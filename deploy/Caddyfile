@@ -1,0 +1,41 @@
+# OCMP Caddyfile
+# Caddy provides automatic HTTPS with Let's Encrypt
+
+{$DOMAIN:localhost} {
+    # Security headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains" defer
+    }
+
+    # API routes
+    handle /api/* {
+        reverse_proxy api:8000
+    }
+
+    # Health check (no auth required)
+    handle /health {
+        reverse_proxy api:8000
+    }
+
+    handle /ready {
+        reverse_proxy api:8000
+    }
+
+    # Frontend (static files)
+    handle {
+        reverse_proxy web:80
+    }
+
+    # Enable gzip compression
+    encode gzip
+
+    # Logging
+    log {
+        output stdout
+        format json
+    }
+}

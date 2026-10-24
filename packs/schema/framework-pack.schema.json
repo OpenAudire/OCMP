@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ocmp.example.com/schemas/framework-pack.schema.json",
+  "title": "OCMP Framework Pack",
+  "description": "Schema for framework and taxonomy packs that can be imported into OCMP",
+  "type": "object",
+  "required": ["$schema", "metadata", "items"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["key", "name", "version", "publisher"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "Unique identifier for this framework (lowercase, hyphens allowed)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of this framework"
+        },
+        "publisher": {
+          "type": "string",
+          "description": "Organization that publishes this framework"
+        },
+        "licence": {
+          "type": "string",
+          "description": "Licence or usage restrictions"
+        },
+        "profile": {
+          "type": "string",
+          "enum": ["core", "health", "other"],
+          "default": "core",
+          "description": "Which institution profile this framework belongs to"
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of the framework"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the official framework documentation"
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "description": "Flat list of framework items (hierarchy via parent_code)",
+      "items": {
+        "type": "object",
+        "required": ["code", "title"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Unique code within this framework"
+          },
+          "title": {
+            "type": "string",
+            "description": "Item title or name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description"
+          },
+          "parent_code": {
+            "type": ["string", "null"],
+            "description": "Code of the parent item (null for root items)"
+          },
+          "order": {
+            "type": "integer",
+            "description": "Sort order within siblings"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional key-value metadata"
+          }
+        }
+      }
+    },
+    "cross_references": {
+      "type": "array",
+      "description": "References between items within this framework",
+      "items": {
+        "type": "object",
+        "required": ["from_code", "to_code", "type"],
+        "properties": {
+          "from_code": {
+            "type": "string"
+          },
+          "to_code": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["related", "prerequisite", "broader", "narrower"]
+          }
+        }
+      }
+    },
+    "taxonomy_scales": {
+      "type": "array",
+      "description": "Taxonomy scales included in this pack",
+      "items": {
+        "type": "object",
+        "required": ["key", "name", "levels"],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "levels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["order", "name"],
+              "properties": {
+                "order": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "verbs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

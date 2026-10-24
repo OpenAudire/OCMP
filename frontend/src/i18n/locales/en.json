@@ -1,0 +1,53 @@
+{
+  "app": {
+    "title": "Open Curriculum Mapping Platform",
+    "description": "Map your curriculum to competency frameworks with AI assistance"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit"
+  },
+  "auth": {
+    "login": "Log in",
+    "logout": "Log out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset password",
+    "register": "Register",
+    "loginWithSSO": "Log in with SSO"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "curriculum": "Curriculum",
+    "mapping": "Mapping",
+    "frameworks": "Frameworks",
+    "reports": "Reports",
+    "search": "Search",
+    "admin": "Admin",
+    "explorer": "Explorer"
+  },
+  "setup": {
+    "title": "Welcome to OCMP",
+    "description": "Let's set up your institution",
+    "adminEmail": "Admin email",
+    "adminPassword": "Admin password",
+    "institutionName": "Institution name",
+    "institutionShortCode": "Short code",
+    "country": "Country",
+    "complete": "Complete setup"
+  }
+}

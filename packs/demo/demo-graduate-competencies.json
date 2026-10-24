@@ -1,0 +1,167 @@
+{
+  "$schema": "../schema/framework-pack.schema.json",
+  "metadata": {
+    "key": "demo-graduate-competencies",
+    "name": "Demo Graduate Competencies",
+    "version": "1.0.0",
+    "publisher": "OCMP Demo",
+    "licence": "CC0 - Public Domain (fictional framework for demonstration)",
+    "profile": "core",
+    "description": "A fictional graduate competency framework for demonstrating OCMP features"
+  },
+  "items": [
+    {
+      "code": "DGC",
+      "title": "Demo Graduate Competencies",
+      "description": "Root node for the demo graduate competencies framework",
+      "parent_code": null,
+      "order": 1
+    },
+    {
+      "code": "DGC-1",
+      "title": "Critical Thinking",
+      "description": "Ability to analyze information, evaluate evidence, and form reasoned conclusions",
+      "parent_code": "DGC",
+      "order": 1
+    },
+    {
+      "code": "DGC-1.1",
+      "title": "Analysis",
+      "description": "Break down complex information into component parts",
+      "parent_code": "DGC-1",
+      "order": 1
+    },
+    {
+      "code": "DGC-1.2",
+      "title": "Evaluation",
+      "description": "Assess the validity and reliability of information and arguments",
+      "parent_code": "DGC-1",
+      "order": 2
+    },
+    {
+      "code": "DGC-2",
+      "title": "Communication",
+      "description": "Effective written and oral communication skills",
+      "parent_code": "DGC",
+      "order": 2
+    },
+    {
+      "code": "DGC-2.1",
+      "title": "Written Communication",
+      "description": "Express ideas clearly and effectively in writing",
+      "parent_code": "DGC-2",
+      "order": 1
+    },
+    {
+      "code": "DGC-2.2",
+      "title": "Oral Communication",
+      "description": "Present information effectively to diverse audiences",
+      "parent_code": "DGC-2",
+      "order": 2
+    },
+    {
+      "code": "DGC-3",
+      "title": "Professional Practice",
+      "description": "Ethical and professional conduct in academic and workplace settings",
+      "parent_code": "DGC",
+      "order": 3
+    },
+    {
+      "code": "DGC-3.1",
+      "title": "Ethics",
+      "description": "Apply ethical principles in decision-making",
+      "parent_code": "DGC-3",
+      "order": 1
+    },
+    {
+      "code": "DGC-3.2",
+      "title": "Collaboration",
+      "description": "Work effectively in teams with diverse members",
+      "parent_code": "DGC-3",
+      "order": 2
+    }
+  ],
+  "cross_references": [
+    {
+      "from_code": "DGC-1.1",
+      "to_code": "DGC-2.1",
+      "type": "related"
+    }
+  ],
+  "taxonomy_scales": [
+    {
+      "key": "bloom-revised",
+      "name": "Bloom's Taxonomy (Revised)",
+      "description": "Cognitive domain taxonomy for educational objectives",
+      "levels": [
+        {
+          "order": 1,
+          "name": "Remember",
+          "description": "Recall facts and basic concepts",
+          "verbs": ["define", "describe", "identify", "label", "list", "match", "name", "recall", "recognize", "state"]
+        },
+        {
+          "order": 2,
+          "name": "Understand",
+          "description": "Explain ideas or concepts",
+          "verbs": ["classify", "compare", "contrast", "explain", "interpret", "paraphrase", "summarize", "translate"]
+        },
+        {
+          "order": 3,
+          "name": "Apply",
+          "description": "Use information in new situations",
+          "verbs": ["apply", "demonstrate", "execute", "implement", "solve", "use", "calculate", "perform"]
+        },
+        {
+          "order": 4,
+          "name": "Analyze",
+          "description": "Draw connections among ideas",
+          "verbs": ["analyze", "categorize", "differentiate", "distinguish", "examine", "organize", "relate"]
+        },
+        {
+          "order": 5,
+          "name": "Evaluate",
+          "description": "Justify a decision or course of action",
+          "verbs": ["appraise", "argue", "assess", "critique", "defend", "evaluate", "judge", "justify"]
+        },
+        {
+          "order": 6,
+          "name": "Create",
+          "description": "Produce new or original work",
+          "verbs": ["construct", "create", "design", "develop", "formulate", "generate", "plan", "produce"]
+        }
+      ]
+    },
+    {
+      "key": "miller",
+      "name": "Miller's Pyramid",
+      "description": "Clinical competence assessment framework",
+      "levels": [
+        {
+          "order": 1,
+          "name": "Knows",
+          "description": "Knowledge - recall of facts",
+          "verbs": ["define", "describe", "list", "recall"]
+        },
+        {
+          "order": 2,
+          "name": "Knows How",
+          "description": "Competence - ability to apply knowledge",
+          "verbs": ["explain", "interpret", "apply", "analyze"]
+        },
+        {
+          "order": 3,
+          "name": "Shows How",
+          "description": "Performance - demonstration in controlled settings",
+          "verbs": ["demonstrate", "perform", "simulate", "practice"]
+        },
+        {
+          "order": 4,
+          "name": "Does",
+          "description": "Action - performance in real practice",
+          "verbs": ["perform independently", "manage", "conduct", "execute in practice"]
+        }
+      ]
+    }
+  ]
+}
