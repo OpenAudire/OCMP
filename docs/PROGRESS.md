@@ -19,8 +19,18 @@ This file tracks progress through the development phases.
 - [x] ADRs 001-007 created
 - [x] `CLAUDE.md` conventions file created
 - [x] Basic health endpoint tests
+- [x] Docker Compose configuration
+- [x] Framework pack schema and demo pack
 
-**Commit**: `feat: initial project scaffold with linting and CI`
+**Verification**:
+- Backend linting: `ruff check .` passes
+- Backend type check: `mypy app` passes
+- Backend tests: `pytest` passes (2 tests, 100% coverage)
+- Frontend linting: `npm run lint` passes
+- Frontend type check: `npm run typecheck` passes
+- Frontend tests: `npm run test` passes (1 test)
+
+**Commit**: `feat: initial project scaffold with linting and CI` (0dcbdea)
 
 ---
 
