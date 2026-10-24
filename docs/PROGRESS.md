@@ -59,7 +59,7 @@ This file tracks progress through the development phases.
 - Mypy: `mypy app` passes (no issues in 14 files)
 - Pytest: 13 tests pass, 62% coverage
 
-**Commit**: (pending)
+**Commit**: `feat: add backend core with config, logging, and health endpoints` (9ef145d)
 
 ---
 
