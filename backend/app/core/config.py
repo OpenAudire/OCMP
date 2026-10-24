@@ -1,10 +1,13 @@
 """Application configuration using pydantic-settings."""
 
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, PostgresDsn, RedisDsn, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+# A list setting given in the environment as a comma-separated string (not JSON).
+CommaSeparatedList = Annotated[list[str], NoDecode]
 
 
 class Settings(BaseSettings):
@@ -33,14 +36,19 @@ class Settings(BaseSettings):
     redis_url: RedisDsn = Field(default="redis://localhost:6379/0")  # type: ignore[assignment]
 
     # CORS
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    cors_origins: CommaSeparatedList = Field(default_factory=lambda: ["http://localhost:3000"])
 
-    @field_validator("cors_origins", mode="before")
+    # Reverse proxies whose X-Forwarded-For header is trusted for the client address:
+    # IP addresses, CIDR networks or hostnames (resolved via DNS, e.g. the compose
+    # service name). Requests from anywhere else use the connecting address.
+    trusted_proxies: CommaSeparatedList = Field(default_factory=lambda: ["caddy"])
+
+    @field_validator("cors_origins", "trusted_proxies", mode="before")
     @classmethod
-    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
-        """Parse CORS origins from comma-separated string or list."""
+    def parse_comma_separated(cls, v: str | list[str]) -> list[str]:
+        """Parse a list from a comma-separated string or a list."""
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
+            return [item.strip() for item in v.split(",") if item.strip()]
         return v
 
     # Email (optional, for password reset)
@@ -104,10 +112,14 @@ class Settings(BaseSettings):
     password_min_length: int = 12
     password_max_length: int = 256  # bounds hashing cost
 
-    # Login rate limiting (fixed window)
+    # Login throttling. Per client address: a hard limit on attempts per window.
+    # Per account: progressive delays after repeated failures, never a lockout, so
+    # nobody can lock another person out by guessing their password.
     login_rate_limit_window_seconds: int = 900
-    login_rate_limit_per_ip: int = 20  # all attempts from one client address
-    login_rate_limit_per_account: int = 10  # failed attempts against one email address
+    login_rate_limit_per_ip: int = 20
+    login_delay_free_failures: int = 3  # failures before delays start
+    login_delay_base_seconds: float = 1.0  # first delay; doubles per further failure
+    login_delay_max_seconds: float = 20.0
 
 
 @lru_cache

@@ -1,8 +1,12 @@
 """Authentication endpoints for local accounts."""
 
+from asyncio import sleep
+
 from fastapi import APIRouter, HTTPException, Request, Response, status
+from redis.asyncio import Redis
 
 from app.api.deps import (
+    ClientIP,
     CurrentAuth,
     CurrentUser,
     RedisDep,
@@ -11,6 +15,7 @@ from app.api.deps import (
     session_ttl_seconds,
     set_session_cookies,
 )
+from app.core.config import Settings
 from app.core.database import DbSession
 from app.core.logging import get_logger
 from app.core.security import PasswordPolicyError, csrf_token_for
@@ -33,28 +38,48 @@ def _too_many_attempts(retry_after: int) -> HTTPException:
     )
 
 
+async def _throttle_account(redis: Redis, settings: Settings, email: str) -> None:
+    """Hold the request back in proportion to the account's recent failures.
+
+    This slows password guessing against one account without ever refusing the
+    attempt, so the account owner can always sign in with the right password.
+    """
+    failures = await rate_limit.count(redis, _ACCOUNT_SCOPE, email)
+    delay = rate_limit.progressive_delay_seconds(
+        failures,
+        free_failures=settings.login_delay_free_failures,
+        base_seconds=settings.login_delay_base_seconds,
+        max_seconds=settings.login_delay_max_seconds,
+    )
+    if delay > 0:
+        logger.info("login_delayed", seconds=delay)
+        await sleep(delay)
+
+
 @router.post("/login", response_model=LoginResponse)
 async def login(
     body: LoginRequest,
     request: Request,
     response: Response,
+    client_ip: ClientIP,
     db: DbSession,
     redis: RedisDep,
     settings: SettingsDep,
 ) -> LoginResponse:
-    """Sign in with email and password and start a session."""
-    client_ip = request.client.host if request.client else "unknown"
+    """Sign in with email and password and start a session.
+
+    Attempts are limited per client address (hard limit, 429) and slowed per
+    account (progressive delay, never refused).
+    """
     window = settings.login_rate_limit_window_seconds
 
-    for scope, identifier, limit in (
-        (_IP_SCOPE, client_ip, settings.login_rate_limit_per_ip),
-        (_ACCOUNT_SCOPE, body.email, settings.login_rate_limit_per_account),
-    ):
-        limited = await rate_limit.check(redis, scope, identifier, limit)
-        if not limited.allowed:
-            logger.warning("login_rate_limited", scope=scope)
-            raise _too_many_attempts(limited.retry_after_seconds)
+    # The address limit also caps how many delayed requests one client can hold open.
+    limited = await rate_limit.check(redis, _IP_SCOPE, client_ip, settings.login_rate_limit_per_ip)
+    if not limited.allowed:
+        logger.warning("login_rate_limited")
+        raise _too_many_attempts(limited.retry_after_seconds)
     await rate_limit.hit(redis, _IP_SCOPE, client_ip, window)
+    await _throttle_account(redis, settings, body.email)
 
     user = await authenticate(db, body.email, body.password)
     if user is None:
@@ -111,11 +136,8 @@ async def change_own_password(
 ) -> None:
     """Change the signed-in user's password and sign out their other sessions."""
     user_id = str(auth.user.id)
-    limited = await rate_limit.check(
-        redis, _ACCOUNT_SCOPE, auth.user.email, settings.login_rate_limit_per_account
-    )
-    if not limited.allowed:
-        raise _too_many_attempts(limited.retry_after_seconds)
+    # Guessing the current password from a hijacked session is slowed the same way.
+    await _throttle_account(redis, settings, auth.user.email)
 
     try:
         changed = await change_password(

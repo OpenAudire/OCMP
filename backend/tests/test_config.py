@@ -111,3 +111,21 @@ class TestSettings:
         assert settings.session_expire_hours == 24
         assert settings.ai_enabled is False
         assert settings.embeddings_local is True
+
+
+class TestListSettingsFromEnvironment:
+    """List settings are given as comma-separated strings in the environment."""
+
+    def test_comma_separated_values(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("CORS_ORIGINS", "https://a.example, https://b.example")
+        monkeypatch.setenv("TRUSTED_PROXIES", "caddy,10.0.0.0/8")
+
+        settings = Settings(_env_file=None)  # type: ignore[call-arg]
+
+        assert settings.cors_origins == ["https://a.example", "https://b.example"]
+        assert settings.trusted_proxies == ["caddy", "10.0.0.0/8"]
+
+    def test_trusted_proxies_default_to_caddy(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("TRUSTED_PROXIES", raising=False)
+
+        assert Settings(_env_file=None).trusted_proxies == ["caddy"]  # type: ignore[call-arg]

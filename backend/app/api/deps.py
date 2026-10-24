@@ -8,6 +8,7 @@ from redis.asyncio import Redis
 
 from app.core.config import Settings, get_settings
 from app.core.database import DbSession
+from app.core.proxy import TrustedProxies
 from app.core.redis import get_redis
 from app.core.security import csrf_token_for
 from app.models import User
@@ -16,6 +17,15 @@ from app.services.users import get_active_user
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 RedisDep = Annotated[Redis, Depends(get_redis)]
+
+
+async def get_client_ip(request: Request) -> str:
+    """The client's address, honouring X-Forwarded-For only from trusted proxies."""
+    trusted: TrustedProxies = request.app.state.trusted_proxies
+    return await trusted.client_ip(request)
+
+
+ClientIP = Annotated[str, Depends(get_client_ip)]
 
 
 def session_ttl_seconds(settings: Settings) -> int:

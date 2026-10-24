@@ -128,7 +128,14 @@ This file tracks progress through the development phases.
 - Pytest: 91 passed, 86% total coverage; auth router, deps, security, sessions, rate limit and user service at 98-100%
 - End to end through Caddy: sign-in, `/me`, logout rejected without CSRF header (403) and accepted with it (204), `/me` afterwards 401, 11th failed sign-in returns 429; no email addresses in API logs
 
-**Commit**: `feat: add local account authentication with sessions and CSRF`
+**Commit**: `feat: add local account authentication with sessions and CSRF` (7f97770)
+
+**Follow-up** (`fix: throttle sign-in without account lockout and trust only Caddy`):
+- [x] Per-account lockout replaced by progressive delays (3 free failures, then 1 s doubling to a 20 s cap; never refused); per-IP hard limit kept
+- [x] Client address resolved in the app from `X-Forwarded-For` only when the peer is in `TRUSTED_PROXIES` (IPs, CIDRs or hostnames, default `caddy`); uvicorn runs with `--no-proxy-headers`
+- [x] Comma-separated list settings from the environment fixed (`CORS_ORIGINS` previously crashed settings loading)
+- [x] ADR 009 revised
+- Verification: 127 tests pass, 88% coverage (auth, deps, proxy, rate limit 100%). End to end through Caddy: rotating spoofed `X-Forwarded-For` still hits the per-IP 429, both through Caddy and directly from another container; a second client through Caddy is limited separately; after 6 failures the owner signs in with the right password after an 8 s delay
 
 ---
 

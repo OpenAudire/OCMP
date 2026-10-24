@@ -12,6 +12,7 @@ from app.core.config import get_settings
 from app.core.csrf import CSRFMiddleware
 from app.core.database import close_database, init_database
 from app.core.logging import get_logger, setup_logging
+from app.core.proxy import TrustedProxies
 from app.core.redis import close_redis, init_redis
 
 logger = get_logger(__name__)
@@ -66,6 +67,8 @@ def create_app() -> FastAPI:
         openapi_url="/api/openapi.json",
         lifespan=lifespan,
     )
+
+    app.state.trusted_proxies = TrustedProxies(settings.trusted_proxies)
 
     # CSRF check for cookie-authenticated unsafe requests (inside CORS, so
     # rejections still carry CORS headers)

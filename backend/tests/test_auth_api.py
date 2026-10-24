@@ -2,11 +2,13 @@
 
 import pytest
 from fakeredis import FakeAsyncRedis
+from fastapi import FastAPI
 from httpx import AsyncClient, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog.testing import capture_logs
 
 from app.core.config import Settings
+from app.core.proxy import TrustedProxies
 from app.models import User
 from app.services.users import create_local_user
 
@@ -104,36 +106,144 @@ class TestLogin:
         assert len(await redis_client.keys("ocmp:session:*")) == 1
 
 
-class TestRateLimiting:
-    async def test_account_locked_after_repeated_failures(
-        self, api_client: AsyncClient, user: User, test_settings: Settings
+@pytest.fixture
+def sleeps(monkeypatch: pytest.MonkeyPatch) -> list[float]:
+    """Record progressive delays instead of actually waiting."""
+    recorded: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        recorded.append(seconds)
+
+    monkeypatch.setattr("app.api.v1.auth.sleep", fake_sleep)
+    return recorded
+
+
+def via_proxy(api_app: FastAPI, client_ip: str) -> dict[str, str]:
+    """Trust the test client as a proxy and report the given client address."""
+    api_app.state.trusted_proxies = TrustedProxies(["127.0.0.1"])
+    return {"X-Forwarded-For": client_ip}
+
+
+class TestAccountThrottling:
+    """Per account: progressive delays, never a lockout."""
+
+    async def test_delays_grow_after_free_failures_and_are_capped(
+        self, api_client: AsyncClient, user: User, test_settings: Settings, sleeps: list[float]
     ) -> None:
-        for _ in range(test_settings.login_rate_limit_per_account):
-            assert (await login(api_client, password="wrong passphrase")).status_code == 401
+        test_settings.login_rate_limit_per_ip = 100
+        for _ in range(10):
+            await login(api_client, password="wrong passphrase")
 
-        # Even the right password is refused until the window passes.
-        response = await login(api_client)
+        # 3 free failures, then 1, 2, 4, 8, 16 s, then capped at 20 s.
+        assert sleeps == [1.0, 2.0, 4.0, 8.0, 16.0, 20.0, 20.0]
 
-        assert response.status_code == 429
-        assert int(response.headers["Retry-After"]) > 0
-
-    async def test_success_resets_account_counter(
-        self, api_client: AsyncClient, user: User, test_settings: Settings
+    async def test_owner_can_sign_in_while_account_is_attacked(
+        self,
+        api_app: FastAPI,
+        api_client: AsyncClient,
+        user: User,
+        test_settings: Settings,
+        sleeps: list[float],
     ) -> None:
-        for _ in range(test_settings.login_rate_limit_per_account - 1):
+        # Many failed guesses from many addresses...
+        for n in range(50):
+            response = await api_client.post(
+                "/api/v1/auth/login",
+                json={"email": EMAIL, "password": "wrong passphrase"},
+                headers=via_proxy(api_app, f"203.0.113.{n}"),
+            )
+            assert response.status_code == 401
+
+        # ...only slow the owner down; the right password still works.
+        response = await api_client.post(
+            "/api/v1/auth/login",
+            json={"email": EMAIL, "password": PASSWORD},
+            headers=via_proxy(api_app, "198.51.100.7"),
+        )
+
+        assert response.status_code == 200
+        assert sleeps[-1] == test_settings.login_delay_max_seconds
+
+    async def test_success_clears_delays(
+        self, api_client: AsyncClient, user: User, sleeps: list[float]
+    ) -> None:
+        for _ in range(4):
             await login(api_client, password="wrong passphrase")
         assert (await login(api_client)).status_code == 200
+        sleeps.clear()
 
-        assert (await login(api_client, password="wrong passphrase")).status_code == 401
+        await login(api_client)
+
+        assert sleeps == []
+
+    async def test_delays_are_per_account(
+        self, api_client: AsyncClient, user: User, sleeps: list[float]
+    ) -> None:
+        for _ in range(5):
+            await login(api_client, email="someone-else@example.org")
+        sleeps.clear()
+
         assert (await login(api_client)).status_code == 200
+        assert sleeps == []
+
+
+class TestAddressRateLimit:
+    """Per client address: a hard limit on attempts."""
 
     async def test_client_address_limited_across_accounts(
-        self, api_client: AsyncClient, test_settings: Settings
+        self, api_client: AsyncClient, test_settings: Settings, sleeps: list[float]
     ) -> None:
         for n in range(test_settings.login_rate_limit_per_ip):
             await login(api_client, email=f"user{n}@example.org")
 
         response = await login(api_client, email="another@example.org")
+
+        assert response.status_code == 429
+        assert int(response.headers["Retry-After"]) > 0
+
+    async def test_addresses_behind_trusted_proxy_are_limited_separately(
+        self,
+        api_app: FastAPI,
+        api_client: AsyncClient,
+        test_settings: Settings,
+        sleeps: list[float],
+    ) -> None:
+        for _ in range(test_settings.login_rate_limit_per_ip):
+            await api_client.post(
+                "/api/v1/auth/login",
+                json={"email": "user@example.org", "password": "x"},
+                headers=via_proxy(api_app, "203.0.113.1"),
+            )
+        blocked = await api_client.post(
+            "/api/v1/auth/login",
+            json={"email": "user@example.org", "password": "x"},
+            headers=via_proxy(api_app, "203.0.113.1"),
+        )
+        other_client = await api_client.post(
+            "/api/v1/auth/login",
+            json={"email": "user@example.org", "password": "x"},
+            headers=via_proxy(api_app, "203.0.113.2"),
+        )
+
+        assert blocked.status_code == 429
+        assert other_client.status_code == 401
+
+    async def test_forwarded_header_from_untrusted_peer_is_ignored(
+        self, api_client: AsyncClient, test_settings: Settings, sleeps: list[float]
+    ) -> None:
+        # Not a trusted proxy: rotating a spoofed X-Forwarded-For does not dodge the limit.
+        for n in range(test_settings.login_rate_limit_per_ip):
+            await api_client.post(
+                "/api/v1/auth/login",
+                json={"email": "user@example.org", "password": "x"},
+                headers={"X-Forwarded-For": f"203.0.113.{n}"},
+            )
+
+        response = await api_client.post(
+            "/api/v1/auth/login",
+            json={"email": "user@example.org", "password": "x"},
+            headers={"X-Forwarded-For": "203.0.113.250"},
+        )
 
         assert response.status_code == 429
 
@@ -277,13 +387,14 @@ class TestChangePassword:
 
         assert response.status_code == 403
 
-    async def test_repeated_wrong_current_password_is_rate_limited(
-        self, api_client: AsyncClient, user: User, test_settings: Settings
+    async def test_repeated_wrong_current_password_is_slowed_not_blocked(
+        self, api_client: AsyncClient, user: User, sleeps: list[float]
     ) -> None:
         await login(api_client)
-        for _ in range(test_settings.login_rate_limit_per_account):
+        for _ in range(5):
             assert (await self.change(api_client, current="not my password")).status_code == 400
 
         response = await self.change(api_client)
 
-        assert response.status_code == 429
+        assert response.status_code == 204
+        assert sleeps == [1.0, 2.0, 4.0]
