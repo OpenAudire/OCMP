@@ -3,9 +3,12 @@
 import os
 from collections.abc import AsyncGenerator, Callable
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
+import dramatiq
 import pytest
 from alembic import command
 from alembic.config import Config
@@ -123,9 +126,31 @@ async def redis_client() -> AsyncGenerator[FakeAsyncRedis, None]:
         await client.aclose()
 
 
+@dataclass
+class EnqueuedJob:
+    actor: str
+    args: tuple[Any, ...]
+    kwargs: dict[str, Any] = field(default_factory=dict)
+
+
+@pytest.fixture
+def enqueued_jobs(monkeypatch: pytest.MonkeyPatch) -> list[EnqueuedJob]:
+    """Record background jobs instead of sending them to the broker."""
+    jobs: list[EnqueuedJob] = []
+
+    def fake_send(self: dramatiq.Actor[Any, Any], *args: Any, **kwargs: Any) -> None:
+        jobs.append(EnqueuedJob(self.actor_name, args, kwargs))
+
+    monkeypatch.setattr(dramatiq.Actor, "send", fake_send)
+    return jobs
+
+
 @pytest.fixture
 def api_app(
-    test_settings: Settings, db_session: AsyncSession, redis_client: FakeAsyncRedis
+    test_settings: Settings,
+    db_session: AsyncSession,
+    redis_client: FakeAsyncRedis,
+    enqueued_jobs: list[EnqueuedJob],
 ) -> FastAPI:
     """The FastAPI app wired to the test database session, fake Redis and test settings."""
     with patch("app.main.get_settings", return_value=test_settings):

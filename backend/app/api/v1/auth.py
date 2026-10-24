@@ -19,14 +19,25 @@ from app.core.config import Settings
 from app.core.database import DbSession
 from app.core.logging import get_logger
 from app.core.security import PasswordPolicyError, csrf_token_for
-from app.schemas.auth import ChangePasswordRequest, LoginRequest, LoginResponse, UserRead
+from app.jobs.auth_emails import send_password_changed_notice, send_password_reset
+from app.schemas.auth import (
+    ChangePasswordRequest,
+    LoginRequest,
+    LoginResponse,
+    PasswordResetConfirm,
+    PasswordResetRequest,
+    PasswordResetRequested,
+    UserRead,
+)
 from app.services import rate_limit, sessions
+from app.services.password_reset import InvalidResetTokenError, reset_password
 from app.services.users import authenticate, change_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = get_logger(__name__)
 
 _IP_SCOPE = "login-ip"
+_RESET_IP_SCOPE = "password-reset-ip"
 _ACCOUNT_SCOPE = "login-account"
 
 
@@ -165,3 +176,62 @@ async def change_own_password(
         redis, auth.user.id, keep_token=auth.session_token
     )
     logger.info("password_changed", user_id=user_id, other_sessions_revoked=revoked)
+    send_password_changed_notice.send(user_id)
+
+
+@router.post(
+    "/password-reset/request",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=PasswordResetRequested,
+)
+async def request_password_reset(
+    body: PasswordResetRequest,
+    client_ip: ClientIP,
+    redis: RedisDep,
+    settings: SettingsDep,
+) -> PasswordResetRequested:
+    """Email a password reset link, if the account exists and can use one.
+
+    The response is the same either way, and the account lookup happens in a
+    background job, so neither content nor timing reveals whether it exists.
+    """
+    limited = await rate_limit.check(
+        redis, _RESET_IP_SCOPE, client_ip, settings.password_reset_per_ip
+    )
+    if not limited.allowed:
+        raise _too_many_attempts(limited.retry_after_seconds)
+    await rate_limit.hit(
+        redis, _RESET_IP_SCOPE, client_ip, settings.login_rate_limit_window_seconds
+    )
+
+    send_password_reset.send(body.email)
+    return PasswordResetRequested()
+
+
+@router.post("/password-reset/confirm", status_code=status.HTTP_204_NO_CONTENT)
+async def confirm_password_reset(
+    body: PasswordResetConfirm,
+    db: DbSession,
+    redis: RedisDep,
+    settings: SettingsDep,
+) -> None:
+    """Set a new password with a reset token and sign out every session."""
+    try:
+        user = await reset_password(
+            db, redis, settings, token=body.token, new_password=body.new_password
+        )
+    except InvalidResetTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This reset link is invalid or has expired. Please request a new one.",
+        ) from exc
+    except PasswordPolicyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+        ) from exc
+
+    revoked = await sessions.revoke_user_sessions(redis, user.id)
+    # Sign-in delays from guesses against this account no longer apply.
+    await rate_limit.reset(redis, _ACCOUNT_SCOPE, user.email)
+    logger.info("password_reset_completed", user_id=str(user.id), sessions_revoked=revoked)
+    send_password_changed_notice.send(str(user.id))

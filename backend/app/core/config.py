@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     )
 
     # Application
+    # Public address of the site, used to build links in emails.
+    public_url: str = "https://localhost"
     app_name: str = "OCMP"
     app_version: str = "0.1.0"
     debug: bool = False
@@ -58,7 +60,9 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     smtp_from_email: str | None = None
     smtp_from_name: str = "OCMP"
-    smtp_tls: bool = True
+    smtp_tls: bool = True  # STARTTLS (usually port 587)
+    smtp_ssl: bool = False  # implicit TLS (usually port 465); takes precedence over smtp_tls
+    smtp_timeout_seconds: float = 10.0
 
     @property
     def smtp_configured(self) -> bool:
@@ -107,6 +111,11 @@ class Settings(BaseSettings):
     session_cookie_secure: bool = True  # only disable for local plain-HTTP development
     csrf_cookie_name: str = "ocmp_csrf"
     csrf_header_name: str = "X-CSRF-Token"
+
+    # Password reset
+    password_reset_token_minutes: int = 60
+    password_reset_per_account_per_hour: int = 3  # emails; extra requests are silently dropped
+    password_reset_per_ip: int = 10  # requests per client address per login window
 
     # Passwords
     password_min_length: int = 12

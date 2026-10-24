@@ -35,6 +35,8 @@ services:
   # One-shot database migration (runs before api and worker start)
   migrate:
     image: ocmp-backend:local
+    # All OCMP settings from .env; the entries under `environment` take precedence.
+    env_file: .env
     build:
       context: ../backend
       dockerfile: Dockerfile
@@ -50,12 +52,15 @@ services:
   # FastAPI backend
   api:
     image: ocmp-backend:local
+    # All OCMP settings from .env; the entries under `environment` take precedence.
+    env_file: .env
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PUBLIC_URL: ${PUBLIC_URL:-https://${DOMAIN:-localhost}}
       # Proxies allowed to report the client address (X-Forwarded-For); hostnames
       # resolve via compose DNS. Used for per-address sign-in limits.
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-caddy}
@@ -73,6 +78,8 @@ services:
   # Dramatiq worker for background jobs
   worker:
     image: ocmp-backend:local
+    # All OCMP settings from .env; the entries under `environment` take precedence.
+    env_file: .env
     command: dramatiq app.worker --processes 1 --threads 4
     restart: unless-stopped
     environment:
@@ -80,6 +87,8 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # The worker builds links in emails (e.g. password reset).
+      PUBLIC_URL: ${PUBLIC_URL:-https://${DOMAIN:-localhost}}
     healthcheck:
       disable: true
     depends_on:
@@ -116,6 +125,15 @@ services:
         condition: service_started
     environment:
       DOMAIN: ${DOMAIN:-localhost}
+
+  # Optional, development only: catches all outgoing email.
+  # Web UI at http://localhost:8025. Set SMTP_HOST=mailpit, SMTP_PORT=1025, SMTP_TLS=false.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    profiles: ["mailpit"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
 
   # Optional: Local embedding model
   embeddings:

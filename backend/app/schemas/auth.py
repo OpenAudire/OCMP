@@ -39,3 +39,24 @@ class ChangePasswordRequest(BaseModel):
 
     current_password: str = Field(min_length=1, max_length=1024)
     new_password: str = Field(min_length=1, max_length=1024)
+
+
+class PasswordResetRequest(BaseModel):
+    """Ask for a password reset link."""
+
+    email: str = Field(min_length=1, max_length=320)
+
+
+class PasswordResetRequested(BaseModel):
+    """Always the same, whether or not the account exists."""
+
+    detail: str = (
+        "If an account with that email address can reset its password, a reset link has been sent."
+    )
+
+
+class PasswordResetConfirm(BaseModel):
+    """Set a new password with the token from a reset link."""
+
+    token: str = Field(min_length=1, max_length=256)
+    new_password: str = Field(min_length=1, max_length=1024)

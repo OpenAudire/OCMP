@@ -140,7 +140,25 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.6: Auth: Password Reset
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] `POST /api/v1/auth/password-reset/request`: always `202`, per-IP limit, account lookup in a background job (no enumeration by content or timing)
+- [x] `POST /api/v1/auth/password-reset/confirm`: policy checked before the token is consumed; revokes all sessions; clears sign-in delays
+- [x] Tokens in Redis as hashes with TTL, single-use (`GETDEL`), bound to a password-hash fingerprint, one live token per user; token in the URL fragment
+- [x] Silent cap of 3 reset emails per account per hour
+- [x] "Password changed" notice after reset and after change-password
+- [x] SMTP sender (`app/services/email.py`) with STARTTLS / implicit TLS / login
+- [x] Shared Dramatiq broker (`app/core/broker.py`), jobs in `app/jobs/`, per-job DB/Redis connections
+- [x] Compose: backend services read `.env` (previously only a fixed list of variables reached them), `PUBLIC_URL`, optional `mailpit` profile
+- [x] ADR 010: password reset
+
+**Verification**:
+- Ruff, ruff format, mypy (34 files) pass
+- Pytest: 163 passed, 91% total coverage; password reset service and API 100%
+- End to end with Mailpit through Caddy: request for an existing and an unknown address give identical `202` responses; exactly one email arrives, for the existing account; the link works once (`204`, then `400`); old password rejected, new one accepted; "password changed" email arrives; no email addresses or tokens in api, worker or Caddy logs
+
+**Commit**: `feat: add password reset by email`
 
 ---
 

@@ -150,6 +150,12 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Soft delete via `SoftDeleteMixin` where history matters
 - Relationships use `lazy="raise"`; load related rows explicitly with `selectinload`
 - Register every model in `app/models/__init__.py` so Alembic sees it
+
+### Background jobs
+
+- Dramatiq actors live in `app/jobs/`; each module imports `app.core.broker` first and is imported by `app/worker.py`
+- Job bodies are async functions run with `asyncio.run`; open connections with `job_resources(settings)`
+- Never log email addresses or tokens; log user ids
 - Audit log for curriculum/framework/mapping changes
 
 ### Testing
@@ -160,6 +166,8 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Factories: factory_boy for models (`tests/factories.py`)
 - API tests use the `api_client` fixture (test DB session, fakeredis, test settings)
 - Never patch `app.core.config.get_settings` in tests; override dependencies or pass `Settings` explicitly
+- `enqueued_jobs` fixture records `.send()` calls instead of using the broker; `tests/fakes.py` has `FakeEmailSender`
+- Service tests use `example.org` addresses (`email_validator` rejects the `.test` domain)
 
 ## Naming Conventions
 
@@ -211,7 +219,7 @@ chore: update dependencies
 - [x] Docker Compose base
 - [x] Backend core + health
 - [x] Core database models
-- [ ] Authentication (local + OIDC)
+- [ ] Authentication (local + OIDC) — local accounts and password reset done; OIDC pending
 - [ ] Roles and permissions
 - [ ] Curriculum models
 - [ ] Framework models
