@@ -35,12 +35,31 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.2: Docker Compose Base Stack
-**Status**: Pending
+**Status**: Pending (deferred - Docker Compose files exist, will verify when Docker available)
 
 ---
 
 ### Slice 0.3: Backend Core + Health Endpoints
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] Configuration system using pydantic-settings (`app/core/config.py`)
+- [x] Structured logging with structlog (`app/core/logging.py`)
+- [x] Database connection management (`app/core/database.py`)
+- [x] Redis connection management (`app/core/redis.py`)
+- [x] Health check router with `/health` and `/ready` endpoints (`app/api/health.py`)
+- [x] FastAPI app with lifespan management (`app/main.py`)
+- [x] CORS middleware configured
+- [x] Virtual environment setup at `backend/.venv`
+- [x] All dependencies in `pyproject.toml`
+- [x] `.gitattributes` for LF line endings
+
+**Verification**:
+- Ruff: `ruff check .` passes
+- Mypy: `mypy app` passes (no issues in 14 files)
+- Pytest: 13 tests pass, 62% coverage
+
+**Commit**: (pending)
 
 ---
 

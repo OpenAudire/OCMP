@@ -57,11 +57,24 @@ chore: update dependencies
 
 ```bash
 cd backend
+
+# Create virtual environment
 python -m venv .venv
+
+# Activate virtual environment
+# On Windows:
+.venv\Scripts\activate
+# On Unix/macOS:
 source .venv/bin/activate
+
+# Install all dependencies including dev tools
 pip install -e ".[dev]"
+
+# Install pre-commit hooks
 pre-commit install
 ```
+
+**Important:** Always work inside the virtual environment. Never install packages globally.
 
 ### Frontend
 
@@ -70,17 +83,36 @@ cd frontend
 npm install
 ```
 
+### Running Linters
+
+```bash
+# Backend (from backend/ with venv activated)
+ruff check .           # Check for issues
+ruff format --check .  # Check formatting
+mypy app               # Type checking
+
+# Frontend (from frontend/)
+npm run lint           # ESLint
+npm run typecheck      # TypeScript
+```
+
 ### Running Tests
 
 ```bash
-# Backend
-cd backend
-pytest
+# Backend (from backend/ with venv activated)
+pytest                 # Run all tests with coverage
+pytest tests/ -v       # Verbose output
+pytest -x              # Stop on first failure
 
-# Frontend
-cd frontend
-npm test
+# Frontend (from frontend/)
+npm run test           # Run tests once
+npm run test:watch     # Watch mode
+npm run test:coverage  # With coverage
 ```
+
+### Line Endings
+
+This project uses LF line endings (Unix-style). The `.gitattributes` file ensures consistent line endings across all platforms. If you're on Windows, Git will handle the conversion automatically.
 
 ## Code Style
 

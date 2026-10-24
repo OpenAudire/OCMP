@@ -26,6 +26,60 @@ This file documents the conventions and patterns used in the OCMP project to ens
 - **Auth**: Argon2id hashing, session cookies, OIDC
 - **Deployment**: Docker Compose with Caddy
 
+## Development Environment Setup
+
+### Backend
+
+```bash
+cd backend
+
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+# Windows:
+.venv\Scripts\activate
+# Unix/macOS:
+source .venv/bin/activate
+
+# Install all dependencies (including dev)
+pip install -e ".[dev]"
+
+# Run linting
+ruff check .
+ruff format --check .
+
+# Run type checking
+mypy app
+
+# Run tests
+pytest
+```
+
+### Frontend
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Run linting
+npm run lint
+
+# Run type checking
+npm run typecheck
+
+# Run tests
+npm run test
+```
+
+### Important
+
+- **Always use the virtual environment** for backend work
+- **Never install packages globally** - add them to `pyproject.toml`
+- Line endings are normalized to LF via `.gitattributes`
+
 ## Code Conventions
 
 ### Python (Backend)
