@@ -156,8 +156,9 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Relationships use `lazy="raise"`; load related rows explicitly with `selectinload`
 - Register every model in `app/models/__init__.py` so Alembic sees it
 - Scope resolvers for programme, module and learning event live in `app/services/curriculum_scopes.py`
-- Enumerations: `StrEnum` stored as VARCHAR + CHECK (`_enum()` in `app/models/curriculum.py`), not native Postgres enums
-- Uniqueness on soft-deletable tables: partial unique index `WHERE deleted_at IS NULL`
+- Enumerations: `StrEnum` stored as VARCHAR + CHECK (`str_enum()` in `app/models/base.py`), not native Postgres enums
+- Uniqueness on soft-deletable tables: partial unique index via `live_unique()` (`WHERE deleted_at IS NULL`)
+- Framework model fields follow the pack format in `packs/schema/` (ADR 014)
 - Data migrations are separate files and use table stubs (`sa.table`), never app models
 
 ### Background jobs
@@ -234,6 +235,6 @@ chore: update dependencies
 - [x] Authentication (local + OIDC)
 - [x] Roles and permissions
 - [x] Curriculum models
-- [ ] Framework models
+- [x] Framework models
 - [ ] Demo dataset
 - [ ] Documentation skeleton

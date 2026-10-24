@@ -234,7 +234,25 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.10: Framework Models
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] Models (`app/models/framework.py`): `TaxonomyScale`, `TaxonomyLevel` (with verb lists), `Framework` (one row per version), `FrameworkItem` (tree with depth, position, metadata), `FrameworkCrossRef`, `Crosswalk`, `CrosswalkEntry`
+- [x] `objectives.taxonomy_level_id` (deferred from Slice 0.9)
+- [x] Migration `0008` with database integrity: key format, key + version unique among live rows, parent in same framework (composite FK), depth consistent with parent, crosswalk entry items consistent with type
+- [x] Framework service (`app/services/frameworks.py`): add items, cross-references and crosswalk entries with validation; activating a version supersedes older ones
+- [x] `str_enum` and `live_unique` model helpers moved to `app/models/base.py`
+- [x] Test loading the shipped demo pack into the models
+- [x] ADR 014: framework and taxonomy data model
+
+**Not in this slice**: pack and Excel import, framework browser, cross-framework search (phase 1); the pack schema needs extending for crosswalks, tag lists and cross-framework references when the importer is built.
+
+**Verification**:
+- Ruff, ruff format, mypy (51 files) pass; `alembic check` reports no drift; `0008` round-trips
+- Pytest: 373 passed, 95% total coverage; framework models and service 100%
+- Docker: `migrate` applied `0008`; all seven framework and taxonomy tables present; `/ready` healthy
+
+**Commit**: `feat: add framework and taxonomy models`
 
 ---
 

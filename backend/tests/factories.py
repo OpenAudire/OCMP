@@ -10,11 +10,13 @@ from app.models import (
     CurriculumVersion,
     Department,
     Faculty,
+    Framework,
     Institution,
     LearningEvent,
     Module,
     Phase,
     Programme,
+    TaxonomyScale,
     User,
 )
 
@@ -103,3 +105,22 @@ class LearningEventFactory(factory.Factory):  # type: ignore[misc]
     title = factory.Sequence(lambda n: f"Demo session {n}")
     contact_minutes = 90
     self_study_minutes = 120
+
+
+class FrameworkFactory(factory.Factory):  # type: ignore[misc]
+    class Meta:
+        model = Framework
+
+    key = factory.Sequence(lambda n: f"demo-framework-{n}")
+    name = factory.Sequence(lambda n: f"Demo Framework {n}")
+    version_label = "1.0"
+    publisher = "OCMP Demo"
+    licence_note = "Fictional framework for tests"
+
+
+class TaxonomyScaleFactory(factory.Factory):  # type: ignore[misc]
+    class Meta:
+        model = TaxonomyScale
+
+    key = factory.Sequence(lambda n: f"scale-{n}")
+    name = factory.Sequence(lambda n: f"Demo Scale {n}")

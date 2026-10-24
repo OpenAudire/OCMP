@@ -2,9 +2,10 @@
 
 import uuid
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any, ClassVar
 
-from sqlalchemy import DateTime, ForeignKey, MetaData, func, text
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, MetaData, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
@@ -85,3 +86,21 @@ class CoreModel(UUIDPrimaryKeyMixin, TimestampMixin, CreatedByMixin, Base):
     # Fetch server-generated values (timestamps) with RETURNING after INSERT/UPDATE,
     # so reading them never triggers implicit lazy IO under asyncio.
     __mapper_args__ = {"eager_defaults": True}  # noqa: RUF012 (typed by SQLAlchemy)
+
+
+def str_enum(enum_cls: type[StrEnum], name: str) -> Enum:
+    """A VARCHAR column with a CHECK constraint (no native Postgres enum to migrate)."""
+    return Enum(
+        enum_cls,
+        name=name,
+        native_enum=False,
+        create_constraint=True,
+        length=32,
+        values_callable=lambda e: [m.value for m in e],
+        validate_strings=True,
+    )
+
+
+def live_unique(name: str, *columns: str) -> Index:
+    """Unique among rows that are not soft-deleted."""
+    return Index(name, *columns, unique=True, postgresql_where=text("deleted_at IS NULL"))

@@ -12,10 +12,8 @@ from typing import Any
 
 from sqlalchemy import (
     CheckConstraint,
-    Enum,
     ForeignKey,
     ForeignKeyConstraint,
-    Index,
     Integer,
     Numeric,
     String,
@@ -28,26 +26,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import CoreModel, SoftDeleteMixin
+from app.models.base import CoreModel, SoftDeleteMixin, live_unique, str_enum
 from app.models.institution import Faculty
-
-
-def _enum(enum_cls: type[StrEnum], name: str) -> Enum:
-    """A VARCHAR column with a CHECK constraint (no native Postgres enum to migrate)."""
-    return Enum(
-        enum_cls,
-        name=name,
-        native_enum=False,
-        create_constraint=True,
-        length=32,
-        values_callable=lambda e: [m.value for m in e],
-        validate_strings=True,
-    )
-
-
-def _live_unique(name: str, *columns: str) -> Index:
-    """Unique among rows that are not soft-deleted."""
-    return Index(name, *columns, unique=True, postgresql_where=sql_text("deleted_at IS NULL"))
 
 
 class ProgrammeStatus(StrEnum):
@@ -127,7 +107,7 @@ class Programme(SoftDeleteMixin, CoreModel):
 
     __tablename__ = "programmes"
     __table_args__ = (
-        _live_unique("uq_programmes_faculty_code_live", "faculty_id", "code"),
+        live_unique("uq_programmes_faculty_code_live", "faculty_id", "code"),
         CheckConstraint("nqf_exit_level BETWEEN 1 AND 10", name="nqf_exit_level_range"),
         CheckConstraint("total_credits IS NULL OR total_credits >= 0", name="credits_positive"),
         CheckConstraint(
@@ -149,14 +129,14 @@ class Programme(SoftDeleteMixin, CoreModel):
     total_credits: Mapped[int | None] = mapped_column(Integer, default=None)
     minimum_duration_years: Mapped[Decimal | None] = mapped_column(Numeric(3, 1), default=None)
     status: Mapped[ProgrammeStatus] = mapped_column(
-        _enum(ProgrammeStatus, "programme_status"),
+        str_enum(ProgrammeStatus, "programme_status"),
         default=ProgrammeStatus.PLANNED,
         server_default=ProgrammeStatus.PLANNED.value,
     )
 
     # Council on Higher Education
     che_accreditation_status: Mapped[AccreditationStatus] = mapped_column(
-        _enum(AccreditationStatus, "che_accreditation_status"),
+        str_enum(AccreditationStatus, "che_accreditation_status"),
         default=AccreditationStatus.NOT_APPLICABLE,
         server_default=AccreditationStatus.NOT_APPLICABLE.value,
     )
@@ -165,7 +145,7 @@ class Programme(SoftDeleteMixin, CoreModel):
     # Professional council (e.g. HPCSA, SANC, SAPC)
     council_name: Mapped[str | None] = mapped_column(String(128), default=None)
     council_accreditation_status: Mapped[AccreditationStatus] = mapped_column(
-        _enum(AccreditationStatus, "council_accreditation_status"),
+        str_enum(AccreditationStatus, "council_accreditation_status"),
         default=AccreditationStatus.NOT_APPLICABLE,
         server_default=AccreditationStatus.NOT_APPLICABLE.value,
     )
@@ -184,7 +164,7 @@ class CurriculumVersion(SoftDeleteMixin, CoreModel):
 
     __tablename__ = "curriculum_versions"
     __table_args__ = (
-        _live_unique(
+        live_unique(
             "uq_curriculum_versions_programme_year_live",
             "programme_id",
             "academic_year",
@@ -197,7 +177,7 @@ class CurriculumVersion(SoftDeleteMixin, CoreModel):
     )
     academic_year: Mapped[int] = mapped_column(Integer)
     status: Mapped[VersionStatus] = mapped_column(
-        _enum(VersionStatus, "version_status"),
+        str_enum(VersionStatus, "version_status"),
         default=VersionStatus.DRAFT,
         server_default=VersionStatus.DRAFT.value,
     )
@@ -231,7 +211,7 @@ class Phase(SoftDeleteMixin, CoreModel):
     name: Mapped[str] = mapped_column(String(255))
     position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     kind: Mapped[PhaseKind] = mapped_column(
-        _enum(PhaseKind, "phase_kind"),
+        str_enum(PhaseKind, "phase_kind"),
         default=PhaseKind.YEAR,
         server_default=PhaseKind.YEAR.value,
     )
@@ -248,7 +228,7 @@ class Module(SoftDeleteMixin, CoreModel):
 
     __tablename__ = "modules"
     __table_args__ = (
-        _live_unique("uq_modules_version_code_live", "version_id", "code"),
+        live_unique("uq_modules_version_code_live", "version_id", "code"),
         # The phase, if any, must belong to the same version.
         ForeignKeyConstraint(
             ["phase_id", "version_id"],
@@ -333,7 +313,7 @@ class Objective(SoftDeleteMixin, CoreModel):
     version_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("curriculum_versions.id", ondelete="CASCADE"), index=True
     )
-    level: Mapped[ObjectiveLevel] = mapped_column(_enum(ObjectiveLevel, "objective_level"))
+    level: Mapped[ObjectiveLevel] = mapped_column(str_enum(ObjectiveLevel, "objective_level"))
     module_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("modules.id", ondelete="CASCADE"), default=None, index=True
     )
@@ -342,7 +322,10 @@ class Objective(SoftDeleteMixin, CoreModel):
     )
     text: Mapped[str] = mapped_column(Text)
     domain: Mapped[ObjectiveDomain | None] = mapped_column(
-        _enum(ObjectiveDomain, "objective_domain"), default=None
+        str_enum(ObjectiveDomain, "objective_domain"), default=None
+    )
+    taxonomy_level_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("taxonomy_levels.id", ondelete="SET NULL"), default=None, index=True
     )
     # Filled by the objective quality checker (phase 1).
     detected_verb: Mapped[str | None] = mapped_column(String(64), default=None)
@@ -350,7 +333,7 @@ class Objective(SoftDeleteMixin, CoreModel):
         JSONB, default=list, server_default=sql_text("'[]'::jsonb")
     )
     status: Mapped[ObjectiveStatus] = mapped_column(
-        _enum(ObjectiveStatus, "objective_status"),
+        str_enum(ObjectiveStatus, "objective_status"),
         default=ObjectiveStatus.DRAFT,
         server_default=ObjectiveStatus.DRAFT.value,
     )
