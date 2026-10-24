@@ -18,12 +18,21 @@ export const api = axios.create({
 /** An API error with its HTTP status and the server's message, if any. */
 export class ApiError extends Error {
   readonly status: number;
+  /** From the Retry-After header of 429 responses. */
+  readonly retryAfterSeconds: number | null;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, retryAfterSeconds: number | null = null) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
+}
+
+function retryAfterOf(headers: unknown): number | null {
+  const value = (headers as Record<string, unknown> | undefined)?.['retry-after'];
+  const seconds = Number(value);
+  return value !== undefined && Number.isFinite(seconds) && seconds >= 0 ? seconds : null;
 }
 
 function detailOf(data: unknown): string | undefined {
@@ -38,7 +47,13 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     const status = error.response?.status ?? 0;
-    return Promise.reject(new ApiError(status, detailOf(error.response?.data) ?? error.message));
+    return Promise.reject(
+      new ApiError(
+        status,
+        detailOf(error.response?.data) ?? error.message,
+        retryAfterOf(error.response?.headers)
+      )
+    );
   }
 );
 

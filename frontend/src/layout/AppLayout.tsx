@@ -11,7 +11,7 @@ import {
   useMantineColorScheme,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconLogout, IconMoon, IconSun, IconUserCircle } from '@tabler/icons-react';
+import { IconLogout, IconMoon, IconSun, IconUser, IconUserCircle } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { NavLink as RouterNavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -61,6 +61,9 @@ function UserMenu({ name }: { name: string }) {
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>{t('layout.signedInAs', { name })}</Menu.Label>
+        <Menu.Item leftSection={<IconUser size={16} />} onClick={() => navigate('/account')}>
+          {t('layout.account')}
+        </Menu.Item>
         <Menu.Item leftSection={<IconLogout size={16} />} onClick={signOut}>
           {t('layout.signOut')}
         </Menu.Item>

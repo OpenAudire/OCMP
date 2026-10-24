@@ -48,6 +48,25 @@ overrides are added to i18next on load (`bindI18nStore: 'added'` re-renders comp
 Landmarks (`header`, labelled `nav`, `main`), a skip-to-content link, labelled icon
 buttons, Mantine's visible focus rings and colour scheme following the system by default.
 
+### Sign-in pages (Slice 0.16)
+- `/login`: email and password; an SSO button when `GET /auth/options` says OIDC is on (a
+  full-page link to the OIDC start endpoint, carrying `next`); translated messages for each
+  `sso_error` code; for 429, how long to wait (from `Retry-After`); a note when sign-in is
+  slowed by progressive delays. `next` is accepted only as a path on this site (same rule as
+  the server). Signed-in visitors skip the form.
+- `/forgot-password` always shows the same confirmation, as the API does.
+- `/reset-password#token=...` reads the token once and removes it from the address bar and
+  history before anything else happens.
+- `/account`: change password for local accounts; SSO-only accounts (`has_password: false`)
+  are told their password is managed by their organisation.
+- Password length rules come from the server (`GET /auth/options`), not constants.
+- Confirmations use `SuccessNotice` (`role="status"`, announced politely); errors use
+  Mantine `Alert`, which always has `role="alert"`.
+
+### Bundles
+Libraries are split into long-lived chunks (React, Mantine, data, i18n) so browsers keep
+them cached across OCMP releases; the app's own code is a small separate chunk.
+
 ### Tests
 Vitest + Testing Library with the real i18n setup; API calls are mocked at the
 `api/endpoints` module. jsdom stand-ins for `matchMedia` and `ResizeObserver` are plain
@@ -56,6 +75,6 @@ functions so tests that reset mocks cannot remove them.
 ## Consequences
 
 - Sections are placeholders until their phase 1 features are built.
-- The single bundle is about 155 kB gzipped; route-level code splitting should be added as
-  sections grow (brief: slow connections).
-- The sign-in form arrives in Slice 0.16, the setup wizard in 0.17.
+- About 170 kB gzipped in total, mostly cached library chunks; route-level code splitting
+  should be added as sections grow (brief: slow connections).
+- The setup wizard arrives in Slice 0.17.

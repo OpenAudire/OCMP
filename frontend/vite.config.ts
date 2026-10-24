@@ -21,6 +21,18 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        // Libraries in their own chunks: smaller files, and they stay cached across
+        // OCMP releases because they change far less often than the app.
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          mantine: ['@mantine/core', '@mantine/hooks', '@mantine/form', '@mantine/notifications'],
+          data: ['@tanstack/react-query', 'axios'],
+          i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+        },
+      },
+    },
   },
   test: {
     globals: true,

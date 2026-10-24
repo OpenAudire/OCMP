@@ -1,83 +1,40 @@
-import { MantineProvider } from '@mantine/core';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '../api/client';
 import * as endpoints from '../api/endpoints';
-import type { Institution, RoleAssignment, User } from '../api/types';
+import type { RoleAssignment } from '../api/types';
 import i18n from '../i18n';
 import { applyTerminology } from '../institution/terminology';
-import { createQueryClient } from '../queryClient';
-import { AppRoutes } from './AppRoutes';
+import { renderAt, role, testInstitution, testUser } from '../test/renderApp';
 
 vi.mock('../api/endpoints', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../api/endpoints')>()),
   fetchMe: vi.fn(),
   fetchMyRoles: vi.fn(),
   fetchInstitution: vi.fn(),
+  fetchAuthOptions: vi.fn(),
   logout: vi.fn(),
 }));
 
 const mocked = vi.mocked(endpoints);
 
-const user: User = {
-  id: 'u1',
-  email: 'student@example.org',
-  display_name: 'Demo Student',
-  is_active: true,
-  last_login_at: null,
-};
-
-function role(key: string, permissions: string[]): RoleAssignment {
-  return {
-    id: `a-${key}`,
-    user_id: user.id,
-    role: { key, name: key, permissions },
-    scope_type: 'instance',
-    scope_id: null,
-    expires_at: null,
-    created_at: '2026-10-25T00:00:00Z',
-  };
-}
-
-const institution: Institution = {
-  id: 'i1',
-  name: 'Demo University',
-  short_code: 'DEMO',
-  country: 'ZA',
-  terminology: { module: { singular: 'Course', plural: 'Courses' } },
-  profiles: ['core'],
-  features: [],
-  default_taxonomy_scale: null,
-  mapping: { four_eyes: false, second_review_for_rejects: false },
-};
-
-function renderAt(path: string) {
-  const client = createQueryClient();
-  client.setDefaultOptions({ queries: { retry: false } });
-  return render(
-    <QueryClientProvider client={client}>
-      <MantineProvider>
-        <MemoryRouter initialEntries={[path]}>
-          <AppRoutes />
-        </MemoryRouter>
-      </MantineProvider>
-    </QueryClientProvider>
-  );
-}
-
 function signedInWith(...roles: RoleAssignment[]) {
-  mocked.fetchMe.mockResolvedValue(user);
+  mocked.fetchMe.mockResolvedValue(testUser);
   mocked.fetchMyRoles.mockResolvedValue(roles);
-  mocked.fetchInstitution.mockResolvedValue(institution);
+  mocked.fetchInstitution.mockResolvedValue(testInstitution);
 }
 
 describe('app routes', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     applyTerminology(i18n, {});
+    mocked.fetchAuthOptions.mockResolvedValue({
+      password_min_length: 12,
+      password_max_length: 256,
+      sso_enabled: false,
+      sso_provider_name: 'SSO',
+    });
   });
 
   it('sends signed-out visitors to the sign-in page', async () => {
@@ -86,7 +43,7 @@ describe('app routes', () => {
 
     renderAt('/curriculum');
 
-    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
     expect(mocked.fetchInstitution).not.toHaveBeenCalled();
   });
 

@@ -233,7 +233,9 @@ chore: update dependencies
 - API calls go through `src/api/endpoints.ts` (shared axios client); add query keys to `queryKeys`
 - Current user and permissions: `useSession()`; institution settings and features: `useInstitution()`, `useFeature()`
 - Navigation visibility rules live in `src/layout/navigation.ts`; they only shape the UI, the API enforces permissions
-- Tests mock `../api/endpoints` with `vi.mock` and use the real i18n setup
+- Tests mock `../api/endpoints` with `vi.mock`; render with `renderAt()` from `src/test/renderApp.tsx` (real i18n)
+- Errors: Mantine `Alert` (role alert); confirmations: `SuccessNotice` (role status)
+- Never hard-code server rules (e.g. password length): read them from the API
 
 ## Documentation
 

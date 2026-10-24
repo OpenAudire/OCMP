@@ -22,6 +22,7 @@ from app.core.security import PasswordPolicyError, csrf_token_for
 from app.jobs.auth_emails import send_password_changed_notice, send_password_reset
 from app.models import RoleAssignment
 from app.schemas.auth import (
+    AuthOptions,
     ChangePasswordRequest,
     LoginRequest,
     LoginResponse,
@@ -68,6 +69,17 @@ async def _throttle_account(redis: Redis, settings: Settings, email: str) -> Non
     if delay > 0:
         logger.info("login_delayed", seconds=delay)
         await sleep(delay)
+
+
+@router.get("/options", response_model=AuthOptions)
+async def auth_options(settings: SettingsDep) -> AuthOptions:
+    """Password rules and SSO availability, for the sign-in pages (no sign-in needed)."""
+    return AuthOptions(
+        password_min_length=settings.password_min_length,
+        password_max_length=settings.password_max_length,
+        sso_enabled=settings.oidc_configured,
+        sso_provider_name=settings.oidc_provider_name,
+    )
 
 
 @router.post("/login", response_model=LoginResponse)

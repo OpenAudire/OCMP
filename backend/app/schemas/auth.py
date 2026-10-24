@@ -16,6 +16,17 @@ class UserRead(BaseModel):
     display_name: str
     is_active: bool
     last_login_at: datetime | None
+    # False for SSO-only accounts, which cannot change or reset a local password.
+    has_password: bool
+
+
+class AuthOptions(BaseModel):
+    """What the sign-in pages need to know before anyone signs in."""
+
+    password_min_length: int
+    password_max_length: int
+    sso_enabled: bool
+    sso_provider_name: str
 
 
 class LoginRequest(BaseModel):

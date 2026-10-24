@@ -1,12 +1,15 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
+import { AccountPage } from '../account/AccountPage';
+import { ForgotPasswordPage } from '../auth/ForgotPasswordPage';
+import { LoginPage } from '../auth/LoginPage';
+import { ResetPasswordPage } from '../auth/ResetPasswordPage';
 import { InstitutionProvider } from '../institution/InstitutionProvider';
 import { AppLayout } from '../layout/AppLayout';
 import { NAV_ITEMS, visibleNavItems, type NavItem } from '../layout/navigation';
 import {
   ErrorPage,
   FullPageLoader,
-  LoginPage,
   NoAccessPage,
   NotFoundPage,
   PlaceholderPage,
@@ -49,9 +52,12 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>
           <Route index element={<StartPage />} />
+          <Route path="/account" element={<AccountPage />} />
           {NAV_ITEMS.map((item) => (
             <Route key={item.key} path={`${item.path}/*`} element={<Section item={item} />} />
           ))}

@@ -370,7 +370,23 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.16: Frontend Auth
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] Sign-in page: email/password, SSO button when enabled, `sso_error` messages, rate-limit wait time, slow sign-in note, safe `next` redirect
+- [x] Forgotten password page (same confirmation either way) and reset page (token from the URL fragment, removed from the address bar)
+- [x] Account page with change password; SSO-only accounts get an explanation
+- [x] Backend: public `GET /api/v1/auth/options` (password rules, SSO availability) and `has_password` on `/auth/me`
+- [x] `SuccessNotice` for polite status announcements; translated strings for every message
+- [x] Library code split into cached chunks (app code about 10 kB gzipped)
+- [x] ADR 019 extended
+
+**Verification**:
+- Frontend lint, typecheck and build pass; 49 tests (90% line coverage) including sign-in, redirects, SSO, errors, reset and account flows
+- Backend: ruff, mypy pass; 481 tests pass
+- Docker: sign-in, reset and account pages served; `/auth/options` reachable without signing in
+
+**Commit**: `feat: add sign-in, password reset and account pages`
 
 ---
 

@@ -398,3 +398,23 @@ class TestChangePassword:
 
         assert response.status_code == 204
         assert sleeps == [1.0, 2.0, 4.0]
+
+
+async def test_auth_options_are_public(api_client: AsyncClient, test_settings: Settings) -> None:
+    response = await api_client.get("/api/v1/auth/options")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "password_min_length": test_settings.password_min_length,
+        "password_max_length": test_settings.password_max_length,
+        "sso_enabled": False,
+        "sso_provider_name": "SSO",
+    }
+
+
+async def test_me_says_whether_the_account_has_a_password(
+    api_client: AsyncClient, user: User
+) -> None:
+    await login(api_client)
+
+    assert (await api_client.get("/api/v1/auth/me")).json()["has_password"] is True

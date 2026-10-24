@@ -59,13 +59,3 @@ export function ErrorPage({ onRetry }: { onRetry: () => void }) {
     </Center>
   );
 }
-
-/** Placeholder until the sign-in form (Slice 0.16). */
-export function LoginPage() {
-  const { t } = useTranslation();
-  return (
-    <Center h="100vh" px="md">
-      <Message title={t('auth.login')} body={t('auth.signInComingSoon')} />
-    </Center>
-  );
-}

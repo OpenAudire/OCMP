@@ -6,6 +6,14 @@ export interface User {
   display_name: string;
   is_active: boolean;
   last_login_at: string | null;
+  has_password: boolean;
+}
+
+export interface AuthOptions {
+  password_min_length: number;
+  password_max_length: number;
+  sso_enabled: boolean;
+  sso_provider_name: string;
 }
 
 export type ScopeType = 'instance' | 'faculty' | 'programme' | 'module' | 'learning_event';

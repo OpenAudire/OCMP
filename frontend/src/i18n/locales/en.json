@@ -22,15 +22,58 @@
     "submit": "Submit"
   },
   "auth": {
-    "login": "Log in",
-    "logout": "Log out",
+    "login": "Sign in",
+    "logout": "Sign out",
     "email": "Email",
     "password": "Password",
     "forgotPassword": "Forgot password?",
-    "resetPassword": "Reset password",
-    "register": "Register",
-    "loginWithSSO": "Log in with SSO",
-    "signInComingSoon": "Signing in with this page arrives in the next update."
+    "loginWithSSO": "Sign in with {{provider}}",
+    "or": "or",
+    "signingIn": "Signing in…",
+    "slowSignIn": "Signing in is taking a little longer because of earlier failed attempts.",
+    "emailRequired": "Enter your email address.",
+    "passwordRequired": "Enter your password.",
+    "errors": {
+      "invalidCredentials": "The email address or password is not correct.",
+      "tooManyAttempts_one": "Too many attempts. Try again in {{count}} minute.",
+      "tooManyAttempts_other": "Too many attempts. Try again in {{count}} minutes.",
+      "generic": "Something went wrong. Try again."
+    },
+    "sso": {
+      "sso_unavailable": "Single sign-on is not available right now. Try again later or sign in with your password.",
+      "sso_failed": "Single sign-on did not complete. Try again.",
+      "sso_cancelled": "Single sign-on was cancelled.",
+      "sso_expired": "The sign-in took too long or was opened in another browser. Start again.",
+      "account_disabled": "This account is disabled. Contact your administrator.",
+      "account_exists": "An account with your email address already exists. Ask an administrator to link it to your organisation sign-in.",
+      "no_email": "Your organisation did not share an email address, so no account could be created. Contact your administrator.",
+      "not_provisioned": "There is no OCMP account for you yet. Ask an administrator to create one.",
+      "too_many_attempts": "Too many sign-in attempts. Try again later."
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "intro": "Enter your email address and we will send you a link to choose a new password.",
+      "submit": "Send reset link",
+      "sent": "If an account with that email address can reset its password, a reset link is on its way. Check your email.",
+      "back": "Back to sign in"
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "newPassword": "New password",
+      "confirmPassword": "Repeat new password",
+      "submit": "Save new password",
+      "done": "Your password has been changed and you were signed out everywhere. Sign in with your new password.",
+      "invalidLink": "This reset link is not valid or has expired.",
+      "requestNew": "Request a new link",
+      "missingToken": "This page needs the link from your reset email."
+    },
+    "password_rules": {
+      "hint": "At least {{min}} characters. Long passphrases are good. Do not use your email address.",
+      "tooShort": "Use at least {{min}} characters.",
+      "tooLong": "Use at most {{max}} characters.",
+      "mismatch": "The passwords do not match.",
+      "rejected": "This password is not allowed. Use at least {{min}} characters and not your email address."
+    }
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -78,7 +121,8 @@
     "userMenu": "Account menu",
     "signedInAs": "Signed in as {{name}}",
     "signOut": "Sign out",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "account": "Account"
   },
   "pages": {
     "comingSoon": "This page is being built.",
@@ -91,5 +135,15 @@
     "errorTitle": "Something went wrong",
     "errorBody": "OCMP could not be reached. Check your connection and try again.",
     "retry": "Try again"
+  },
+  "account": {
+    "title": "Your account",
+    "name": "Name",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "save": "Change password",
+    "changed": "Your password has been changed. Your other sessions were signed out.",
+    "wrongCurrent": "The current password is not correct.",
+    "ssoOnly": "You sign in through your organisation, so your password is managed there."
   }
 }
