@@ -374,3 +374,11 @@ async def sync_system_roles(db: AsyncSession) -> list[Role]:
         synced.append(role)
     await db.flush()
     return synced
+
+
+# Curriculum scope types (programme, module, learning event) live with the
+# curriculum models. Registered here, after register_scope exists, so that any
+# use of this module has every scope type available.
+from app.services import curriculum_scopes  # noqa: E402
+
+curriculum_scopes.register()

@@ -211,7 +211,25 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.9: Curriculum Models
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] Models (`app/models/curriculum.py`): `QualificationType`, `Programme` (with SAQA ID, NQF exit level, CHE and professional council accreditation), `CurriculumVersion`, `Phase`, `Module`, `LearningEvent`, `Objective`, `ObjectiveLink`
+- [x] Migration `0006` (schema) and data migration `0007` seeding the 10 HEQSF qualification types from the brief, each marked "verify against the current HEQSF"
+- [x] Database integrity: check constraints (NQF 1-10, credits, minutes, academic year, objective owner matches level, enum values), composite FK keeping a module's phase in its version, partial unique indexes ignoring soft-deleted rows
+- [x] Objective service (`app/services/curriculum.py`): level and version from owner; upward link rules (same version, broader level, session objectives link to their own module)
+- [x] Real authorization scopes for programme, module and learning event (`app/services/curriculum_scopes.py`)
+- [x] Curriculum factories
+- [x] ADR 013: curriculum data model
+
+**Not in this slice**: curriculum CRUD API and tree editor, publishing rules, copy-forward and version diff (phase 1); teaching format and taxonomy level columns arrive with tag lists and taxonomy scales.
+
+**Verification**:
+- Ruff, ruff format, mypy (49 files) pass; `alembic check` reports no drift; `0007` round-trips
+- Pytest: 348 passed, 94% total coverage; curriculum models and scopes 100%, curriculum service 97%
+- End to end in Docker: `migrate` applied `0006` and `0007`; a platform admin assigned programme director at a real programme through the API (201), and a non-existent programme was refused (422)
+
+**Commit**: `feat: add curriculum models`
 
 ---
 

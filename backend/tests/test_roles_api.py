@@ -349,7 +349,7 @@ class TestAssignments:
             ({"user_id": "00000000-0000-0000-0000-000000000000"}, 404),
             ({"scope_type": "instance", "scope_id": None}, 422),  # wrong scope for the role
             ({"scope_id": "00000000-0000-0000-0000-000000000000"}, 422),  # no such faculty
-            ({"scope_type": "module"}, 422),  # scope type not available yet
+            ({"scope_type": "module"}, 422),  # role not allowed at module scope
         ],
     )
     async def test_assignment_errors(

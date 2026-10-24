@@ -151,8 +151,14 @@ class TestHierarchy:
         with pytest.raises(InvalidRequestError, match="No faculty"):
             await lineage(db_session, ScopeRef(ScopeType.FACULTY, uuid.uuid4()))
 
-    async def test_scope_type_not_available_yet(self, db_session: AsyncSession) -> None:
+    async def test_unregistered_scope_type(
+        self, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         import uuid
+
+        from app.services import authorization
+
+        monkeypatch.delitem(authorization._parents, ScopeType.MODULE)
 
         with pytest.raises(InvalidRequestError, match="not available yet"):
             await lineage(db_session, ScopeRef(ScopeType.MODULE, uuid.uuid4()))
