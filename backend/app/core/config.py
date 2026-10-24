@@ -75,6 +75,17 @@ class Settings(BaseSettings):
     oidc_discovery_url: str | None = None
     oidc_client_id: str | None = None
     oidc_client_secret: str | None = None
+    oidc_scopes: str = "openid profile email"
+    # Create an account on first SSO sign-in. New accounts have no roles until assigned.
+    oidc_auto_provision: bool = True
+    oidc_clock_skew_seconds: int = 60  # tolerance for exp/iat in ID tokens
+    # Only for testing against a local mock provider; real providers must use HTTPS.
+    oidc_allow_insecure_http: bool = False
+
+    @property
+    def oidc_redirect_uri(self) -> str:
+        """Where the provider sends the browser back; register this with the provider."""
+        return f"{self.public_url.rstrip('/')}/api/v1/auth/oidc/callback"
 
     @property
     def oidc_configured(self) -> bool:

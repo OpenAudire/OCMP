@@ -50,6 +50,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Cleanup
     logger.info("Shutting down OCMP API")
+    oidc_client = getattr(app.state, "oidc_client", None)
+    if oidc_client is not None:
+        await oidc_client.http.aclose()
     await close_database()
     await close_redis()
 

@@ -156,6 +156,7 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Dramatiq actors live in `app/jobs/`; each module imports `app.core.broker` first and is imported by `app/worker.py`
 - Job bodies are async functions run with `asyncio.run`; open connections with `job_resources(settings)`
 - Never log email addresses or tokens; log user ids
+- Identify SSO users by (issuer, subject) only; never link or match accounts by email (ADR 011)
 - Audit log for curriculum/framework/mapping changes
 
 ### Testing
@@ -168,6 +169,7 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Never patch `app.core.config.get_settings` in tests; override dependencies or pass `Settings` explicitly
 - `enqueued_jobs` fixture records `.send()` calls instead of using the broker; `tests/fakes.py` has `FakeEmailSender`
 - Service tests use `example.org` addresses (`email_validator` rejects the `.test` domain)
+- OIDC tests use `tests/fake_idp.py` (`FakeIdP` served via `httpx.MockTransport`)
 
 ## Naming Conventions
 
@@ -219,7 +221,7 @@ chore: update dependencies
 - [x] Docker Compose base
 - [x] Backend core + health
 - [x] Core database models
-- [ ] Authentication (local + OIDC) — local accounts and password reset done; OIDC pending
+- [x] Authentication (local + OIDC)
 - [ ] Roles and permissions
 - [ ] Curriculum models
 - [ ] Framework models

@@ -33,9 +33,16 @@
     # Enable gzip compression
     encode gzip
 
-    # Logging
+    # Logging. OAuth/OIDC callback parameters are redacted: authorization codes and
+    # state values must not be stored in access logs (RFC 9700 section 4.2).
     log {
         output stdout
-        format json
+        format filter {
+            wrap json
+            request>uri query {
+                replace code REDACTED
+                replace state REDACTED
+            }
+        }
     }
 }
