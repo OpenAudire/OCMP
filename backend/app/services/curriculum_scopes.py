@@ -11,7 +11,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.permissions import ScopeType
-from app.models import CurriculumVersion, LearningEvent, Module, Programme
+from app.models import CurriculumVersion, LearningEvent, Module, Objective, Programme
+from app.models.curriculum import ObjectiveLevel
 from app.services.authorization import ScopeRef, register_scope
 
 
@@ -51,3 +52,18 @@ def register() -> None:
     register_scope(ScopeType.PROGRAMME, _programme_parent)
     register_scope(ScopeType.MODULE, _module_parent)
     register_scope(ScopeType.LEARNING_EVENT, _learning_event_parent)
+
+
+async def objective_scope(db: AsyncSession, objective: Objective) -> ScopeRef:
+    """The scope an objective (and its mappings and tags) belongs to."""
+    if objective.level == ObjectiveLevel.LEARNING_EVENT:
+        assert objective.learning_event_id is not None
+        return ScopeRef(ScopeType.LEARNING_EVENT, objective.learning_event_id)
+    if objective.level == ObjectiveLevel.MODULE:
+        assert objective.module_id is not None
+        return ScopeRef(ScopeType.MODULE, objective.module_id)
+    programme_id = await db.scalar(
+        select(CurriculumVersion.programme_id).where(CurriculumVersion.id == objective.version_id)
+    )
+    assert programme_id is not None
+    return ScopeRef(ScopeType.PROGRAMME, programme_id)

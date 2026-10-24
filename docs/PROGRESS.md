@@ -278,7 +278,23 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.12: Mapping Models
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] Models (`app/models/mapping.py`): `AIRun`, `AIRunCall` (prompts and responses for audit), `MappingLink`, `ReviewAssignment`
+- [x] Migration `0010` with database integrity: one link per objective and item, coverage 0-5, confidence 0-1, accept method set exactly when accepted, different first and second reviewers, token/cost/timing checks
+- [x] Review workflow (`app/services/mapping.py`): starting status by source, accept / reject / second review, four-eyes mode, disagreement flag, reopen, bulk accept above a confidence threshold, evidence quote must come from the objective
+- [x] `objective_scope()` for authorizing work on an objective's mappings and tags
+- [x] ADR 016: mapping, AI run and review data model
+
+**Not in this slice**: AI pipeline, review queue UI and endpoints, automatic acceptance, coverage reports (phase 1); framework version migration (phase 2).
+
+**Verification**:
+- Ruff, ruff format, mypy (55 files) pass; `alembic check` reports no drift; `0010` round-trips
+- Pytest: 421 passed, 95% total coverage; mapping models and service 100%
+- Docker: `migrate` applied `0010`; mapping tables present
+
+**Commit**: `feat: add mapping, AI run and review assignment models`
 
 ---
 

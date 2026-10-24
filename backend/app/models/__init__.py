@@ -25,11 +25,14 @@ from app.models.framework import (
 )
 from app.models.identity import UserIdentity
 from app.models.institution import Department, Faculty, Institution
+from app.models.mapping import AIRun, AIRunCall, MappingLink, ReviewAssignment
 from app.models.role import Role, RoleAssignment
 from app.models.tagging import Tagging, TagList, TagValue
 from app.models.user import User
 
 __all__ = [
+    "AIRun",
+    "AIRunCall",
     "Base",
     "CoreModel",
     "Crosswalk",
@@ -42,12 +45,14 @@ __all__ = [
     "FrameworkItem",
     "Institution",
     "LearningEvent",
+    "MappingLink",
     "Module",
     "Objective",
     "ObjectiveLink",
     "Phase",
     "Programme",
     "QualificationType",
+    "ReviewAssignment",
     "Role",
     "RoleAssignment",
     "TagList",
