@@ -4,14 +4,19 @@ Lifecycle of a link:
 
 - AI suggestions and migrated links start as ``suggested``.
 - A person reviewing a suggestion accepts it, rejects it, or sends it to a
-  second reviewer. In four-eyes mode an accept also goes to a second reviewer,
-  so a link only counts once two different people agreed. A first-stage
-  reject is final in both modes: rejecting does not add coverage.
+  second reviewer. With the institution's four-eyes policy an accept also goes
+  to a second reviewer, so a link only counts once two different people agreed.
+  A first-stage reject is final unless the policy requires second review for
+  rejects too.
 - The second reviewer accepts or rejects. If that overturns the first
   reviewer's decision, the link is flagged for discussion.
-- Decided links can be reopened, which returns them to ``suggested``.
+- A rejected link can be reopened (returning it to ``suggested``) by someone
+  allowed to review mappings for that objective.
 - Links created by hand count as reviewed by their author (and need a second
-  reviewer in four-eyes mode); imported links arrive accepted.
+  reviewer under four-eyes); imported links arrive accepted.
+
+Policies come from ``mapping_policy_for`` (institution settings); callers pass
+them in so a batch of reviews uses one consistent policy.
 """
 
 import re
@@ -23,6 +28,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.permissions import Permission
 from app.models import AIRun, Framework, FrameworkItem, MappingLink, Objective, User
 from app.models.mapping import (
     AcceptMethod,
@@ -31,7 +37,16 @@ from app.models.mapping import (
     MappingStatus,
     ReviewDecision,
 )
-from app.services.authorization import ConflictError, InvalidRequestError
+from app.services.authorization import (
+    AuthorizationError,
+    ConflictError,
+    InvalidRequestError,
+    has_permission,
+)
+from app.services.curriculum_scopes import objective_scope
+from app.services.policies import MappingPolicy
+
+DEFAULT_POLICY = MappingPolicy()
 
 
 def _normalise(text: str) -> str:
@@ -59,7 +74,7 @@ async def create_link(
     confidence: Decimal | float | None = None,
     ai_run: AIRun | None = None,
     migrated_from: MappingLink | None = None,
-    four_eyes: bool = False,
+    policy: MappingPolicy = DEFAULT_POLICY,
 ) -> MappingLink:
     """Record that an objective addresses a framework item.
 
@@ -112,7 +127,7 @@ async def create_link(
         link.first_reviewer_id = creator.id
         link.first_reviewed_at = now
         link.first_decision = ReviewDecision.ACCEPT
-        if four_eyes:
+        if policy.four_eyes:
             link.status = MappingStatus.NEEDS_SECOND_REVIEW
         else:
             link.status = MappingStatus.ACCEPTED
@@ -132,13 +147,24 @@ def _accept(link: MappingLink, method: AcceptMethod) -> None:
     link.accept_method = method
 
 
+def _first_stage_status(decision: ReviewDecision, policy: MappingPolicy) -> MappingStatus | None:
+    """Status after a first review; None means accepted."""
+    if decision == ReviewDecision.SECOND_REVIEW:
+        return MappingStatus.NEEDS_SECOND_REVIEW
+    if decision == ReviewDecision.REJECT:
+        if policy.second_review_for_rejects:
+            return MappingStatus.NEEDS_SECOND_REVIEW
+        return MappingStatus.REJECTED
+    return MappingStatus.NEEDS_SECOND_REVIEW if policy.four_eyes else None
+
+
 async def review_link(
     db: AsyncSession,
     link: MappingLink,
     reviewer: User,
     decision: ReviewDecision,
     *,
-    four_eyes: bool = False,
+    policy: MappingPolicy = DEFAULT_POLICY,
     coverage: int | None = None,
     depth_match: DepthMatch | None = None,
     method: AcceptMethod = AcceptMethod.INDIVIDUAL,
@@ -158,12 +184,11 @@ async def review_link(
         link.first_reviewer_id = reviewer.id
         link.first_reviewed_at = now
         link.first_decision = decision
-        if decision == ReviewDecision.REJECT:
-            link.status = MappingStatus.REJECTED
-        elif decision == ReviewDecision.SECOND_REVIEW or four_eyes:
-            link.status = MappingStatus.NEEDS_SECOND_REVIEW
-        else:
+        status = _first_stage_status(decision, policy)
+        if status is None:
             _accept(link, method)
+        else:
+            link.status = status
     elif link.status == MappingStatus.NEEDS_SECOND_REVIEW:
         if reviewer.id == link.first_reviewer_id:
             raise ConflictError("The second review must be done by someone else.")
@@ -176,15 +201,11 @@ async def review_link(
         else:
             link.status = MappingStatus.REJECTED
         link.needs_discussion = (
-            link.first_decision
-            in (
-                ReviewDecision.ACCEPT,
-                ReviewDecision.REJECT,
-            )
+            link.first_decision in (ReviewDecision.ACCEPT, ReviewDecision.REJECT)
             and link.first_decision != decision
         )
     else:
-        raise ConflictError("This link has already been decided; reopen it to review again.")
+        raise ConflictError("This link has already been decided.")
 
     if coverage is not None:
         link.coverage = coverage
@@ -194,8 +215,23 @@ async def review_link(
     return link
 
 
-async def reopen_link(db: AsyncSession, link: MappingLink) -> MappingLink:
-    """Return a decided link to ``suggested`` so it can be reviewed again."""
+async def reopen_link(db: AsyncSession, actor: User, link: MappingLink) -> MappingLink:
+    """Return a rejected link to ``suggested`` so it can be reviewed again.
+
+    The caller records the change in the audit log.
+
+    Raises:
+        AuthorizationError: If the actor may not review mappings for this objective.
+        ConflictError: If the link is not rejected.
+    """
+    objective = await db.get(Objective, link.objective_id)
+    assert objective is not None
+    scope = await objective_scope(db, objective)
+    if not await has_permission(db, actor, Permission.MAPPING_REVIEW, scope):
+        raise AuthorizationError("You may not review mappings for this objective.")
+    if link.status != MappingStatus.REJECTED:
+        raise ConflictError("Only rejected links can be reopened.")
+
     link.status = MappingStatus.SUGGESTED
     link.accept_method = None
     link.needs_discussion = False
@@ -212,7 +248,7 @@ async def bulk_accept(
     links: Iterable[MappingLink],
     *,
     min_confidence: Decimal | float,
-    four_eyes: bool = False,
+    policy: MappingPolicy = DEFAULT_POLICY,
 ) -> list[MappingLink]:
     """Accept every suggestion at or above a confidence threshold, as one person.
 
@@ -232,7 +268,7 @@ async def bulk_accept(
                 link,
                 reviewer,
                 ReviewDecision.ACCEPT,
-                four_eyes=four_eyes,
+                policy=policy,
                 method=AcceptMethod.BULK,
             )
             accepted.append(link)

@@ -4,8 +4,8 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import delete, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import delete
+from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.permissions import ScopeType
@@ -27,7 +27,13 @@ from app.models.mapping import (
     MappingStatus,
     ReviewDecision,
 )
-from app.services.authorization import ConflictError, InvalidRequestError, ScopeRef
+from app.services.ai_runs import purge_ai_call_content
+from app.services.authorization import (
+    AuthorizationError,
+    ConflictError,
+    InvalidRequestError,
+    ScopeRef,
+)
 from app.services.curriculum import add_objective
 from app.services.curriculum_scopes import objective_scope
 from app.services.frameworks import add_item
@@ -38,13 +44,15 @@ from app.services.mapping import (
     reopen_link,
     review_link,
 )
-from tests.authz_helpers import new_user
+from app.services.policies import MappingPolicy, mapping_policy_for, parse_mapping_policy
+from tests.authz_helpers import grant, new_user
 from tests.factories import FrameworkFactory, LearningEventFactory
 
 pytestmark = pytest.mark.filterwarnings(
     "ignore:Object of type .* not in session:sqlalchemy.exc.SAWarning"
 )
 
+FOUR_EYES = MappingPolicy(four_eyes=True)
 OBJECTIVE_TEXT = "Take a focused history from a patient with chest pain."
 
 
@@ -91,6 +99,11 @@ async def world(db_session: AsyncSession) -> World:
     return World(objective, items, run, people)
 
 
+async def grant_mapper(db: AsyncSession, w: World, user: User) -> None:
+    assert w.objective.module_id is not None
+    await grant(db, user, "mapper", ScopeRef(ScopeType.MODULE, w.objective.module_id))
+
+
 async def suggestion(db: AsyncSession, w: World, item: int = 0, **kwargs: object) -> MappingLink:
     values: dict[str, object] = {
         "source": MappingSource.AI,
@@ -121,9 +134,7 @@ class TestAIRuns:
         assert world.run.status == AIRunStatus.QUEUED
         assert world.run.estimated_cost == 0
         assert world.run.parameters == {}
-
-        await db_session.execute(delete(AIRun).where(AIRun.id == world.run.id))
-        assert (await db_session.execute(select(AIRunCall))).first() is None
+        assert call.content_purged_at is None
 
     @pytest.mark.parametrize(
         "values",
@@ -143,16 +154,81 @@ class TestAIRuns:
             AIRun(type=AIRunType.QA, provider="p", model="m", prompt_version="v", **values),
         )
 
-    async def test_deleting_a_run_keeps_its_links(
+    @pytest.mark.parametrize("table", [AIRun, AIRunCall])
+    async def test_runs_and_calls_can_never_be_deleted(
+        self, db_session: AsyncSession, world: World, table: type[AIRun] | type[AIRunCall]
+    ) -> None:
+        await save(db_session, AIRunCall(run_id=world.run.id, request={"messages": []}))
+
+        with pytest.raises(DBAPIError, match="permanent"):
+            async with db_session.begin_nested():
+                await db_session.execute(delete(table))
+
+    async def test_ai_link_must_reference_its_run(
         self, db_session: AsyncSession, world: World
     ) -> None:
+        await must_fail(
+            db_session,
+            MappingLink(
+                objective_id=world.objective.id,
+                framework_item_id=world.items[0].id,
+                source=MappingSource.AI,
+                status="suggested",
+            ),
+        )
+
+
+class TestRetention:
+    async def make_call(self, db: AsyncSession, w: World, age_days: int) -> AIRunCall:
+        call = AIRunCall(
+            run_id=w.run.id,
+            request={"messages": [{"role": "user", "content": OBJECTIVE_TEXT}]},
+            response='{"is_match": true}',
+            input_tokens=100,
+            output_tokens=20,
+            duration_ms=500,
+            valid=True,
+            error_message="retried once",
+        )
+        await save(db, call)
+        call.created_at = datetime.now(UTC) - timedelta(days=age_days)
+        await db.flush()
+        return call
+
+    async def test_clears_old_content_and_keeps_the_record(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        old = await self.make_call(db_session, world, age_days=400)
+        recent = await self.make_call(db_session, world, age_days=10)
         link = await suggestion(db_session, world)
 
-        await db_session.execute(delete(AIRun).where(AIRun.id == world.run.id))
-        await db_session.refresh(link)
+        purged = await purge_ai_call_content(db_session, older_than_days=365)
 
-        assert link.ai_run_id is None
-        assert link.source == MappingSource.AI
+        assert purged == 1
+        await db_session.refresh(old)
+        await db_session.refresh(recent)
+        assert (old.request, old.response, old.error_message) == ({}, None, None)
+        assert old.content_purged_at is not None
+        # Counts, timing and validity stay for cost reports and audit.
+        assert (old.input_tokens, old.output_tokens, old.duration_ms, old.valid) == (
+            100,
+            20,
+            500,
+            True,
+        )
+        assert recent.response == '{"is_match": true}'
+        await db_session.refresh(link)
+        assert link.ai_run_id == world.run.id
+        assert await db_session.get(AIRun, world.run.id) is not None
+
+    async def test_is_idempotent_and_can_be_disabled(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        await self.make_call(db_session, world, age_days=400)
+
+        assert await purge_ai_call_content(db_session, older_than_days=0) == 0
+        assert await purge_ai_call_content(db_session, older_than_days=30) == 1
+        assert await purge_ai_call_content(db_session, older_than_days=30) == 0
 
 
 class TestCreateLink:
@@ -198,7 +274,7 @@ class TestCreateLink:
             world.items[0],
             source=MappingSource.HUMAN,
             creator=world.alice,
-            four_eyes=True,
+            policy=FOUR_EYES,
         )
 
         assert link.status == MappingStatus.NEEDS_SECOND_REVIEW
@@ -294,21 +370,38 @@ class TestReview:
         assert link.first_reviewer_id == world.alice.id
         assert link.first_reviewed_at is not None
 
-    async def test_reject_is_final_even_in_four_eyes(
+    async def test_reject_is_final_by_default_even_in_four_eyes(
         self, db_session: AsyncSession, world: World
     ) -> None:
         link = await suggestion(db_session, world)
 
-        await review_link(db_session, link, world.alice, ReviewDecision.REJECT, four_eyes=True)
+        await review_link(db_session, link, world.alice, ReviewDecision.REJECT, policy=FOUR_EYES)
 
         assert link.status == MappingStatus.REJECTED
         with pytest.raises(ConflictError, match="already been decided"):
             await review_link(db_session, link, world.bob, ReviewDecision.ACCEPT)
 
+    async def test_policy_can_require_second_review_for_rejects(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        policy = MappingPolicy(second_review_for_rejects=True)
+        confirmed = await suggestion(db_session, world, 0)
+        overturned = await suggestion(db_session, world, 1)
+
+        for link in (confirmed, overturned):
+            await review_link(db_session, link, world.alice, ReviewDecision.REJECT, policy=policy)
+            assert link.status == MappingStatus.NEEDS_SECOND_REVIEW
+
+        await review_link(db_session, confirmed, world.bob, ReviewDecision.REJECT)
+        await review_link(db_session, overturned, world.bob, ReviewDecision.ACCEPT)
+
+        assert (confirmed.status, confirmed.needs_discussion) == (MappingStatus.REJECTED, False)
+        assert (overturned.status, overturned.needs_discussion) == (MappingStatus.ACCEPTED, True)
+
     async def test_four_eyes_needs_two_people(self, db_session: AsyncSession, world: World) -> None:
         link = await suggestion(db_session, world)
 
-        await review_link(db_session, link, world.alice, ReviewDecision.ACCEPT, four_eyes=True)
+        await review_link(db_session, link, world.alice, ReviewDecision.ACCEPT, policy=FOUR_EYES)
         assert link.status == MappingStatus.NEEDS_SECOND_REVIEW
 
         with pytest.raises(ConflictError, match="someone else"):
@@ -323,7 +416,7 @@ class TestReview:
 
     async def test_disagreement_is_flagged(self, db_session: AsyncSession, world: World) -> None:
         link = await suggestion(db_session, world)
-        await review_link(db_session, link, world.alice, ReviewDecision.ACCEPT, four_eyes=True)
+        await review_link(db_session, link, world.alice, ReviewDecision.ACCEPT, policy=FOUR_EYES)
 
         await review_link(db_session, link, world.bob, ReviewDecision.REJECT)
 
@@ -349,12 +442,16 @@ class TestReview:
         with pytest.raises(InvalidRequestError, match="already the second review"):
             await review_link(db_session, link, world.bob, ReviewDecision.SECOND_REVIEW)
 
-    async def test_reopen(self, db_session: AsyncSession, world: World) -> None:
+    @pytest.mark.usefixtures("system_roles")
+    async def test_authorised_reviewer_reopens_rejected_link(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        await grant_mapper(db_session, world, world.carol)
         link = await suggestion(db_session, world)
-        await review_link(db_session, link, world.alice, ReviewDecision.ACCEPT, four_eyes=True)
+        await review_link(db_session, link, world.alice, ReviewDecision.ACCEPT, policy=FOUR_EYES)
         await review_link(db_session, link, world.bob, ReviewDecision.REJECT)
 
-        await reopen_link(db_session, link)
+        await reopen_link(db_session, world.carol, link)
 
         assert link.status == MappingStatus.SUGGESTED
         assert (link.first_reviewer_id, link.second_reviewer_id, link.needs_discussion) == (
@@ -364,6 +461,23 @@ class TestReview:
         )
         await review_link(db_session, link, world.carol, ReviewDecision.ACCEPT)
         assert link.status == MappingStatus.ACCEPTED
+
+    @pytest.mark.usefixtures("system_roles")
+    async def test_reopen_needs_permission_and_a_rejected_link(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        await grant_mapper(db_session, world, world.carol)
+        rejected = await suggestion(db_session, world, 0)
+        await review_link(db_session, rejected, world.alice, ReviewDecision.REJECT)
+        accepted = await suggestion(db_session, world, 1)
+        await review_link(db_session, accepted, world.alice, ReviewDecision.ACCEPT)
+
+        # Bob has no mapping role for this objective's module.
+        with pytest.raises(AuthorizationError):
+            await reopen_link(db_session, world.bob, rejected)
+        with pytest.raises(ConflictError, match="Only rejected"):
+            await reopen_link(db_session, world.carol, accepted)
+        assert rejected.status == MappingStatus.REJECTED
 
     async def test_invalid_coverage_correction(
         self, db_session: AsyncSession, world: World
@@ -410,7 +524,7 @@ class TestBulkAccept:
     ) -> None:
         link = await suggestion(db_session, world, confidence=0.95)
 
-        await bulk_accept(db_session, world.alice, [link], min_confidence=0.9, four_eyes=True)
+        await bulk_accept(db_session, world.alice, [link], min_confidence=0.9, policy=FOUR_EYES)
 
         assert link.status == MappingStatus.NEEDS_SECOND_REVIEW
         assert link.accept_method is None
@@ -456,4 +570,40 @@ class TestObjectiveScope:
         )
         assert await objective_scope(db_session, programme_outcome) == ScopeRef(
             ScopeType.PROGRAMME, version.programme_id
+        )
+
+
+class TestMappingPolicy:
+    def test_defaults(self) -> None:
+        policy = parse_mapping_policy({})
+
+        assert (policy.four_eyes, policy.second_review_for_rejects) == (False, False)
+
+    def test_invalid_settings(self) -> None:
+        with pytest.raises(InvalidRequestError, match="mapping settings"):
+            parse_mapping_policy({"mapping": {"four_eyes": "yes please"}})
+
+    async def test_read_from_the_objective_institution(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        from app.models import CurriculumVersion, Faculty, Institution, Programme
+
+        version = await db_session.get(CurriculumVersion, world.objective.version_id)
+        assert version is not None
+        programme = await db_session.get(Programme, version.programme_id)
+        assert programme is not None
+        faculty = await db_session.get(Faculty, programme.faculty_id)
+        assert faculty is not None
+        institution = await db_session.get(Institution, faculty.institution_id)
+        assert institution is not None
+        assert await mapping_policy_for(db_session, world.objective) == MappingPolicy()
+
+        institution.settings = {
+            "mapping": {"four_eyes": True, "second_review_for_rejects": True},
+            "terminology": {"module": "course"},
+        }
+        await db_session.flush()
+
+        assert await mapping_policy_for(db_session, world.objective) == MappingPolicy(
+            four_eyes=True, second_review_for_rejects=True
         )

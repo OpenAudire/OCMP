@@ -294,7 +294,14 @@ This file tracks progress through the development phases.
 - Pytest: 421 passed, 95% total coverage; mapping models and service 100%
 - Docker: `migrate` applied `0010`; mapping tables present
 
-**Commit**: `feat: add mapping, AI run and review assignment models`
+**Commit**: `feat: add mapping, AI run and review assignment models` (9fce3b1)
+
+**Follow-up** (`feat: mapping review policy and permanent AI runs`):
+- [x] Institution mapping policy (`settings["mapping"]`): `four_eyes` and `second_review_for_rejects`, both off by default (`app/services/policies.py`)
+- [x] Reopening limited to rejected links and to users with `mapping.review` at the objective's scope (audit entry added in Slice 0.13)
+- [x] AI runs and calls can never be deleted (trigger, `RESTRICT`, AI links must name their run); retention clears prompt/response text (`AI_CALL_RETENTION_DAYS`, `purge-ai-content` command), keeping run records and counts
+- [x] Migration `0011`; ADR 016 revised
+- Verification: 431 tests pass, 96% coverage; mapping, policy and retention services 100%. In Docker, `0011` applied and a `DELETE` on `ai_runs` was refused by the database
 
 ---
 

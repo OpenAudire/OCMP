@@ -107,6 +107,10 @@ class Settings(BaseSettings):
     ai_ollama_base_url: str | None = None
     ai_monthly_budget_cap: float = 0.0  # 0 = unlimited
 
+    # Stored AI prompts and responses are cleared after this many days
+    # (0 = keep). Run records, token counts and links are always kept.
+    ai_call_retention_days: int = Field(default=365, ge=0)
+
     # Embeddings
     embeddings_local: bool = True
     embeddings_local_url: str = "http://embeddings:8080"

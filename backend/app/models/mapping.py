@@ -91,7 +91,8 @@ class AIRun(CoreModel):
     """One AI job (e.g. map these modules to that framework), with its cost.
 
     Inputs are built only from curriculum entities; personal data is never sent
-    (see the privacy guard).
+    (see the privacy guard). Runs are never deleted (a database trigger refuses
+    it), so every AI-made link stays traceable to the run that produced it.
     """
 
     __tablename__ = "ai_runs"
@@ -136,7 +137,11 @@ class AIRun(CoreModel):
 
 
 class AIRunCall(CoreModel):
-    """One request to the AI provider within a run: prompt and response, kept for audit."""
+    """One request to the AI provider within a run: prompt and response, kept for audit.
+
+    Never deleted. Retention clears the prompt and response text
+    (``content_purged_at``) and keeps the rest: tokens, timing, validity.
+    """
 
     __tablename__ = "ai_run_calls"
     __table_args__ = (
@@ -145,11 +150,13 @@ class AIRunCall(CoreModel):
     )
 
     run_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("ai_runs.id", ondelete="CASCADE"), index=True
+        ForeignKey("ai_runs.id", ondelete="RESTRICT"), index=True
     )
-    # The messages sent (after the privacy guard) and the raw response text.
+    # The messages sent (after the privacy guard) and the raw response text;
+    # emptied by retention.
     request: Mapped[dict[str, Any]] = mapped_column(JSONB)
     response: Mapped[str | None] = mapped_column(Text, default=None)
+    content_purged_at: Mapped[datetime | None] = mapped_column(default=None, index=True)
     input_tokens: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     output_tokens: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     duration_ms: Mapped[int | None] = mapped_column(Integer, default=None)
@@ -182,6 +189,7 @@ class MappingLink(CoreModel):
         CheckConstraint(
             "(status = 'accepted') = (accept_method IS NOT NULL)", name="accept_method_iff_accepted"
         ),
+        CheckConstraint("source <> 'ai' OR ai_run_id IS NOT NULL", name="ai_links_have_run"),
     )
 
     objective_id: Mapped[uuid.UUID] = mapped_column(
@@ -221,9 +229,9 @@ class MappingLink(CoreModel):
         ForeignKey("users.id", ondelete="SET NULL"), default=None, index=True
     )
     second_reviewed_at: Mapped[datetime | None] = mapped_column(default=None)
-    # Required for AI links when created (service rule); cleared if the run is ever deleted.
+    # Required for AI links; runs cannot be deleted, so the link stays traceable.
     ai_run_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("ai_runs.id", ondelete="SET NULL"), default=None, index=True
+        ForeignKey("ai_runs.id", ondelete="RESTRICT"), default=None, index=True
     )
     # For links moved to a new framework version: the link they replace.
     migrated_from_id: Mapped[uuid.UUID | None] = mapped_column(

@@ -75,3 +75,9 @@ def test_create_admin_rejects_weak_password(
 
     assert cli.main(["create-admin", "--email", EMAIL]) == 1
     assert "at least 12" in capsys.readouterr().err
+
+
+def test_purge_ai_content(cli_settings: str, capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(["purge-ai-content", "--days", "30"]) == 0
+
+    assert "older than 30 days" in capsys.readouterr().out

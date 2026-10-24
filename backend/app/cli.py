@@ -2,6 +2,7 @@
 
     python -m app.cli sync-roles
     python -m app.cli create-admin --email admin@example.org --name "Admin"
+    python -m app.cli purge-ai-content [--days N]
 
 ``create-admin`` reads the password from OCMP_ADMIN_PASSWORD or prompts for it.
 If the account already exists (e.g. created by SSO), it is made a platform
@@ -19,6 +20,7 @@ from app.core import database
 from app.core.config import get_settings
 from app.core.permissions import ScopeType
 from app.core.security import PasswordPolicyError
+from app.services.ai_runs import purge_ai_call_content
 from app.services.authorization import (
     ConflictError,
     ScopeRef,
@@ -61,6 +63,13 @@ async def _create_admin(email: str, name: str) -> int:
     return 0
 
 
+async def _purge_ai_content(days: int) -> int:
+    async with database.session_scope() as db:
+        purged = await purge_ai_call_content(db, older_than_days=days)
+    print(f"Cleared stored prompts and responses of {purged} AI calls older than {days} days.")  # noqa: T201
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -68,14 +77,22 @@ def main(argv: list[str] | None = None) -> int:
     admin = commands.add_parser("create-admin", help="Create or promote a platform admin.")
     admin.add_argument("--email", required=True)
     admin.add_argument("--name", default="Platform admin")
+    purge = commands.add_parser(
+        "purge-ai-content", help="Clear stored AI prompts and responses past retention."
+    )
+    purge.add_argument("--days", type=int, default=None, help="Default: AI_CALL_RETENTION_DAYS.")
     args = parser.parse_args(argv)
 
-    database.init_database(get_settings())
+    settings = get_settings()
+    database.init_database(settings)
 
     async def run() -> int:
         try:
             if args.command == "sync-roles":
                 return await _sync_roles()
+            if args.command == "purge-ai-content":
+                days = args.days if args.days is not None else settings.ai_call_retention_days
+                return await _purge_ai_content(days)
             return await _create_admin(args.email, args.name)
         finally:
             await database.close_database()
