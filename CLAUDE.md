@@ -160,6 +160,7 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Uniqueness on soft-deletable tables: partial unique index via `live_unique()` (`WHERE deleted_at IS NULL`)
 - Framework model fields follow the pack format in `packs/schema/` (ADR 014)
 - Data migrations are separate files and use table stubs (`sa.table`), never app models
+- Institution settings are read through `app/services/institution_settings.py` (typed sections), never raw JSON
 
 ### Background jobs
 
@@ -225,6 +226,7 @@ chore: update dependencies
 - English is the default language
 - Translation files in `/frontend/src/i18n/locales/`
 - No hard-coded strings in components
+- Curriculum nouns use `terms.*` keys (e.g. `t('terms.module', { count })`), so institution terminology overrides apply
 
 ## Documentation
 

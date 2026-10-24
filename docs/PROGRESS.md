@@ -328,7 +328,21 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.14: Terminology & Profiles
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] Terms, profiles and profile features in code (`app/core/profiles.py`): core always on, health adds role balance report, council evidence pack, clinical placements
+- [x] Typed institution settings (`app/services/institution_settings.py`): terminology overrides, profiles, default taxonomy scale, mapping policy; section updates keep unknown keys; invalid values refused
+- [x] `GET /api/v1/institution` (any signed-in user) and `PATCH /api/v1/institution/settings` (`settings.manage`), audited
+- [x] Default English wording for every term in `frontend/src/i18n/locales/en.json` (`terms.<term>_one/_other`), with a test that backend terms and translations match
+- [x] ADR 018: terminology and feature profiles
+
+**Verification**:
+- Ruff, ruff format, mypy (64 files) pass; frontend lint, typecheck and tests pass
+- Pytest: 479 passed, 96% total coverage; settings service and profiles 100%, institution API 97%
+- End to end in Docker: admin renamed "module" to "Course" and enabled the health profile; `GET /institution` returned the override and the three health features; the change appeared in the audit log
+
+**Commit**: `feat: add configurable terminology and feature profiles`
 
 ---
 

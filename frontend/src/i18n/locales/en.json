@@ -49,5 +49,23 @@
     "institutionShortCode": "Short code",
     "country": "Country",
     "complete": "Complete setup"
+  },
+  "terms": {
+    "programme_one": "Programme",
+    "programme_other": "Programmes",
+    "curriculum_version_one": "Curriculum version",
+    "curriculum_version_other": "Curriculum versions",
+    "phase_one": "Phase",
+    "phase_other": "Phases",
+    "module_one": "Module",
+    "module_other": "Modules",
+    "learning_event_one": "Session",
+    "learning_event_other": "Sessions",
+    "objective_one": "Objective",
+    "objective_other": "Objectives",
+    "framework_one": "Framework",
+    "framework_other": "Frameworks",
+    "framework_item_one": "Framework item",
+    "framework_item_other": "Framework items"
   }
 }
