@@ -148,3 +148,22 @@ async def change_password(
     user.password_hash = hash_password(new_password)
     await db.flush()
     return True
+
+
+async def list_users(
+    db: AsyncSession, *, search: str | None = None, offset: int = 0, limit: int = 50
+) -> tuple[list[User], int]:
+    """Non-deleted users, newest first, optionally filtered by name or email."""
+    query = select(User).where(User.deleted_at.is_(None))
+    if search:
+        # Escape LIKE wildcards so the search text is matched literally.
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        pattern = f"%{escaped}%"
+        query = query.where(
+            User.email.ilike(pattern, escape="\\") | User.display_name.ilike(pattern, escape="\\")
+        )
+    total = await db.scalar(select(func.count()).select_from(query.subquery()))
+    result = await db.execute(
+        query.order_by(User.created_at.desc(), User.id).offset(offset).limit(limit)
+    )
+    return list(result.scalars()), int(total or 0)

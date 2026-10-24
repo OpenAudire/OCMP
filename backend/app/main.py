@@ -1,10 +1,11 @@
 """FastAPI application entry point."""
 
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api.health import router as health_router
 from app.api.v1 import router as v1_router
@@ -14,6 +15,7 @@ from app.core.database import close_database, init_database
 from app.core.logging import get_logger, setup_logging
 from app.core.proxy import TrustedProxies
 from app.core.redis import close_redis, init_redis
+from app.services.authorization import AuthorizationError, ConflictError, InvalidRequestError
 
 logger = get_logger(__name__)
 
@@ -57,6 +59,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await close_redis()
 
 
+def _error_handler(status_code: int) -> Callable[[Request, Exception], Awaitable[JSONResponse]]:
+    async def handler(_request: Request, exc: Exception) -> JSONResponse:
+        return JSONResponse(status_code=status_code, content={"detail": str(exc)})
+
+    return handler
+
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     settings = get_settings()
@@ -72,6 +81,14 @@ def create_app() -> FastAPI:
     )
 
     app.state.trusted_proxies = TrustedProxies(settings.trusted_proxies)
+
+    # Service-layer errors become HTTP errors with the service's message.
+    for error, code in (
+        (AuthorizationError, status.HTTP_403_FORBIDDEN),
+        (InvalidRequestError, status.HTTP_422_UNPROCESSABLE_CONTENT),
+        (ConflictError, status.HTTP_409_CONFLICT),
+    ):
+        app.add_exception_handler(error, _error_handler(code))
 
     # CSRF check for cookie-authenticated unsafe requests (inside CORS, so
     # rejections still carry CORS headers)

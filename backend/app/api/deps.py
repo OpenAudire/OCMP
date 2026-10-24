@@ -1,5 +1,6 @@
 """Shared FastAPI dependencies."""
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Annotated
 
@@ -8,11 +9,13 @@ from redis.asyncio import Redis
 
 from app.core.config import Settings, get_settings
 from app.core.database import DbSession
+from app.core.permissions import Permission
 from app.core.proxy import TrustedProxies
 from app.core.redis import get_redis
 from app.core.security import csrf_token_for
 from app.models import User
 from app.services import sessions
+from app.services.authorization import INSTANCE, ScopeRef, has_permission
 from app.services.users import get_active_user
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
@@ -122,3 +125,29 @@ async def get_current_user(auth: CurrentAuth) -> User:
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+ScopeFromRequest = Callable[[Request], ScopeRef]
+
+
+def require_permission(
+    permission: Permission, scope: ScopeFromRequest | None = None
+) -> Callable[..., Awaitable[User]]:
+    """Dependency: the signed-in user, who must hold ``permission`` at the scope.
+
+    ``scope`` derives the scope from the request (e.g. a faculty id in the path);
+    without it the permission is checked for the whole instance.
+
+    Usage: ``actor: Annotated[User, Depends(require_permission(Permission.USERS_MANAGE))]``
+    """
+
+    async def check(request: Request, user: CurrentUser, db: DbSession) -> User:
+        target = scope(request) if scope else INSTANCE
+        if not await has_permission(db, user, permission, target):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to do this.",
+            )
+        return user
+
+    return check

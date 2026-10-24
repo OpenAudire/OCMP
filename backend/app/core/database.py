@@ -1,6 +1,7 @@
 """Database connection and session management."""
 
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends
@@ -63,6 +64,20 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     if _async_session_factory is None:
         raise RuntimeError("Database not initialized. Call init_database() first.")
 
+    async with _async_session_factory() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+
+
+@asynccontextmanager
+async def session_scope() -> AsyncGenerator[AsyncSession, None]:
+    """A session outside a request (commands, scripts), committed on success."""
+    if _async_session_factory is None:
+        raise RuntimeError("Database not initialized. Call init_database() first.")
     async with _async_session_factory() as session:
         try:
             yield session

@@ -20,6 +20,7 @@ from app.core.database import DbSession
 from app.core.logging import get_logger
 from app.core.security import PasswordPolicyError, csrf_token_for
 from app.jobs.auth_emails import send_password_changed_notice, send_password_reset
+from app.models import RoleAssignment
 from app.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
@@ -29,7 +30,9 @@ from app.schemas.auth import (
     PasswordResetRequested,
     UserRead,
 )
+from app.schemas.roles import AssignmentRead
 from app.services import rate_limit, sessions
+from app.services.authorization import user_assignments
 from app.services.password_reset import InvalidResetTokenError, reset_password
 from app.services.users import authenticate, change_password
 
@@ -135,6 +138,12 @@ async def logout(
 async def me(user: CurrentUser) -> UserRead:
     """The signed-in user's account."""
     return UserRead.model_validate(user)
+
+
+@router.get("/me/roles", response_model=list[AssignmentRead])
+async def my_roles(user: CurrentUser, db: DbSession) -> list[RoleAssignment]:
+    """The signed-in user's current role assignments (for showing the right navigation)."""
+    return await user_assignments(db, user.id)
 
 
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)

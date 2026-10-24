@@ -40,7 +40,8 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    command: alembic upgrade head
+    # Apply migrations, then create/update the built-in roles.
+    command: sh -c "alembic upgrade head && python -m app.cli sync-roles"
     restart: "no"
     environment:
       DATABASE_URL: ${DATABASE_URL}

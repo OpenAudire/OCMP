@@ -27,5 +27,10 @@ class User(SoftDeleteMixin, CoreModel):
     password_hash: Mapped[str | None] = mapped_column(String(255), default=None)
     last_login_at: Mapped[datetime | None] = mapped_column(default=None)
 
+    @property
+    def has_password(self) -> bool:
+        """Whether the user can sign in with a local password."""
+        return self.password_hash is not None
+
     def __repr__(self) -> str:
         return f"<User {self.id}>"

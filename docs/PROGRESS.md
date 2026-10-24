@@ -187,7 +187,26 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.8: Roles & Permissions
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] Permission catalogue and the 8 system roles from the brief in code (`app/core/permissions.py`)
+- [x] `roles` and `role_assignments` tables (migration `0005`); system roles synced by `python -m app.cli sync-roles`, run by the `migrate` service
+- [x] Scoped authorization (`app/services/authorization.py`): roles apply at their scope and below, never above or sideways; expiry; scope-type registry for curriculum scopes (Slice 0.9)
+- [x] No privilege escalation: granting or removing a role needs `roles.assign` and all of the role's permissions at that scope; last platform admin protected
+- [x] Custom roles (create, update, delete when unused); system roles read-only
+- [x] `require_permission` dependency; service errors mapped to 403/422/409 centrally
+- [x] Endpoints for permissions, roles, role assignments, user administration (create, list/search, get, rename, deactivate/reactivate) and `GET /auth/me/roles`
+- [x] `python -m app.cli create-admin` bootstrap/recovery command
+- [x] ADR 012: roles and scoped permissions
+
+**Verification**:
+- Ruff, ruff format, mypy (46 files) pass
+- Pytest: 318 passed, 94% total coverage; authorization service 99%, role and user endpoints 100%
+- Permission matrix: every system role at every scope type it allows, checked against every permission, plus checks that it does not reach parent or sibling scopes
+- End to end in Docker: `migrate` synced all 8 roles; CLI created the platform admin; admin created a user and made them curriculum office for a faculty; that user was refused user listing and self-promotion to platform admin (403) but could see their faculty's assignments; deactivating them ended their session
+
+**Commit**: `feat: add scoped roles and permissions`
 
 ---
 
@@ -256,4 +275,4 @@ This file tracks progress through the development phases.
 - [ ] Fresh Linux server with Docker can be set up by following install guide
 - [ ] CI is green
 - [ ] Demo data loads with one command
-- [ ] Role permissions covered by tests
+- [x] Role permissions covered by tests

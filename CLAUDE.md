@@ -60,6 +60,9 @@ docker run -d --name ocmp-test-db -e POSTGRES_USER=test -e POSTGRES_PASSWORD=tes
   -e POSTGRES_DB=ocmp_test -p 55432:5432 pgvector/pgvector:pg16
 TEST_DATABASE_URL=postgresql+asyncpg://test:test@localhost:55432/ocmp_test pytest
 
+# Create or promote a platform admin (password from OCMP_ADMIN_PASSWORD or prompt)
+python -m app.cli create-admin --email admin@example.org --name "Admin"
+
 # New migration after changing models (review the generated file)
 alembic revision --autogenerate -m "add thing table"
 ```
@@ -142,6 +145,8 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - RESTful resource naming
 - Pydantic schemas for request/response
 - Protected routes take `CurrentUser` (or `CurrentAuth`) from `app/api/deps.py`; CSRF is enforced by middleware (ADR 009)
+- Check permissions with `Depends(require_permission(Permission.X, scope=...))`; never only in the UI (ADR 012)
+- Raise `AuthorizationError` / `InvalidRequestError` / `ConflictError` from services; they map to 403 / 422 / 409
 - HTTP status codes: 200 OK, 201 Created, 204 No Content, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 422 Validation Error
 
 ### Database
@@ -150,6 +155,7 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Soft delete via `SoftDeleteMixin` where history matters
 - Relationships use `lazy="raise"`; load related rows explicitly with `selectinload`
 - Register every model in `app/models/__init__.py` so Alembic sees it
+- New scoped resources (programme, module, learning event) call `register_scope` with a parent resolver
 
 ### Background jobs
 
@@ -170,6 +176,7 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - `enqueued_jobs` fixture records `.send()` calls instead of using the broker; `tests/fakes.py` has `FakeEmailSender`
 - Service tests use `example.org` addresses (`email_validator` rejects the `.test` domain)
 - OIDC tests use `tests/fake_idp.py` (`FakeIdP` served via `httpx.MockTransport`)
+- Authorization tests use `system_roles` fixture and `tests/authz_helpers.py` (`grant`, `curriculum_scopes`)
 
 ## Naming Conventions
 
@@ -222,7 +229,7 @@ chore: update dependencies
 - [x] Backend core + health
 - [x] Core database models
 - [x] Authentication (local + OIDC)
-- [ ] Roles and permissions
+- [x] Roles and permissions
 - [ ] Curriculum models
 - [ ] Framework models
 - [ ] Demo dataset

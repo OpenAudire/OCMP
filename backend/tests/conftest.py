@@ -174,3 +174,11 @@ async def api_client(api_app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
         transport=ASGITransport(app=api_app), base_url="https://testserver"
     ) as client:
         yield client
+
+
+@pytest.fixture
+async def system_roles(db_session: AsyncSession) -> None:
+    """Built-in roles, as the migrate service creates them."""
+    from app.services.authorization import sync_system_roles
+
+    await sync_system_roles(db_session)
