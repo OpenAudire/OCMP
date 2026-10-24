@@ -52,8 +52,25 @@ ruff format --check .
 # Run type checking
 mypy app
 
-# Run tests
+# Run tests (database tests skip unless TEST_DATABASE_URL is set)
 pytest
+
+# Disposable test database for the database tests
+docker run -d --name ocmp-test-db -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test \
+  -e POSTGRES_DB=ocmp_test -p 55432:5432 pgvector/pgvector:pg16
+TEST_DATABASE_URL=postgresql+asyncpg://test:test@localhost:55432/ocmp_test pytest
+
+# New migration after changing models (review the generated file)
+alembic revision --autogenerate -m "add thing table"
+```
+
+### Full stack (Docker)
+
+```bash
+cd deploy
+cp .env.example .env   # then set SECRET_KEY and POSTGRES_PASSWORD
+docker compose up -d --build --wait
+# https://localhost (self-signed via Caddy); migrations run in the one-shot `migrate` service
 ```
 
 ### Frontend
@@ -128,9 +145,10 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 
 ### Database
 
-- UUID primary keys
-- `created_at`, `updated_at` on all tables
-- Soft delete where history matters
+- All models inherit `CoreModel` (`app/models/base.py`): UUID PK, `created_at`, `updated_at`, `created_by_id` (see ADR 008)
+- Soft delete via `SoftDeleteMixin` where history matters
+- Relationships use `lazy="raise"`; load related rows explicitly with `selectinload`
+- Register every model in `app/models/__init__.py` so Alembic sees it
 - Audit log for curriculum/framework/mapping changes
 
 ### Testing
@@ -187,9 +205,9 @@ chore: update dependencies
 ## Phase 0 Checklist
 
 - [x] Project scaffold
-- [ ] Docker Compose base
-- [ ] Backend core + health
-- [ ] Core database models
+- [x] Docker Compose base
+- [x] Backend core + health
+- [x] Core database models
 - [ ] Authentication (local + OIDC)
 - [ ] Roles and permissions
 - [ ] Curriculum models

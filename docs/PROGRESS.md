@@ -83,7 +83,25 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.4: Database Models (Core)
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] `app/models/base.py`: `Base` with constraint naming convention; mixins for UUID PK, timestamps, `created_by_id`, soft delete; `CoreModel` abstract base
+- [x] Models: `Institution` (country, settings JSONB), `Faculty`, `Department`, `User` (identity only; auth fields come in Slice 0.5)
+- [x] Alembic wired to model metadata (`compare_type`, `compare_server_default`); migration template uses modern typing; post-write hook runs `ruff check --fix` and `ruff format`
+- [x] Migrations: `0001` enables `vector`; `0002` adds core organisation and user tables
+- [x] Test harness against real PostgreSQL (`TEST_DATABASE_URL`), migrations once per session, per-test rollback
+- [x] factory_boy factories (`tests/factories.py`) with fictional data
+- [x] Migration drift test (`alembic check`) and downgrade/upgrade round trip
+- [x] CI sets `TEST_DATABASE_URL` so database tests never skip there
+- [x] ADR 008: core data model conventions
+
+**Verification**:
+- Ruff, ruff format, mypy (18 files) pass
+- Pytest: 29 passed against `pgvector/pgvector:pg16` (15 database tests skip when `TEST_DATABASE_URL` is unset)
+- `docker compose up` runs `0001` and `0002` in the `migrate` service; tables and `vector` extension present
+
+**Commit**: `feat: add core database models and migrations`
 
 ---
 

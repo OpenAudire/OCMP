@@ -80,8 +80,9 @@ jobs:
       - name: Run tests
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/ocmp_test
+          TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/ocmp_test
           REDIS_URL: redis://localhost:6379/0
-          SECRET_KEY: test-secret-key-for-ci-only
+          SECRET_KEY: test-secret-key-for-ci-only-not-a-real-secret
         run: pytest --cov=app --cov-report=xml
 
       - name: Upload coverage

@@ -9,24 +9,23 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-# Import models for autogenerate support
-# from app.models import Base
+from app.models import Base
 
 config = context.config
 
-# Interpret the config file for Python logging
-if config.config_file_name is not None:
+# Interpret the config file for Python logging (skipped when the caller,
+# e.g. the test suite, has already configured logging).
+if config.config_file_name is not None and config.attributes.get("configure_logger", True):
     fileConfig(config.config_file_name)
 
-# Set sqlalchemy.url from environment variable
+# Database URL: an explicit override from the caller wins, then DATABASE_URL.
 config.set_main_option(
     "sqlalchemy.url",
-    os.environ.get("DATABASE_URL", "postgresql+asyncpg://localhost/ocmp"),
+    config.attributes.get("database_url")
+    or os.environ.get("DATABASE_URL", "postgresql+asyncpg://localhost/ocmp"),
 )
 
-# Add your model's MetaData object here for 'autogenerate' support
-# target_metadata = Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
@@ -54,7 +53,12 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection: Connection) -> None:
     """Run migrations with connection."""
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_type=True,
+        compare_server_default=True,
+    )
 
     with context.begin_transaction():
         context.run_migrations()
