@@ -26,6 +26,7 @@ from app.models.framework import (
 from app.models.identity import UserIdentity
 from app.models.institution import Department, Faculty, Institution
 from app.models.role import Role, RoleAssignment
+from app.models.tagging import Tagging, TagList, TagValue
 from app.models.user import User
 
 __all__ = [
@@ -49,6 +50,9 @@ __all__ = [
     "QualificationType",
     "Role",
     "RoleAssignment",
+    "TagList",
+    "TagValue",
+    "Tagging",
     "TaxonomyLevel",
     "TaxonomyScale",
     "User",

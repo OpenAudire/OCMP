@@ -257,7 +257,23 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.11: Tag Models
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] Models (`app/models/tagging.py`): `TagList` (kind, applicable item types), `TagValue` (label, optional code), `Tagging` (one FK column per taggable type, `inherited_from_id`)
+- [x] `learning_events.format_value_id`: teaching format from a teaching-method list (deferred from Slice 0.9)
+- [x] Migration `0009` with database integrity: key format, live uniqueness of keys, labels and codes, exactly one tagged item, uniqueness per tag/item/source, cascades from items, values and source taggings
+- [x] Tagging service (`app/services/tagging.py`): add values, tag items, remove direct tags (inherited ones go with their source), list an item's tags, set teaching format
+- [x] ADR 015: tag lists and tagging
+
+**Not in this slice**: inheritance rules and preview (with the tagging UI in phase 1); default tag lists (packs and demo dataset).
+
+**Verification**:
+- Ruff, ruff format, mypy (53 files) pass; `alembic check` reports no drift; `0009` round-trips
+- Pytest: 391 passed, 95% total coverage; tagging models and service 100%
+- Docker: `migrate` applied `0009`; tag tables and `learning_events.format_value_id` present
+
+**Commit**: `feat: add tag lists and tagging`
 
 ---
 

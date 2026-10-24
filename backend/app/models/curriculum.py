@@ -264,10 +264,7 @@ class Module(SoftDeleteMixin, CoreModel):
 
 
 class LearningEvent(SoftDeleteMixin, CoreModel):
-    """A session within a module (lecture, PBL tutorial, practical, placement...).
-
-    The teaching format comes from a tag list (added with tag lists).
-    """
+    """A session within a module (lecture, PBL tutorial, practical, placement...)."""
 
     __tablename__ = "learning_events"
     __table_args__ = (
@@ -280,6 +277,10 @@ class LearningEvent(SoftDeleteMixin, CoreModel):
         ForeignKey("modules.id", ondelete="CASCADE"), index=True
     )
     title: Mapped[str] = mapped_column(String(255))
+    # Teaching format: a value from a teaching-method tag list (lecture, PBL, practical...).
+    format_value_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("tag_values.id", ondelete="SET NULL"), default=None, index=True
+    )
     contact_minutes: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     self_study_minutes: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")

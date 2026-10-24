@@ -16,6 +16,7 @@ from app.models import (
     Module,
     Phase,
     Programme,
+    TagList,
     TaxonomyScale,
     User,
 )
@@ -124,3 +125,12 @@ class TaxonomyScaleFactory(factory.Factory):  # type: ignore[misc]
 
     key = factory.Sequence(lambda n: f"scale-{n}")
     name = factory.Sequence(lambda n: f"Demo Scale {n}")
+
+
+class TagListFactory(factory.Factory):  # type: ignore[misc]
+    class Meta:
+        model = TagList
+
+    key = factory.Sequence(lambda n: f"demo-list-{n}")
+    name = factory.Sequence(lambda n: f"Demo List {n}")
+    kind = "custom"
