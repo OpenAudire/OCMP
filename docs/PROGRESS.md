@@ -35,7 +35,26 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.2: Docker Compose Base Stack
-**Status**: Pending (deferred - Docker Compose files exist, will verify when Docker available)
+**Status**: Complete
+
+**Deliverables**:
+- [x] Backend Dockerfile installs dependencies in a cached layer (previous editable install failed before app code was copied)
+- [x] `.dockerignore` for backend and frontend (keeps `.venv` and Windows `node_modules` out of the build context)
+- [x] Dramatiq worker entry point (`app/worker.py`) with a `ping` actor
+- [x] One-shot `migrate` service runs `alembic upgrade head`; `api` and `worker` wait for it to succeed
+- [x] `api`, `worker` and `migrate` share one image (`ocmp-backend:local`); compose project named `ocmp`
+- [x] Frontend production build fixed (`vite.config.ts` uses `vitest/config` and `import.meta.url`; `@types/node` added)
+- [x] Web container healthcheck uses `127.0.0.1` (busybox `localhost` resolves to IPv6)
+
+**Verification** (Docker Desktop 29.9, Compose v5.6):
+- `docker compose up -d --wait` from `deploy/` after copying `.env.example` to `.env`: all services healthy, `migrate` exits 0
+- `https://localhost/health` -> healthy; `https://localhost/ready` -> database up, redis up
+- `https://localhost/` serves the React app; `http://` redirects to `https://`
+- Job enqueued from the api container is consumed by the worker
+- Backend: ruff, ruff format, mypy, pytest (13 passed) all pass
+- Frontend: `npm run build`, lint, typecheck, test all pass
+
+**Commit**: `feat: make Docker Compose stack build and start`
 
 ---
 

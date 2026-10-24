@@ -1,6 +1,8 @@
 # OCMP Docker Compose Configuration
 # See .env.example for configuration options
 
+name: ocmp
+
 services:
   # PostgreSQL database with pgvector extension
   db:
@@ -30,11 +32,24 @@ services:
       timeout: 5s
       retries: 5
 
-  # FastAPI backend
-  api:
+  # One-shot database migration (runs before api and worker start)
+  migrate:
+    image: ocmp-backend:local
     build:
       context: ../backend
       dockerfile: Dockerfile
+    command: alembic upgrade head
+    restart: "no"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # FastAPI backend
+  api:
+    image: ocmp-backend:local
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -42,8 +57,8 @@ services:
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     healthcheck:
@@ -54,18 +69,19 @@ services:
 
   # Dramatiq worker for background jobs
   worker:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
-    command: dramatiq app.worker
+    image: ocmp-backend:local
+    command: dramatiq app.worker --processes 1 --threads 4
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
-      SECRET_KEY: ${SECRET_KEY}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    healthcheck:
+      disable: true
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
@@ -74,6 +90,7 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
+    image: ocmp-web:local
     restart: unless-stopped
     depends_on:
       - api
@@ -90,8 +107,10 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - api
-      - web
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started
     environment:
       DOMAIN: ${DOMAIN:-localhost}
 

@@ -67,12 +67,14 @@ class Settings(BaseSettings):
     @property
     def oidc_configured(self) -> bool:
         """Check if OIDC is configured."""
-        return all([
-            self.oidc_enabled,
-            self.oidc_discovery_url,
-            self.oidc_client_id,
-            self.oidc_client_secret,
-        ])
+        return all(
+            [
+                self.oidc_enabled,
+                self.oidc_discovery_url,
+                self.oidc_client_id,
+                self.oidc_client_secret,
+            ]
+        )
 
     # AI providers (optional)
     ai_enabled: bool = False

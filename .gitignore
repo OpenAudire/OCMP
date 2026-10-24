@@ -95,3 +95,7 @@ coverage/
 # Backup files
 *.bak
 *.backup
+
+# TypeScript build artefacts
+*.tsbuildinfo
+frontend/vite.config.d.ts
