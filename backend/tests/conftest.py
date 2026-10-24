@@ -4,12 +4,27 @@ import os
 from collections.abc import AsyncGenerator, Callable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from alembic import command
 from alembic.config import Config
+from fakeredis import FakeAsyncRedis
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
+
+from app.core.config import Settings, get_settings
+from app.core.database import get_db_session
+from app.core.redis import get_redis
+
+# Importing app.main builds a module-level app from the environment. Provide safe
+# defaults so that works anywhere; tests needing specific settings override them.
+# (Do not patch app.core.config.get_settings instead: modules imported under the
+# patch would capture the mock in their Depends(...) declarations.)
+os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-at-least-32-characters-long")
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test")
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 
@@ -83,3 +98,53 @@ async def db_session(migrated_database: str) -> AsyncGenerator[AsyncSession, Non
             await session.close()
             await transaction.rollback()
     await engine.dispose()
+
+
+@pytest.fixture
+def test_settings() -> Settings:
+    """Settings for API tests (never read from the environment's secrets)."""
+    return Settings(
+        secret_key="test-secret-key-that-is-at-least-32-characters-long",
+        database_url="postgresql+asyncpg://test:test@localhost:5432/test",
+        redis_url="redis://localhost:6379/0",
+        login_rate_limit_per_ip=20,
+        login_rate_limit_per_account=5,
+    )
+
+
+@pytest.fixture
+async def redis_client() -> AsyncGenerator[FakeAsyncRedis, None]:
+    """In-memory Redis, fresh for each test."""
+    client = FakeAsyncRedis(decode_responses=True)
+    try:
+        yield client
+    finally:
+        await client.aclose()
+
+
+@pytest.fixture
+def api_app(
+    test_settings: Settings, db_session: AsyncSession, redis_client: FakeAsyncRedis
+) -> FastAPI:
+    """The FastAPI app wired to the test database session, fake Redis and test settings."""
+    with patch("app.main.get_settings", return_value=test_settings):
+        from app.main import create_app
+
+        app = create_app()
+
+    async def override_db() -> AsyncGenerator[AsyncSession, None]:
+        yield db_session
+
+    app.dependency_overrides[get_settings] = lambda: test_settings
+    app.dependency_overrides[get_db_session] = override_db
+    app.dependency_overrides[get_redis] = lambda: redis_client
+    return app
+
+
+@pytest.fixture
+async def api_client(api_app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
+    """HTTPS client (so Secure cookies are sent) for the test app."""
+    async with AsyncClient(
+        transport=ASGITransport(app=api_app), base_url="https://testserver"
+    ) as client:
+        yield client

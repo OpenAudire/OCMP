@@ -1,7 +1,6 @@
 """User account model.
 
-Authentication fields (password hash, OIDC subject) and role assignments are
-added in their own slices; this is the identity row everything else refers to.
+OIDC identity fields and role assignments are added in their own slices.
 """
 
 from datetime import datetime
@@ -24,6 +23,8 @@ class User(SoftDeleteMixin, CoreModel):
     email: Mapped[str] = mapped_column(String(320))
     display_name: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(default=True, server_default="true")
+    # Argon2id encoded hash; NULL for users who only sign in through SSO.
+    password_hash: Mapped[str | None] = mapped_column(String(255), default=None)
     last_login_at: Mapped[datetime | None] = mapped_column(default=None)
 
     def __repr__(self) -> str:

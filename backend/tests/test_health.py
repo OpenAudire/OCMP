@@ -12,7 +12,7 @@ from app.core.config import Settings
 def mock_settings() -> Settings:
     """Create mock settings for testing."""
     return Settings(
-        secret_key="test-secret-key-that-is-at-least-32-characters-long",  # noqa: S106
+        secret_key="test-secret-key-that-is-at-least-32-characters-long",
         database_url="postgresql+asyncpg://test:test@localhost:5432/test",
         redis_url="redis://localhost:6379/0",
         debug=True,
@@ -22,10 +22,7 @@ def mock_settings() -> Settings:
 @pytest.fixture
 def app(mock_settings: Settings):
     """Create test application with mocked settings."""
-    with (
-        patch("app.core.config.get_settings", return_value=mock_settings),
-        patch("app.main.get_settings", return_value=mock_settings),
-    ):
+    with patch("app.main.get_settings", return_value=mock_settings):
         # Import here to get fresh app with mocked settings
         from app.main import create_app
 

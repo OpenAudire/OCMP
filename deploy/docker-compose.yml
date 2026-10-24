@@ -56,6 +56,9 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # The api is only reachable through Caddy, so trust its X-Forwarded-* headers
+      # (needed for real client IPs in login rate limiting).
+      FORWARDED_ALLOW_IPS: "*"
     depends_on:
       migrate:
         condition: service_completed_successfully

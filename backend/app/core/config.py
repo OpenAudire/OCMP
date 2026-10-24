@@ -94,7 +94,20 @@ class Settings(BaseSettings):
     connector_encryption_key: str | None = None
 
     # Session
-    session_expire_hours: int = 24
+    session_expire_hours: int = 24  # sliding: renewed on each authenticated request
+    session_cookie_name: str = "ocmp_session"
+    session_cookie_secure: bool = True  # only disable for local plain-HTTP development
+    csrf_cookie_name: str = "ocmp_csrf"
+    csrf_header_name: str = "X-CSRF-Token"
+
+    # Passwords
+    password_min_length: int = 12
+    password_max_length: int = 256  # bounds hashing cost
+
+    # Login rate limiting (fixed window)
+    login_rate_limit_window_seconds: int = 900
+    login_rate_limit_per_ip: int = 20  # all attempts from one client address
+    login_rate_limit_per_account: int = 10  # failed attempts against one email address
 
 
 @lru_cache

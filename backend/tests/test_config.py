@@ -9,11 +9,13 @@ from app.core.config import Settings
 class TestSettings:
     """Tests for Settings class."""
 
-    def test_required_fields(self):
+    def test_required_fields(self, monkeypatch: pytest.MonkeyPatch):
         """Test that required fields must be provided."""
+        monkeypatch.delenv("SECRET_KEY", raising=False)
+        monkeypatch.delenv("DATABASE_URL", raising=False)
         with pytest.raises(ValidationError):
             # Missing required fields should raise validation error
-            Settings()  # type: ignore[call-arg]
+            Settings(_env_file=None)  # type: ignore[call-arg]
 
     def test_minimal_valid_settings(self):
         """Test minimal valid settings configuration."""
@@ -28,7 +30,7 @@ class TestSettings:
         """Test that secret key must be at least 32 characters."""
         with pytest.raises(ValidationError):
             Settings(
-                secret_key="short",  # noqa: S106
+                secret_key="short",
                 database_url="postgresql+asyncpg://user:pass@localhost:5432/db",
             )
 
@@ -93,7 +95,7 @@ class TestSettings:
             oidc_enabled=True,
             oidc_discovery_url="https://example.com/.well-known/openid-configuration",
             oidc_client_id="client-id",
-            oidc_client_secret="client-secret",  # noqa: S106
+            oidc_client_secret="client-secret",
         )
         assert settings.oidc_configured is True
 

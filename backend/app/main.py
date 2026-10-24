@@ -7,7 +7,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.health import router as health_router
+from app.api.v1 import router as v1_router
 from app.core.config import get_settings
+from app.core.csrf import CSRFMiddleware
 from app.core.database import close_database, init_database
 from app.core.logging import get_logger, setup_logging
 from app.core.redis import close_redis, init_redis
@@ -65,6 +67,10 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # CSRF check for cookie-authenticated unsafe requests (inside CORS, so
+    # rejections still carry CORS headers)
+    app.add_middleware(CSRFMiddleware, settings=settings)
+
     # CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -76,6 +82,7 @@ def create_app() -> FastAPI:
 
     # Health check routes (no /api/v1 prefix)
     app.include_router(health_router)
+    app.include_router(v1_router)
 
     return app
 

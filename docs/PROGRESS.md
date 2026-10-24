@@ -106,7 +106,29 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.5: Auth: Local Accounts
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] `User.password_hash` (nullable for SSO-only users), migration `0003`
+- [x] Argon2id hashing with automatic rehash on sign-in, password policy (12-256 characters, not the email address), constant-time handling of unknown accounts (`app/core/security.py`)
+- [x] Redis session store with hashed tokens, sliding 24h expiry, revoke-all per user (`app/services/sessions.py`)
+- [x] CSRF middleware with session-derived HMAC tokens (`app/core/csrf.py`)
+- [x] Sign-in rate limiting per client address and per account (`app/services/rate_limit.py`)
+- [x] User service: `create_local_user`, `authenticate`, `change_password` (`app/services/users.py`)
+- [x] Endpoints: `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`, `POST /api/v1/auth/change-password`
+- [x] API dependencies `CurrentUser` / `CurrentAuth` for protected routes (`app/api/deps.py`)
+- [x] uvicorn trusts Caddy's forwarded headers in Docker; session and rate limit settings in `.env.example`
+- [x] ADR 009: session, CSRF and rate limiting implementation
+- [x] Test fixes: env defaults in `conftest.py` replace patching `app.core.config.get_settings` (which leaked a mock into `Depends`); coverage traces greenlets so SQLAlchemy async code is measured
+
+**Not in this slice**: creating users through the API needs roles (Slice 0.8); the first admin is created by the setup wizard (Slice 0.17).
+
+**Verification**:
+- Ruff, ruff format, mypy (27 files) pass
+- Pytest: 91 passed, 86% total coverage; auth router, deps, security, sessions, rate limit and user service at 98-100%
+- End to end through Caddy: sign-in, `/me`, logout rejected without CSRF header (403) and accepted with it (204), `/me` afterwards 401, 11th failed sign-in returns 429; no email addresses in API logs
+
+**Commit**: `feat: add local account authentication with sessions and CSRF`
 
 ---
 

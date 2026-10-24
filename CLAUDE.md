@@ -141,6 +141,7 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - All routes under `/api/v1/`
 - RESTful resource naming
 - Pydantic schemas for request/response
+- Protected routes take `CurrentUser` (or `CurrentAuth`) from `app/api/deps.py`; CSRF is enforced by middleware (ADR 009)
 - HTTP status codes: 200 OK, 201 Created, 204 No Content, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 422 Validation Error
 
 ### Database
@@ -156,7 +157,9 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Backend: pytest with pytest-asyncio
 - Frontend: Vitest with Testing Library
 - E2E: Playwright
-- Factories: factory_boy for models
+- Factories: factory_boy for models (`tests/factories.py`)
+- API tests use the `api_client` fixture (test DB session, fakeredis, test settings)
+- Never patch `app.core.config.get_settings` in tests; override dependencies or pass `Settings` explicitly
 
 ## Naming Conventions
 
