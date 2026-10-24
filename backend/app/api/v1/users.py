@@ -14,6 +14,7 @@ from app.models import RoleAssignment, User
 from app.schemas.roles import AssignmentRead
 from app.schemas.users import UserAdminRead, UserCreate, UserList, UserUpdate
 from app.services import sessions
+from app.services.audit import record_event
 from app.services.authorization import (
     ConflictError,
     InvalidRequestError,
@@ -51,6 +52,13 @@ async def get_users(
 ) -> UserList:
     """Users, newest first."""
     users, total = await list_users(db, search=search, offset=offset, limit=limit)
+    # POPIA: record which people's details an administrator saw (not the search text).
+    await record_event(
+        db,
+        action="view",
+        entity_type="users",
+        details={"user_ids": [u.id for u in users], "searched": bool(search)},
+    )
     return UserList(items=[UserAdminRead.model_validate(u) for u in users], total=total)
 
 
@@ -78,7 +86,9 @@ async def create_user(
 
 @router.get("/{user_id}", response_model=UserAdminRead)
 async def get_user(user_id: uuid.UUID, _actor: UserManager, db: DbSession) -> User:
-    return await _user_or_404(db, user_id)
+    user = await _user_or_404(db, user_id)
+    await record_event(db, action="view", entity_type="users", entity_id=user.id)
+    return user
 
 
 @router.patch("/{user_id}", response_model=UserAdminRead)

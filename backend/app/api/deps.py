@@ -15,6 +15,7 @@ from app.core.redis import get_redis
 from app.core.security import csrf_token_for
 from app.models import User
 from app.services import sessions
+from app.services.audit import set_actor
 from app.services.authorization import INSTANCE, ScopeRef, has_permission
 from app.services.users import get_active_user
 
@@ -113,6 +114,7 @@ async def get_auth_context(
         raise _NOT_AUTHENTICATED
 
     set_session_cookies(response, settings, token)
+    set_actor(user.id)  # attribute this request's changes in the audit log
     return AuthContext(user=user, session_token=token)
 
 

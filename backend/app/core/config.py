@@ -111,6 +111,9 @@ class Settings(BaseSettings):
     # (0 = keep). Run records, token counts and links are always kept.
     ai_call_retention_days: int = Field(default=365, ge=0)
 
+    # Audit log entries are deleted after this many days (0 = keep forever).
+    audit_log_retention_days: int = Field(default=0, ge=0)
+
     # Embeddings
     embeddings_local: bool = True
     embeddings_local_url: str = "http://embeddings:8080"

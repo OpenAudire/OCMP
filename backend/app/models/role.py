@@ -7,13 +7,13 @@ from sqlalchemy import Boolean, CheckConstraint, ForeignKey, String, Text, Uniqu
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import CoreModel
+from app.models.base import Audited, CoreModel
 from app.models.user import User
 
 SCOPE_TYPES_SQL = "'instance', 'faculty', 'programme', 'module', 'learning_event'"
 
 
-class Role(CoreModel):
+class Role(Audited, CoreModel):
     """A named set of permissions. System roles are synced from code."""
 
     __tablename__ = "roles"
@@ -36,7 +36,7 @@ class Role(CoreModel):
         return f"<Role {self.key}>"
 
 
-class RoleAssignment(CoreModel):
+class RoleAssignment(Audited, CoreModel):
     """A user holding a role at a scope (the whole instance, or one faculty, programme...).
 
     ``scope_id`` refers to a row of the table named by ``scope_type``; it has no

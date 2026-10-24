@@ -6,10 +6,10 @@ from typing import Any
 from sqlalchemy import ForeignKey, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import CoreModel, SoftDeleteMixin
+from app.models.base import Audited, CoreModel, SoftDeleteMixin
 
 
-class Institution(SoftDeleteMixin, CoreModel):
+class Institution(Audited, SoftDeleteMixin, CoreModel):
     """A university or college running this OCMP instance."""
 
     __tablename__ = "institutions"
@@ -31,7 +31,7 @@ class Institution(SoftDeleteMixin, CoreModel):
         return f"<Institution {self.short_code}>"
 
 
-class Faculty(SoftDeleteMixin, CoreModel):
+class Faculty(Audited, SoftDeleteMixin, CoreModel):
     """A faculty (or school/college) within an institution."""
 
     __tablename__ = "faculties"
@@ -52,7 +52,7 @@ class Faculty(SoftDeleteMixin, CoreModel):
         return f"<Faculty {self.code}>"
 
 
-class Department(SoftDeleteMixin, CoreModel):
+class Department(Audited, SoftDeleteMixin, CoreModel):
     """A department within a faculty."""
 
     __tablename__ = "departments"

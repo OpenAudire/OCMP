@@ -3,6 +3,7 @@
     python -m app.cli sync-roles
     python -m app.cli create-admin --email admin@example.org --name "Admin"
     python -m app.cli purge-ai-content [--days N]
+    python -m app.cli purge-audit-log [--days N]
 
 ``create-admin`` reads the password from OCMP_ADMIN_PASSWORD or prompts for it.
 If the account already exists (e.g. created by SSO), it is made a platform
@@ -21,6 +22,7 @@ from app.core.config import get_settings
 from app.core.permissions import ScopeType
 from app.core.security import PasswordPolicyError
 from app.services.ai_runs import purge_ai_call_content
+from app.services.audit import purge_audit_log
 from app.services.authorization import (
     ConflictError,
     ScopeRef,
@@ -70,6 +72,16 @@ async def _purge_ai_content(days: int) -> int:
     return 0
 
 
+async def _purge_audit_log(days: int) -> int:
+    if days <= 0:
+        print("Audit log retention is off (keep forever); nothing deleted.")  # noqa: T201
+        return 0
+    async with database.session_scope() as db:
+        deleted = await purge_audit_log(db, older_than_days=days)
+    print(f"Deleted {deleted} audit log entries older than {days} days.")  # noqa: T201
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -81,6 +93,12 @@ def main(argv: list[str] | None = None) -> int:
         "purge-ai-content", help="Clear stored AI prompts and responses past retention."
     )
     purge.add_argument("--days", type=int, default=None, help="Default: AI_CALL_RETENTION_DAYS.")
+    audit_purge = commands.add_parser(
+        "purge-audit-log", help="Delete audit log entries past retention."
+    )
+    audit_purge.add_argument(
+        "--days", type=int, default=None, help="Default: AUDIT_LOG_RETENTION_DAYS."
+    )
     args = parser.parse_args(argv)
 
     settings = get_settings()
@@ -90,6 +108,9 @@ def main(argv: list[str] | None = None) -> int:
         try:
             if args.command == "sync-roles":
                 return await _sync_roles()
+            if args.command == "purge-audit-log":
+                days = args.days if args.days is not None else settings.audit_log_retention_days
+                return await _purge_audit_log(days)
             if args.command == "purge-ai-content":
                 days = args.days if args.days is not None else settings.ai_call_retention_days
                 return await _purge_ai_content(days)

@@ -26,7 +26,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import CoreModel, SoftDeleteMixin, live_unique, str_enum
+from app.models.base import Audited, CoreModel, SoftDeleteMixin, live_unique, str_enum
 from app.models.institution import Faculty
 
 
@@ -84,7 +84,7 @@ class ObjectiveStatus(StrEnum):
     RETIRED = "retired"
 
 
-class QualificationType(CoreModel):
+class QualificationType(Audited, CoreModel):
     """HEQSF qualification type: an editable configuration table, seeded with defaults."""
 
     __tablename__ = "qualification_types"
@@ -102,7 +102,7 @@ class QualificationType(CoreModel):
     is_active: Mapped[bool] = mapped_column(default=True, server_default="true")
 
 
-class Programme(SoftDeleteMixin, CoreModel):
+class Programme(Audited, SoftDeleteMixin, CoreModel):
     """A qualification offered by a faculty."""
 
     __tablename__ = "programmes"
@@ -159,7 +159,7 @@ class Programme(SoftDeleteMixin, CoreModel):
     )
 
 
-class CurriculumVersion(SoftDeleteMixin, CoreModel):
+class CurriculumVersion(Audited, SoftDeleteMixin, CoreModel):
     """The curriculum of a programme for one academic year."""
 
     __tablename__ = "curriculum_versions"
@@ -196,7 +196,7 @@ class CurriculumVersion(SoftDeleteMixin, CoreModel):
     )
 
 
-class Phase(SoftDeleteMixin, CoreModel):
+class Phase(Audited, SoftDeleteMixin, CoreModel):
     """A year, phase, block or longitudinal thread within a version."""
 
     __tablename__ = "phases"
@@ -219,7 +219,7 @@ class Phase(SoftDeleteMixin, CoreModel):
     version: Mapped[CurriculumVersion] = relationship(back_populates="phases", lazy="raise")
 
 
-class Module(SoftDeleteMixin, CoreModel):
+class Module(Audited, SoftDeleteMixin, CoreModel):
     """A module (course) in a version, optionally within a phase.
 
     Longitudinal modules span phases and have no phase. Coordinators are users
@@ -263,7 +263,7 @@ class Module(SoftDeleteMixin, CoreModel):
     )
 
 
-class LearningEvent(SoftDeleteMixin, CoreModel):
+class LearningEvent(Audited, SoftDeleteMixin, CoreModel):
     """A session within a module (lecture, PBL tutorial, practical, placement...)."""
 
     __tablename__ = "learning_events"
@@ -291,7 +291,7 @@ class LearningEvent(SoftDeleteMixin, CoreModel):
     module: Mapped[Module] = relationship(back_populates="learning_events", lazy="raise")
 
 
-class Objective(SoftDeleteMixin, CoreModel):
+class Objective(Audited, SoftDeleteMixin, CoreModel):
     """A learning objective or outcome at programme, module or learning event level.
 
     ``version_id`` is always set (also for module and event objectives) so a
@@ -345,7 +345,7 @@ class Objective(SoftDeleteMixin, CoreModel):
     )
 
 
-class ObjectiveLink(CoreModel):
+class ObjectiveLink(Audited, CoreModel):
     """An upward link: a narrower objective contributes to a broader one."""
 
     __tablename__ = "objective_links"

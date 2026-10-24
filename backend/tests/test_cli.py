@@ -81,3 +81,14 @@ def test_purge_ai_content(cli_settings: str, capsys: pytest.CaptureFixture[str])
     assert cli.main(["purge-ai-content", "--days", "30"]) == 0
 
     assert "older than 30 days" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("days", "message"), [("0", "retention is off"), ("3650", "older than 3650 days")]
+)
+def test_purge_audit_log(
+    cli_settings: str, capsys: pytest.CaptureFixture[str], days: str, message: str
+) -> None:
+    assert cli.main(["purge-audit-log", "--days", days]) == 0
+
+    assert message in capsys.readouterr().out

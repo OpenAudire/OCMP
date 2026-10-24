@@ -6,17 +6,20 @@ from datetime import datetime
 from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import CoreModel
+from app.models.base import Audited, CoreModel
 from app.models.user import User
 
 
-class UserIdentity(CoreModel):
+class UserIdentity(Audited, CoreModel):
     """A sign-in identity at an external provider (OIDC now, SAML later).
 
     A person is identified by the provider's issuer and its stable subject
     identifier, never by email address: providers do not guarantee email
     addresses are verified or unchanging.
     """
+
+    __audit_exclude__ = frozenset({"subject"})
+    __audit_ignore__ = frozenset({"last_login_at"})
 
     __tablename__ = "user_identities"
     __table_args__ = (UniqueConstraint("issuer", "subject"),)

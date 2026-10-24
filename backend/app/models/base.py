@@ -78,6 +78,18 @@ class SoftDeleteMixin:
         self.deleted_at = None
 
 
+class Audited:
+    """Marker: every change to rows of this model is written to the audit log.
+
+    ``__audit_exclude__``: columns whose values are never written (e.g. personal
+    data); a change to them is still recorded, naming the field only.
+    ``__audit_ignore__``: columns not audited at all (e.g. last sign-in time).
+    """
+
+    __audit_exclude__: ClassVar[frozenset[str]] = frozenset()
+    __audit_ignore__: ClassVar[frozenset[str]] = frozenset()
+
+
 class CoreModel(UUIDPrimaryKeyMixin, TimestampMixin, CreatedByMixin, Base):
     """Abstract base with the columns every OCMP table carries."""
 

@@ -3,6 +3,7 @@
 Every model must be imported here so Alembic autogenerate sees its table.
 """
 
+from app.models.audit import AuditLog
 from app.models.base import Base, CoreModel
 from app.models.curriculum import (
     CurriculumVersion,
@@ -33,6 +34,7 @@ from app.models.user import User
 __all__ = [
     "AIRun",
     "AIRunCall",
+    "AuditLog",
     "Base",
     "CoreModel",
     "Crosswalk",

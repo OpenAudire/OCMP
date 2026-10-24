@@ -166,6 +166,13 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Dramatiq actors live in `app/jobs/`; each module imports `app.core.broker` first and is imported by `app/worker.py`
 - Job bodies are async functions run with `asyncio.run`; open connections with `job_resources(settings)`
 - Never log email addresses or tokens; log user ids
+
+### Audit log
+
+- New models that hold curriculum, framework, mapping, organisation or access data inherit `Audited` (ADR 017)
+- Mark personal columns `__audit_exclude__` (recorded by name only) and noisy ones `__audit_ignore__`
+- Change audited data through ORM objects, not bulk `update()`/`delete()` statements (those are not captured)
+- Label meaningful operations with `audit_operation("area.action", actor_id=..., reason=...)`
 - Identify SSO users by (issuer, subject) only; never link or match accounts by email (ADR 011)
 - Audit log for curriculum/framework/mapping changes
 

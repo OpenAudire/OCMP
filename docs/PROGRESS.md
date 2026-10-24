@@ -306,7 +306,24 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.13: Audit Log Service
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] `audit_log` table (migration `0012`) with ordering `seq`, event-time `occurred_at`, actor, entity, action, before/after, context
+- [x] Automatic capture of every change to `Audited` models (27 models) via a session hook, in the same transaction; personal fields excluded or recorded by name only
+- [x] Actor from authentication (system for commands and jobs), per-request actor context middleware, `audit_operation` labels (mapping reopen records the reviewer and reason)
+- [x] POPIA: admin views of user records recorded; deleting a user anonymises their audit entries
+- [x] Append-only: trigger refuses updates and deletes except anonymisation and the retention purge (`AUDIT_LOG_RETENTION_DAYS`, `purge-audit-log` command)
+- [x] `GET /api/v1/audit-log` with filters, `audit.view` permission
+- [x] `activate_framework` changed to ORM updates so they are audited
+- [x] ADR 017: audit log
+
+**Verification**:
+- Ruff, ruff format, mypy (61 files) pass; `alembic check` reports no drift
+- Pytest: 454 passed, 96% total coverage; audit service 99%, audit API 98%
+- End to end in Docker: role sync and CLI bootstrap recorded as system entries; user creation and user list view recorded with the admin as actor; no email addresses in audit entries; `UPDATE` and `DELETE` on `audit_log` refused by the database; deleting the test users anonymised their entries
+
+**Commit**: `feat: add audit log`
 
 ---
 

@@ -8,11 +8,15 @@ from datetime import datetime
 from sqlalchemy import Index, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import CoreModel, SoftDeleteMixin
+from app.models.base import Audited, CoreModel, SoftDeleteMixin
 
 
-class User(SoftDeleteMixin, CoreModel):
+class User(Audited, SoftDeleteMixin, CoreModel):
     """A person who can sign in to OCMP."""
+
+    # Personal data stays out of the audit log; changes are recorded by field only.
+    __audit_exclude__ = frozenset({"email", "display_name", "password_hash"})
+    __audit_ignore__ = frozenset({"last_login_at"})
 
     __tablename__ = "users"
     __table_args__ = (

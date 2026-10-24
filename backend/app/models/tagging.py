@@ -19,7 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import CoreModel, SoftDeleteMixin, live_unique, str_enum
+from app.models.base import Audited, CoreModel, SoftDeleteMixin, live_unique, str_enum
 
 
 class TagListKind(StrEnum):
@@ -51,7 +51,7 @@ TAGGING_COLUMNS = {
 }
 
 
-class TagList(SoftDeleteMixin, CoreModel):
+class TagList(Audited, SoftDeleteMixin, CoreModel):
     """A configurable list of tags, managed by the curriculum office."""
 
     __tablename__ = "tag_lists"
@@ -77,7 +77,7 @@ class TagList(SoftDeleteMixin, CoreModel):
     )
 
 
-class TagValue(SoftDeleteMixin, CoreModel):
+class TagValue(Audited, SoftDeleteMixin, CoreModel):
     """One tag in a list."""
 
     __tablename__ = "tag_values"
@@ -99,7 +99,7 @@ class TagValue(SoftDeleteMixin, CoreModel):
     tag_list: Mapped[TagList] = relationship(back_populates="values", lazy="raise")
 
 
-class Tagging(CoreModel):
+class Tagging(Audited, CoreModel):
     """A tag applied to one curriculum item, directly or by inheritance.
 
     Exactly one of the item columns is set. An inherited tagging points to the

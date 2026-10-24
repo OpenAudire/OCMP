@@ -3,7 +3,7 @@
 import uuid
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Crosswalk, CrosswalkEntry, Framework, FrameworkCrossRef, FrameworkItem
@@ -152,19 +152,19 @@ async def activate_framework(db: AsyncSession, framework: Framework) -> list[uui
     """
     if framework.is_deleted:
         raise InvalidRequestError("A deleted framework cannot be activated.")
+    # ORM updates (not a bulk UPDATE) so each status change reaches the audit log.
     result = await db.execute(
-        update(Framework)
-        .where(
+        select(Framework).where(
             Framework.key == framework.key,
             Framework.id != framework.id,
             Framework.status == FrameworkStatus.ACTIVE,
             Framework.deleted_at.is_(None),
         )
-        .values(status=FrameworkStatus.SUPERSEDED)
-        .returning(Framework.id)
-        .execution_options(synchronize_session="fetch")
     )
-    superseded = list(result.scalars())
+    superseded = []
+    for older in result.scalars():
+        older.status = FrameworkStatus.SUPERSEDED
+        superseded.append(older.id)
     framework.status = FrameworkStatus.ACTIVE
     await db.flush()
     return superseded

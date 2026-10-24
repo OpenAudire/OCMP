@@ -25,7 +25,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import CoreModel, SoftDeleteMixin, live_unique, str_enum
+from app.models.base import Audited, CoreModel, SoftDeleteMixin, live_unique, str_enum
 
 
 class FrameworkProfile(StrEnum):
@@ -57,7 +57,7 @@ class CrosswalkEntryType(StrEnum):
     NEW = "new"  # new item has no predecessor
 
 
-class TaxonomyScale(CoreModel):
+class TaxonomyScale(Audited, CoreModel):
     """An ordered scale of cognitive or performance levels (Bloom, Miller, SOLO...)."""
 
     __tablename__ = "taxonomy_scales"
@@ -71,7 +71,7 @@ class TaxonomyScale(CoreModel):
     )
 
 
-class TaxonomyLevel(CoreModel):
+class TaxonomyLevel(Audited, CoreModel):
     """One level of a scale, with the verbs that suggest it."""
 
     __tablename__ = "taxonomy_levels"
@@ -93,7 +93,7 @@ class TaxonomyLevel(CoreModel):
     scale: Mapped[TaxonomyScale] = relationship(back_populates="levels", lazy="raise")
 
 
-class Framework(SoftDeleteMixin, CoreModel):
+class Framework(Audited, SoftDeleteMixin, CoreModel):
     """One version of a framework."""
 
     __tablename__ = "frameworks"
@@ -126,7 +126,7 @@ class Framework(SoftDeleteMixin, CoreModel):
     )
 
 
-class FrameworkItem(CoreModel):
+class FrameworkItem(Audited, CoreModel):
     """A competency, descriptor or keyword within a framework, in a tree.
 
     Items are not soft-deleted: a framework version is fixed once published,
@@ -174,7 +174,7 @@ class FrameworkItem(CoreModel):
     )
 
 
-class FrameworkCrossRef(CoreModel):
+class FrameworkCrossRef(Audited, CoreModel):
     """A typed link between two items, within one framework or across frameworks."""
 
     __tablename__ = "framework_cross_refs"
@@ -192,7 +192,7 @@ class FrameworkCrossRef(CoreModel):
     type: Mapped[CrossRefType] = mapped_column(str_enum(CrossRefType, "cross_ref_type"))
 
 
-class Crosswalk(CoreModel):
+class Crosswalk(Audited, CoreModel):
     """How the items of one framework version map onto another version."""
 
     __tablename__ = "crosswalks"
@@ -212,7 +212,7 @@ class Crosswalk(CoreModel):
     entries: Mapped[list["CrosswalkEntry"]] = relationship(back_populates="crosswalk", lazy="raise")
 
 
-class CrosswalkEntry(CoreModel):
+class CrosswalkEntry(Audited, CoreModel):
     """One mapping in a crosswalk. Which items are set depends on the type."""
 
     __tablename__ = "crosswalk_entries"

@@ -37,6 +37,7 @@ from app.models.mapping import (
     MappingStatus,
     ReviewDecision,
 )
+from app.services.audit import audit_operation
 from app.services.authorization import (
     AuthorizationError,
     ConflictError,
@@ -215,10 +216,13 @@ async def review_link(
     return link
 
 
-async def reopen_link(db: AsyncSession, actor: User, link: MappingLink) -> MappingLink:
+async def reopen_link(
+    db: AsyncSession, actor: User, link: MappingLink, *, reason: str | None = None
+) -> MappingLink:
     """Return a rejected link to ``suggested`` so it can be reviewed again.
 
-    The caller records the change in the audit log.
+    Recorded in the audit log as a ``mapping.reopen`` operation by ``actor``,
+    with the reason given.
 
     Raises:
         AuthorizationError: If the actor may not review mappings for this objective.
@@ -232,13 +236,14 @@ async def reopen_link(db: AsyncSession, actor: User, link: MappingLink) -> Mappi
     if link.status != MappingStatus.REJECTED:
         raise ConflictError("Only rejected links can be reopened.")
 
-    link.status = MappingStatus.SUGGESTED
-    link.accept_method = None
-    link.needs_discussion = False
-    link.first_reviewer_id = link.second_reviewer_id = None
-    link.first_reviewed_at = link.second_reviewed_at = None
-    link.first_decision = None
-    await db.flush()
+    with audit_operation("mapping.reopen", actor_id=actor.id, reason=reason):
+        link.status = MappingStatus.SUGGESTED
+        link.accept_method = None
+        link.needs_discussion = False
+        link.first_reviewer_id = link.second_reviewer_id = None
+        link.first_reviewed_at = link.second_reviewed_at = None
+        link.first_decision = None
+        await db.flush()
     return link
 
 

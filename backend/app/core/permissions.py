@@ -18,6 +18,7 @@ class Permission(StrEnum):
     USERS_MANAGE = "users.manage"
     ROLES_MANAGE = "roles.manage"  # define custom roles
     ROLES_ASSIGN = "roles.assign"  # grant roles within one's scope
+    AUDIT_VIEW = "audit.view"  # read the audit log
 
     # Curriculum
     CURRICULUM_VIEW = "curriculum.view"  # including drafts

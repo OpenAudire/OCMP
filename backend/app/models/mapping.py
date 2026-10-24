@@ -23,7 +23,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import CoreModel, str_enum
+from app.models.base import Audited, CoreModel, str_enum
 
 
 class AIRunType(StrEnum):
@@ -167,7 +167,7 @@ class AIRunCall(CoreModel):
     run: Mapped[AIRun] = relationship(back_populates="calls", lazy="raise")
 
 
-class MappingLink(CoreModel):
+class MappingLink(Audited, CoreModel):
     """A claim that an objective addresses a framework item, and how well.
 
     One row per (objective, framework item): its status changes as people review
@@ -239,7 +239,7 @@ class MappingLink(CoreModel):
     )
 
 
-class ReviewAssignment(CoreModel):
+class ReviewAssignment(Audited, CoreModel):
     """Mapping review work given to a person: a version (or one module) against a framework."""
 
     __tablename__ = "review_assignments"
