@@ -328,7 +328,9 @@ class TestAssignments:
         )
         assert created.status_code == 201
         assignment = created.json()
-        assert assignment["role"] == {"key": "curriculum_office", "name": "Curriculum office"}
+        assert assignment["role"]["key"] == "curriculum_office"
+        assert assignment["role"]["name"] == "Curriculum office"
+        assert "frameworks.manage" in assignment["role"]["permissions"]
 
         at_scope = await api_client.get(
             "/api/v1/role-assignments",

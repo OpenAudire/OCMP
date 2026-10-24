@@ -347,7 +347,25 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.15: Frontend Scaffold
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] API client (`src/api/`): axios with session cookie and CSRF header, typed endpoints, `ApiError`, central query keys
+- [x] Session (`src/session/`): current user, roles and permissions (with server-side implications)
+- [x] Institution provider (`src/institution/`): loads settings, applies terminology overrides to i18next, `useFeature()`
+- [x] App shell (`src/layout/`): Mantine AppShell, responsive navbar, light/dark toggle, user menu with sign-out, skip link
+- [x] Navigation by permission (brief section 11): staff sections per permission, students see Explorer and Search only; direct addresses to hidden sections show "No access"
+- [x] Routes (`src/routes/`): auth guard with sign-in redirect, start page, placeholders, not-found, no-access, error with retry
+- [x] Backend: role summaries include their permissions (`/auth/me/roles`)
+- [x] All UI text in `en.json` (`layout.*`, `pages.*`)
+- [x] ADR 019: frontend architecture
+
+**Verification**:
+- Frontend lint, typecheck, production build pass; 20 tests (86% line coverage): API client, navigation rules, terminology, routing and guards
+- Backend: ruff, mypy pass; 479 tests pass
+- Docker: Caddy and nginx serve the app for client-side routes (`/`, `/explorer`, deep paths); hashed assets cached as immutable; same-origin API reachable
+
+**Commit**: `feat: add frontend scaffold`
 
 ---
 

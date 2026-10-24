@@ -1,7 +1,8 @@
 {
   "app": {
     "title": "Open Curriculum Mapping Platform",
-    "description": "Map your curriculum to competency frameworks with AI assistance"
+    "description": "Map your curriculum to competency frameworks with AI assistance",
+    "shortTitle": "OCMP"
   },
   "common": {
     "loading": "Loading...",
@@ -28,7 +29,8 @@
     "forgotPassword": "Forgot password?",
     "resetPassword": "Reset password",
     "register": "Register",
-    "loginWithSSO": "Log in with SSO"
+    "loginWithSSO": "Log in with SSO",
+    "signInComingSoon": "Signing in with this page arrives in the next update."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -67,5 +69,27 @@
     "framework_other": "Frameworks",
     "framework_item_one": "Framework item",
     "framework_item_other": "Framework items"
+  },
+  "layout": {
+    "skipToContent": "Skip to main content",
+    "toggleNavigation": "Show or hide navigation",
+    "mainNavigation": "Main navigation",
+    "colorScheme": "Switch between light and dark theme",
+    "userMenu": "Account menu",
+    "signedInAs": "Signed in as {{name}}",
+    "signOut": "Sign out",
+    "loading": "Loading…"
+  },
+  "pages": {
+    "comingSoon": "This page is being built.",
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "There is no page at this address.",
+    "backHome": "Go to start page",
+    "noAccessTitle": "No access",
+    "noAccessBody": "Your account cannot use this part of OCMP. Ask an administrator if you need access.",
+    "noRolesBody": "Your account has no roles yet. Ask an administrator to give you access.",
+    "errorTitle": "Something went wrong",
+    "errorBody": "OCMP could not be reached. Check your connection and try again.",
+    "retry": "Try again"
   }
 }

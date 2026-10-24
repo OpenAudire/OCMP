@@ -50,6 +50,8 @@ class RoleSummary(BaseModel):
 
     key: str
     name: str
+    # Lets the UI decide what to show; the API still checks every permission.
+    permissions: list[str]
 
 
 class AssignmentRead(BaseModel):

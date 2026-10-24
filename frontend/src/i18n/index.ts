@@ -17,6 +17,8 @@ i18n
     interpolation: {
       escapeValue: false,
     },
+    // Re-render when institution terminology is added to the translations.
+    react: { bindI18nStore: 'added' },
   });
 
 export default i18n;

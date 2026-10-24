@@ -228,6 +228,13 @@ chore: update dependencies
 - No hard-coded strings in components
 - Curriculum nouns use `terms.*` keys (e.g. `t('terms.module', { count })`), so institution terminology overrides apply
 
+### Frontend structure (ADR 019)
+
+- API calls go through `src/api/endpoints.ts` (shared axios client); add query keys to `queryKeys`
+- Current user and permissions: `useSession()`; institution settings and features: `useInstitution()`, `useFeature()`
+- Navigation visibility rules live in `src/layout/navigation.ts`; they only shape the UI, the API enforces permissions
+- Tests mock `../api/endpoints` with `vi.mock` and use the real i18n setup
+
 ## Documentation
 
 - ADRs in `/docs/adr/` for major decisions

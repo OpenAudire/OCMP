@@ -1,0 +1,16 @@
+/* Hidden until focused, so keyboard users can jump past the navigation. */
+.skipLink {
+  position: absolute;
+  left: var(--mantine-spacing-md);
+  top: -100px;
+  z-index: 1000;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  background: var(--mantine-color-body);
+  color: var(--mantine-color-text);
+  border: 2px solid var(--mantine-primary-color-filled);
+  border-radius: var(--mantine-radius-sm);
+}
+
+.skipLink:focus {
+  top: var(--mantine-spacing-xs);
+}
