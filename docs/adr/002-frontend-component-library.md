@@ -43,3 +43,8 @@ We will use **Mantine v7** as the primary component library.
 - Use @mantine/form for all forms
 - Use @mantine/notifications for toast messages
 - PostCSS configuration required for Mantine
+
+*Revised 2026-10-25 (Slice 1.0):* upgraded to **Mantine 9**, which requires React 19.2 or
+later, so React moved to 19 in the same change. Mantine 9 changed the `light` colour variant to
+solid colours and the default radius to `md`; the theme sets its radius explicitly, and the
+Curriculum in Context design tokens (Slice 1.1) define the colours.

@@ -43,7 +43,7 @@ Frontend (`frontend/src/`): one folder per feature (`auth/`, `account/`, `setup/
 - **Backend**: Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.x, Alembic
 - **Database**: PostgreSQL 16 with pgvector
 - **Background jobs**: Dramatiq with Redis
-- **Frontend**: React 18, TypeScript, Vite, Mantine v7, TanStack Query, React Router
+- **Frontend**: React 19, TypeScript, Vite, Mantine v9, TanStack Query, React Router; Node.js LTS (24) for tooling
 - **Auth**: Argon2id hashing, session cookies, OIDC
 - **Deployment**: Docker Compose with Caddy
 

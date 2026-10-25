@@ -608,3 +608,88 @@ Dependabot pull requests at approval: only #1 (Mailpit v1.21 to v1.31, developme
 - [x] CI is green (764d194: CI and CodeQL)
 - [x] Demo data loads with one command
 - [x] Role permissions covered by tests
+
+---
+
+## Phase 1 Plan (approved 2026-10-25)
+
+Product name: **Curriculum in Context** (repository, Python package, CLI, images and compose project stay `ocmp`). UI reference: the approved mockups in `docs/mockups/` (start with its README).
+
+### Decisions
+
+| # | Topic | Decision |
+|---|---|---|
+| 1 | Contrast | Light `--faint` darkened to about `#5F6B76` (was 4.26:1 on `--bg`); new `--field-line` token at 3:1 or more for inputs and toggles in both themes; card borders stay as designed; token table in `docs/mockups/README.md` updated to match |
+| 2 | Phase 2 items in the mockups | Hidden in Phase 1, no placeholders: declared vs delivered, Brightspace card, evidence pack button, framework version/crosswalk panel, session times and venues. The dashboard is rearranged so nothing looks missing; the student "This week" lists sessions by week number |
+| 3 | AI tasks from brief section 8 | Study-guide extraction (PDF/DOCX to draft objectives) is a Phase 1 slice. "Explain this gap", "Suggest sessions" and Q&A are deferred to Phase 2; their buttons stay hidden |
+| 4 | Demo data | Keep the 3-module demo; add a published 2026 version and a 2027 draft made by copy-forward (Slice 1.5), seeded metrics history (1.28) and the AI gold set (1.19) |
+| 5 | Charts | Plain SVG components instead of ECharts (ADR); Cytoscape stays for the Phase 2 network view |
+| 6 | Rename scope | "Curriculum in Context" in UI, docs site, README, emails, OpenAPI title and page titles; no acronym |
+| 7 | Navigation | As the mockup sidebar: Dashboard, Curriculum, Mapping, Review queue (sub-item), Frameworks, Reports, Import and export, Search, Admin. Students: Explorer and Search |
+| 8 | Public API | Personal API tokens in Phase 1 (Slice 1.30); webhooks in Phase 2 |
+| 9 | Fonts | IBM Plex Sans and Mono self-hosted (OFL), no third-party requests |
+| 10 | Embeddings | Model and server proposed as an ADR at the start of Slice 1.15 |
+
+### Slices
+
+| # | Slice |
+|---|---|
+| 1.0 | Dependency upgrades: Node current LTS, Mantine 7 to 9, react-i18next 15 to 17, eslint-plugin-react-refresh 0.5, GitHub Actions majors (React 19 if Mantine 9 needs it) |
+| 1.1 | Product name ADR and rename; design tokens (CSS variables, light/dark) mapped into the Mantine theme; self-hosted IBM Plex; theme toggle; shared layout (sidebar, wordmark, icon nav, review count slot, header); shared empty/loading/error components; Playwright with axe checks in both themes |
+| 1.2 | Curriculum read API; programme/version switcher; read-only builder structure tree with states |
+| 1.3 | Structure editing: phases, modules and learning events CRUD with scoped permissions |
+| 1.4 | Reorder (drag and drop with keyboard alternative) and copy items with children |
+| 1.5 | Curriculum versions: publish rules, copy academic year forward, version diff; demo gets 2026 published and 2027 draft |
+| 1.6 | Objective editor at each level: upward links, domain, taxonomy level |
+| 1.7 | Rule-based objective quality checker (live and bulk) and taxonomy level suggestion from verb lists |
+| 1.8 | Tag lists managed by the curriculum office; tagging with inheritance preview and source |
+| 1.9 | Minimal assessments (items linked to objectives); credits and notional hours check per module, year and NQF level |
+| 1.10 | Framework pack import from the UI (schema extended for crosswalks, tag lists, cross-references); structure-only templates (HPCSA, NQF, graduate attributes, MeSH subset) |
+| 1.11 | Framework library screen and tree browser with search and "where mapped" |
+| 1.12 | Mapping workspace: manual linking, coverage 0-5 and depth with help text |
+| 1.13 | Review queue: API and screen, keyboard shortcuts, bulk accept, four-eyes, sidebar count |
+| 1.14 | AI provider layer (Null, Anthropic, OpenAI-compatible, Ollama), privacy guard and redaction, encrypted keys, budgets, local-only, outside-SA warning, admin AI settings screen |
+| 1.15 | Embeddings image and text-hash cache in pgvector; near-duplicate detection in the checker (ADR first) |
+| 1.16 | AI mapping pipeline: hybrid shortlist, versioned prompt, validated JSON, job progress and error states, few-shot from decisions |
+| 1.17 | AI objective rewrite (diff to accept) and domain/level classification |
+| 1.18 | Study-guide extraction: PDF/DOCX upload to draft objectives for review |
+| 1.19 | Evaluation harness (script and admin page) with fictional gold set: precision, recall, Cohen's kappa |
+| 1.20 | Search: full-text and meaning-based with filters; "Where do we teach X?"; header search |
+| 1.21 | Coverage engine (four labelled methods), coverage report with heatmap, gap report |
+| 1.22 | Report exports to Excel and PDF, each stating method and date |
+| 1.23 | Redundancy and traceability reports |
+| 1.24 | Teaching formats and contact hours, curriculum relationship, role balance (health profile), assessment methods coverage |
+| 1.25 | Excel templates from field definitions; import engine with preview, dry run, row errors, upsert by external ID (structure and objectives) |
+| 1.26 | Excel imports for tags, frameworks and mappings; import job history |
+| 1.27 | Exports: full round trip, objectives x framework items matrix, JSON of a version |
+| 1.28 | Committee dashboard: KPI trends from nightly metric snapshots (seeded for the demo), traceability diagram, coverage vs last published version, mapping progress, credit table |
+| 1.29 | Student and staff explorer (phone first): published versions only, search, "what is covered in this module/assessment" |
+| 1.30 | Admin screens (users, roles, assignments, institution settings); personal API tokens; `remove-demo` command |
+| 1.31 | End-to-end journeys complete; user guides per role, glossary, FAQ, AI provider setup guide; Phase 1 definition-of-done review |
+
+Each slice: its screen states, tests, docs, PROGRESS.md entry and one Conventional Commit; Playwright journeys are added as screens arrive.
+
+---
+
+### Slice 1.0: Dependency Upgrades
+**Status**: Complete
+
+**Deliverables**:
+- [x] **Node.js 24** (current LTS, "Krypton", checked against the Node.js release schedule on 2026-10-25) in CI, the web image (`node:24-alpine`) and CONTRIBUTING; `@types/node` 24. Node 26 becomes LTS on 2026-10-28, three days after this slice
+- [x] **Mantine 7 to 9.7.3** (core, hooks, form, notifications). Mantine 9 requires **React 19.2**, so React and React DOM moved to 19 (`@types/react` 19). No code changes needed: none of the removed props or hooks were used, and the theme already sets its radius
+- [x] **react-i18next 15 to 17**, which requires **i18next 26** (from 23); none of the removed init options were used
+- [x] **eslint-plugin-react-refresh 0.4 to 0.5**, which requires **ESLint 9**: `.eslintrc.cjs` replaced by flat config `eslint.config.js` (same rule sets; `reactRefresh.configs.vite()` keeps constant exports allowed); `typescript-eslint` package replaces the separate parser and plugin; `eslint-plugin-react-hooks` 4 to 7. ESLint stays on 9 because `eslint-plugin-react` does not support 10 yet
+- [x] The new React Hooks rule `set-state-in-effect` flagged the sign-in "taking longer" note; the reset moved into the effect cleanup, with a new test for the note appearing and disappearing
+- [x] **Also upgraded (not in the Dependabot list)**: all 9 `npm audit` findings (3 critical, 1 high) were already present and came from Vite 5, Vitest 2 and React Router 6; Dependabot had stopped at its limit of 5 open npm pull requests. Upgraded to **Vite 8** (Rolldown: `manualChunks` replaced by `codeSplitting` groups), **@vitejs/plugin-react 6**, **Vitest 5**, **jsdom 30**, **@testing-library/jest-dom 7** (now imported from `@testing-library/jest-dom/vitest`) and **React Router 7** (imports moved from `react-router-dom` to `react-router`). `npm audit`: 0 vulnerabilities. Lockfile regenerated
+- [x] TypeScript stays on 5.9: TypeScript 6/7 exist but `typescript-eslint` supports below 6.1 only
+- [x] **GitHub Actions majors**: `actions/checkout` 7, `actions/setup-python` 7, `actions/setup-node` 7, `codecov/codecov-action` 7.1.1, `docker/setup-buildx-action` 4.4.1, `docker/build-push-action` 7.4.0 (third-party pinned to commit SHAs); release notes checked: the breaking changes are the Node 24 action runtime and inputs this repository does not use
+- [x] ADR 002 revised (Mantine 9, React 19); CLAUDE.md stack line updated
+
+**Verification**:
+- Frontend under Node 24.22.1: lint, typecheck, production build pass; 56 tests pass (90.5% line coverage); no warnings in the test run; library chunks split as before (app code 10.9 kB gzipped)
+- Backend: ruff, ruff format, mypy (69 files) pass; pytest 515 passed against the test database, 96% coverage; `mkdocs build --strict` passes
+- Docker: web image builds on `node:24-alpine`; stack healthy, `/ready` ready
+- Real browser (temporary Playwright Chromium against the Docker stack): sign-in page renders, wrong credentials show the error, forgotten-password page sends its confirmation, dark colour scheme applies; no console errors besides the expected 401s
+- Not verified here: the workflows themselves on GitHub Actions (runs on push)
+
+**Commit**: `chore: upgrade to Node 24, React 19, Mantine 9, ESLint 9, Vite 8 and current actions`

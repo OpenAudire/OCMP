@@ -1,7 +1,7 @@
 import { MantineProvider } from '@mantine/core';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 
 import type { Institution, RoleAssignment, User } from '../api/types';
 import { createQueryClient } from '../queryClient';

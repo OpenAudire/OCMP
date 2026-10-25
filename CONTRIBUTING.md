@@ -49,7 +49,7 @@ chore: update dependencies
 ### Prerequisites
 
 - Python 3.12+
-- Node.js 22+
+- Node.js 24 (current LTS)
 - Docker and Docker Compose
 - PostgreSQL 16 (or use Docker)
 

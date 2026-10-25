@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router';
 
 import { AccountPage } from '../account/AccountPage';
 import { ForgotPasswordPage } from '../auth/ForgotPasswordPage';

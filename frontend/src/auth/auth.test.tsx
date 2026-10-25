@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '../api/client';
@@ -112,6 +112,37 @@ describe('sign in', () => {
     submit('Sign in');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Try again in 3 minutes.');
+  });
+
+  it('explains a slow sign-in, and drops the note when it ends', async () => {
+    startSignedOut();
+    let fail!: () => void;
+    mocked.login.mockImplementation(
+      () =>
+        new Promise<void>((_, reject) => {
+          fail = () => reject(new ApiError(401, 'Invalid email or password.'));
+        })
+    );
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      renderAt('/login');
+      await type(/^Email/, 'demo.user@example.org');
+      await type(/^Password/, 'wrong passphrase');
+      submit('Sign in');
+      await waitFor(() => expect(mocked.login).toHaveBeenCalled());
+      expect(screen.queryByText(/taking a little longer/)).not.toBeInTheDocument();
+
+      act(() => vi.advanceTimersByTime(3000));
+      expect(await screen.findByText(/taking a little longer/)).toBeInTheDocument();
+
+      act(() => fail());
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'The email address or password is not correct.'
+      );
+      expect(screen.queryByText(/taking a little longer/)).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('asks for email and password before calling the server', async () => {

@@ -3,7 +3,7 @@ import { Alert, Anchor, Button, PasswordInput, Stack } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router';
 
 import { isApiError } from '../api/client';
 import { confirmPasswordReset, queryKeys } from '../api/endpoints';

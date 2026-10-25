@@ -15,7 +15,7 @@ import {
 import { useForm } from '@mantine/form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router';
 
 import { isApiError } from '../api/client';
 import { fetchSetupStatus, queryKeys, runSetup } from '../api/endpoints';

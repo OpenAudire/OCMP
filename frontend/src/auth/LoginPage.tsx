@@ -3,7 +3,7 @@ import { Alert, Anchor, Button, Divider, PasswordInput, Stack, Text, TextInput }
 import { useForm } from '@mantine/form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 
 import { isApiError } from '../api/client';
 import { fetchSetupStatus, login, queryKeys, ssoLoginUrl } from '../api/endpoints';
@@ -65,12 +65,13 @@ export function LoginPage() {
   });
 
   useEffect(() => {
-    if (!signIn.isPending) {
-      setSlow(false);
-      return undefined;
-    }
+    if (!signIn.isPending) return undefined;
     const timer = setTimeout(() => setSlow(true), SLOW_SIGN_IN_MS);
-    return () => clearTimeout(timer);
+    // Runs when the attempt ends, so the note disappears with it.
+    return () => {
+      clearTimeout(timer);
+      setSlow(false);
+    };
   }, [signIn.isPending]);
 
   if (sessionPending || setupStatus.isPending) return <FullPageLoader />;

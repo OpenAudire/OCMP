@@ -14,7 +14,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconLogout, IconMoon, IconSun, IconUser, IconUserCircle } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { NavLink as RouterNavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink as RouterNavLink, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { logout } from '../api/endpoints';
 import { useInstitution } from '../institution/useInstitution';
