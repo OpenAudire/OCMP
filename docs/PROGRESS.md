@@ -568,7 +568,7 @@ scripts.
 Collected from the slices above so nothing is lost:
 
 - **Phase 1**: curriculum CRUD API and tree editor, publishing rules, copy-forward and version diff; framework pack and Excel import, framework browser, cross-framework search (pack schema to extend for crosswalks, tag lists and cross-references); tag inheritance rules and tagging UI; AI pipeline, review queue, coverage reports; eval harness with a fictional gold set; admin screens for users, roles and settings (API only today); user guides per role, glossary, FAQ, AI provider setup guide; a command to remove the demo data; Playwright end-to-end tests; personal API tokens (`ApiToken`)
-- **Phase 2**: SAML (account service is protocol-independent), framework version migration, Brightspace connector and setup guide
+- **Phase 2**: SAML (account service is protocol-independent), framework version migration, Brightspace connector and setup guide; move to Node 26 LTS early in Phase 2 (CI, web image, CONTRIBUTING, `@types/node`; decided at Slice 1.0)
 - **SSO**: role mapping from claims, admin linking of existing local accounts, provider logout, multi-tenant Entra
 - **POPIA**: per-user data export and deletion, email address changes (the inventory and notice template exist since Slice 0.21)
 - **CI/CD**: first tagged release, GitHub Pages and code scanning upload (see "Before the Public Release"); multi-architecture images
@@ -675,7 +675,7 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 **Status**: Complete
 
 **Deliverables**:
-- [x] **Node.js 24** (current LTS, "Krypton", checked against the Node.js release schedule on 2026-10-25) in CI, the web image (`node:24-alpine`) and CONTRIBUTING; `@types/node` 24. Node 26 becomes LTS on 2026-10-28, three days after this slice
+- [x] **Node.js 24** (current LTS, "Krypton", checked against the Node.js release schedule on 2026-10-25) in CI, the web image (`node:24-alpine`) and CONTRIBUTING; `@types/node` 24. Node 26 becomes LTS on 2026-10-28, three days after this slice; the owner chose to stay on 24 and move to 26 early in Phase 2
 - [x] **Mantine 7 to 9.7.3** (core, hooks, form, notifications). Mantine 9 requires **React 19.2**, so React and React DOM moved to 19 (`@types/react` 19). No code changes needed: none of the removed props or hooks were used, and the theme already sets its radius
 - [x] **react-i18next 15 to 17**, which requires **i18next 26** (from 23); none of the removed init options were used
 - [x] **eslint-plugin-react-refresh 0.4 to 0.5**, which requires **ESLint 9**: `.eslintrc.cjs` replaced by flat config `eslint.config.js` (same rule sets; `reactRefresh.configs.vite()` keeps constant exports allowed); `typescript-eslint` package replaces the separate parser and plugin; `eslint-plugin-react-hooks` 4 to 7. ESLint stays on 9 because `eslint-plugin-react` does not support 10 yet
