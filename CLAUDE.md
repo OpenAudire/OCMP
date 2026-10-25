@@ -11,11 +11,32 @@ This file documents the conventions and patterns used in the OCMP project to ens
 ```
 /backend        FastAPI app (Python 3.12)
 /frontend       React app (TypeScript, Vite, Mantine)
-/packs          Framework/taxonomy pack schema and templates
-/deploy         Docker Compose, Caddyfile, deployment scripts
-/docs           MkDocs site, ADRs, PROJECT_BRIEF.md, PROGRESS.md
-/scripts        Dev helpers, seed data, eval harness
+/packs          Framework/taxonomy pack schema and demo pack
+/deploy         Docker Compose, Caddyfile, backup/restore scripts, .env.example
+/docs           MkDocs site (operations/, admin/), ADRs, PROJECT_BRIEF.md, PROGRESS.md
+/scripts        Dev helpers, eval harness (stub until Phase 1)
+mkdocs.yml      Documentation site configuration
 ```
+
+Backend (`backend/app/`):
+
+```
+main.py         App factory, middleware, lifespan
+cli.py          `python -m app.cli` commands (setup-token, create-admin, load-demo, ...)
+worker.py       Dramatiq entry point; imports every module in jobs/
+api/            deps.py (auth, permissions, settings deps), health.py, v1/ routers
+core/           config, logging, database, redis, broker, security, csrf, proxy,
+                permissions (catalogue + system roles), profiles (terms, features)
+models/         SQLAlchemy models; base.py has CoreModel, mixins, Audited, str_enum, live_unique
+schemas/        Shared Pydantic schemas (router-only schemas may live in the router)
+services/       Business logic; service errors live in services/authorization.py
+jobs/           Dramatiq actors
+demo/           Demo dataset loader and data
+ai/, connectors/  Placeholders for Phase 1 (AI) and Phase 2 (LMS connectors)
+```
+
+Frontend (`frontend/src/`): one folder per feature (`auth/`, `account/`, `setup/`,
+`layout/`, `routes/`, `session/`, `institution/`, `api/`, `pages/`), tests beside the code.
 
 ## Technology Stack
 
@@ -98,6 +119,10 @@ npm run typecheck
 
 # Run tests
 npm run test
+
+# Dev server (proxies the API) and production build
+npm run dev
+npm run build
 ```
 
 ### Documentation site
@@ -143,15 +168,10 @@ async def get_programme(db: AsyncSession, programme_id: UUID) -> Programme | Non
 - Use Mantine components
 
 ```typescript
-// Example component
-export function ProgrammeCard({ programme }: { programme: Programme }) {
+// Example component: curriculum nouns come from terms.* so institution wording applies
+export function ModuleCount({ count }: { count: number }) {
   const { t } = useTranslation();
-  return (
-    <Card>
-      <Text>{programme.name}</Text>
-      <Badge>{t('common.credits', { count: programme.credits })}</Badge>
-    </Card>
-  );
+  return <Badge>{`${count} ${t('terms.module', { count })}`}</Badge>;
 }
 ```
 
@@ -163,7 +183,10 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Protected routes take `CurrentUser` (or `CurrentAuth`) from `app/api/deps.py`; CSRF is enforced by middleware (ADR 009)
 - Check permissions with `Depends(require_permission(Permission.X, scope=...))`; never only in the UI (ADR 012)
 - Raise `AuthorizationError` / `InvalidRequestError` / `ConflictError` from services; they map to 403 / 422 / 409
-- HTTP status codes: 200 OK, 201 Created, 204 No Content, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 422 Validation Error
+- HTTP status codes: 200 OK, 201 Created, 202 Accepted (queued work), 204 No Content, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 422 Validation Error, 429 Too Many Requests (`too_many_attempts()` in `app/api/deps.py`), 503 Not Ready
+- Register new routers in `app/api/v1/__init__.py`
+- New settings: add to `app/core/config.py`, `deploy/.env.example` and `docs/operations/configuration.md` together
+- New CLI commands: `app/cli.py`, tested in `tests/test_cli.py`, listed in `docs/admin/basics.md`
 
 ### Database
 
@@ -192,13 +215,14 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Change audited data through ORM objects, not bulk `update()`/`delete()` statements (those are not captured)
 - Label meaningful operations with `audit_operation("area.action", actor_id=..., reason=...)`
 - Identify SSO users by (issuer, subject) only; never link or match accounts by email (ADR 011)
-- Audit log for curriculum/framework/mapping changes
+- Record admin views of personal data with `record_event(..., action="view")` (POPIA)
 
 ### Testing
 
 - Backend: pytest with pytest-asyncio
 - Frontend: Vitest with Testing Library
-- E2E: Playwright
+- E2E: Playwright (planned for Phase 1; not set up yet)
+- Backend tests are flat files `tests/test_<area>.py`; database tests skip unless `TEST_DATABASE_URL` is set, and CI always sets it
 - Factories: factory_boy for models (`tests/factories.py`)
 - API tests use the `api_client` fixture (test DB session, fakeredis, test settings)
 - Never patch `app.core.config.get_settings` in tests; override dependencies or pass `Settings` explicitly
@@ -213,7 +237,7 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 |--------|---------|----------|----------|
 | Models | PascalCase | PascalCase | snake_case |
 | Functions | snake_case | camelCase | - |
-| Files | snake_case.py | PascalCase.tsx | - |
+| Files | snake_case.py | PascalCase.tsx (components), camelCase.ts (other modules) | - |
 | Routes | /kebab-case | - | - |
 
 ## Commit Conventions
@@ -267,15 +291,20 @@ chore: update dependencies
 - Backup scripts in `deploy/` are POSIX `sh`; local deploy changes go in
   `deploy/caddy/*.caddy` or `deploy/docker-compose.override.yml`, never in tracked files
 
-## Phase 0 Checklist
+## Working in Slices
 
-- [x] Project scaffold
-- [x] Docker Compose base
-- [x] Backend core + health
-- [x] Core database models
-- [x] Authentication (local + OIDC)
-- [x] Roles and permissions
-- [x] Curriculum models
-- [x] Framework models
-- [x] Demo dataset
-- [x] Documentation skeleton
+- Re-read `docs/PROJECT_BRIEF.md`, this file and `docs/PROGRESS.md` at the start of a session
+- Each slice ends with: checks passing (backend ruff, format, mypy, pytest with the test
+  database; frontend lint, typecheck, test; `mkdocs build --strict`), an end-to-end check
+  in Docker where behaviour changed, `PROGRESS.md` updated, docs and ADR updated, one
+  Conventional Commit
+- Record what was verified and what was not in `PROGRESS.md`; never claim an unrun check
+- Check current official documentation before integrating an external API (Brightspace,
+  AI providers, LTI); if it cannot be verified, stub it behind an interface and say so
+- Ask before changing the technology stack (via ADR)
+
+## Status
+
+Phase 0 is complete apart from installing on a real Linux server with public DNS (see the
+Phase 0 Definition of Done in `docs/PROGRESS.md`). Phase 1 (core mapping) is planned after
+approval of Phase 0.

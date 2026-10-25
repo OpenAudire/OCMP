@@ -2,7 +2,7 @@
 
 This file tracks progress through the development phases.
 
-## Current Phase: Phase 0 - Foundations
+## Current Phase: Phase 0 - Foundations (complete; awaiting a real-server install and approval)
 
 ### Slice 0.1: Project Scaffold
 **Status**: Complete
@@ -456,13 +456,53 @@ This file tracks progress through the development phases.
 - Backup and restore test on the demo data (3 modules, 20 sessions, 60 objectives, 13 mappings); a truncated dump that passes `pg_restore --list` was refused by `restore.sh` with live data and services untouched; a real restore removed a user created after the backup, ended existing sessions (401) and left the site ready
 - Own certificate in `deploy/caddy/` served by Caddy; `/ready` answered 503 with the database stopped
 - Not verified here: a real Linux server with public DNS and Let's Encrypt (Phase 0 definition of done)
+- GitHub Actions for 3e212d4: CI green (all jobs including the new Documentation job); the Docs publish workflow built the site but stopped at `configure-pages` because Pages is not enabled for the repository yet
 
-**Commit**: `feat: add documentation site, install guides and backup scripts`
+**Commit**: `feat: add documentation site, install guides and backup scripts` (3e212d4)
 
 ---
 
 ### Slice 0.20: CLAUDE.md & PROGRESS.md Finalization
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] CLAUDE.md checked against the code: every module, helper and fixture it names exists; backend and frontend layout added; frontend example used a translation key that does not exist (now a `terms.*` example); Playwright marked as not set up yet; frontend file naming matches the code (components PascalCase, other modules camelCase); status codes 202/409/429/503 added; conventions for registering routers, adding settings and CLI commands, recording personal-data views; slice workflow and current status
+- [x] PROGRESS.md: Phase 0 summary, Definition of Done with evidence, and every deferred item in one list
+
+**Verification**: documentation changes only; `mkdocs build --strict` passes.
+
+**Commit**: `docs: finalise CLAUDE.md and PROGRESS.md for phase 0`
+
+---
+
+## Phase 0 Summary
+
+Built in 20 slices plus a CI fix. The platform installs with Docker Compose, runs a
+first-run setup wizard, signs people in with local accounts (Argon2id, sessions, CSRF,
+throttling, password reset) or OpenID Connect, enforces scoped roles in the API, holds
+the full curriculum, framework, tagging and mapping data model with an append-only audit
+log, supports institution terminology and profiles, loads a fictional demo programme with
+one command, and has operator and admin documentation with tested backup and restore
+scripts.
+
+| Area | State at the end of Phase 0 |
+|---|---|
+| Backend | 69 modules, 515 tests, 96% coverage, ruff/mypy strict clean |
+| Frontend | App shell, sign-in, password reset, account, setup wizard; 55 tests, 91% line coverage |
+| Database | 12 migrations, 30 tables, `alembic check` drift test |
+| Decisions | ADR 001-022 |
+| Docs | MkDocs site: install, configuration, upgrade, backup/restore, admin basics, users and roles, SSO |
+
+### Deferred to later phases
+
+Collected from the slices above so nothing is lost:
+
+- **Phase 1**: curriculum CRUD API and tree editor, publishing rules, copy-forward and version diff; framework pack and Excel import, framework browser, cross-framework search (pack schema to extend for crosswalks, tag lists and cross-references); tag inheritance rules and tagging UI; AI pipeline, review queue, coverage reports; eval harness with a fictional gold set; admin screens for users, roles and settings (API only today); user guides per role, glossary, FAQ, AI provider setup guide; a command to remove the demo data; Playwright end-to-end tests; personal API tokens (`ApiToken`)
+- **Phase 2**: SAML (account service is protocol-independent), framework version migration, Brightspace connector and setup guide
+- **SSO**: role mapping from claims, admin linking of existing local accounts, provider logout, multi-tenant Entra
+- **POPIA**: data inventory in `docs/privacy/`, privacy notice template, per-user data export and deletion
+- **CI/CD**: Dependabot and CodeQL, image builds pushed to GitHub Container Registry on tagged releases, first tagged release; GitHub Pages must be enabled for the docs workflow
+- **Deployment**: the optional `embeddings` profile names an image that does not exist yet (`ghcr.io/ocmp/embeddings`); move the docs from MkDocs Material (end of life 5 May 2027) to Zensical once it is stable
 
 ---
 
@@ -478,6 +518,6 @@ This file tracks progress through the development phases.
 ## Phase 0 Definition of Done
 
 - [ ] Fresh Linux server with Docker can be set up by following install guide
-- [x] CI is green
+- [x] CI is green (3e212d4)
 - [x] Demo data loads with one command
 - [x] Role permissions covered by tests
