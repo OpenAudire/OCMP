@@ -302,6 +302,9 @@ chore: update dependencies
 - Tag `vX.Y.Z` on `main`; `.github/workflows/release.yml` runs CI and pushes
   `ghcr.io/openaudire/ocmp-backend` and `ocmp-web`. Running it by hand is a build-only dry run
 - Compose uses `OCMP_BACKEND_IMAGE` / `OCMP_WEB_IMAGE` (default: local build)
+- GHCR packages take the repository's visibility only when first created: tag the first
+  release after the repository is public, or set both packages to public afterwards
+- Docs treat the repository as public; private copies get a short note only
 - Dependabot opens weekly grouped update PRs; review them like any other change
 
 ## Working in Slices

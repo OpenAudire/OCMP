@@ -520,6 +520,31 @@ This file tracks progress through the development phases.
 
 ---
 
+### Public-Repository Docs, Secret Scan and Image Visibility
+**Status**: Complete
+
+- [x] Install and upgrade guides written for the public repository (clone and pull need no account); a short note covers private copies (fine-grained token with read-only Contents access); released images described as public, with `docker login ghcr.io` only for private images
+- [x] **Secret scan of the whole history** (33 commits, all refs):
+  - gitleaks 8.30.1: 4 findings, all the same test placeholder `test-secret-key-that-is-at-least-32-characters-long` in `backend/tests/conftest.py` and `test_health.py` (false positives)
+  - TruffleHog 3.99.7 (verified, unknown and unverified results): 0 findings
+  - No `.env` file was ever committed (`deploy/.env` is git-ignored); the local `SECRET_KEY`, `POSTGRES_PASSWORD` and the GitHub CLI token appear in no commit
+- [x] **Release image visibility** (GitHub packages documentation, checked 2026-10-25): images published by the release workflow take the repository's visibility when each package is first created and do not follow later changes. Tagged while the repository is private, they would be private and stay private after it goes public, until switched to public in each package's settings (irreversible). No image has been published yet (the dry runs do not push). `OpenAudire` is a personal account, so no organisation policy restricts public packages. Recorded in ADR 023 and CLAUDE.md
+
+**Not verified**: cloning without credentials, which only works once the repository is public (see the checklist below).
+
+---
+
+## Before the Public Release
+
+1. Make the repository public
+2. From a machine without GitHub credentials, run the install guide's `git clone` (anonymous clone)
+3. Enable GitHub Pages (source: GitHub Actions) and re-run the Docs workflow
+4. Set the repository variable `CODE_SCANNING_ENABLED=true` (code scanning is free for public repositories)
+5. Tag the first release only after step 1; check that `ghcr.io/openaudire/ocmp-backend` and `ocmp-web` are public (otherwise set each to public in its package settings), and pull one without signing in
+6. Install on the pilot server with public DNS and Let's Encrypt (Phase 0 definition of done)
+
+---
+
 ## Phase 0 Summary
 
 Built in 20 slices plus a CI fix. The platform installs with Docker Compose, runs a
@@ -546,7 +571,7 @@ Collected from the slices above so nothing is lost:
 - **Phase 2**: SAML (account service is protocol-independent), framework version migration, Brightspace connector and setup guide
 - **SSO**: role mapping from claims, admin linking of existing local accounts, provider logout, multi-tenant Entra
 - **POPIA**: per-user data export and deletion, email address changes (the inventory and notice template exist since Slice 0.21)
-- **CI/CD**: first tagged release; GitHub Pages must be enabled for the docs workflow; code scanning upload once available (`CODE_SCANNING_ENABLED`); multi-architecture images
+- **CI/CD**: first tagged release, GitHub Pages and code scanning upload (see "Before the Public Release"); multi-architecture images
 - **Deployment**: the embeddings image (optional profile, off by default) is built with the Phase 1 search features; move the docs from MkDocs Material (end of life 5 May 2027) to Zensical once it is stable
 
 ---

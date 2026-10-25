@@ -33,8 +33,8 @@ git fetch --tags
 git checkout v0.2.0        # the release to install; before releases: git pull
 ```
 
-While the repository is private, `git fetch` asks for your GitHub username and personal
-access token, as during [installation](install.md#3-get-ocmp).
+For a private copy, `git fetch` asks for your GitHub username and token, as during
+[installation](install.md#3-get-ocmp).
 
 If git refuses because of local changes, a tracked file was edited by hand. Move local
 changes into `docker-compose.override.yml` or `deploy/caddy/` (see [Install](install.md))
@@ -93,9 +93,9 @@ docker compose up -d --wait
 
 Leave out `--build`: it would build the images from the checkout instead. Still check out
 the same tag in git, because the compose file, Caddyfile and scripts come from the
-checkout. While the repository is private, the images are private too: sign in first
-with `docker login ghcr.io` using a GitHub personal access token with the
-`read:packages` scope.
+checkout. The released images are public and need no sign-in. For private images (for
+example from a private fork), sign in first with `docker login ghcr.io`, using a GitHub
+personal access token (classic) with the `read:packages` scope as the password.
 
 ## If the upgrade fails
 

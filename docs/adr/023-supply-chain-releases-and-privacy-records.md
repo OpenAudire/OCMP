@@ -68,7 +68,14 @@ action majors are `github/codeql-action@v4`, `docker/metadata-action@v6`,
 
 - CodeQL findings now block merges just like test failures; false positives are dismissed
   in code with a justification, not by weakening the query suite.
-- The first release needs a `v0.x.y` tag; GHCR packages of a private repository are
-  private, so servers need `docker login ghcr.io` with a `read:packages` token.
+- The first release needs a `v0.x.y` tag. Image visibility (checked 2026-10-25 in GitHub's
+  packages documentation): a container package created by a workflow with `GITHUB_TOKEN`
+  takes the repository's visibility **when it is first created** and is linked to the
+  repository, inheriting its access permissions but not later visibility changes. Tagged
+  while the repository is private, the images are private and stay private after the
+  repository goes public, until each package is switched to public in its settings
+  (irreversible). `OpenAudire` is a personal account, so no organisation policy blocks
+  public packages. Release only after the repository is public, or make both packages
+  public right after the first release; public images can be pulled without signing in.
 - Per-user data export and deletion (brief section 9) remain Phase 1 work; the inventory
   records the current, partial state.

@@ -35,10 +35,6 @@ technician and takes about 30 minutes, most of it waiting for the first build.
   email, "forgotten password" cannot work.
 - Optional: an OpenID Connect app registration for single sign-on, see
   [Single sign-on](../admin/sso.md). You can add it later.
-- Read access to the OCMP repository on GitHub. While the repository is private, you need
-  a GitHub account that has been given access, and a
-  [personal access token](https://github.com/settings/personal-access-tokens) for it
-  (fine-grained, repository `OpenAudire/OCMP`, permission **Contents: read-only**).
 
 ## 2. Install Docker
 
@@ -69,11 +65,16 @@ git clone https://github.com/OpenAudire/OCMP.git /opt/ocmp
 cd /opt/ocmp/deploy
 ```
 
-While the repository is private, `git clone` asks for a username and password: enter
-your GitHub username, and the personal access token (not your GitHub password) as the
-password. The token is not saved; `git` asks again when you [upgrade](upgrade.md).
+All later commands run in `/opt/ocmp/deploy`. The repository is public, so no GitHub
+account is needed.
 
-All later commands run in `/opt/ocmp/deploy`.
+!!! note "Installing from a private copy"
+    If you install from a private repository (for example your institution's fork, or
+    OCMP before its public release), `git clone` asks for a username and password. Enter
+    your GitHub username, and as the password a
+    [fine-grained personal access token](https://github.com/settings/personal-access-tokens)
+    with read-only **Contents** access to that repository (not your GitHub password).
+    The token is not saved; `git` asks again when you [upgrade](upgrade.md).
 
 ## 4. Configure
 
