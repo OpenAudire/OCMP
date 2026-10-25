@@ -1,0 +1,14 @@
+/* The mockups' page padding (36px top, 40px sides), less on phones. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 36px 40px 56px;
+}
+
+@media (max-width: 48em) {
+  .page {
+    gap: 20px;
+    padding: 24px 16px 40px;
+  }
+}

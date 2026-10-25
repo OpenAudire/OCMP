@@ -115,7 +115,7 @@ class FrameworkFactory(factory.Factory):  # type: ignore[misc]
     key = factory.Sequence(lambda n: f"demo-framework-{n}")
     name = factory.Sequence(lambda n: f"Demo Framework {n}")
     version_label = "1.0"
-    publisher = "OCMP Demo"
+    publisher = "Curriculum in Context demo"
     licence_note = "Fictional framework for tests"
 
 

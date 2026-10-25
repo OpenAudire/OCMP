@@ -17,7 +17,7 @@ helper from [Users and roles](users-and-roles.md#sign-in).
 
 ## Terminology and profiles
 
-**Terminology.** OCMP's curriculum words can be renamed to match the institution, for
+**Terminology.** Curriculum in Context's curriculum words can be renamed to match the institution, for
 example "Course" instead of "Module". The words that can be renamed are `programme`,
 `curriculum_version`, `phase`, `module`, `learning_event`, `objective`, `framework` and
 `framework_item`. Each needs a singular and a plural.
@@ -101,6 +101,6 @@ All on the server, as `docker compose exec api python -m app.cli <command>`:
 | `setup-token` | Shows the setup token while the first-run setup is pending. |
 | `create-admin --email <address> --name "<name>"` | Creates a platform admin, or promotes an existing account ([recover admin access](users-and-roles.md#recover-admin-access)). |
 | `sync-roles` | Creates or updates the built-in roles (runs automatically on every start). |
-| `load-demo` | Loads the fictional demo programme (once; see [Install](../operations/install.md#try-ocmp-with-the-demo-data)). |
+| `load-demo` | Loads the fictional demo programme (once; see [Install](../operations/install.md#try-curriculum-in-context-with-the-demo-data)). |
 | `purge-audit-log [--days N]` | Deletes audit log entries older than N days (default from `.env`). |
 | `purge-ai-content [--days N]` | Clears stored AI prompts and responses older than N days. |

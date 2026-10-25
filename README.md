@@ -1,4 +1,4 @@
-# Open Curriculum Mapping Platform (OCMP)
+# Curriculum in Context
 
 An open-source, self-hosted curriculum mapping platform for universities.
 
@@ -92,4 +92,4 @@ Apache-2.0. See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-OCMP is inspired by LOOOP (Charité Berlin) and One45 Curriculum (Acuity Insights), built to address gaps identified in curriculum mapping research.
+Curriculum in Context is inspired by LOOOP (Charité Berlin) and One45 Curriculum (Acuity Insights), built to address gaps identified in curriculum mapping research.

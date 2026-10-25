@@ -61,7 +61,7 @@ describe('first-run setup', () => {
   it('is where a fresh installation sends visitors', async () => {
     renderAt('/');
 
-    expect(await screen.findByRole('heading', { name: 'Set up OCMP' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Set up Curriculum in Context' })).toBeInTheDocument();
   });
 
   it('is closed once setup is complete', async () => {

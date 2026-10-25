@@ -1,0 +1,29 @@
+.wordmark {
+  display: inline-flex;
+  flex-direction: column;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  font-size: 19px;
+}
+
+.wordmark[data-size='sm'] {
+  font-size: 16px;
+}
+
+.first {
+  font-weight: 700;
+  color: var(--cic-ink);
+}
+
+.second {
+  font-weight: 400;
+  color: var(--cic-warm-ink);
+}
+
+.wordmark[data-on-dark] .first {
+  color: var(--cic-sidebar-text-active);
+}
+
+.wordmark[data-on-dark] .second {
+  color: var(--cic-sidebar-accent);
+}

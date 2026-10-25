@@ -4,10 +4,10 @@
     "key": "demo-graduate-competencies",
     "name": "Demo Graduate Competencies",
     "version": "1.0.0",
-    "publisher": "OCMP Demo",
+    "publisher": "Curriculum in Context demo",
     "licence": "CC0 - Public Domain (fictional framework for demonstration)",
     "profile": "core",
-    "description": "A fictional graduate competency framework (8 items in 2 levels) for demonstrating OCMP. Not based on any real framework."
+    "description": "A fictional graduate competency framework (8 items in 2 levels) for demonstrating Curriculum in Context. Not based on any real framework."
   },
   "items": [
     {

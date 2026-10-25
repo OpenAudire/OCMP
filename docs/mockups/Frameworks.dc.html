@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Framework library</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.cic{--bg:#F5F7F6;--surface:#FFFFFF;--ink:#15212A;--muted:#55616C;--faint:#6B7782;--line:#DCE2E5;--soft:#EEF2F2;--brand:#0E6B6B;--brand-ink:#0A5656;--brand-soft:#E1F0EE;--on-brand:#FFFFFF;--warm:#A3561A;--warm-ink:#8A4510;--warm-soft:#FBEEDF;--warm-line:#EFCFAE;--shadow:0 1px 2px rgba(16,33,42,.05),0 6px 20px rgba(16,33,42,.05)}
+.cic.dark{--bg:#0E1618;--surface:#152024;--ink:#E6EEEE;--muted:#A3B3B5;--faint:#8D9EA1;--line:#283639;--soft:#1C2A2D;--brand:#45B5AD;--brand-ink:#86D6CF;--brand-soft:#173634;--on-brand:#0E1618;--warm:#E39A57;--warm-ink:#F2B57C;--warm-soft:#38281A;--warm-line:#5A3F26;--shadow:none}
+a{color:var(--brand-ink)}a:hover{color:var(--ink)}
+.btn{font:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{border-color:var(--faint)}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.btn-sm{min-height:36px;font-size:13px;padding:0 12px}
+.icon-btn{font:inherit;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.mono{font-family:'IBM Plex Mono',monospace}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="min-height: 1100px; background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 232px; display: flex; background: #0F2A2E">
+    <dc-import name="Sidebar" active="frameworks" hint-size="100%,100%"></dc-import>
+  </div>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 14px 40px; background: var(--surface); border-bottom: 1px solid var(--line)">
+      <span style="font-size: 14px; color: var(--muted)">Faculty of Health Sciences · shared by all programmes</span>
+      <button class="icon-btn" type="button" onClick="{{toggleTheme}}" aria-label="{{themeLabel}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </header>
+
+    <div style="padding: 36px 40px 48px; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-end">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <h1 style="margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -0.01em">Framework library</h1>
+          <p style="margin: 0; font-size: 15px; color: var(--muted); max-width: 660px; line-height: 1.5">Competency frameworks, level descriptors, taxonomies and keyword lists your objectives can be mapped to. Each one is imported as data, so any discipline can add its own.</p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          <button class="btn" type="button">Download Excel template</button>
+          <button class="btn" type="button">Import from Excel</button>
+          <button class="btn btn-primary" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Import framework pack</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+        <section aria-label="Frameworks" style="flex: 1.3 1 420px; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+          <sc-for list="{{fws}}" as="f" hint-placeholder-count="7">
+            <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.on}}" style="{{f.style}}">
+              <div style="display: flex; justify-content: space-between; gap: 8px; width: 100%; align-items: center">
+                <span style="font-size: 12px; font-weight: 600; color: var(--muted)">{{f.kind}}</span>
+                <span style="{{f.statusStyle}}">{{f.status}}</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; line-height: 1.35">{{f.name}}</span>
+              <span style="font-size: 13px; color: var(--muted); line-height: 1.4">{{f.meta}}</span>
+            </button>
+          </sc-for>
+        </section>
+
+        <section aria-label="Framework details" class="card" style="flex: 1 1 400px; min-width: 0; padding: 26px; display: flex; flex-direction: column; gap: 20px">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span class="lbl">{{sel.kind}}</span>
+            <h2 style="margin: 0; font-size: 22px; font-weight: 600">{{sel.name}}</h2>
+            <p style="margin: 0; font-size: 14px; color: var(--muted); line-height: 1.5">{{sel.about}}</p>
+          </div>
+          <sc-if value="{{sel.isTemplate}}" hint-placeholder-val="{{ false }}">
+            <div style="background: var(--warm-soft); border: 1px solid var(--warm-line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+              <span style="font-size: 14px; line-height: 1.5"><strong>Template only.</strong> The official text is copyrighted, so it isn't included. Fill the Excel template from your institution's licensed copy, or import a pack another university has shared with permission.</span>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap"><button class="btn btn-sm" type="button">Download template</button><button class="btn btn-sm" type="button">Import filled template</button></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{sel.isLoaded}}" hint-placeholder-val="{{ true }}">
+            <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+              <sc-for list="{{sel.stats}}" as="s" hint-placeholder-count="4">
+                <div style="background: var(--soft); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-size: 22px; font-weight: 600">{{s.n}}</span>
+                  <span style="font-size: 12px; color: var(--muted)">{{s.label}}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <span class="lbl">Structure and coverage</span>
+              <sc-for list="{{sel.tree}}" as="t" hint-placeholder-count="5">
+                <div style="display: grid; grid-template-columns: minmax(0, 1fr) 110px 40px; gap: 12px; align-items: center; font-size: 14px">
+                  <span><span class="mono" style="font-size: 12px; color: var(--brand-ink)">{{t.code}}</span> {{t.name}} <span style="font-size: 12px; color: var(--muted)">· {{t.items}}</span></span>
+                  <span style="height: 8px; background: var(--soft); border-radius: 4px; overflow: hidden; display: block"><span style="{{t.bar}}"></span></span>
+                  <span class="mono" style="font-size: 12px; text-align: right">{{t.pct}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{sel.hasVersions}}" hint-placeholder-val="{{ true }}">
+            <div style="border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+              <span class="lbl">Versions</span>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 14px">
+                <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-ink)">v1 · in use</span>
+                <span aria-hidden="true">→</span>
+                <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--soft); color: var(--muted)">v2 · draft, imported 12 Oct</span>
+              </div>
+              <span style="font-size: 14px; line-height: 1.5">Crosswalk v1 → v2: 18 unchanged, 3 split, 1 merged, 2 new. <strong>9 existing links need a decision</strong> before you switch.</span>
+              <a href="#migrate" style="font-size: 14px; font-weight: 500">Review the migration (AI proposes, you confirm)</a>
+            </div>
+          </sc-if>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { selected: 'demo', dark: null };
+  }
+  renderVals() {
+    const dark = this.state.dark != null ? this.state.dark : !!this.props.dark;
+    const st = { active: ['Active', 'var(--brand-soft)', 'var(--brand-ink)'], template: ['Needs content', 'var(--warm-soft)', 'var(--warm-ink)'], empty: ['Not loaded', 'var(--soft)', 'var(--muted)'] };
+    const list = [
+      { id: 'demo', kind: 'Competency framework', name: 'Demo Graduate Competencies', meta: 'v1 · 8 groups · 24 items · 54% weighted coverage', status: 'active', about: 'A fictional framework shipped with the demo programme. Use it to try mapping before loading your own.', stats: [['24', 'items'], ['13', 'cross-refs'], ['2', 'versions'], ['412', 'links']], tree: [['1', 'Clinical reasoning', '3 items', 82], ['2', 'Communication', '4 items', 74], ['3', 'Collaboration', '3 items', 61], ['5', 'Health advocacy', '3 items', 35], ['6', 'Leadership and management', '3 items', 28]], versions: true },
+      { id: 'hpcsa', kind: 'Competency framework', name: 'HPCSA core competencies', meta: 'Template · load your licensed copy', status: 'template', about: 'Core competencies for undergraduate medical, dental and clinical associate programmes, as required by the Medical and Dental Professions Board.', template: true },
+      { id: 'nqf', kind: 'Level descriptors', name: 'SAQA NQF level descriptors', meta: '10 levels · used for credit and level checks', status: 'active', about: 'National Qualifications Framework levels 1 to 10, used to check that modules sit at the right level for the qualification.', stats: [['10', 'levels'], ['0', 'cross-refs'], ['1', 'version'], ['14', 'modules']], tree: [['5', 'NQF level 5', 'Year 1', 100], ['6', 'NQF level 6', 'Year 2', 100], ['7', 'NQF level 7', 'Year 3', 92], ['8', 'NQF level 8', 'Year 4', 85]] },
+      { id: 'ga', kind: 'Graduate attributes', name: 'University graduate attributes', meta: 'Template · add your university’s list', status: 'template', about: 'Your university’s own graduate attributes, so every programme can show how it develops them.', template: true },
+      { id: 'bloom', kind: 'Taxonomy', name: 'Bloom’s taxonomy (revised)', meta: '6 levels with verb lists', status: 'active', about: 'Cognitive levels from Remember to Create. The verb lists power the objective quality checker.', stats: [['6', 'levels'], ['148', 'verbs'], ['1', 'version'], ['60', 'objectives']], tree: [['1', 'Remember', '24 verbs', 18], ['2', 'Understand', '31 verbs', 34], ['3', 'Apply', '27 verbs', 26], ['4', 'Analyse', '25 verbs', 15]] },
+      { id: 'miller', kind: 'Taxonomy', name: 'Miller’s pyramid', meta: '4 levels · Knows to Does', status: 'active', about: 'Clinical competence from Knows to Does, combined with Bloom for the depth scale.', stats: [['4', 'levels'], ['0', 'cross-refs'], ['1', 'version'], ['60', 'objectives']], tree: [['1', 'Knows', 'facts', 45], ['2', 'Knows how', 'applies', 30], ['3', 'Shows how', 'demonstrates', 20], ['4', 'Does', 'in practice', 5]] },
+      { id: 'mesh', kind: 'Keyword vocabulary', name: 'MeSH subset', meta: 'Not loaded · optional', status: 'empty', about: 'Medical Subject Headings keywords for search and tagging. Import the subset your faculty uses.', template: true }
+    ];
+    const fws = list.map((f) => { const on = f.id === this.state.selected; const s = st[f.status]; return Object.assign({}, f, { on: on, status: s[0], statusStyle: { fontSize: '12px', fontWeight: 600, padding: '3px 9px', borderRadius: '999px', background: s[1], color: s[2], whiteSpace: 'nowrap' }, style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px', textAlign: 'left', font: 'inherit', color: 'var(--ink)', cursor: 'pointer', background: 'var(--surface)', border: on ? '2px solid var(--brand)' : '1px solid var(--line)', borderRadius: '14px', padding: on ? '17px 19px' : '18px 20px', boxShadow: on ? 'var(--shadow)' : 'none', minHeight: '128px' }, pick: () => this.setState({ selected: f.id }) }); });
+    const s = list.find((f) => f.id === this.state.selected);
+    return {
+      rootClass: dark ? 'cic dark' : 'cic',
+      themeLabel: dark ? 'Switch to light mode' : 'Switch to dark mode',
+      toggleTheme: () => this.setState({ dark: !dark }),
+      fws: fws,
+      sel: {
+        kind: s.kind, name: s.name, about: s.about,
+        isTemplate: !!s.template, isLoaded: !s.template, hasVersions: !!s.versions,
+        stats: (s.stats || []).map((x) => ({ n: x[0], label: x[1] })),
+        tree: (s.tree || []).map((t) => ({ code: t[0], name: t[1], items: t[2], pct: t[3] + '%', bar: { display: 'block', width: t[3] + '%', height: '100%', background: t[3] < 40 ? 'var(--warm)' : 'var(--brand)', borderRadius: '4px' } }))
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -84,7 +84,7 @@ async def complete_setup(db: AsyncSession, settings: Settings, request: SetupReq
     # Only one setup at a time; re-check inside the lock.
     await db.execute(text("SELECT pg_advisory_xact_lock(:id)"), {"id": _SETUP_LOCK_ID})
     if not await setup_needed(db):
-        raise ConflictError("OCMP has already been set up.")
+        raise ConflictError("Curriculum in Context has already been set up.")
 
     # All or nothing: a rejected admin account must not leave an institution behind.
     async with db.begin_nested():

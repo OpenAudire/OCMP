@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Committee dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.cic{--bg:#F5F7F6;--surface:#FFFFFF;--ink:#15212A;--muted:#55616C;--faint:#6B7782;--line:#DCE2E5;--soft:#EEF2F2;--brand:#0E6B6B;--brand-ink:#0A5656;--brand-soft:#E1F0EE;--on-brand:#FFFFFF;--warm:#A3561A;--warm-ink:#8A4510;--warm-soft:#FBEEDF;--warm-line:#EFCFAE;--bad:#9B2C2C;--bad-soft:#FBEAEA;--ok:#1F7A4D;--ok-soft:#E4F3EA;--shadow:0 1px 2px rgba(16,33,42,.05),0 6px 20px rgba(16,33,42,.05)}
+.cic.dark{--bg:#0E1618;--surface:#152024;--ink:#E6EEEE;--muted:#A3B3B5;--faint:#8D9EA1;--line:#283639;--soft:#1C2A2D;--brand:#45B5AD;--brand-ink:#86D6CF;--brand-soft:#173634;--on-brand:#0E1618;--warm:#E39A57;--warm-ink:#F2B57C;--warm-soft:#38281A;--warm-line:#5A3F26;--bad:#F19191;--bad-soft:#3A2020;--ok:#6CCB98;--ok-soft:#183126;--shadow:none}
+a{color:var(--brand-ink)}a:hover{color:var(--ink)}
+.btn{font:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{border-color:var(--faint)}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.icon-btn{font:inherit;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.mono{font-family:'IBM Plex Mono',monospace}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.th{font-size:12px;font-weight:600;color:var(--muted);padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+.td{font-size:14px;padding:12px;border-bottom:1px solid var(--line);text-align:left}
+.tdn{font-size:14px;padding:12px;border-bottom:1px solid var(--line);text-align:right;font-family:'IBM Plex Mono',monospace}
+.field{font:inherit;font-size:14px;min-height:44px;box-sizing:border-box;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="min-height: 1560px; background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 232px; display: flex; background: #0F2A2E">
+    <dc-import name="Sidebar" active="dashboard" hint-size="100%,100%"></dc-import>
+  </div>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 14px 40px; background: var(--surface); border-bottom: 1px solid var(--line)">
+      <button class="btn" type="button" aria-label="Switch programme">BSc Health Sciences (Demo) · 2027 draft <span aria-hidden="true">▾</span></button>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+        <button class="btn" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M9 15h6"></path><path d="M9 11h2"></path></svg>
+          Build evidence pack
+        </button>
+        <button class="icon-btn" type="button" onClick="{{toggleTheme}}" aria-label="{{themeLabel}}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+        </button>
+        <span aria-label="Signed in as Thandi Nkosi" style="width: 40px; height: 40px; border-radius: 50%; background: var(--brand-soft); color: var(--brand-ink); display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px">TN</span>
+      </div>
+    </header>
+
+    <div style="padding: 36px 40px 56px; display: flex; flex-direction: column; gap: 28px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h1 style="margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -0.01em">Programme committee overview</h1>
+        <p style="margin: 0; font-size: 15px; color: var(--muted)">2027 draft compared with the 2026 published version · last 8 weeks · demo data</p>
+      </div>
+
+      <section aria-label="Key indicators" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+        <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+          <div class="card" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
+            <span style="font-size: 13px; color: var(--muted)">{{k.label}}</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px">
+              <span style="font-size: 34px; font-weight: 600; line-height: 1">{{k.value}}<span style="font-size: 15px; font-weight: 500; color: var(--muted)">{{k.unit}}</span></span>
+              <svg width="120" height="40" viewBox="0 0 120 40" role="img" aria-label="{{k.trendLabel}}" style="overflow: visible">
+                <polyline points="{{k.points}}" fill="none" stroke="{{k.stroke}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                <circle cx="120" cy="{{k.lastY}}" r="3.5" fill="{{k.stroke}}"></circle>
+              </svg>
+            </div>
+            <span style="{{k.noteStyle}}">{{k.note}}</span>
+          </div>
+        </sc-for>
+      </section>
+
+      <section aria-label="Traceability" class="card" style="padding: 24px 26px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h2 style="margin: 0; font-size: 19px; font-weight: 600">Traceability: from programme outcome to framework</h2>
+            <span style="font-size: 14px; color: var(--muted)">How one programme outcome is taught, session by session, and which competencies it reaches</span>
+          </div>
+          <label style="display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted)">Outcome
+            <select class="field"><option>PO3 Communication</option><option>PO1 Clinical reasoning</option><option>PO5 Health advocacy</option></select>
+          </label>
+        </div>
+        <div style="overflow-x: auto">
+          <div style="position: relative; width: 1080px; height: 352px">
+            <svg width="36" height="8" viewBox="0 0 36 8" preserveAspectRatio="none" style="position: absolute; left: 224px; top: 192px; width: 36px; height: 8px; overflow: visible; fill: none; stroke: #8A97A0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="M 0 4 L 36 4"></path></svg>
+            <svg width="8" height="192" viewBox="0 0 8 192" preserveAspectRatio="none" style="position: absolute; left: 256px; top: 100px; width: 8px; height: 192px; overflow: visible; fill: none; stroke: #8A97A0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="M 4 0 L 4 192"></path></svg>
+            <svg width="35" height="8" viewBox="0 0 35 8" preserveAspectRatio="none" style="position: absolute; left: 260px; top: 96px; width: 35px; height: 8px; overflow: visible; fill: none; stroke: #8A97A0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#8A97A0" stroke="none" style="stroke: none; fill: #8A97A0; fill: context-stroke"></path></marker></defs><path d="M 0 4 L 31 4" marker-end="url(#dc-arrow-head-filled-1)"></path></svg>
+            <svg width="35" height="8" viewBox="0 0 35 8" preserveAspectRatio="none" style="position: absolute; left: 260px; top: 192px; width: 35px; height: 8px; overflow: visible; fill: none; stroke: #8A97A0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-2" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#8A97A0" stroke="none" style="stroke: none; fill: #8A97A0; fill: context-stroke"></path></marker></defs><path d="M 0 4 L 31 4" marker-end="url(#dc-arrow-head-filled-2)"></path></svg>
+            <svg width="35" height="8" viewBox="0 0 35 8" preserveAspectRatio="none" style="position: absolute; left: 260px; top: 288px; width: 35px; height: 8px; overflow: visible; fill: none; stroke: #8A97A0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-3" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#8A97A0" stroke="none" style="stroke: none; fill: #8A97A0; fill: context-stroke"></path></marker></defs><path d="M 0 4 L 31 4" marker-end="url(#dc-arrow-head-filled-3)"></path></svg>
+            <svg width="71" height="8" viewBox="0 0 71 8" preserveAspectRatio="none" style="position: absolute; left: 496px; top: 96px; width: 71px; height: 8px; overflow: visible; fill: none; stroke: #8A97A0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-4" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#8A97A0" stroke="none" style="stroke: none; fill: #8A97A0; fill: context-stroke"></path></marker></defs><path d="M 0 4 L 67 4" marker-end="url(#dc-arrow-head-filled-4)"></path></svg>
+            <svg width="71" height="8" viewBox="0 0 71 8" preserveAspectRatio="none" style="position: absolute; left: 496px; top: 192px; width: 71px; height: 8px; overflow: visible; fill: none; stroke: #8A97A0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-5" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#8A97A0" stroke="none" style="stroke: none; fill: #8A97A0; fill: context-stroke"></path></marker></defs><path d="M 0 4 L 67 4" marker-end="url(#dc-arrow-head-filled-5)"></path></svg>
+            <svg width="71" height="8" viewBox="0 0 71 8" preserveAspectRatio="none" style="position: absolute; left: 496px; top: 288px; width: 71px; height: 8px; overflow: visible; fill: none; stroke: #8A97A0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-6" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#8A97A0" stroke="none" style="stroke: none; fill: #8A97A0; fill: context-stroke"></path></marker></defs><path d="M 0 4 L 67 4" marker-end="url(#dc-arrow-head-filled-6)"></path></svg>
+            <svg width="71" height="8" viewBox="0 0 71 8" preserveAspectRatio="none" style="position: absolute; left: 768px; top: 96px; width: 71px; height: 8px; overflow: visible; fill: none; stroke: #8A97A0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-7" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#8A97A0" stroke="none" style="stroke: none; fill: #8A97A0; fill: context-stroke"></path></marker></defs><path d="M 0 4 L 67 4" marker-end="url(#dc-arrow-head-filled-7)"></path></svg>
+            <svg width="71" height="8" viewBox="0 0 71 8" preserveAspectRatio="none" style="position: absolute; left: 768px; top: 192px; width: 71px; height: 8px; overflow: visible; fill: none; stroke: #8A97A0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-8" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#8A97A0" stroke="none" style="stroke: none; fill: #8A97A0; fill: context-stroke"></path></marker></defs><path d="M 0 4 L 67 4" marker-end="url(#dc-arrow-head-filled-8)"></path></svg>
+            <svg width="71" height="8" viewBox="0 0 71 8" preserveAspectRatio="none" style="position: absolute; left: 768px; top: 288px; width: 71px; height: 8px; overflow: visible; fill: none; stroke: #8A97A0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><defs><marker id="dc-arrow-head-filled-9" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#8A97A0" stroke="none" style="stroke: none; fill: #8A97A0; fill: context-stroke"></path></marker></defs><path d="M 0 4 L 67 4" marker-end="url(#dc-arrow-head-filled-9)"></path></svg>
+            <div class="lbl" style="position: absolute; left: 24px; top: 16px; width: 200px">Programme outcome</div>
+            <div class="lbl" style="position: absolute; left: 296px; top: 16px; width: 200px">Module outcomes</div>
+            <div class="lbl" style="position: absolute; left: 568px; top: 16px; width: 200px">Session objectives</div>
+            <div class="lbl" style="position: absolute; left: 840px; top: 16px; width: 216px">Framework items</div>
+            <div style="position: absolute; left: 24px; top: 160px; width: 200px; height: 72px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; background: var(--brand-soft); border: 2px solid var(--brand); border-radius: 12px; font-size: 14px; line-height: 20px; color: var(--ink)"><span><b>PO3 Communication</b><br>with patients and teams</span></div>
+            <div style="position: absolute; left: 296px; top: 64px; width: 200px; height: 72px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: 14px; line-height: 20px; color: var(--ink)"><span><b>HSC201 · Outcome 3</b><br>Takes focused histories</span></div>
+            <div style="position: absolute; left: 296px; top: 160px; width: 200px; height: 72px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: 14px; line-height: 20px; color: var(--ink)"><span><b>HSC205 · Outcome 1</b><br>Counsels on risk</span></div>
+            <div style="position: absolute; left: 296px; top: 256px; width: 200px; height: 72px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: 14px; line-height: 20px; color: var(--ink)"><span><b>HSC209 · Outcome 2</b><br>Hands over care safely</span></div>
+            <div style="position: absolute; left: 568px; top: 64px; width: 200px; height: 72px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: 14px; line-height: 20px; color: var(--ink)"><span><b>6 objectives</b><br>4 sessions · Year 2</span></div>
+            <div style="position: absolute; left: 568px; top: 160px; width: 200px; height: 72px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: 14px; line-height: 20px; color: var(--ink)"><span><b>4 objectives</b><br>3 sessions · Year 2</span></div>
+            <div style="position: absolute; left: 568px; top: 256px; width: 200px; height: 72px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; background: var(--warm-soft); border: 1px solid var(--warm-line); border-radius: 12px; font-size: 14px; line-height: 20px; color: var(--ink)"><span><b>2 objectives</b><br>1 session · Year 2</span></div>
+            <div style="position: absolute; left: 840px; top: 64px; width: 216px; height: 72px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: 14px; line-height: 20px; color: var(--ink)"><span><b>DGC 2.1</b> · 4 of 5<br>Gathers information</span></div>
+            <div style="position: absolute; left: 840px; top: 160px; width: 216px; height: 72px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: 14px; line-height: 20px; color: var(--ink)"><span><b>DGC 2.2</b> · 3 of 5<br>Shares information</span></div>
+            <div style="position: absolute; left: 840px; top: 256px; width: 216px; height: 72px; box-sizing: border-box; padding: 10px 14px; display: flex; align-items: center; background: var(--warm-soft); border: 1px solid var(--warm-line); border-radius: 12px; font-size: 14px; line-height: 20px; color: var(--ink)"><span><b>DGC 2.4</b> · 1 of 5<br>Team communication</span></div>
+          </div>
+        </div>
+        <p style="margin: 0; font-size: 14px; color: var(--muted); line-height: 1.5">PO3 reaches 12 session objectives through 3 modules. Team communication (DGC 2.4) gets only 2 objectives in one session, at coverage 1 of 5: a gap to raise with the HSC209 coordinator.</p>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+        <section aria-label="Coverage by competency group" class="card" style="flex: 3 1 520px; min-width: 0; padding: 24px 26px; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h2 style="margin: 0; font-size: 19px; font-weight: 600">Weighted coverage by competency group</h2>
+            <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--muted); align-items: center">
+              <span style="display: inline-flex; gap: 6px; align-items: center"><span style="width: 14px; height: 10px; border-radius: 3px; background: var(--brand)"></span>2027 draft</span>
+              <span style="display: inline-flex; gap: 6px; align-items: center"><span style="width: 3px; height: 14px; background: var(--ink)"></span>2026 published</span>
+              <span style="display: inline-flex; gap: 6px; align-items: center"><span style="width: 14px; height: 10px; border-radius: 3px; background: var(--warm)"></span>below 40%</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <sc-for list="{{groups}}" as="g" hint-placeholder-count="8">
+              <div style="display: grid; grid-template-columns: 210px minmax(0, 1fr) 52px; gap: 14px; align-items: center">
+                <span style="font-size: 14px"><span class="mono" style="font-size: 12px; color: var(--brand-ink)">{{g.code}}</span> {{g.name}}</span>
+                <div style="position: relative; height: 18px; background: var(--soft); border-radius: 4px" role="img" aria-label="{{g.aria}}">
+                  <div style="{{g.barStyle}}"></div>
+                  <div style="{{g.tickStyle}}"></div>
+                </div>
+                <span class="mono" style="font-size: 13px; text-align: right">{{g.now}}%</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <div style="flex: 2 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 28px">
+          <section aria-label="Declared versus delivered" class="card" style="padding: 24px 26px; display: flex; flex-direction: column; gap: 14px">
+            <h2 style="margin: 0; font-size: 19px; font-weight: 600">Declared vs delivered</h2>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+              <div style="background: var(--warm-soft); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 28px; font-weight: 600; color: var(--warm-ink)">7</span>
+                <span style="font-size: 13px; line-height: 1.4">mapped sessions with no Brightspace content</span>
+              </div>
+              <div style="background: var(--soft); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 28px; font-weight: 600">4</span>
+                <span style="font-size: 13px; line-height: 1.4">Brightspace items with no place in the map</span>
+              </div>
+            </div>
+            <a href="#mismatches" style="font-size: 14px; font-weight: 500">Review the 11 mismatches</a>
+          </section>
+          <section aria-label="Mapping progress" class="card" style="padding: 24px 26px; display: flex; flex-direction: column; gap: 14px">
+            <h2 style="margin: 0; font-size: 19px; font-weight: 600">Mapping progress by module</h2>
+            <sc-for list="{{progress}}" as="p" hint-placeholder-count="5">
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <div style="display: flex; justify-content: space-between; font-size: 13px"><span><span class="mono" style="font-size: 12px; color: var(--brand-ink)">{{p.code}}</span> {{p.name}}</span><strong>{{p.pct}}</strong></div>
+                <div style="height: 8px; background: var(--soft); border-radius: 4px; overflow: hidden"><div style="{{p.bar}}"></div></div>
+              </div>
+            </sc-for>
+            <a href="Main.dc.html" style="font-size: 14px; font-weight: 500">Open the review queue</a>
+          </section>
+        </div>
+      </div>
+
+      <section aria-label="Credit check" class="card" style="padding: 24px 26px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h2 style="margin: 0; font-size: 19px; font-weight: 600">Credits and notional hours · Year 2</h2>
+            <span style="font-size: 13px; color: var(--muted)">1 credit = 10 notional hours · tolerance ±10% · Year 2 total 118 of 120 credits</span>
+          </div>
+          <label style="display: inline-flex; gap: 10px; align-items: center; font-size: 14px; min-height: 44px; cursor: pointer">
+            <input type="checkbox" checked="{{onlyIssues}}" onChange="{{toggle}}" style="width: 18px; height: 18px; accent-color: var(--brand)">
+            Only modules outside tolerance
+          </label>
+        </div>
+        <div style="overflow-x: auto">
+          <table style="border-collapse: collapse; width: 100%; min-width: 640px">
+            <thead><tr><th scope="col" class="th">Module</th><th scope="col" class="th" style="text-align: right">Credits</th><th scope="col" class="th" style="text-align: right">Expected</th><th scope="col" class="th" style="text-align: right">Planned</th><th scope="col" class="th" style="text-align: right">Difference</th><th scope="col" class="th">Status</th></tr></thead>
+            <tbody>
+              <sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+                <tr>
+                  <td class="td"><span class="mono" style="font-size: 12px; color: var(--brand-ink)">{{r.code}}</span> {{r.name}}</td>
+                  <td class="tdn">{{r.credits}}</td>
+                  <td class="tdn">{{r.expected}} h</td>
+                  <td class="tdn">{{r.planned}} h</td>
+                  <td class="tdn">{{r.diff}}</td>
+                  <td class="td"><span style="{{r.chipStyle}}">{{r.status}}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { onlyIssues: false, dark: null };
+  }
+  spark(vals) {
+    const lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    const y = (v) => Math.round((36 - (v - lo) / ((hi - lo) || 1) * 32) * 10) / 10;
+    return { points: vals.map((v, i) => Math.round(i * 120 / (vals.length - 1)) + ',' + y(v)).join(' '), lastY: y(vals[vals.length - 1]) };
+  }
+  renderVals() {
+    const dark = this.state.dark != null ? this.state.dark : !!this.props.dark;
+    const good = { fontSize: '13px', color: 'var(--brand-ink)', fontWeight: 500 };
+    const warn = { fontSize: '13px', color: 'var(--warm-ink)', fontWeight: 500 };
+    const kdefs = [
+      { label: 'Objectives reviewed', value: '72', unit: '%', vals: [12, 18, 25, 31, 40, 48, 61, 72], note: 'Up 18 points this month', noteStyle: good, stroke: 'var(--brand)' },
+      { label: 'Weighted framework coverage', value: '54', unit: '%', vals: [41, 44, 46, 49, 50, 52, 53, 54], note: '2026 version: 49%', noteStyle: good, stroke: 'var(--brand)' },
+      { label: 'Modules outside credit tolerance', value: '3', unit: ' of 14', vals: [7, 6, 6, 5, 5, 4, 3, 3], note: '2 under, 1 over', noteStyle: warn, stroke: 'var(--warm)' },
+      { label: 'Declared vs delivered mismatches', value: '11', unit: '', vals: [24, 22, 19, 18, 15, 14, 12, 11], note: 'Down from 24 · synced today', noteStyle: good, stroke: 'var(--brand)' }
+    ];
+    const kpis = kdefs.map((k) => { const s = this.spark(k.vals); return Object.assign({}, k, { points: s.points, lastY: s.lastY, trendLabel: k.label + ' over 8 weeks: from ' + k.vals[0] + ' to ' + k.vals[k.vals.length - 1] }); });
+    const gdefs = [['DGC 1', 'Clinical reasoning', 82, 78], ['DGC 2', 'Communication', 74, 70], ['DGC 3', 'Collaboration', 61, 52], ['DGC 4', 'Community-based practice', 66, 60], ['DGC 5', 'Health advocacy', 35, 30], ['DGC 6', 'Leadership and management', 28, 26], ['DGC 7', 'Scholarship', 40, 41], ['DGC 8', 'Professionalism', 68, 61]];
+    const groups = gdefs.map((g) => ({ code: g[0], name: g[1], now: g[2], aria: g[1] + ': ' + g[2] + '% in 2027 draft, ' + g[3] + '% in 2026', barStyle: { position: 'absolute', left: 0, top: 0, bottom: 0, width: g[2] + '%', background: g[2] < 40 ? 'var(--warm)' : 'var(--brand)', borderRadius: '4px' }, tickStyle: { position: 'absolute', left: 'calc(' + g[3] + '% - 1.5px)', top: '-3px', bottom: '-3px', width: '3px', background: 'var(--ink)', borderRadius: '2px' } }));
+    const chip = { fontSize: '12px', fontWeight: 600, padding: '4px 10px', borderRadius: '999px', whiteSpace: 'nowrap' };
+    const all = [['HSC101', 'Foundations of health', 16, 158], ['HSC103', 'Cell and tissue biology', 16, 141], ['HSC201', 'Cardiovascular system', 16, 148], ['HSC203', 'Respiratory system', 16, 183], ['HSC205', 'Community health practice', 12, 119], ['HSC207', 'Research methods', 8, 66], ['HSC209', 'Professional practice 2', 8, 81]];
+    const rows = all.map((a) => {
+      const exp = a[2] * 10, d0 = (a[3] - exp) / exp * 100, d = Math.sign(d0) * Math.round(Math.abs(d0)), out = Math.abs(d) > 10;
+      return { code: a[0], name: a[1], credits: a[2], expected: exp, planned: a[3], diff: (d > 0 ? '+' : d < 0 ? '−' : '') + Math.abs(d) + '%', status: !out ? 'Within tolerance' : d < 0 ? 'Under' : 'Over', chipStyle: Object.assign({}, chip, out ? { background: 'var(--warm-soft)', color: 'var(--warm-ink)' } : { background: 'var(--brand-soft)', color: 'var(--brand-ink)' }), out: out };
+    }).filter((r) => !this.state.onlyIssues || r.out);
+    const prog = [['HSC201', 'Cardiovascular system', 92], ['HSC203', 'Respiratory system', 64], ['HSC205', 'Community health practice', 40], ['HSC207', 'Research methods', 15], ['HSC209', 'Professional practice 2', 0]];
+    return {
+      rootClass: dark ? 'cic dark' : 'cic',
+      themeLabel: dark ? 'Switch to light mode' : 'Switch to dark mode',
+      toggleTheme: () => this.setState({ dark: !dark }),
+      kpis: kpis,
+      groups: groups,
+      rows: rows,
+      onlyIssues: this.state.onlyIssues,
+      toggle: () => this.setState({ onlyIssues: !this.state.onlyIssues }),
+      progress: prog.map((p) => ({ code: p[0], name: p[1], pct: p[2] + '%', bar: { width: p[2] + '%', height: '100%', background: p[2] < 30 ? 'var(--warm)' : 'var(--brand)', borderRadius: '4px' } }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -693,3 +693,31 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 - Not verified here: the workflows themselves on GitHub Actions (runs on push)
 
 **Commit**: `chore: upgrade to Node 24, React 19, Mantine 9, ESLint 9, Vite 8 and current actions`
+
+---
+
+### Slice 1.1: Name, Design Tokens, Shared Layout and Accessibility Checks
+**Status**: Complete
+
+**Deliverables**:
+- [x] **Product name "Curriculum in Context"** (ADR 025): UI (two-tone wordmark in the sidebar and on the sign-in pages, page title, favicon), docs site, README, CONTRIBUTING, SECURITY, operator and admin guides, email sender name and subjects (`APP_NAME`, `SMTP_FROM_NAME` defaults), OpenAPI title, setup message, demo data ("Demo University") and pack schema title. Technical identifiers stay `ocmp`; ADRs 001-024 unchanged as records. Renamed headings changed two doc anchors; links updated
+- [x] **Design tokens** (ADR 026): `src/theme/tokens.ts` is the single source; the CSS variables resolver writes `--cic-*` per scheme; Mantine's semantic variables, `gray`/`dark` palettes, primary `brand` colour and red variants point at the tokens; filled brand buttons use on-brand text; `global.css` sets 44px buttons and fields, card surfaces, menu colours. Phase 1 decision 1 applied: light `faint` `#5F6B76`, new `fieldLine` (`#7F8A93` / `#667A7D`); token table in `docs/mockups/README.md` updated (plus `ok`/`ok-soft` from the dashboard mockup)
+- [x] **Self-hosted IBM Plex** Sans and Mono via `@fontsource` (OFL), bundled by Vite; no third-party requests (checked in an end-to-end test)
+- [x] **Theme toggle**: follows the system until chosen, remembered in local storage; `public/color-scheme.js` applies the saved scheme before the app loads (no light flash; external file so a future CSP can allow it); the toggle's label names the theme it switches to
+- [x] **Shared layout**: dark teal sidebar from the mockup (wordmark, icon navigation, Review queue as a sub-item under Mapping with a count slot whose number has a text label, "Import and export" item, institution name), header with theme toggle and an initials avatar menu. Navigation order per Phase 1 decision 7; most specific item is the current page (`activeNavKey`). On phones the header stays above the open navigation and the closed navigation is hidden from keyboard and screen readers; the menu button has `aria-expanded`
+- [x] **Shared components** in `src/ui/`: `Page` (padding, the only `h1`) and `EmptyState`, `LoadingState` (progress bar or status, skeletons, `aria-busy`), `ErrorState` (`role="alert"`, hint box) from the States mockup. Status pages, account page and the session error page use them; the sign-in card shows the wordmark
+- [x] **Playwright with axe** (`frontend/e2e/`, ADR 006 and 026): light and dark projects; WCAG 2.0-2.2 A/AA checks on sign-in, forgotten password, failed sign-in, dashboard, review queue, account, not found and the open account menu; layout journeys (start page and navigation, current item, theme toggle remembered, self-hosted font, skip link, phone navigation). One sign-in per run (sign-in is rate-limited), reused locally while valid. New CI job "End-to-End Tests" starts the Compose stack, loads the demo data, creates an admin with a random password and runs the suite; `build` now waits for it
+- [x] axe found and the slice fixed: initials avatar's name did not contain its visible text; Mantine Menu's focus placeholder broke the `menu` role (`withInitialFocusPlaceholder={false}`); the menu's dark hover colour was the field border colour (too dark for text); Mantine's navbar `<nav>` wrapped the labelled navigation (now `role="none"`)
+- [x] `npm run typecheck` also checks the Playwright config and tests; Vitest runs only `src/**/*.test.*`; `docs/mockups/` (design-tool source) committed and excluded from the docs site
+- [x] CLAUDE.md, CONTRIBUTING, ADR 006 and 019 updated; ADR 025 and 026 added
+
+**Verification**:
+- Frontend under Node 24.22.1: lint, typecheck, production build pass; 90 tests pass (90.8% line coverage), including token contrast tests (every text token 4.5:1 and field borders 3:1 on `bg`, `surface`, `soft` in both themes; sidebar colours)
+- Backend: ruff, ruff format, mypy (69 files) pass; pytest 515 passed against the test database, 96% coverage; `mkdocs build --strict` passes
+- Docker: web image rebuilt; Playwright 1.64.1 (Chromium) against the local Compose stack: 27 passed, twice in a row; screenshots of light and dark, the account menu and the phone navigation compared with the mockups by eye
+- Not verified here: the new CI job on GitHub Actions (runs on push); browsers other than Chromium; screen readers by hand
+- Local note: the shell's default Node is 22.11, which cannot run Vitest 5 (`require()` of an ES module); the checks above used Node 24.22.1
+
+**Not in this slice**: programme/version switcher in the header (Slice 1.2), header search (1.20), the review count source (1.13); a Content-Security-Policy header (not set by Caddy today) is worth adding with a later security slice.
+
+**Commit**: `feat: rename to Curriculum in Context with design tokens, shared layout and axe checks`

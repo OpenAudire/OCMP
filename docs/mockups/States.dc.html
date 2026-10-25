@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Empty, loading and error states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.cic{--bg:#F5F7F6;--surface:#FFFFFF;--ink:#15212A;--muted:#55616C;--faint:#6B7782;--line:#DCE2E5;--soft:#EEF2F2;--brand:#0E6B6B;--brand-ink:#0A5656;--brand-soft:#E1F0EE;--on-brand:#FFFFFF;--warm:#A3561A;--warm-ink:#8A4510;--warm-soft:#FBEEDF;--warm-line:#EFCFAE;--bad:#9B2C2C;--bad-soft:#FBEAEA;--shadow:0 1px 2px rgba(16,33,42,.05),0 6px 20px rgba(16,33,42,.05)}
+.cic.dark{--bg:#0E1618;--surface:#152024;--ink:#E6EEEE;--muted:#A3B3B5;--faint:#8D9EA1;--line:#283639;--soft:#1C2A2D;--brand:#45B5AD;--brand-ink:#86D6CF;--brand-soft:#173634;--on-brand:#0E1618;--warm:#E39A57;--warm-ink:#F2B57C;--warm-soft:#38281A;--warm-line:#5A3F26;--bad:#F19191;--bad-soft:#3A2020;--shadow:none}
+.btn{font:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sk{background:var(--soft);border-radius:6px}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="width: 1440px; height: 720px; box-sizing: border-box; padding: 56px 64px; background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <h1 style="margin: 0; font-size: 28px; font-weight: 600">Empty, loading and error states</h1>
+    <p style="margin: 0; font-size: 15px; color: var(--muted)">Every screen needs these three. Each one says what's happening and offers the next step.</p>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; flex: 1">
+
+    <section aria-label="Empty state" class="card" style="padding: 32px; display: flex; flex-direction: column; gap: 18px">
+      <span class="lbl">Empty · new programme</span>
+      <span style="width: 64px; height: 64px; border-radius: 16px; background: var(--brand-soft); color: var(--brand-ink); display: inline-flex; align-items: center; justify-content: center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5z"></path><path d="m2 17 10 5 10-5"></path><path d="m2 12 10 5 10-5"></path></svg></span>
+      <h2 style="margin: 0; font-size: 21px; font-weight: 600">No modules yet</h2>
+      <p style="margin: 0; font-size: 15px; color: var(--muted); line-height: 1.55">Start by bringing in what you already have. Most faculties import their existing module list and objectives from Excel, then tidy up here.</p>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto">
+        <button class="btn btn-primary" type="button" style="justify-content: center">Import from Excel</button>
+        <button class="btn" type="button" style="justify-content: center">Add a module by hand</button>
+        <a href="#demo" style="font-size: 14px; color: var(--brand-ink); text-align: center; padding: 10px 0">Or explore the demo programme first</a>
+      </div>
+    </section>
+
+    <section aria-label="Loading state" class="card" style="padding: 32px; display: flex; flex-direction: column; gap: 18px">
+      <span class="lbl">Loading · AI mapping run</span>
+      <h2 style="margin: 0; font-size: 21px; font-weight: 600">Suggesting links for HSC201</h2>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; justify-content: space-between; font-size: 14px"><span>46 of 112 objectives</span><span style="color: var(--muted)">about 3 minutes left</span></div>
+        <div style="height: 10px; background: var(--soft); border-radius: 5px; overflow: hidden" role="progressbar" aria-valuenow="41" aria-valuemin="0" aria-valuemax="100" aria-label="AI mapping progress"><div style="width: 41%; height: 100%; background: var(--brand); border-radius: 5px"></div></div>
+      </div>
+      <div aria-hidden="true" style="display: flex; flex-direction: column; gap: 14px; padding-top: 6px">
+        <div style="display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line); border-radius: 12px; padding: 14px"><span class="sk" style="width: 40%; height: 10px"></span><span class="sk" style="width: 92%; height: 14px"></span><span class="sk" style="width: 70%; height: 14px"></span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line); border-radius: 12px; padding: 14px"><span class="sk" style="width: 35%; height: 10px"></span><span class="sk" style="width: 85%; height: 14px"></span><span class="sk" style="width: 60%; height: 14px"></span></div>
+      </div>
+      <p style="margin: auto 0 0; font-size: 14px; color: var(--muted); line-height: 1.5">You can leave this page. Suggestions appear in the review queue as they're ready, and nothing is accepted until a person reviews it.</p>
+    </section>
+
+    <section aria-label="Error state" class="card" style="padding: 32px; display: flex; flex-direction: column; gap: 18px; border-color: var(--warm-line)">
+      <span class="lbl">Error · AI provider unavailable</span>
+      <span style="width: 64px; height: 64px; border-radius: 16px; background: var(--warm-soft); color: var(--warm-ink); display: inline-flex; align-items: center; justify-content: center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg></span>
+      <h2 style="margin: 0; font-size: 21px; font-weight: 600">Couldn't reach the AI service</h2>
+      <p style="margin: 0; font-size: 15px; color: var(--muted); line-height: 1.55">The run stopped after 46 objectives. Those suggestions are saved, and nothing else in your curriculum was changed.</p>
+      <div style="background: var(--soft); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: var(--muted); line-height: 1.5">Your administrator may need to check the AI provider key or this month's budget in Admin › AI settings. Mapping by hand still works.</div>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto">
+        <button class="btn btn-primary" type="button" style="justify-content: center">Try the remaining 66 again</button>
+        <button class="btn" type="button" style="justify-content: center">Review the 46 that are ready</button>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { rootClass: this.props.dark ? 'cic dark' : 'cic' };
+  }
+}
+</script>
+</body>
+</html>

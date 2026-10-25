@@ -30,3 +30,5 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [022](022-documentation-and-backups.md) | Documentation Site and Backups |
 | [023](023-supply-chain-releases-and-privacy-records.md) | Dependency Scanning, Release Images and Privacy Records |
 | [024](024-licence.md) | Licence |
+| [025](025-product-name.md) | Product Name "Curriculum in Context" |
+| [026](026-visual-design-and-theming.md) | Visual Design, Theming and Accessibility Checks |

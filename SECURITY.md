@@ -45,7 +45,7 @@ The following are out of scope:
 
 ## Security Measures
 
-OCMP implements the following security measures:
+Curriculum in Context implements the following security measures:
 
 ### Authentication
 

@@ -1,6 +1,6 @@
-# OCMP Backend
+# Curriculum in Context Backend
 
-FastAPI backend for the Open Curriculum Mapping Platform.
+FastAPI backend for Curriculum in Context.
 
 ## Development Setup
 

@@ -1,6 +1,6 @@
 # Backup and restore
 
-All OCMP data lives in the PostgreSQL database. Three scripts in `deploy/` back it up,
+All Curriculum in Context data lives in the PostgreSQL database. Three scripts in `deploy/` back it up,
 check a backup and restore it. They use `pg_dump` and `pg_restore` inside the `db`
 container, so nothing extra needs installing on the server.
 
@@ -36,7 +36,7 @@ Run the backup every night and copy the files off the server. With cron, as a us
 may run Docker (`crontab -e`):
 
 ```cron
-# OCMP database backup, every day at 02:30; output goes to the system log
+# Curriculum in Context database backup, every day at 02:30; output goes to the system log
 30 2 * * * /opt/ocmp/deploy/backup.sh 2>&1 | logger -t ocmp-backup
 ```
 
@@ -72,13 +72,13 @@ cd /opt/ocmp/deploy
 
 The script checks the file, asks you to type `RESTORE`, then:
 
-1. restores the backup into a side database (`ocmp_restoring`) while OCMP keeps running;
+1. restores the backup into a side database (`ocmp_restoring`) while Curriculum in Context keeps running;
    if this fails, for example because the file is damaged, it stops here and the live
    data is unchanged,
 2. stops the `api` and `worker` services (users see an error page for a few seconds),
 3. replaces the live database with the restored one,
 4. clears Redis (sessions, rate limits and queued jobs),
-5. starts OCMP again; the `migrate` service updates the schema if the backup came from an
+5. starts Curriculum in Context again; the `migrate` service updates the schema if the backup came from an
    older version.
 
 Add `--yes` to skip the question, for example in scripted recovery tests. The database
@@ -86,12 +86,12 @@ server needs free disk space for a second copy of the data while the restore run
 
 ### Restore on a new server
 
-1. [Install](install.md) OCMP on the new server up to and including step 4, using the
+1. [Install](install.md) Curriculum in Context on the new server up to and including step 4, using the
    **same `.env`** as the old server (copy it from your secrets store).
-2. Check out the same OCMP version as the old server, or a newer one.
+2. Check out the same Curriculum in Context version as the old server, or a newer one.
 3. Start the stack with `docker compose up -d --build --wait`. Do not run the setup wizard.
 4. Copy the backup file to the server and run `./restore.sh <file>`.
 5. Point the DNS name at the new server.
 
-A backup can only be restored into the same or a newer OCMP version: migrations upgrade
+A backup can only be restored into the same or a newer Curriculum in Context version: migrations upgrade
 the schema but never downgrade it.

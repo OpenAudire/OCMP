@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Coverage report</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.cic{--bg:#F5F7F6;--surface:#FFFFFF;--ink:#15212A;--muted:#55616C;--faint:#6B7782;--line:#DCE2E5;--soft:#EEF2F2;--brand:#0E6B6B;--brand-ink:#0A5656;--brand-soft:#E1F0EE;--on-brand:#FFFFFF;--warm:#A3561A;--warm-ink:#8A4510;--warm-soft:#FBEEDF;--warm-line:#EFCFAE;--bad:#9B2C2C;--bad-soft:#FBEAEA;--shadow:0 1px 2px rgba(16,33,42,.05),0 6px 20px rgba(16,33,42,.05)}
+.cic.dark{--bg:#0E1618;--surface:#152024;--ink:#E6EEEE;--muted:#A3B3B5;--faint:#8D9EA1;--line:#283639;--soft:#1C2A2D;--brand:#45B5AD;--brand-ink:#86D6CF;--brand-soft:#173634;--on-brand:#0E1618;--warm:#E39A57;--warm-ink:#F2B57C;--warm-soft:#38281A;--warm-line:#5A3F26;--bad:#F19191;--bad-soft:#3A2020;--shadow:none}
+a{color:var(--brand-ink)}a:hover{color:var(--ink)}
+.btn{font:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{border-color:var(--faint)}
+.icon-btn{font:inherit;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.mono{font-family:'IBM Plex Mono',monospace}
+.th{font-size:12px;font-weight:600;color:var(--muted);text-align:center;padding:8px 4px}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="min-height: 1100px; background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 232px; display: flex; background: #0F2A2E">
+    <dc-import name="Sidebar" active="reports" hint-size="100%,100%"></dc-import>
+  </div>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 14px 40px; background: var(--surface); border-bottom: 1px solid var(--line)">
+      <button class="btn" type="button" aria-label="Switch programme">BSc Health Sciences (Demo) · 2027 draft <span aria-hidden="true">▾</span></button>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <button class="btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path><path d="M12 15V3"></path></svg>Excel</button>
+        <button class="btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path><path d="M12 15V3"></path></svg>PDF</button>
+        <button class="icon-btn" type="button" onClick="{{toggleTheme}}" aria-label="{{themeLabel}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+      </div>
+    </header>
+
+    <div style="padding: 36px 40px 48px; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 13px; color: var(--muted)">Reports › Coverage</span>
+        <h1 style="margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -0.01em">Coverage of Demo Graduate Competencies</h1>
+        <p style="margin: 0; font-size: 15px; color: var(--muted)">Accepted mappings only · version 2027 draft · generated 23 October 2026</p>
+      </div>
+
+      <section aria-label="Coverage method" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+        <sc-for list="{{methods}}" as="m" hint-placeholder-count="4">
+          <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.on}}" style="{{m.style}}">
+            <span style="font-size: 14px; font-weight: 600">{{m.name}}</span>
+            <span style="font-size: 34px; font-weight: 600; line-height: 1.1">{{m.overall}}</span>
+            <span style="font-size: 13px; color: var(--muted); line-height: 1.4">{{m.short}}</span>
+          </button>
+        </sc-for>
+      </section>
+
+      <div role="note" style="display: flex; gap: 14px; align-items: flex-start; background: var(--warm-soft); border: 1px solid var(--warm-line); border-radius: 12px; padding: 16px 18px; font-size: 14px; line-height: 1.55">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px; color: var(--warm-ink)"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+        <span>Simple counts overstate coverage. "At least one link" gives <strong>86%</strong> here, but weighing how much of each item is covered, at the right depth, gives <strong>54%</strong>. Use weighted coverage for accreditation decisions.</span>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+        <section aria-label="Coverage heatmap" class="card" style="flex: 3 1 560px; min-width: 0; padding: 24px 26px; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h2 style="margin: 0; font-size: 19px; font-weight: 600">{{heading}}</h2>
+            <span style="font-size: 14px; color: var(--muted)">{{methodLong}}</span>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="border-collapse: separate; border-spacing: 5px; width: 100%; min-width: 580px">
+              <thead><tr><th scope="col" class="th" style="text-align: left">Competency group</th><th scope="col" class="th">Year 1</th><th scope="col" class="th">Year 2</th><th scope="col" class="th">Year 3</th><th scope="col" class="th">Year 4</th><th scope="col" class="th">Year 5</th></tr></thead>
+              <tbody>
+                <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+                  <tr>
+                    <th scope="row" style="text-align: left; font-size: 14px; font-weight: 500; padding: 6px 10px 6px 0; white-space: nowrap"><span class="mono" style="font-size: 12px; color: var(--brand-ink)">{{r.code}}</span> {{r.name}}</th>
+                    <sc-for list="{{r.cells}}" as="c" hint-placeholder-count="5"><td style="{{c.style}}">{{c.text}}</td></sc-for>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); flex-wrap: wrap">
+            <span>0%</span><span aria-hidden="true" style="{{legendStyle}}"></span><span>100%</span>
+            <span style="margin-left: 10px">Cumulative by the end of each year · outlined cells are below 30%</span>
+          </div>
+        </section>
+
+        <section aria-label="Biggest gaps" class="card" style="flex: 2 1 340px; min-width: 0; padding: 24px 26px; display: flex; flex-direction: column; gap: 6px">
+          <h2 style="margin: 0 0 4px; font-size: 19px; font-weight: 600">Biggest gaps</h2>
+          <span style="font-size: 14px; color: var(--muted); margin-bottom: 8px">No or weak coverage across all five years</span>
+          <sc-for list="{{gaps}}" as="g" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-top: 1px solid var(--line)">
+              <span style="font-size: 15px; font-weight: 500; line-height: 1.4"><span class="mono" style="font-size: 12px; color: var(--warm-ink)">{{g.code}}</span> {{g.name}}</span>
+              <span style="font-size: 13px; color: var(--muted)">{{g.detail}}</span>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; font-weight: 500"><a href="#explain">Explain this gap</a><a href="#suggest">Suggest sessions that could cover it</a></div>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { method: 'weighted', dark: null };
+  }
+  renderVals() {
+    const dark = this.state.dark != null ? this.state.dark : !!this.props.dark;
+    const groups = [['DGC 1', 'Clinical reasoning', [48, 62, 71, 78, 82]], ['DGC 2', 'Communication', [40, 55, 63, 70, 74]], ['DGC 3', 'Collaboration', [22, 35, 48, 55, 61]], ['DGC 4', 'Community-based practice', [30, 38, 42, 58, 66]], ['DGC 5', 'Health advocacy', [12, 18, 24, 31, 35]], ['DGC 6', 'Leadership and management', [5, 9, 14, 22, 28]], ['DGC 7', 'Scholarship', [18, 24, 22, 30, 40]], ['DGC 8', 'Professionalism', [35, 42, 50, 61, 68]]];
+    const defs = {
+      single: { name: 'Single match', overall: '86%', short: 'At least 1 accepted link', long: 'An item counts as covered if at least one accepted objective links to it.', f: (w) => Math.min(100, Math.round(w * 1.45 + 12)) },
+      multiple: { name: 'Multiple match', overall: '47%', short: '3 or more accepted links', long: 'An item counts only if three or more accepted objectives link to it.', f: (w) => Math.round(w * 0.85) },
+      subordinate: { name: 'Subordinate match', overall: '81%', short: 'Share of sub-items covered', long: 'A group’s coverage is the share of its sub-items with at least one link.', f: (w) => Math.min(100, Math.round(w * 1.35 + 8)) },
+      weighted: { name: 'Weighted content', overall: '54%', short: 'Coverage 0–5, reduced when depth is below', long: 'Each link’s coverage (0–5) is added up per item and reduced when depth is below what the item asks for.', f: (w) => w }
+    };
+    const m = this.state.method;
+    const methods = Object.keys(defs).map((k) => { const on = k === m; return { name: defs[k].name, overall: defs[k].overall, short: defs[k].short, on: on, style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px', textAlign: 'left', font: 'inherit', color: 'var(--ink)', cursor: 'pointer', background: on ? 'var(--brand-soft)' : 'var(--surface)', border: on ? '2px solid var(--brand)' : '1px solid var(--line)', borderRadius: '14px', padding: on ? '17px 19px' : '18px 20px', minHeight: '44px' }, pick: () => this.setState({ method: k }) }; });
+    const lo = dark ? [28, 42, 45] : [238, 242, 242], hi = dark ? [69, 181, 173] : [70, 155, 155];
+    const shade = (v) => 'rgb(' + lo.map((a, i) => Math.round(a + (hi[i] - a) * v / 100)).join(',') + ')';
+    const rows = groups.map((g) => ({ code: g[0], name: g[1], cells: g[2].map((w) => { const v = defs[m].f(w); return { text: v + '%', style: { background: shade(v), color: dark && v > 60 ? '#0E1618' : 'var(--ink)', fontSize: '14px', fontWeight: v < 30 ? 700 : 500, textAlign: 'center', padding: '13px 4px', borderRadius: '8px', minWidth: '76px', outline: v < 30 ? '2px solid var(--warm)' : 'none', outlineOffset: '-2px' } }; }) }));
+    return {
+      rootClass: dark ? 'cic dark' : 'cic',
+      themeLabel: dark ? 'Switch to light mode' : 'Switch to dark mode',
+      toggleTheme: () => this.setState({ dark: !dark }),
+      methods: methods,
+      rows: rows,
+      heading: defs[m].name + ' coverage by competency group and year',
+      methodLong: defs[m].long,
+      legendStyle: { width: '180px', height: '10px', borderRadius: '5px', background: 'linear-gradient(90deg, ' + shade(0) + ', ' + shade(100) + ')' },
+      gaps: [
+        { code: 'DGC 6.2', name: 'Manages resources within a health team', detail: 'No objectives linked in any year' },
+        { code: 'DGC 7.3', name: 'Teaches peers, patients and communities', detail: 'No objectives linked in any year' },
+        { code: 'DGC 5.3', name: 'Advocates for vulnerable groups', detail: '1 objective linked · coverage 1 of 5 · depth below' },
+        { code: 'DGC 3.4', name: 'Handles disagreement within a team', detail: '2 objectives linked · both describe rather than practise' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

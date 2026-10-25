@@ -1,7 +1,7 @@
 {
-  "_comment": "Fictional demo curriculum for OCMP. All names and texts are invented for demonstration.",
+  "_comment": "Fictional demo curriculum for Curriculum in Context. All names and texts are invented for demonstration.",
   "institution": {
-    "name": "OCMP Demo University",
+    "name": "Demo University",
     "short_code": "DEMO-UNI",
     "country": "ZA"
   },

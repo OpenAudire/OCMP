@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dark mode · committee dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1618}
+.cic{--bg:#F5F7F6;--surface:#FFFFFF;--ink:#15212A;--muted:#55616C;--faint:#6B7782;--line:#DCE2E5;--soft:#EEF2F2;--brand:#0E6B6B;--brand-ink:#0A5656;--brand-soft:#E1F0EE;--on-brand:#FFFFFF;--warm:#A3561A;--warm-ink:#8A4510;--warm-soft:#FBEEDF;--warm-line:#EFCFAE;--bad:#9B2C2C;--bad-soft:#FBEAEA;--ok:#1F7A4D;--ok-soft:#E4F3EA;--shadow:0 1px 2px rgba(16,33,42,.05),0 6px 20px rgba(16,33,42,.05)}
+.cic.dark{--bg:#0E1618;--surface:#152024;--ink:#E6EEEE;--muted:#A3B3B5;--faint:#8D9EA1;--line:#283639;--soft:#1C2A2D;--brand:#45B5AD;--brand-ink:#86D6CF;--brand-soft:#173634;--on-brand:#0E1618;--warm:#E39A57;--warm-ink:#F2B57C;--warm-soft:#38281A;--warm-line:#5A3F26;--bad:#F19191;--bad-soft:#3A2020;--ok:#6CCB98;--ok-soft:#183126;--shadow:none}
+a{color:var(--brand-ink)}a:hover{color:var(--ink)}
+.btn{font:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{border-color:var(--faint)}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.icon-btn{font:inherit;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.mono{font-family:'IBM Plex Mono',monospace}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.th{font-size:12px;font-weight:600;color:var(--muted);padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+.td{font-size:14px;padding:12px;border-bottom:1px solid var(--line);text-align:left}
+.tdn{font-size:14px;padding:12px;border-bottom:1px solid var(--line);text-align:right;font-family:'IBM Plex Mono',monospace}
+.field{font:inherit;font-size:14px;min-height:44px;box-sizing:border-box;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+</style>
+</helmet>
+<div style="min-height: 1560px; background: #0E1618">
+  <dc-import name="Dashboard" dark="{{ true }}" hint-size="100%,1560px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

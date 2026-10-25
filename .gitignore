@@ -99,6 +99,11 @@ coverage/
 # TypeScript build artefacts
 *.tsbuildinfo
 frontend/vite.config.d.ts
+frontend/playwright.config.d.ts
+frontend/test-results/
+frontend/playwright-report/
+frontend/e2e/*.d.ts
+frontend/e2e/.auth/
 
 # Local deployment files
 deploy/backups/

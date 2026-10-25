@@ -1,6 +1,6 @@
 # Users and roles
 
-People get access to OCMP through **roles**. A role is a set of permissions given to a
+People get access to Curriculum in Context through **roles**. A role is a set of permissions given to a
 person at a **scope**: the whole institution, a faculty, a programme, a module or a
 learning event. A role applies at its scope and everything below it, never above or
 beside it. The API enforces every permission; the web application only hides what a
@@ -19,7 +19,7 @@ person cannot use.
 | Student | `student` | institution, programme | Read-only explorer and search over published content. |
 | External reviewer | `external_reviewer` | programme | Time-limited read-only access to evidence packs. Needs an expiry date. |
 
-The built-in roles cannot be changed; they are updated with each OCMP version. Platform
+The built-in roles cannot be changed; they are updated with each Curriculum in Context version. Platform
 admins can add custom roles. A person can give a role only if they have the permission
 to assign roles at that scope **and** every permission of the role there, so nobody can
 give more access than they have. The last active platform admin cannot be removed or

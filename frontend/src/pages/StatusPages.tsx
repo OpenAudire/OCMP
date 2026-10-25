@@ -1,6 +1,9 @@
-import { Button, Center, Loader, Stack, Text, Title } from '@mantine/core';
+import { Button, Center, Loader } from '@mantine/core';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+
+import { Page } from '../ui/Page';
+import { ErrorState } from '../ui/States';
 
 export function FullPageLoader() {
   const { t } = useTranslation();
@@ -11,51 +14,42 @@ export function FullPageLoader() {
   );
 }
 
-function Message({ title, body, children }: { title: string; body: string; children?: React.ReactNode }) {
-  return (
-    <Stack maw={560} gap="sm" py="xl">
-      <Title order={2}>{title}</Title>
-      <Text>{body}</Text>
-      {children}
-    </Stack>
-  );
-}
-
 export function PlaceholderPage({ titleKey }: { titleKey: string }) {
   const { t } = useTranslation();
-  return <Message title={t(titleKey)} body={t('pages.comingSoon')} />;
+  return <Page title={t(titleKey)} description={t('pages.comingSoon')} />;
 }
 
 export function NotFoundPage() {
   const { t } = useTranslation();
   return (
-    <Message title={t('pages.notFoundTitle')} body={t('pages.notFoundBody')}>
-      <Button component={Link} to="/" variant="light" w="fit-content">
+    <Page title={t('pages.notFoundTitle')} description={t('pages.notFoundBody')}>
+      <Button component={Link} to="/" variant="default" w="fit-content">
         {t('pages.backHome')}
       </Button>
-    </Message>
+    </Page>
   );
 }
 
 export function NoAccessPage({ noRoles = false }: { noRoles?: boolean }) {
   const { t } = useTranslation();
   return (
-    <Message
+    <Page
       title={t('pages.noAccessTitle')}
-      body={t(noRoles ? 'pages.noRolesBody' : 'pages.noAccessBody')}
+      description={t(noRoles ? 'pages.noRolesBody' : 'pages.noAccessBody')}
     />
   );
 }
 
+/** The API could not be reached before the app frame could load. */
 export function ErrorPage({ onRetry }: { onRetry: () => void }) {
   const { t } = useTranslation();
   return (
-    <Center h="100vh" px="md">
-      <Message title={t('pages.errorTitle')} body={t('pages.errorBody')}>
-        <Button onClick={onRetry} w="fit-content">
-          {t('pages.retry')}
-        </Button>
-      </Message>
+    <Center mih="100vh" px="md" component="main">
+      <ErrorState
+        title={t('pages.errorTitle')}
+        body={t('pages.errorBody')}
+        actions={<Button onClick={onRetry}>{t('pages.retry')}</Button>}
+      />
     </Center>
   );
 }

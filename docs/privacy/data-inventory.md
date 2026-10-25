@@ -1,14 +1,14 @@
 # Personal data inventory
 
-This inventory lists every place OCMP stores or processes personal information, why, and
+This inventory lists every place Curriculum in Context stores or processes personal information, why, and
 for how long, to support the institution's obligations under the Protection of Personal
-Information Act (POPIA). It describes OCMP as built at the end of Phase 0 and must be
+Information Act (POPIA). It describes Curriculum in Context as built at the end of Phase 0 and must be
 updated whenever a change adds or changes personal data (see `CLAUDE.md`).
 
-The institution running OCMP is the **responsible party**. If someone else hosts it for
+The institution running Curriculum in Context is the **responsible party**. If someone else hosts it for
 the institution, that party is an **operator** and needs a written agreement (POPIA
-sections 20 and 21). OCMP is self-hosted: no personal information leaves the server
-except as listed under [Sent outside OCMP](#sent-outside-ocmp).
+sections 20 and 21). Curriculum in Context is self-hosted: no personal information leaves the server
+except as listed under [Sent outside Curriculum in Context](#sent-outside-curriculum-in-context).
 
 !!! note "Not legal advice"
     This document describes what the software does. The institution's information officer
@@ -20,7 +20,7 @@ except as listed under [Sent outside OCMP](#sent-outside-ocmp).
   coordinators, lecturers, mappers and reviewers, external reviewers.
 - **Students**, when given the student role.
 
-OCMP holds **no student records** (marks, registrations, health data) and is not designed
+Curriculum in Context holds **no student records** (marks, registrations, health data) and is not designed
 to: curriculum content (objectives, sessions, frameworks) is not personal information.
 Free-text fields such as descriptions must not be used for personal information about
 students or patients.
@@ -73,7 +73,7 @@ They are kept for `BACKUP_KEEP_DAYS` (default 14) on the server, plus whatever t
 institution's off-site backup keeps. A person's deletion reaches backups only when those
 backups expire.
 
-## Sent outside OCMP
+## Sent outside Curriculum in Context
 
 | Recipient | What | When |
 |---|---|---|
@@ -82,7 +82,7 @@ backups expire.
 | AI provider (Phase 1, optional) | Curriculum text only, never personal information | When AI features are used |
 
 If an AI provider outside South Africa is configured, curriculum text (not personal
-information) is transferred abroad; OCMP will warn the administrator (brief section 9).
+information) is transferred abroad; Curriculum in Context will warn the administrator (brief section 9).
 
 ## Rights of data subjects
 

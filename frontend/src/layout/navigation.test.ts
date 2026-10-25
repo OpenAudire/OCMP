@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { collectPermissions, Permission } from '../session/permissions';
-import { visibleNavItems } from './navigation';
+import { activeNavKey, NAV_ITEMS, visibleNavItems } from './navigation';
 
 function navFor(...permissions: string[]): string[] {
   return visibleNavItems(collectPermissions(permissions)).map((item) => item.key);
@@ -28,17 +28,32 @@ describe('navigation by permission', () => {
     ]);
   });
 
-  it('shows mappers the mapping workspace', () => {
-    expect(navFor(Permission.CurriculumView, Permission.MappingReview)).toContain('mapping');
+  it('shows reviewers the mapping workspace and the review queue', () => {
+    const items = navFor(Permission.CurriculumView, Permission.MappingReview);
+    expect(items).toContain('mapping');
+    expect(items).toContain('review');
   });
 
-  it('shows administrators everything except the student explorer', () => {
+  it('shows mappers who do not review the workspace without the queue', () => {
+    const items = navFor(Permission.CurriculumView, Permission.MappingEdit);
+    expect(items).toContain('mapping');
+    expect(items).not.toContain('review');
+  });
+
+  it('shows import and export to people who edit what can be imported', () => {
+    expect(navFor(Permission.CurriculumView, Permission.CurriculumEdit)).toContain('import');
+    expect(navFor(Permission.CurriculumView)).not.toContain('import');
+  });
+
+  it('shows administrators everything except the student explorer, in sidebar order', () => {
     expect(navFor(...Object.values(Permission))).toEqual([
       'dashboard',
       'curriculum',
       'mapping',
+      'review',
       'frameworks',
       'reports',
+      'import',
       'search',
       'admin',
     ]);
@@ -46,5 +61,23 @@ describe('navigation by permission', () => {
 
   it('shows nothing to accounts without roles', () => {
     expect(navFor()).toEqual([]);
+  });
+});
+
+describe('active navigation item', () => {
+  it('matches a section and the pages inside it', () => {
+    expect(activeNavKey(NAV_ITEMS, '/curriculum')).toBe('curriculum');
+    expect(activeNavKey(NAV_ITEMS, '/curriculum/modules/7')).toBe('curriculum');
+  });
+
+  it('prefers the most specific item, so the review queue is not also "mapping"', () => {
+    expect(activeNavKey(NAV_ITEMS, '/mapping')).toBe('mapping');
+    expect(activeNavKey(NAV_ITEMS, '/mapping/review')).toBe('review');
+    expect(activeNavKey(NAV_ITEMS, '/mapping/review/12')).toBe('review');
+  });
+
+  it('matches whole path segments only', () => {
+    expect(activeNavKey(NAV_ITEMS, '/mapping-help')).toBeUndefined();
+    expect(activeNavKey(NAV_ITEMS, '/account')).toBeUndefined();
   });
 });

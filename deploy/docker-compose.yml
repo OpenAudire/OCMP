@@ -1,5 +1,5 @@
-# OCMP Docker Compose Configuration
-# See .env.example for configuration options. By default the OCMP images are built
+# Curriculum in Context Docker Compose Configuration
+# See .env.example for configuration options. By default the Curriculum in Context images are built
 # from this checkout (`up --build`); set OCMP_BACKEND_IMAGE and OCMP_WEB_IMAGE in
 # .env to run released images from GitHub Container Registry instead.
 
@@ -47,7 +47,7 @@ services:
   # One-shot database migration (runs before api and worker start)
   migrate:
     image: ${OCMP_BACKEND_IMAGE:-ocmp-backend:local}
-    # All OCMP settings from .env; the entries under `environment` take precedence.
+    # All Curriculum in Context settings from .env; the entries under `environment` take precedence.
     env_file: .env
     build:
       context: ../backend
@@ -66,7 +66,7 @@ services:
   # FastAPI backend
   api:
     image: ${OCMP_BACKEND_IMAGE:-ocmp-backend:local}
-    # All OCMP settings from .env; the entries under `environment` take precedence.
+    # All Curriculum in Context settings from .env; the entries under `environment` take precedence.
     env_file: .env
     restart: unless-stopped
     logging: *logging
@@ -93,7 +93,7 @@ services:
   # Dramatiq worker for background jobs
   worker:
     image: ${OCMP_BACKEND_IMAGE:-ocmp-backend:local}
-    # All OCMP settings from .env; the entries under `environment` take precedence.
+    # All Curriculum in Context settings from .env; the entries under `environment` take precedence.
     env_file: .env
     command: dramatiq app.worker --processes 1 --threads 4
     restart: unless-stopped

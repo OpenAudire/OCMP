@@ -1,10 +1,12 @@
 # CLAUDE.md - Project Conventions for Claude Code
 
-This file documents the conventions and patterns used in the OCMP project to ensure consistency across development sessions.
+This file documents the conventions and patterns used in this project to ensure consistency across development sessions.
 
 ## Project Overview
 
-**Open Curriculum Mapping Platform (OCMP)** - An open-source, self-hosted curriculum mapping platform for universities.
+**Curriculum in Context** - An open-source, self-hosted curriculum mapping platform for universities.
+People see only the product name (no acronym); technical identifiers stay `ocmp`
+(repository, package, CLI, images, compose project, `OCMP_*` variables) (ADR 025).
 
 ## Repository Structure
 
@@ -36,7 +38,9 @@ ai/, connectors/  Placeholders for Phase 1 (AI) and Phase 2 (LMS connectors)
 ```
 
 Frontend (`frontend/src/`): one folder per feature (`auth/`, `account/`, `setup/`,
-`layout/`, `routes/`, `session/`, `institution/`, `api/`, `pages/`), tests beside the code.
+`layout/`, `routes/`, `session/`, `institution/`, `api/`, `pages/`), plus `theme/` (tokens,
+Mantine theme, fonts) and `ui/` (shared `Page` and state components); tests beside the code.
+Playwright journeys live in `frontend/e2e/`.
 
 ## Technology Stack
 
@@ -119,6 +123,9 @@ npm run typecheck
 
 # Run tests
 npm run test
+
+# End-to-end + axe checks against the Docker stack (frontend/e2e/README.md)
+E2E_EMAIL=... E2E_PASSWORD=... npm run e2e
 
 # Dev server (proxies the API) and production build
 npm run dev
@@ -221,7 +228,9 @@ export function ModuleCount({ count }: { count: number }) {
 
 - Backend: pytest with pytest-asyncio
 - Frontend: Vitest with Testing Library
-- E2E: Playwright (planned for Phase 1; not set up yet)
+- E2E: Playwright in `frontend/e2e/` against the Docker stack, light and dark projects, axe
+  WCAG checks on every screen and state (`expectNoAccessibilityViolations`); never sign in
+  inside a test (rate limits): use the saved session from `auth.setup.ts`
 - Backend tests are flat files `tests/test_<area>.py`; database tests skip unless `TEST_DATABASE_URL` is set, and CI always sets it
 - Factories: factory_boy for models (`tests/factories.py`)
 - API tests use the `api_client` fixture (test DB session, fakeredis, test settings)
@@ -282,6 +291,11 @@ chore: update dependencies
 - Navigation visibility rules live in `src/layout/navigation.ts`; they only shape the UI, the API enforces permissions
 - Tests mock `../api/endpoints` with `vi.mock`; render with `renderAt()` from `src/test/renderApp.tsx` (real i18n)
 - Errors: Mantine `Alert` (role alert); confirmations: `SuccessNotice` (role status)
+- Pages wrap content in `Page` (`src/ui/Page.tsx`, the only h1); empty, loading and error
+  states use `EmptyState`, `LoadingState`, `ErrorState` (`src/ui/States.tsx`)
+- Colours come from the design tokens (`src/theme/tokens.ts`, `var(--cic-*)`, ADR 026), never
+  raw values; teal = good/selected/primary, ochre = needs attention, and never colour alone
+- Controls at least 44px tall; check new screens with axe in both themes
 - Never hard-code server rules (e.g. password length): read them from the API
 
 ## Documentation

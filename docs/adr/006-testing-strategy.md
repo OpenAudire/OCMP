@@ -62,6 +62,15 @@ OCMP requires comprehensive testing to ensure:
 2. **factory_boy**: Standard, well-documented model factory library
 3. **Playwright**: Reliable, modern E2E testing with good debugging
 
+### End-to-end tests (Slice 1.1)
+
+Playwright in `frontend/e2e/` against the Docker Compose stack (`E2E_BASE_URL`, default
+`https://localhost`), with a light and a dark project and axe-core accessibility checks
+on every page they visit (ADR 026). One setup step signs in and saves the session for the
+other tests, because sign-in is rate-limited. CI runs them on every push and pull request
+in the "End-to-End Tests" job, after starting the stack and loading the demo data; the
+journeys above are added as their screens are built.
+
 ## Consequences
 
 - CI runs backend and frontend tests in parallel

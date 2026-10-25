@@ -5,12 +5,49 @@
   top: -100px;
   z-index: 1000;
   padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
-  background: var(--mantine-color-body);
-  color: var(--mantine-color-text);
-  border: 2px solid var(--mantine-primary-color-filled);
+  background: var(--cic-surface);
+  color: var(--cic-ink);
+  border: 2px solid var(--cic-brand);
   border-radius: var(--mantine-radius-sm);
 }
 
 .skipLink:focus {
   top: var(--mantine-spacing-xs);
+}
+
+.header {
+  background: var(--cic-surface);
+  border-bottom: 1px solid var(--cic-line);
+}
+
+.burger {
+  width: 44px;
+  height: 44px;
+}
+
+.navbar {
+  background: var(--cic-sidebar-bg);
+  overflow-y: auto;
+}
+
+.main {
+  background: var(--cic-bg);
+  min-height: 100dvh;
+}
+
+.main:focus {
+  outline: none;
+}
+
+.avatarButton {
+  border-radius: 50%;
+}
+
+.avatarButton:focus-visible {
+  outline: 2px solid var(--cic-brand);
+  outline-offset: 2px;
+}
+
+.navbar[data-hidden] {
+  visibility: hidden;
 }

@@ -1,6 +1,6 @@
 # Single sign-on (OIDC)
 
-OCMP can let people sign in with their university account through OpenID Connect, for
+Curriculum in Context can let people sign in with their university account through OpenID Connect, for
 example with Microsoft Entra ID. Local passwords keep working beside it. SAML 2.0 is
 planned for Phase 2.
 
@@ -9,23 +9,23 @@ planned for Phase 2.
 - A person is identified by the identity provider and their subject id at that provider,
   **never by email address**. Email addresses can be changed at the provider, so trusting
   them would let someone take over another person's account.
-- With automatic account creation (the default), the first sign-in creates an OCMP account
+- With automatic account creation (the default), the first sign-in creates a Curriculum in Context account
   without a password. New accounts have **no roles**: an admin gives them access
   afterwards (see [Users and roles](users-and-roles.md)).
-- If the email address of a first SSO sign-in already belongs to a local OCMP account,
+- If the email address of a first SSO sign-in already belongs to a local Curriculum in Context account,
   the sign-in is refused. Linking existing
   local accounts to SSO is not available yet. Create admin accounts with an address that
   people will not use for SSO, or use SSO accounts and give them roles after their first
   sign-in.
 
-## 1. Register OCMP with the identity provider
+## 1. Register Curriculum in Context with the identity provider
 
-Register OCMP as a **confidential web application** with:
+Register Curriculum in Context as a **confidential web application** with:
 
 | Value | Setting |
 |---|---|
 | Redirect URI | `https://<your site>/api/v1/auth/oidc/callback` (exactly, with your `PUBLIC_URL`) |
-| Grant type | Authorization code (OCMP also uses PKCE) |
+| Grant type | Authorization code (Curriculum in Context also uses PKCE) |
 | Scopes | `openid profile email` |
 | Client authentication | Client secret (`client_secret_post` or `client_secret_basic`) |
 
@@ -39,7 +39,7 @@ Following Microsoft's guide
 
 1. In the Microsoft Entra admin center, open **App registrations** and choose
    **New registration**.
-2. Name: for example "OCMP Curriculum Mapping". Supported account types: **accounts in
+2. Name: for example "Curriculum in Context". Supported account types: **accounts in
    this organizational directory only** (single tenant).
 3. Redirect URI: platform **Web**, `https://<your site>/api/v1/auth/oidc/callback`.
 4. After registering, copy the **Application (client) ID** and the **Directory (tenant)
@@ -48,14 +48,14 @@ Following Microsoft's guide
    secret ID). Note when it expires: sign-in stops working on that day unless you create a
    new secret and update `.env` first.
 6. Optional: under **Token configuration**, add the optional claim `email` to the ID
-   token. Without it OCMP uses the sign-in name (`preferred_username`) as the email
+   token. Without it Curriculum in Context uses the sign-in name (`preferred_username`) as the email
    address when it looks like one.
 
 The discovery URL is tenant-specific:
 `https://login.microsoftonline.com/<tenant id>/v2.0/.well-known/openid-configuration`.
 The multi-tenant `/common` and `/organizations` endpoints are not supported.
 
-## 2. Configure OCMP
+## 2. Configure Curriculum in Context
 
 Add to `deploy/.env`:
 
@@ -71,7 +71,7 @@ OIDC_CLIENT_SECRET=<client secret value>
 ```
 
 `OIDC_PROVIDER_NAME` is shown on the sign-in button ("Sign in with University account").
-`OIDC_AUTO_PROVISION=false` allows only people who already have an SSO account in OCMP.
+`OIDC_AUTO_PROVISION=false` allows only people who already have an SSO account in Curriculum in Context.
 SSO accounts cannot be created in advance yet, so in practice it stops new people
 signing in; leave it on and control access through roles.
 
@@ -96,5 +96,5 @@ If sign-in fails, the sign-in page shows a short reason and the details are in
 | "The sign-in took too long or was opened in another browser" | The sign-in was not finished within 10 minutes, or started in a different browser |
 | "An account with your email address already exists" | A local account has the same email address (see [How accounts are matched](#how-accounts-are-matched)) |
 | "Your organisation did not share an email address" | The provider sent neither `email` nor an email-like `preferred_username` |
-| "There is no OCMP account for you yet" | `OIDC_AUTO_PROVISION=false` and the person has never signed in with SSO |
+| "There is no Curriculum in Context account for you yet" | `OIDC_AUTO_PROVISION=false` and the person has never signed in with SSO |
 | "This account is disabled" | An admin deactivated the account |

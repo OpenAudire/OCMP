@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ocmp.example.com/schemas/framework-pack.schema.json",
-  "title": "OCMP Framework Pack",
-  "description": "Schema for framework and taxonomy packs that can be imported into OCMP",
+  "title": "Curriculum in Context Framework Pack",
+  "description": "Schema for framework and taxonomy packs that can be imported into Curriculum in Context",
   "type": "object",
   "required": ["$schema", "metadata", "items"],
   "properties": {

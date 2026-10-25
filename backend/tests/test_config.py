@@ -105,7 +105,7 @@ class TestSettings:
             secret_key="a" * 32,
             database_url="postgresql+asyncpg://user:pass@localhost:5432/db",
         )
-        assert settings.app_name == "OCMP"
+        assert settings.app_name == "Curriculum in Context"
         assert settings.debug is False
         assert settings.log_level == "INFO"
         assert settings.session_expire_hours == 24

@@ -4,7 +4,7 @@ POPIA section 18 requires the institution to tell people what personal informati
 collects and why. Adapt this template, have it approved by the institution's information
 officer, and publish it where users sign in (for example linked from the institution's
 intranet or the sign-in email). Replace everything in `[brackets]`. Check it against the
-[data inventory](data-inventory.md) after each OCMP upgrade.
+[data inventory](data-inventory.md) after each Curriculum in Context upgrade.
 
 !!! note "Not legal advice"
     This is a starting point, not legal advice. The institution is responsible for its
@@ -12,7 +12,7 @@ intranet or the sign-in email). Replace everything in `[brackets]`. Check it aga
 
 ---
 
-## Privacy notice: [System name, e.g. "Curriculum Mapping (OCMP)"]
+## Privacy notice: [System name, e.g. "Curriculum in Context"]
 
 **Responsible party:** [Institution name], [physical address].
 **Information officer:** [name or title], [email address], [telephone].

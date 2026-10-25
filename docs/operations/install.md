@@ -1,6 +1,6 @@
 # Install
 
-This guide sets up OCMP on one Linux server with Docker. It is written for a university IT
+This guide sets up Curriculum in Context on one Linux server with Docker. It is written for a university IT
 technician and takes about 30 minutes, most of it waiting for the first build.
 
 ## 1. What you need
@@ -19,7 +19,7 @@ technician and takes about 30 minutes, most of it waiting for the first build.
 **Network**
 
 - A DNS name for the site, for example `curriculum.example.ac.za`, pointing at the server.
-- Inbound TCP ports **80** and **443** open to your users. OCMP publishes no other ports;
+- Inbound TCP ports **80** and **443** open to your users. Curriculum in Context publishes no other ports;
   the database and Redis are reachable only inside Docker. Docker opens published ports
   in the server's own firewall itself, even when `ufw` is enabled, so no `ufw` rule is
   needed for them; a network firewall in front of the server still needs them opened.
@@ -31,7 +31,7 @@ technician and takes about 30 minutes, most of it waiting for the first build.
 
 **Accounts and details**
 
-- An SMTP server OCMP may send from (host, port, user, password, sender address). Without
+- An SMTP server Curriculum in Context may send from (host, port, user, password, sender address). Without
   email, "forgotten password" cannot work.
 - Optional: an OpenID Connect app registration for single sign-on, see
   [Single sign-on](../admin/sso.md). You can add it later.
@@ -56,7 +56,7 @@ command (and the backup scripts) with `sudo`, or add yourself to the `docker` gr
 `sudo usermod -aG docker $USER` and sign in again. Membership of the `docker` group is
 equivalent to root access on the server; give it only to administrators.
 
-## 3. Get OCMP
+## 3. Get Curriculum in Context
 
 ```bash
 sudo mkdir -p /opt/ocmp
@@ -70,7 +70,7 @@ account is needed.
 
 !!! note "Installing from a private copy"
     If you install from a private repository (for example your institution's fork, or
-    OCMP before its public release), `git clone` asks for a username and password. Enter
+    Curriculum in Context before its public release), `git clone` asks for a username and password. Enter
     your GitHub username, and as the password a
     [fine-grained personal access token](https://github.com/settings/personal-access-tokens)
     with read-only **Contents** access to that repository (not your GitHub password).
@@ -140,7 +140,7 @@ different address. Every setting is described in [Configuration](configuration.m
 docker compose up -d --build --wait
 ```
 
-The first run builds the OCMP images and takes 5 to 15 minutes. The command returns when
+The first run builds the Curriculum in Context images and takes 5 to 15 minutes. The command returns when
 all services are healthy. Check the result:
 
 ```bash
@@ -164,7 +164,7 @@ server itself: `curl --resolve curriculum.example.ac.za:443:127.0.0.1 https://cu
 
 ## 6. Run the setup wizard
 
-While no institution exists, OCMP is waiting for its first-run setup, protected by a
+While no institution exists, Curriculum in Context is waiting for its first-run setup, protected by a
 setup token that only someone with access to the server can see:
 
 ```bash
@@ -219,9 +219,9 @@ services:
       - "8443:443"
 ```
 
-## Try OCMP with the demo data
+## Try Curriculum in Context with the demo data
 
-To explore OCMP before entering real curricula, load the fictional demo programme
+To explore Curriculum in Context before entering real curricula, load the fictional demo programme
 "BSc Health Sciences (Demo)" after the setup wizard:
 
 ```bash
@@ -263,5 +263,5 @@ Password reset emails do not arrive
     to `.env` take effect after `docker compose up -d`.
 
 Logs
-:   `docker compose logs --tail 100 api` (or `worker`, `caddy`, `db`). OCMP logs in JSON
+:   `docker compose logs --tail 100 api` (or `worker`, `caddy`, `db`). Curriculum in Context logs in JSON
     and never logs passwords, tokens or email addresses.

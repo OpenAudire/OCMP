@@ -1,21 +1,21 @@
-# OCMP Documentation
+# Curriculum in Context Documentation
 
-The **Open Curriculum Mapping Platform (OCMP)** is an open-source, self-hosted curriculum
+**Curriculum in Context** is an open-source, self-hosted curriculum
 mapping platform for universities. It holds the structure of a programme (phases, modules,
 learning events and objectives), maps objectives to competency frameworks and taxonomies,
 and reports on coverage, gaps and workload.
 
 !!! note "Project status"
-    OCMP is in **Phase 0 (foundations)**: installation, sign-in, roles and permissions, the
-    data model, the audit log and a demo dataset are in place. Curriculum editing, mapping
-    and reports arrive in Phase 1. Some tasks described here are done through the API or
-    the command line until their admin screens exist.
+    Curriculum in Context is in **Phase 1 (core mapping)**. Installation, sign-in, roles
+    and permissions, the data model, the audit log and a demo dataset are in place;
+    curriculum editing, mapping and reports are being built. Some tasks described here are
+    done through the API or the command line until their admin screens exist.
 
 ## Where to start
 
 | You want to... | Read |
 |---|---|
-| Install OCMP on a server | [Install](operations/install.md) |
+| Install Curriculum in Context on a server | [Install](operations/install.md) |
 | Look up a setting in `.env` | [Configuration](operations/configuration.md) |
 | Move to a newer version | [Upgrade](operations/upgrade.md) |
 | Protect and recover the data | [Backup and restore](operations/backup-restore.md) |
@@ -25,9 +25,9 @@ and reports on coverage, gaps and workload.
 | Meet POPIA obligations | [Personal data inventory](privacy/data-inventory.md), [privacy notice template](privacy/privacy-notice-template.md) |
 | Understand why it is built this way | [Architecture decisions](adr/index.md) |
 
-## How OCMP runs
+## How Curriculum in Context runs
 
-OCMP runs as a set of Docker containers on one server, started with Docker Compose:
+Curriculum in Context runs as a set of Docker containers on one server, started with Docker Compose:
 
 | Service | Purpose |
 |---|---|
@@ -43,7 +43,7 @@ The interactive API reference is served by every installation at `/api/docs`.
 
 ## Data and privacy
 
-OCMP is self-hosted: all data stays on the institution's server. The demo dataset and the
+Curriculum in Context is self-hosted: all data stays on the institution's server. The demo dataset and the
 demo framework are fictional. Personal data (names, email addresses) is never sent to AI
-providers. The [personal data inventory](privacy/data-inventory.md) lists everything OCMP
+providers. The [personal data inventory](privacy/data-inventory.md) lists everything Curriculum in Context
 stores about people.

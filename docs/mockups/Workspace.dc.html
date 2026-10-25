@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mapping workspace</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.cic{--bg:#F5F7F6;--surface:#FFFFFF;--ink:#15212A;--muted:#55616C;--faint:#6B7782;--line:#DCE2E5;--soft:#EEF2F2;--brand:#0E6B6B;--brand-ink:#0A5656;--brand-soft:#E1F0EE;--on-brand:#FFFFFF;--warm:#A3561A;--warm-ink:#8A4510;--warm-soft:#FBEEDF;--warm-line:#EFCFAE;--bad:#9B2C2C;--bad-soft:#FBEAEA;--ok:#1F7A4D;--ok-soft:#E4F3EA;--shadow:0 1px 2px rgba(16,33,42,.05),0 6px 20px rgba(16,33,42,.05)}
+.cic.dark{--bg:#0E1618;--surface:#152024;--ink:#E6EEEE;--muted:#A3B3B5;--faint:#8D9EA1;--line:#283639;--soft:#1C2A2D;--brand:#45B5AD;--brand-ink:#86D6CF;--brand-soft:#173634;--on-brand:#0E1618;--warm:#E39A57;--warm-ink:#F2B57C;--warm-soft:#38281A;--warm-line:#5A3F26;--bad:#F19191;--bad-soft:#3A2020;--ok:#6CCB98;--ok-soft:#183126;--shadow:none}
+a{color:var(--brand-ink)}a:hover{color:var(--ink)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.btn{font:inherit;font-size:14px;font-weight:600;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{border-color:var(--faint)}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.btn-sm{min-height:36px;font-size:13px;padding:0 12px}
+.icon-btn{font:inherit;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.mono{font-family:'IBM Plex Mono',monospace}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.field{font:inherit;font-size:14px;min-height:44px;box-sizing:border-box;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="min-height: 1080px; background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 232px; display: flex; background: #0F2A2E">
+    <dc-import name="Sidebar" active="mapping" hint-size="100%,100%"></dc-import>
+  </div>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 14px 40px; background: var(--surface); border-bottom: 1px solid var(--line)">
+      <button class="btn" type="button" aria-label="Switch programme">BSc Health Sciences (Demo) · 2027 draft <span aria-hidden="true">▾</span></button>
+      <button class="icon-btn" type="button" onClick="{{toggleTheme}}" aria-label="{{themeLabel}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </header>
+
+    <div style="padding: 32px 40px 48px; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-end">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; color: var(--muted)">Mapping › Workspace</span>
+          <h1 style="margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -0.01em">Map HSC201 Cardiovascular system</h1>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+          <label class="sr" for="fw">Framework</label>
+          <select id="fw" class="field"><option>Demo Graduate Competencies v1</option><option>SAQA NQF level descriptors</option></select>
+          <button class="btn btn-primary" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z"></path></svg>
+            Suggest links for this module with AI
+          </button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+        <section aria-label="Objectives" class="card" style="flex: 1.2 1 300px; min-width: 0; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <span class="lbl">Objectives · 6</span>
+            <span style="font-size: 12px; color: var(--muted)">{{mappedText}}</span>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap">
+            <span class="chip" style="background: var(--brand-soft); color: var(--brand-ink)">All</span><span class="chip">Unmapped</span><span class="chip">Needs review</span>
+          </div>
+          <sc-for list="{{objectives}}" as="o" hint-placeholder-count="6">
+            <button type="button" onClick="{{o.pick}}" style="{{o.style}}">
+              <span style="{{o.dotStyle}}" aria-hidden="true"></span>
+              <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                <span style="font-size: 14px; line-height: 1.4">{{o.text}}</span>
+                <span style="font-size: 12px; color: var(--muted)">{{o.session}} · {{o.linkText}}</span>
+              </span>
+            </button>
+          </sc-for>
+        </section>
+
+        <section aria-label="Selected objective" class="card" style="flex: 1.6 1 380px; min-width: 0; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span class="lbl">Objective</span>
+            <p style="margin: 0; font-size: 18px; line-height: 1.5; font-weight: 500">{{sel.text}}</p>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap"><span class="chip">{{sel.domain}}</span><span class="chip">{{sel.level}}</span><span class="chip">{{sel.session}}</span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <span class="lbl">Linked framework items</span>
+            <sc-if value="{{sel.hasLinks}}" hint-placeholder-val="{{ true }}">
+              <sc-for list="{{sel.links}}" as="l" hint-placeholder-count="2">
+                <div style="border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+                  <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start">
+                    <span style="font-size: 15px; font-weight: 500; line-height: 1.4"><span class="mono" style="font-size: 13px; color: var(--brand-ink)">{{l.code}}</span> {{l.title}}</span>
+                    <span style="{{l.chipStyle}}">{{l.status}}</span>
+                  </div>
+                  <div style="display: flex; gap: 18px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--muted)">
+                    <span style="display: inline-flex; gap: 8px; align-items: center">Coverage
+                      <span style="display: inline-flex; gap: 3px" role="img" aria-label="{{l.covLabel}}"><sc-for list="{{l.dots}}" as="d" hint-placeholder-count="5"><span style="{{d}}"></span></sc-for></span>
+                    </span>
+                    <span>Depth <strong style="color: var(--ink)">{{l.depth}}</strong></span>
+                    <button class="btn btn-sm" type="button" onClick="{{l.remove}}" style="margin-left: auto">Remove</button>
+                  </div>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{sel.noLinks}}" hint-placeholder-val="{{ false }}">
+              <div style="border: 1px dashed var(--line); border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start">
+                <span style="font-size: 15px; font-weight: 500">No links yet</span>
+                <span style="font-size: 14px; color: var(--muted); line-height: 1.5">Pick items from the framework on the right, or let the AI suggest some for you to review.</span>
+                <button class="btn btn-sm" type="button" onClick="{{suggest}}">Suggest with AI</button>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+
+        <section aria-label="Framework" class="card" style="flex: 1.4 1 320px; min-width: 0; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center"><span class="lbl">Demo Graduate Competencies</span><a href="Frameworks.dc.html" style="font-size: 12px">Library</a></div>
+          <label class="sr" for="fwq">Search the framework</label>
+          <input id="fwq" class="field" type="search" placeholder="Search items or codes" style="background: var(--soft)">
+          <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 6px">
+              <span style="font-size: 13px; font-weight: 600"><span class="mono" style="font-size: 12px; color: var(--brand-ink)">{{g.code}}</span> {{g.name}}</span>
+              <sc-for list="{{g.items}}" as="it" hint-placeholder-count="3">
+                <div style="display: flex; gap: 10px; align-items: center; padding: 6px 0 6px 14px; border-left: 2px solid var(--line)">
+                  <span style="flex: 1; font-size: 13px; line-height: 1.4"><span class="mono" style="font-size: 12px; color: var(--muted)">{{it.code}}</span> {{it.title}}<br><span style="font-size: 12px; color: var(--muted)">{{it.used}}</span></span>
+                  <button class="btn btn-sm" type="button" onClick="{{it.link}}" aria-label="{{it.linkLabel}}" style="{{it.btnStyle}}">{{it.btnText}}</button>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1080}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      dark: null,
+      selected: 'o1',
+      links: {
+        o1: [{ code: 'DGC 2.1', cov: 4, depth: 'Matches', status: 'accepted' }],
+        o2: [{ code: 'DGC 1.2', cov: 3, depth: 'Below', status: 'suggested' }],
+        o3: [{ code: 'DGC 1.3', cov: 5, depth: 'Matches', status: 'accepted' }],
+        o4: [{ code: 'DGC 5.1', cov: 3, depth: 'Matches', status: 'suggested' }],
+        o5: [],
+        o6: []
+      }
+    };
+  }
+  items() {
+    return {
+      'DGC 1.1': 'Integrates history and examination findings', 'DGC 1.2': 'Applies biomedical science to clinical problems', 'DGC 1.3': 'Interprets common investigations',
+      'DGC 2.1': 'Gathers relevant information from patients', 'DGC 2.2': 'Shares information clearly', 'DGC 2.4': 'Communicates within teams',
+      'DGC 5.1': 'Promotes health with individuals and communities', 'DGC 8.1': 'Acts with respect and integrity'
+    };
+  }
+  renderVals() {
+    const st = this.state;
+    const dark = st.dark != null ? st.dark : !!this.props.dark;
+    const objs = [
+      ['o1', 'Take a focused history from a patient presenting with chest pain.', 'Skills lab 3', 'Skill', 'Bloom: Apply'],
+      ['o2', 'Explain the stages of the cardiac cycle using a pressure–volume loop.', 'Lecture 4', 'Knowledge', 'Bloom: Understand'],
+      ['o3', 'Interpret a 12-lead ECG showing an acute ST-elevation myocardial infarction.', 'ECG workshop', 'Skill', 'Bloom: Analyse'],
+      ['o4', 'Discuss lifestyle risk factors for hypertension with a simulated patient.', 'Simulation 2', 'Skill', 'Bloom: Apply'],
+      ['o5', 'Identify the waves, intervals and axis of a normal 12-lead ECG.', 'ECG workshop', 'Knowledge', 'Bloom: Understand'],
+      ['o6', 'Perform a cardiovascular examination on a peer, explaining each step.', 'Skills lab 2', 'Skill', 'Miller: Shows how']
+    ];
+    const names = this.items();
+    let mapped = 0;
+    const objectives = objs.map((o) => {
+      const ls = st.links[o[0]] || [];
+      const acc = ls.some((l) => l.status !== 'suggested');
+      if (ls.length) mapped += 1;
+      const on = st.selected === o[0];
+      const dotStyle = { width: '10px', height: '10px', borderRadius: '50%', flex: 'none', marginTop: '5px', background: acc ? 'var(--brand)' : ls.length ? 'var(--warm)' : 'transparent', border: acc || ls.length ? 'none' : '2px solid var(--faint)', boxSizing: 'border-box' };
+      return { text: o[1], session: o[2], linkText: ls.length ? ls.length + (ls.length === 1 ? ' link' : ' links') + (acc ? '' : ' · to review') : 'not mapped', dotStyle: dotStyle, style: { display: 'flex', gap: '12px', alignItems: 'flex-start', textAlign: 'left', width: '100%', font: 'inherit', color: 'var(--ink)', cursor: 'pointer', borderRadius: '10px', padding: on ? '11px 13px' : '12px 14px', background: on ? 'var(--brand-soft)' : 'transparent', border: on ? '2px solid var(--brand)' : '1px solid transparent' }, pick: () => this.setState({ selected: o[0] }) };
+    });
+    const so = objs.find((o) => o[0] === st.selected);
+    const sl = st.links[st.selected] || [];
+    const chipFor = { accepted: ['Accepted', 'var(--brand-soft)', 'var(--brand-ink)'], suggested: ['AI suggested', 'var(--warm-soft)', 'var(--warm-ink)'], manual: ['Added by you', 'var(--soft)', 'var(--muted)'] };
+    const links = sl.map((l, i) => ({
+      code: l.code, title: names[l.code], depth: l.depth, status: chipFor[l.status][0],
+      chipStyle: { fontSize: '12px', fontWeight: 600, padding: '4px 10px', borderRadius: '999px', whiteSpace: 'nowrap', background: chipFor[l.status][1], color: chipFor[l.status][2] },
+      covLabel: 'Coverage ' + l.cov + ' of 5',
+      dots: [1, 2, 3, 4, 5].map((n) => ({ width: '14px', height: '8px', borderRadius: '2px', background: n <= l.cov ? 'var(--brand)' : 'var(--soft)', display: 'inline-block' })),
+      remove: () => { const all = Object.assign({}, st.links); all[st.selected] = sl.filter((_, j) => j !== i); this.setState({ links: all }); }
+    }));
+    const linked = sl.map((l) => l.code);
+    const counts = { 'DGC 1.1': 4, 'DGC 1.2': 15, 'DGC 1.3': 10, 'DGC 2.1': 7, 'DGC 2.2': 5, 'DGC 2.4': 2, 'DGC 5.1': 4, 'DGC 8.1': 9 };
+    const gdefs = [['DGC 1', 'Clinical reasoning', ['DGC 1.1', 'DGC 1.2', 'DGC 1.3']], ['DGC 2', 'Communication', ['DGC 2.1', 'DGC 2.2', 'DGC 2.4']], ['DGC 5', 'Health advocacy', ['DGC 5.1']], ['DGC 8', 'Professionalism', ['DGC 8.1']]];
+    const groups = gdefs.map((g) => ({ code: g[0], name: g[1], items: g[2].map((c) => {
+      const has = linked.indexOf(c) >= 0;
+      return { code: c.replace('DGC ', ''), title: names[c], used: 'Mapped from ' + counts[c] + ' objectives', btnText: has ? 'Linked' : 'Link', linkLabel: (has ? 'Already linked: ' : 'Link to ') + names[c], btnStyle: has ? { background: 'var(--brand-soft)', color: 'var(--brand-ink)', borderColor: 'var(--brand-soft)' } : {}, link: () => { if (has) return; const all = Object.assign({}, st.links); all[st.selected] = sl.concat([{ code: c, cov: 3, depth: 'Matches', status: 'manual' }]); this.setState({ links: all }); } };
+    }) }));
+    return {
+      rootClass: dark ? 'cic dark' : 'cic',
+      themeLabel: dark ? 'Switch to light mode' : 'Switch to dark mode',
+      toggleTheme: () => this.setState({ dark: !dark }),
+      objectives: objectives,
+      mappedText: mapped + ' of 6 mapped',
+      sel: { text: so[1], session: so[2], domain: so[3], level: so[4], links: links, hasLinks: links.length > 0, noLinks: links.length === 0 },
+      groups: groups,
+      suggest: () => { const all = Object.assign({}, st.links); const c = st.selected === 'o6' ? 'DGC 1.1' : 'DGC 1.3'; all[st.selected] = [{ code: c, cov: 3, depth: 'Matches', status: 'suggested' }]; this.setState({ links: all }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

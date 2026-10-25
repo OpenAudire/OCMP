@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Button, PasswordInput, Stack, Text, Title } from '@mantine/core';
+import { Alert, Button, Paper, PasswordInput, Stack, Text, Title } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ import {
 } from '../auth/passwordRules';
 import { SuccessNotice } from '../pages/SuccessNotice';
 import { useSession } from '../session/useSession';
+import { Page } from '../ui/Page';
 
 function ChangePasswordForm() {
   const { t } = useTranslation();
@@ -93,14 +94,17 @@ export function AccountPage() {
   const { user } = session;
 
   return (
-    <Stack gap="lg" py="md">
-      <Title order={2}>{t('account.title')}</Title>
-      <Stack gap={2}>
-        <Text fw={600}>{user.display_name}</Text>
-        <Text c="dimmed">{user.email}</Text>
-      </Stack>
-      <Title order={3}>{t('account.changePassword')}</Title>
-      {user.has_password ? <ChangePasswordForm /> : <Text>{t('account.ssoOnly')}</Text>}
-    </Stack>
+    <Page title={t('account.title')}>
+      <Paper withBorder p={{ base: 'md', sm: 'xl' }} maw={560}>
+        <Stack gap="lg">
+          <Stack gap={2}>
+            <Text fw={600}>{user.display_name}</Text>
+            <Text c="dimmed">{user.email}</Text>
+          </Stack>
+          <Title order={2}>{t('account.changePassword')}</Title>
+          {user.has_password ? <ChangePasswordForm /> : <Text>{t('account.ssoOnly')}</Text>}
+        </Stack>
+      </Paper>
+    </Page>
   );
 }

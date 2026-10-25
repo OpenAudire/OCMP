@@ -1,5 +1,5 @@
 #!/bin/sh
-# Back up the OCMP database to a pg_dump file (custom format, compressed).
+# Back up the Curriculum in Context database to a pg_dump file (custom format, compressed).
 #
 # Usage: ./backup.sh [backup-directory]
 #

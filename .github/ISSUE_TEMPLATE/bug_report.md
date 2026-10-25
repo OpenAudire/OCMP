@@ -23,7 +23,7 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 ## Environment
-- OCMP version: [e.g. 0.1.0]
+- Curriculum in Context version: [e.g. 0.1.0]
 - Browser: [e.g. Chrome 120, Firefox 121]
 - OS: [e.g. Ubuntu 22.04, Windows 11]
 - Docker version: [e.g. 24.0.7]

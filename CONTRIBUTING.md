@@ -1,6 +1,6 @@
-# Contributing to OCMP
+# Contributing to Curriculum in Context
 
-Thank you for considering contributing to the Open Curriculum Mapping Platform!
+Thank you for considering contributing to Curriculum in Context!
 
 ## Code of Conduct
 
@@ -108,6 +108,9 @@ pytest -x              # Stop on first failure
 npm run test           # Run tests once
 npm run test:watch     # Watch mode
 npm run test:coverage  # With coverage
+
+# End-to-end and accessibility checks against the Docker stack (see frontend/e2e/README.md)
+E2E_EMAIL=... E2E_PASSWORD=... npm run e2e
 ```
 
 ### Documentation

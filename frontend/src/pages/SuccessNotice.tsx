@@ -11,9 +11,9 @@ export function SuccessNotice({ children }: { children: ReactNode }) {
       role="status"
       withBorder
       p="sm"
-      radius="sm"
-      bg="var(--mantine-color-teal-light)"
-      c="var(--mantine-color-teal-light-color)"
+      radius="md"
+      bg="var(--cic-brand-soft)"
+      c="var(--cic-brand-ink)"
     >
       <Text size="sm">{children}</Text>
     </Paper>

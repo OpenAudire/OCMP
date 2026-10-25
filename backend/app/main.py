@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     )
 
     logger.info(
-        "Starting OCMP API",
+        "Starting Curriculum in Context API",
         version=settings.app_version,
         debug=settings.debug,
     )
@@ -70,7 +70,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
 
     # Cleanup
-    logger.info("Shutting down OCMP API")
+    logger.info("Shutting down Curriculum in Context API")
     oidc_client = getattr(app.state, "oidc_client", None)
     if oidc_client is not None:
         await oidc_client.http.aclose()
@@ -90,8 +90,8 @@ def create_app() -> FastAPI:
     settings = get_settings()
 
     app = FastAPI(
-        title="OCMP API",
-        description="Open Curriculum Mapping Platform API",
+        title="Curriculum in Context API",
+        description="Curriculum mapping: programmes, objectives, frameworks and mappings.",
         version=settings.app_version,
         docs_url="/api/docs",
         redoc_url="/api/redoc",

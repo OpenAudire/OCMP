@@ -1,8 +1,9 @@
 {
   "app": {
-    "title": "Open Curriculum Mapping Platform",
-    "description": "Map your curriculum to competency frameworks with AI assistance",
-    "shortTitle": "OCMP"
+    "title": "Curriculum in Context",
+    "wordmarkFirst": "Curriculum",
+    "wordmarkSecond": "in Context",
+    "description": "Map your curriculum to competency frameworks with AI assistance"
   },
   "common": {
     "loading": "Loading...",
@@ -47,7 +48,7 @@
       "account_disabled": "This account is disabled. Contact your administrator.",
       "account_exists": "An account with your email address already exists. Ask an administrator to link it to your organisation sign-in.",
       "no_email": "Your organisation did not share an email address, so no account could be created. Contact your administrator.",
-      "not_provisioned": "There is no OCMP account for you yet. Ask an administrator to create one.",
+      "not_provisioned": "There is no Curriculum in Context account for you yet. Ask an administrator to create one.",
       "too_many_attempts": "Too many sign-in attempts. Try again later."
     },
     "forgot": {
@@ -83,10 +84,14 @@
     "reports": "Reports",
     "search": "Search",
     "admin": "Admin",
-    "explorer": "Explorer"
+    "explorer": "Explorer",
+    "review": "Review queue",
+    "import": "Import and export",
+    "waiting_one": "{{count}} waiting",
+    "waiting_other": "{{count}} waiting"
   },
   "setup": {
-    "title": "Set up OCMP",
+    "title": "Set up Curriculum in Context",
     "intro": "Create your institution and the first administrator. This is done once, on a new installation.",
     "steps": {
       "institution": "Institution",
@@ -117,7 +122,7 @@
       "shortCode": "Use 2 to 32 letters, digits or dashes.",
       "country": "Enter a two-letter country code.",
       "token": "The setup token is not correct. Check the API log.",
-      "alreadyDone": "OCMP has already been set up. Sign in instead.",
+      "alreadyDone": "Curriculum in Context has already been set up. Sign in instead.",
       "invalidAccount": "The administrator account was not accepted. Check the email address, and use a password of at least {{min}} characters that is not your email address."
     }
   },
@@ -143,12 +148,15 @@
     "skipToContent": "Skip to main content",
     "toggleNavigation": "Show or hide navigation",
     "mainNavigation": "Main navigation",
-    "colorScheme": "Switch between light and dark theme",
-    "userMenu": "Account menu",
-    "signedInAs": "Signed in as {{name}}",
+    "toDarkTheme": "Switch to dark theme",
+    "toLightTheme": "Switch to light theme",
+    "userMenu": "{{initials}}: account menu for {{name}}",
     "signOut": "Sign out",
     "loading": "Loading…",
     "account": "Account"
+  },
+  "states": {
+    "loading": "Loading…"
   },
   "pages": {
     "comingSoon": "This page is being built.",
@@ -156,10 +164,10 @@
     "notFoundBody": "There is no page at this address.",
     "backHome": "Go to start page",
     "noAccessTitle": "No access",
-    "noAccessBody": "Your account cannot use this part of OCMP. Ask an administrator if you need access.",
+    "noAccessBody": "Your account cannot use this part of Curriculum in Context. Ask an administrator if you need access.",
     "noRolesBody": "Your account has no roles yet. Ask an administrator to give you access.",
     "errorTitle": "Something went wrong",
-    "errorBody": "OCMP could not be reached. Check your connection and try again.",
+    "errorBody": "Curriculum in Context could not be reached. Check your connection and try again.",
     "retry": "Try again"
   },
   "account": {

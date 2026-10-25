@@ -1,0 +1,100 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 480px;
+  padding: 32px;
+}
+
+:root .card[data-tone='warm'] {
+  --paper-border-color: var(--cic-warm-line);
+}
+
+@media (max-width: 48em) {
+  .card {
+    padding: 24px;
+  }
+}
+
+.tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--cic-brand-soft);
+  color: var(--cic-brand-ink);
+}
+
+.card[data-tone='warm'] .tile {
+  background: var(--cic-warm-soft);
+  color: var(--cic-warm-ink);
+}
+
+.body {
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.hint {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--cic-soft);
+  color: var(--cic-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.progressText {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.skeletonCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+}
+
+.skeleton {
+  display: block;
+  border-radius: 6px;
+  background: var(--cic-soft);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+.note {
+  margin-top: auto;
+  line-height: 1.5;
+}

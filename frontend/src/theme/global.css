@@ -1,0 +1,45 @@
+/*
+ * Global adjustments to Mantine's component styles, loaded after Mantine's CSS.
+ * `:root` raises specificity to match Mantine's colour-scheme selectors.
+ */
+
+/* Buttons and fields at least 44px tall at the default sizes (mockups, WCAG 2.5.8). */
+:root .mantine-Button-root {
+  --button-height-sm: calc(2.75rem * var(--mantine-scale));
+  --button-height-md: calc(2.75rem * var(--mantine-scale));
+}
+
+:root .mantine-Input-wrapper {
+  --input-height-sm: calc(2.75rem * var(--mantine-scale));
+  --input-height-md: calc(2.75rem * var(--mantine-scale));
+}
+
+:root .mantine-Input-wrapper[data-variant='default'] {
+  --input-bg: var(--cic-surface);
+  --input-bd: var(--cic-field-line);
+}
+
+/* Cards: surface colour, soft line border and the light-theme shadow. */
+:root .mantine-Paper-root {
+  --paper-border-color: var(--cic-line);
+  background-color: var(--cic-surface);
+}
+
+:root .mantine-Paper-root[data-with-border] {
+  box-shadow: var(--cic-shadow);
+}
+
+/* Numbers and codes in tables line up. */
+.cic-mono {
+  font-family: var(--mantine-font-family-monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Menus and popovers: surface with a soft line; hovered items on the soft fill
+   (Mantine's dark default is the field border colour, too dark for text). */
+:root .mantine-Menu-dropdown,
+:root .mantine-Popover-dropdown {
+  --menu-item-hover: var(--cic-soft);
+  background-color: var(--cic-surface);
+  border-color: var(--cic-line);
+}

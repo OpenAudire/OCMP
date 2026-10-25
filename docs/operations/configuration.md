@@ -1,6 +1,6 @@
 # Configuration
 
-OCMP reads its settings from `deploy/.env`, created from `deploy/.env.example` during
+Curriculum in Context reads its settings from `deploy/.env`, created from `deploy/.env.example` during
 [installation](install.md). After changing `.env`, apply it with:
 
 ```bash
@@ -52,7 +52,7 @@ Needed for password reset and "password changed" notices.
 | `SMTP_PORT` | `587` | Usually 587 (STARTTLS) or 465 (implicit TLS). |
 | `SMTP_USER`, `SMTP_PASSWORD` | (none) | Leave empty if the server accepts mail without signing in. |
 | `SMTP_FROM_EMAIL` | (none) | Sender address. |
-| `SMTP_FROM_NAME` | `OCMP` | Sender name. |
+| `SMTP_FROM_NAME` | `Curriculum in Context` | Sender name. |
 | `SMTP_TLS` | `true` | STARTTLS. |
 | `SMTP_SSL` | `false` | Implicit TLS; takes precedence over `SMTP_TLS`. |
 | `PASSWORD_RESET_TOKEN_MINUTES` | `60` | How long a reset link works. |

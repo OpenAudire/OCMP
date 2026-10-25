@@ -1,6 +1,6 @@
 # Upgrade
 
-OCMP is upgraded by fetching a newer version of the repository and rebuilding the
+Curriculum in Context is upgraded by fetching a newer version of the repository and rebuilding the
 images. Database changes are applied automatically by the `migrate` service when the
 stack starts.
 
@@ -34,7 +34,7 @@ git checkout v0.2.0        # the release to install; before releases: git pull
 ```
 
 For a private copy, `git fetch` asks for your GitHub username and token, as during
-[installation](install.md#3-get-ocmp).
+[installation](install.md#3-get-curriculum-in-context).
 
 If git refuses because of local changes, a tracked file was edited by hand. Move local
 changes into `docker-compose.override.yml` or `deploy/caddy/` (see [Install](install.md))
@@ -122,7 +122,7 @@ Changes made after the upgrade are lost.
 
 ## Docker and PostgreSQL updates
 
-- Apply operating system and Docker updates as usual. Restarting Docker restarts OCMP.
+- Apply operating system and Docker updates as usual. Restarting Docker restarts Curriculum in Context.
 - `docker compose pull` followed by `docker compose up -d --build --wait` updates the
   third-party images (PostgreSQL 16 minor versions, Redis, Caddy) within their pinned
   major versions.

@@ -1,4 +1,3 @@
-import { MantineProvider } from '@mantine/core';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
@@ -6,6 +5,7 @@ import { MemoryRouter } from 'react-router';
 import type { Institution, RoleAssignment, User } from '../api/types';
 import { createQueryClient } from '../queryClient';
 import { AppRoutes } from '../routes/AppRoutes';
+import { ThemeProvider } from '../theme/ThemeProvider';
 
 /** Render the whole app at an address, with fresh query state and no retries. */
 export function renderAt(path: string) {
@@ -13,11 +13,11 @@ export function renderAt(path: string) {
   client.setDefaultOptions({ queries: { retry: false } });
   return render(
     <QueryClientProvider client={client}>
-      <MantineProvider>
+      <ThemeProvider>
         <MemoryRouter initialEntries={[path]}>
           <AppRoutes />
         </MemoryRouter>
-      </MantineProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     # Application
     # Public address of the site, used to build links in emails.
     public_url: str = "https://localhost"
-    app_name: str = "OCMP"
+    app_name: str = "Curriculum in Context"
     app_version: str = "0.1.0"
     debug: bool = False
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     smtp_user: str | None = None
     smtp_password: str | None = None
     smtp_from_email: str | None = None
-    smtp_from_name: str = "OCMP"
+    smtp_from_name: str = "Curriculum in Context"
     smtp_tls: bool = True  # STARTTLS (usually port 587)
     smtp_ssl: bool = False  # implicit TLS (usually port 465); takes precedence over smtp_tls
     smtp_timeout_seconds: float = 10.0

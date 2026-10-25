@@ -1,5 +1,5 @@
 #!/bin/sh
-# Restore the OCMP database from a backup made by backup.sh.
+# Restore the Curriculum in Context database from a backup made by backup.sh.
 #
 # Usage: ./restore.sh <backup-file> [--yes]
 #
@@ -44,7 +44,7 @@ if ! docker compose exec -T db pg_restore --list < "$file" > /dev/null; then
 fi
 
 if [ "$confirmed" != "--yes" ]; then
-    echo "This replaces ALL data in the OCMP database with $file"
+    echo "This replaces ALL data in the Curriculum in Context database with $file"
     echo "and signs everyone out. Type RESTORE to continue."
     read -r answer
     if [ "$answer" != "RESTORE" ]; then
@@ -76,6 +76,6 @@ in_db 'dropdb --username="$POSTGRES_USER" --force "$POSTGRES_DB" \
 echo "Clearing sessions and queued jobs..."
 docker compose exec -T redis redis-cli FLUSHALL > /dev/null
 
-echo "Starting OCMP (migrations run first)..."
+echo "Starting Curriculum in Context (migrations run first)..."
 docker compose up -d --wait
 echo "Restore complete."

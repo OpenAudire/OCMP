@@ -1,4 +1,4 @@
-# OCMP Caddyfile
+# Curriculum in Context Caddyfile
 # Caddy provides automatic HTTPS with Let's Encrypt
 
 {$DOMAIN:localhost} {

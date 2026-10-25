@@ -1,26 +1,27 @@
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
+import './theme/fonts';
+import './theme/global.css';
 
-import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router';
 
 import { createQueryClient } from './queryClient';
 import { AppRoutes } from './routes/AppRoutes';
-import { theme } from './theme';
+import { ThemeProvider } from './theme/ThemeProvider';
 
 const queryClient = createQueryClient();
 
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider theme={theme} defaultColorScheme="auto">
+      <ThemeProvider>
         <Notifications />
         <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>
-      </MantineProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

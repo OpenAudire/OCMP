@@ -25,7 +25,10 @@ terminology and feature profiles (ADR 018).
   terminology over the translations; `useInstitution()` and `useFeature()` expose settings
   and profile features.
 - `layout/`: the Mantine `AppShell` (header, responsive navbar that collapses to a burger
-  below `sm`, light/dark toggle, user menu, skip link) and the navigation rules.
+  below `sm`, light/dark toggle, user menu, skip link) and the navigation rules. Since
+  Slice 1.1 the navbar is the mockups' sidebar (ADR 026).
+- `theme/` (Slice 1.1): design tokens, the Mantine theme and fonts (ADR 026).
+- `ui/` (Slice 1.1): shared building blocks: `Page`, and the empty, loading and error states.
 - `routes/`: an auth guard (sign-in redirect with `next`), a start page that opens the first
   section the user may use, section guards, not-found and no-access pages.
 

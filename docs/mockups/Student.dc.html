@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Student curriculum explorer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.cic{--bg:#F5F7F6;--surface:#FFFFFF;--ink:#15212A;--muted:#55616C;--line:#DCE2E5;--soft:#EEF2F2;--brand:#0E6B6B;--brand-ink:#0A5656;--brand-soft:#E1F0EE;--warm:#A3561A;--warm-ink:#8A4510;--warm-soft:#FBEEDF;--warm-line:#EFCFAE}
+.cic.dark{--bg:#0E1618;--surface:#152024;--ink:#E6EEEE;--muted:#A3B3B5;--line:#283639;--soft:#1C2A2D;--brand:#45B5AD;--brand-ink:#86D6CF;--brand-soft:#173634;--warm:#E39A57;--warm-ink:#F2B57C;--warm-soft:#38281A;--warm-line:#5A3F26}
+a{color:var(--brand-ink)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:56px;font-size:12px;font-weight:500;color:var(--muted);text-decoration:none}
+.slot{display:flex;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;text-decoration:none;color:var(--ink)}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="width: 390px; height: 844px; box-sizing: border-box; background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="background: #0F2A2E; color: #FFFFFF; padding: 24px 20px 20px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; justify-content: space-between; align-items: center">
+      <span style="font-size: 14px; font-weight: 700">Curriculum <span style="font-weight: 400; color: #E8B07A">in Context</span></span>
+      <button type="button" onClick="{{toggleTheme}}" aria-label="{{themeLabel}}" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #23464B; background: transparent; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg></button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 13px; color: #9DBAB7">BSc Health Sciences · Year 2</span>
+      <h1 style="margin: 0; font-size: 24px; font-weight: 600">Explore your curriculum</h1>
+    </div>
+    <label class="sr" for="sq">Search topics</label>
+    <input id="sq" type="search" placeholder="Search a topic, e.g. ECG" style="font: inherit; font-size: 16px; min-height: 48px; box-sizing: border-box; width: 100%; padding: 0 16px; border: 0; border-radius: 12px; background: #FFFFFF; color: #15212A">
+  </header>
+
+  <div style="flex: 1; overflow: hidden; padding: 18px 16px; display: flex; flex-direction: column; gap: 18px">
+    <section aria-label="This week" style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">This week · Week 4</h2>
+        <a href="#timetable" style="font-size: 14px">All 6 sessions</a>
+      </div>
+      <a class="slot" href="#ecg" style="background: var(--brand-soft); border: 2px solid var(--brand); padding: 11px 13px">
+        <span style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 48px; border-right: 1px solid var(--line); padding-right: 12px"><span style="font-size: 12px; color: var(--brand-ink)">Tue</span><span style="font-size: 15px; font-weight: 600">09:00</span></span>
+        <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">ECG interpretation workshop</span><span style="font-size: 13px; color: var(--muted)">Skills lab B · prepare 90 min</span></span>
+      </a>
+      <a class="slot" href="#sim2">
+        <span style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 48px; border-right: 1px solid var(--line); padding-right: 12px"><span style="font-size: 12px; color: var(--muted)">Thu</span><span style="font-size: 15px; font-weight: 600">14:00</span></span>
+        <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Simulation 2 · Hypertension</span><span style="font-size: 13px; color: var(--muted)">Simulation centre · 3 objectives</span></span>
+      </a>
+    </section>
+
+    <section aria-label="Block test" style="background: var(--warm-soft); border: 1px solid var(--warm-line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">HSC201 block test</h2>
+        <span style="font-size: 13px; font-weight: 600; color: var(--warm-ink)">in 12 days</span>
+      </div>
+      <span style="font-size: 14px; line-height: 1.45">Covers <strong>38 objectives</strong> from 12 sessions, including:</span>
+      <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.4">
+        <li>Interpret a 12-lead ECG showing an acute STEMI.</li>
+        <li>Take a focused history for chest pain.</li>
+      </ul>
+      <a href="#all" style="font-size: 14px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center">See all 38 objectives</a>
+    </section>
+
+    <section aria-label="Where you build each competency" style="background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 600">Where Year 2 builds your skills</h2>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px">
+        <div style="display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 10px; align-items: center"><span>Clinical reasoning</span><span style="height: 8px; background: var(--soft); border-radius: 4px; overflow: hidden; display: block"><span style="display: block; width: 62%; height: 100%; background: var(--brand); border-radius: 4px"></span></span></div>
+        <div style="display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 10px; align-items: center"><span>Communication</span><span style="height: 8px; background: var(--soft); border-radius: 4px; overflow: hidden; display: block"><span style="display: block; width: 55%; height: 100%; background: var(--brand); border-radius: 4px"></span></span></div>
+        <div style="display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 10px; align-items: center"><span>Health advocacy</span><span style="height: 8px; background: var(--soft); border-radius: 4px; overflow: hidden; display: block"><span style="display: block; width: 18%; height: 100%; background: var(--brand); border-radius: 4px"></span></span></div>
+      </div>
+    </section>
+  </div>
+
+  <nav aria-label="Student menu" style="display: flex; background: var(--surface); border-top: 1px solid var(--line); padding: 4px 8px 10px">
+    <a class="tab" href="#explore" aria-current="page" style="color: var(--brand-ink)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"></path><path d="M9 3v15"></path><path d="M15 6v15"></path></svg>Explore</a>
+    <a class="tab" href="#search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>Search</a>
+    <a class="tab" href="#timetable"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>Timetable</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dark: null };
+  }
+  renderVals() {
+    const dark = this.state.dark != null ? this.state.dark : !!this.props.dark;
+    return {
+      rootClass: dark ? 'cic dark' : 'cic',
+      themeLabel: dark ? 'Switch to light mode' : 'Switch to dark mode',
+      toggleTheme: () => this.setState({ dark: !dark })
+    };
+  }
+}
+</script>
+</body>
+</html>
