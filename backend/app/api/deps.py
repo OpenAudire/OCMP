@@ -6,6 +6,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, Response, status
 from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.core.database import DbSession
@@ -129,7 +130,9 @@ async def get_current_user(auth: CurrentAuth) -> User:
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-ScopeFromRequest = Callable[[Request], ScopeRef]
+# Finds the scope a request acts on, e.g. from an id in the path. It may load rows
+# (answering 404 when the target does not exist or is not visible to the user).
+ScopeFromRequest = Callable[[Request, AsyncSession, User], Awaitable[ScopeRef]]
 
 
 def require_permission(
@@ -137,14 +140,14 @@ def require_permission(
 ) -> Callable[..., Awaitable[User]]:
     """Dependency: the signed-in user, who must hold ``permission`` at the scope.
 
-    ``scope`` derives the scope from the request (e.g. a faculty id in the path);
-    without it the permission is checked for the whole instance.
+    ``scope`` derives the scope from the request (e.g. the programme of a curriculum
+    version in the path); without it the permission is checked for the whole instance.
 
     Usage: ``actor: Annotated[User, Depends(require_permission(Permission.USERS_MANAGE))]``
     """
 
     async def check(request: Request, user: CurrentUser, db: DbSession) -> User:
-        target = scope(request) if scope else INSTANCE
+        target = await scope(request, db, user) if scope else INSTANCE
         if not await has_permission(db, user, permission, target):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

@@ -33,3 +33,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [025](025-product-name.md) | Product Name "Curriculum in Context" |
 | [026](026-visual-design-and-theming.md) | Visual Design, Theming and Accessibility Checks |
 | [027](027-curriculum-read-access.md) | Curriculum Read API and Who Sees What |
+| [028](028-curriculum-structure-editing.md) | Curriculum Structure Editing |

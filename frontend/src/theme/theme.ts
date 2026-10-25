@@ -58,11 +58,15 @@ const dark: MantineColorsTuple = [
 const FONT_SANS = "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 const FONT_MONO = "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
-/** Filled brand buttons use the scheme's on-brand text (white in light, dark ink in dark). */
+/**
+ * Filled brand and red (delete) buttons use the scheme's on-brand text (white in light,
+ * dark ink in dark): the dark scheme's brand and bad colours are light.
+ */
 const variantColorResolver: VariantColorsResolver = (input) => {
   const colors = defaultVariantColorsResolver(input);
   const parsed = parseThemeColor({ color: input.color || input.theme.primaryColor, theme: input.theme });
-  if (input.variant === 'filled' && parsed.color === 'brand' && parsed.shade === undefined) {
+  const onToken = parsed.color === 'brand' || parsed.color === 'red';
+  if (input.variant === 'filled' && onToken && parsed.shade === undefined) {
     return { ...colors, color: 'var(--cic-on-brand)' };
   }
   return colors;
@@ -121,6 +125,8 @@ const mantineVariables: Record<string, string> = {
   '--mantine-primary-color-contrast': 'var(--cic-on-brand)',
   // Errors (Alert color="red", error text) use the bad tokens, which meet AA.
   '--mantine-color-red-filled': 'var(--cic-bad)',
+  // Hover moves towards the ink colour, which keeps the on-brand text readable.
+  '--mantine-color-red-filled-hover': 'color-mix(in srgb, var(--cic-bad) 88%, var(--cic-ink))',
   '--mantine-color-red-light': 'var(--cic-bad-soft)',
   '--mantine-color-red-light-color': 'var(--cic-bad)',
   '--mantine-color-red-text': 'var(--cic-bad)',

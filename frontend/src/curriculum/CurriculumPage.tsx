@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Button, Paper, Text } from '@mantine/core';
 import { IconStack2 } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +10,7 @@ import { fetchVersionStructure, queryKeys } from '../api/endpoints';
 import type { VersionStructure } from '../api/types';
 import { useSession } from '../session/useSession';
 import { Permission } from '../session/permissions';
+import { SuccessNotice } from '../pages/SuccessNotice';
 import { Page } from '../ui/Page';
 import { EmptyState, ErrorState, LoadingState } from '../ui/States';
 import {
@@ -18,6 +19,8 @@ import {
   rememberVersion,
   useProgrammes,
 } from './currentVersion';
+import type { EditResult } from './editing';
+import { ItemActions } from './ItemActions';
 import { ItemDetails } from './ItemDetails';
 import { CURRICULUM_PATH, versionPath } from './paths';
 import { StructureTree } from './StructureTree';
@@ -87,9 +90,26 @@ function Builder({ structure }: BuilderProps) {
   );
   const versionId = structure.version.id;
   useEffect(() => rememberVersion(versionId), [versionId]);
+  // What the last change did; announced, and focused when the selection moved.
+  const [notice, setNotice] = useState<{ key: number; message: string; focus: boolean } | null>(
+    null
+  );
+  const noticeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (notice?.focus) noticeRef.current?.focus();
+  }, [notice]);
 
   const select = (id: string) => {
+    setNotice(null);
     setSearchParams(id === ROOT_ID ? {} : { item: id }, { replace: true });
+  };
+  const saved = (result: EditResult) => {
+    const moves = result.select !== undefined && result.select !== selectedId;
+    if (result.select !== undefined) select(result.select);
+    if (result.reveal?.length) {
+      setExpanded((current) => new Set([...current, ...(result.reveal ?? [])]));
+    }
+    setNotice({ key: Date.now(), message: result.message, focus: moves });
   };
   const toggle = (id: string, open: boolean) => {
     setExpanded((current) => {
@@ -105,7 +125,8 @@ function Builder({ structure }: BuilderProps) {
     sessions: t('terms.learning_event', { count: 2 }).toLocaleLowerCase(),
   };
 
-  if (hasNoModules(structure)) {
+  // People who may add modules get the builder, with its "Add" buttons, instead.
+  if (hasNoModules(structure) && !structure.can_edit) {
     return (
       <EmptyState
         icon={IconStack2}
@@ -143,6 +164,17 @@ function Builder({ structure }: BuilderProps) {
         />
       </Paper>
       <section aria-label={t('curriculum.details.label')} className={classes.details}>
+        {notice && (
+          <div key={notice.key} ref={noticeRef} tabIndex={-1} className={classes.notice}>
+            <SuccessNotice>{notice.message}</SuccessNotice>
+          </div>
+        )}
+        <ItemActions
+          key={`actions-${selectedId}`}
+          item={found.node.item}
+          structure={structure}
+          onSaved={saved}
+        />
         <ItemDetails key={selectedId} item={found.node.item} />
       </section>
     </div>

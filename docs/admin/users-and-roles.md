@@ -42,6 +42,32 @@ People with a module or session role see a note that they see only the parts the
 on. Anything a person cannot see is answered as "not found", so nobody learns which
 other programmes or modules exist.
 
+## Who can change the curriculum structure
+
+In the curriculum builder, people with `curriculum.edit` (curriculum office, programme
+directors, module coordinators) see **Add**, **Edit** and **Delete** buttons next to the
+selected item, as far as their role reaches:
+
+| Change | Needs `curriculum.edit` at |
+|---|---|
+| Add, rename or delete a phase; add or delete a module; move a module to another phase | The programme (or its faculty, or the institution) |
+| Change a module's code, name, credits, NQF level, description or LMS reference; add or delete its sessions | The module (or above) |
+| Change a session | The session (or above) |
+
+So a module coordinator can maintain their own module and its sessions, but cannot add
+modules, delete their module or move it to another phase. Lecturers and mappers cannot
+change the structure. The API checks every change; the buttons only follow the roles.
+
+- **Deleting** is a soft delete: the item disappears from the builder but its rows and
+  history stay in the database. Deleting a module also deletes its sessions and all their
+  objectives; deleting a session deletes its objectives. A phase can only be deleted once
+  it holds no modules. There is no restore screen yet.
+- Every change is recorded in the audit log with who made it (`curriculum.phase_create`,
+  `curriculum.module_update`, `curriculum.learning_event_delete` and so on).
+- **Archived** versions cannot be changed. Until publishing rules arrive, draft and
+  published versions can both be edited.
+- Roles held at a deleted module or session stay listed but give no access to anything.
+
 ## Managing users before the admin screens exist
 
 User and role screens arrive in Phase 1. Until then, platform admins manage access

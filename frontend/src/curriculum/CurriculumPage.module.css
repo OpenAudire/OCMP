@@ -36,3 +36,13 @@
 .partial {
   padding: 0 8px 10px;
 }
+
+/* Focused after a change moved the selection; the notice itself shows the focus ring. */
+.notice:focus {
+  outline: none;
+}
+
+.notice:focus-visible > * {
+  outline: 2px solid var(--cic-brand);
+  outline-offset: 2px;
+}

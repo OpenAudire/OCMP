@@ -49,6 +49,7 @@ function module(overrides: Partial<StructureModule> & Pick<StructureModule, 'id'
     nqf_level: 5,
     context_only: false,
     objective_count: 0,
+    can_edit: false,
     events: [],
     ...overrides,
   } satisfies StructureModule;
@@ -68,9 +69,11 @@ export const cardio = module({
       position: 0,
       week: 4,
       format: 'Lecture',
+      format_value_id: 'f-lecture',
       contact_minutes: 90,
       self_study_minutes: 120,
       objective_count: 1,
+      can_edit: false,
     },
     {
       id: 'e2',
@@ -78,9 +81,11 @@ export const cardio = module({
       position: 1,
       week: null,
       format: null,
+      format_value_id: null,
       contact_minutes: 120,
       self_study_minutes: 90,
       objective_count: 0,
+      can_edit: false,
     },
   ],
 });
@@ -101,4 +106,5 @@ export const structure: VersionStructure = {
     { id: 'y2', name: 'Year 2', kind: 'year', position: 1, modules: [cardio] },
   ],
   modules_without_phase: [module({ id: 'm3', code: 'HSC300', name: 'Research thread' })],
+  can_edit: false,
 };

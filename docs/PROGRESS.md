@@ -612,6 +612,27 @@ Dependabot pull requests at approval: only #1 (Mailpit v1.21 to v1.31, developme
 
 ---
 
+## Decisions to review
+
+Decisions made during the slices without asking first, following the brief and earlier
+ADRs. Each can be changed; the last column says how much work that would be.
+
+| Slice | Decision | Why | How hard to reverse |
+|---|---|---|---|
+| 1.3 | Published versions stay editable until Slice 1.5; only archived versions are read-only | Publishing rules are scheduled for 1.5, and the demo has only a published version, so nothing could be edited otherwise | Easy: one constant (`EDITABLE_STATUSES`) |
+| 1.3 | Phases, adding and deleting modules, and moving a module to another phase need `curriculum.edit` at the programme; a module's own fields and its sessions need it at the module; a session's fields at the session | Brief section 4: directors own the structure, coordinators their modules and sessions | Easy: scope per endpoint |
+| 1.3 | Deleting is a soft delete that takes the children with it (module: its sessions and all their objectives; session: its objectives), with one shared timestamp | Keeps later reports and copy-forward from seeing orphaned objectives; a restore can bring back what went together | Medium: data already deleted this way would need a restore step |
+| 1.3 | A phase holding modules cannot be deleted (the dialog explains why) | Avoids deleting many modules by accident | Easy |
+| 1.3 | Module codes are unique per version ignoring upper/lower case (the database index is case-sensitive) | "hsc101" and "HSC101" in one version would confuse imports and reports | Easy |
+| 1.3 | Write endpoints answer 404 for items the user cannot see and 403 for visible items they may not change | Same rule as the read API (ADR 027): the API does not reveal what exists | Easy |
+| 1.3 | Add, Edit and Delete buttons sit in the details panel of the selected item, not one "+ Add learning event" button under the tree as in the mockup | Every action sits next to the item it changes, and the same pattern works for phases, modules and sessions | Easy (UI only) |
+| 1.3 | New items go to the end of their parent; reordering waits for Slice 1.4 | Matches the plan | Easy |
+| 1.3 | `require_permission` scope resolvers are now async and receive the database session and the user | Curriculum scopes need a lookup (version to programme) and a visibility check | Easy: no other endpoint used `scope=` yet |
+| 1.3 | The request's database session now commits when the endpoint returns, before the response is sent (`Depends(..., scope="function")`) | Found by the new end-to-end journey: FastAPI ended `yield` dependencies after the response, so a read straight after a save could miss it, and a failed commit still answered 2xx | Easy: one line in `app/core/database.py` |
+| 1.3 | Filled red (delete) buttons use the on-brand text colour, like filled brand buttons | White text on the dark theme's light red failed contrast (axe) | Easy |
+
+---
+
 ## Phase 1 Plan (approved 2026-10-25)
 
 Product name: **Curriculum in Context** (repository, Python package, CLI, images and compose project stay `ocmp`). UI reference: the approved mockups in `docs/mockups/` (start with its README).
@@ -757,3 +778,29 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 2. For Slice 1.5: copying a year forward **copies role assignments at module and session scope** to the new rows by default. The copy-forward preview lists them so each can be unticked; assignments that have expired, or whose account is deactivated or deleted, are skipped (and shown as skipped)
 
 **Commit**: `feat: add curriculum read API, version switcher and read-only structure tree`
+
+---
+
+### Slice 1.3: Structure Editing
+**Status**: Complete
+
+**Deliverables**:
+- [x] **Editing API** (ADR 028): `POST /curriculum-versions/{id}/phases`, `PATCH`/`DELETE /phases/{id}`, `POST /curriculum-versions/{id}/modules`, `PATCH`/`DELETE /modules/{id}`, `POST /modules/{id}/learning-events`, `PATCH`/`DELETE /learning-events/{id}`, and `GET /teaching-formats` (values of active teaching-method lists). Partial updates (`PATCH` changes only the fields sent; `null` clears optional ones); validation of names, codes, credits (one decimal), NQF level, minutes and week
+- [x] **Scoped permissions**: `curriculum.edit` at the programme for phases, adding and deleting modules and moving a module between phases; at the module for its fields and adding or deleting its sessions; at the session for its fields. Not visible = 404 (ADR 027), visible but not allowed = 403. `require_permission` takes async scope resolvers `(request, db, user)`
+- [x] **Rules** (`app/services/curriculum_edit.py`): archived versions read-only (409); phase must be in the same version; module codes unique per version ignoring case (409); new items at the end; format from a usable teaching-method list; soft delete with children (module: sessions and all their objectives; session: its objectives; one timestamp), phase only when empty (409). Every change through ORM objects with `audit_operation` names (`curriculum.phase_create` and so on)
+- [x] Structure response carries `can_edit` for the version, each module and each session; `format_value_id` added to sessions
+- [x] **Builder screens**: Add, Edit and Delete buttons for the selected item in the details panel, following the `can_edit` flags; Mantine modal forms for phases (name, kind), modules (code, name, phase or "across phases", credits, NQF level, description, LMS reference) and sessions (title, format, contact and self-study minutes, week, description, LMS reference); delete dialogs say what goes with the item; a phase holding modules explains why it cannot be deleted. After a change the new item (or the deleted item's parent) is selected and opened, and a `SuccessNotice` confirms it (focused when the selection moved; otherwise focus returns to the button). Editors see the builder, not the empty state, for a version without modules. All text from `curriculum.edit.*` and `terms.*`
+- [x] Fixed while testing: the request's database session committed after the response was sent, so the builder's refetch after a save could miss the change (now committed before the response); filled red buttons had white text on the dark theme's light red (now on-brand text, contrast test added); the test factory's academic years overflowed the allowed range in long runs
+- [x] ADR 028; admin guide "Who can change the curriculum structure"; CLAUDE.md (service and scope resolvers); "Decisions to review" section started in this file
+
+**Verification**:
+- Backend: ruff, ruff format, mypy (74 files) pass; pytest 594 passed against the test database (51 new in `test_curriculum_edit_api.py`: sign-in required, programme director, module coordinator, lecturer, mapper and student, archived and published versions, validation, cascade, audit entry), 97% coverage
+- Frontend under Node 24.22.1: lint, typecheck, production build pass; 119 tests pass (9 new in `StructureEditing.test.tsx`: no buttons without rights, add phase with validation, edit module and phase, duplicate code, module coordinator limits, add session with format, delete session, non-empty phase, empty editable version)
+- Docker: api, worker and web images rebuilt; Playwright (Chromium) against the Compose stack with the demo data: 41 passed, twice in a row (4 new in `e2e/curriculum-editing.spec.ts`: add, change and delete a phase, module and session with cancel and focus checks, and the non-empty phase; axe WCAG 2.2 AA on each dialog and state, light and dark)
+- Screenshots of the module edit dialog (dark) and the module view with its buttons (light) checked by eye
+- `mkdocs build --strict` passes
+- Not verified here: browsers other than Chromium; screen readers by hand; the CI run on GitHub (runs on push)
+
+**Not in this slice**: reordering and copying (1.4), publishing rules and making published versions read-only (1.5), a restore screen for deleted items, objective editing (1.6).
+
+**Commit**: `feat: edit phases, modules and sessions with scoped permissions`

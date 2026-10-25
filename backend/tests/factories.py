@@ -75,7 +75,8 @@ class CurriculumVersionFactory(factory.Factory):  # type: ignore[misc]
         model = CurriculumVersion
 
     programme = factory.SubFactory(ProgrammeFactory)
-    academic_year = factory.Sequence(lambda n: 2027 + n)
+    # Wraps so long test runs stay inside the allowed range (1900-2200).
+    academic_year = factory.Sequence(lambda n: 2000 + n % 200)
 
 
 class PhaseFactory(factory.Factory):  # type: ignore[misc]

@@ -170,3 +170,20 @@ async def set_teaching_format(
             raise InvalidRequestError("The format must come from a teaching-method list.")
     event.format_value_id = value.id if value else None
     await db.flush()
+
+
+async def teaching_formats(db: AsyncSession) -> list[tuple[TagValue, TagList]]:
+    """Values that can be chosen as a session's teaching format, by list and position."""
+    result = await db.execute(
+        select(TagValue, TagList)
+        .join(TagList, TagList.id == TagValue.tag_list_id)
+        .where(
+            TagList.kind == TagListKind.TEACHING_METHOD,
+            TagList.deleted_at.is_(None),
+            TagList.is_active.is_(True),
+            TagValue.deleted_at.is_(None),
+            TagValue.is_active.is_(True),
+        )
+        .order_by(TagList.name, TagValue.position, TagValue.label)
+    )
+    return [(value, tag_list) for value, tag_list in result.all()]

@@ -3,8 +3,9 @@
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.models.curriculum import (
     AccreditationStatus,
@@ -74,9 +75,12 @@ class StructureEvent(BaseModel):
     position: int
     week: int | None
     format: str | None
+    format_value_id: uuid.UUID | None
     contact_minutes: int
     self_study_minutes: int
     objective_count: int
+    # Whether the user may edit this session.
+    can_edit: bool
 
 
 class StructureModule(BaseModel):
@@ -90,6 +94,8 @@ class StructureModule(BaseModel):
     # Shown only to place the user's sessions; its details are not available to them.
     context_only: bool
     objective_count: int
+    # Whether the user may edit the module and add or remove its sessions.
+    can_edit: bool
     events: list[StructureEvent]
 
 
@@ -113,6 +119,8 @@ class VersionStructure(BaseModel):
     phases: list[StructurePhase]
     # Longitudinal modules that span phases.
     modules_without_phase: list[StructureModule]
+    # Whether the user may add, change and remove phases and modules.
+    can_edit: bool
 
 
 class ObjectiveRead(BaseModel):
@@ -147,6 +155,7 @@ class LearningEventRead(BaseModel):
     module_id: uuid.UUID
     title: str
     format: str | None
+    format_value_id: uuid.UUID | None
     contact_minutes: int
     self_study_minutes: int
     week: int | None
@@ -154,3 +163,118 @@ class LearningEventRead(BaseModel):
     description: str
     external_lms_ref: str | None
     objectives: list[ObjectiveRead]
+
+
+# --- Editing (Slice 1.3) ---------------------------------------------------------------
+
+Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
+Code = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=32)]
+Description = Annotated[str, StringConstraints(strip_whitespace=True, max_length=10000)]
+LmsRef = Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)]
+Credits = Annotated[Decimal, Field(ge=0, max_digits=5, decimal_places=1)]
+NqfLevel = Annotated[int, Field(ge=1, le=10)]
+Minutes = Annotated[int, Field(ge=0, le=100_000)]
+Week = Annotated[int, Field(ge=0, le=520)]
+
+
+class PhaseCreate(BaseModel):
+    name: Name
+    kind: PhaseKind = PhaseKind.YEAR
+
+
+class PhaseUpdate(BaseModel):
+    name: Name | None = None
+    kind: PhaseKind | None = None
+
+
+class PhaseSaved(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    version_id: uuid.UUID
+    name: str
+    kind: PhaseKind
+    position: int
+
+
+class ModuleCreate(BaseModel):
+    code: Code
+    name: Name
+    # None: a longitudinal module that spans phases.
+    phase_id: uuid.UUID | None = None
+    credits: Credits | None = None
+    nqf_level: NqfLevel | None = None
+    description: Description = ""
+    external_lms_ref: LmsRef | None = None
+
+
+class ModuleUpdate(BaseModel):
+    """Only the fields sent are changed; send null to clear an optional field."""
+
+    code: Code | None = None
+    name: Name | None = None
+    phase_id: uuid.UUID | None = None
+    credits: Credits | None = None
+    nqf_level: NqfLevel | None = None
+    description: Description | None = None
+    external_lms_ref: LmsRef | None = None
+
+
+class ModuleSaved(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    version_id: uuid.UUID
+    phase_id: uuid.UUID | None
+    code: str
+    name: str
+    credits: Decimal | None
+    nqf_level: int | None
+    description: str
+    external_lms_ref: str | None
+    position: int
+
+
+class LearningEventCreate(BaseModel):
+    title: Name
+    format_value_id: uuid.UUID | None = None
+    contact_minutes: Minutes = 0
+    self_study_minutes: Minutes = 0
+    week: Week | None = None
+    description: Description = ""
+    external_lms_ref: LmsRef | None = None
+
+
+class LearningEventUpdate(BaseModel):
+    """Only the fields sent are changed; send null to clear an optional field."""
+
+    title: Name | None = None
+    format_value_id: uuid.UUID | None = None
+    contact_minutes: Minutes | None = None
+    self_study_minutes: Minutes | None = None
+    week: Week | None = None
+    description: Description | None = None
+    external_lms_ref: LmsRef | None = None
+
+
+class LearningEventSaved(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    module_id: uuid.UUID
+    title: str
+    format_value_id: uuid.UUID | None
+    contact_minutes: int
+    self_study_minutes: int
+    week: int | None
+    position: int
+    description: str
+    external_lms_ref: str | None
+
+
+class TeachingFormat(BaseModel):
+    """A value that can be chosen as a session's teaching format."""
+
+    id: uuid.UUID
+    label: str
+    list_name: str

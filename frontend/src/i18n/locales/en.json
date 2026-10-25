@@ -261,6 +261,51 @@
       "notFoundTitle": "This curriculum version isn't available",
       "notFoundBody": "It may have been removed, or your account cannot see it.",
       "openDefault": "Open the latest version"
+    },
+    "edit": {
+      "actions": "Changes",
+      "add": "Add {{noun}}",
+      "addTo": "Add {{noun}} to {{name}}",
+      "edit": "Edit {{noun}}",
+      "delete": "Delete {{noun}}",
+      "editTitle": "Edit {{name}}",
+      "deleteTitle": "Delete {{name}}?",
+      "save": "Save changes",
+      "close": "Close",
+      "added": "{{name}} added.",
+      "saved": "Changes to {{name}} saved.",
+      "deleted": "{{name}} deleted.",
+      "required": "Fill in this field.",
+      "notNegative": "Enter 0 or more.",
+      "nqfRange": "Enter a whole number from 1 to 10.",
+      "wholeNumber": "Enter a whole number, 0 or more.",
+      "phaseNotEmpty": "This {{phase}} still holds {{modules}}. Move them to another {{phase}} or delete them first.",
+      "deletePhase": "The {{phase}} is removed from this version.",
+      "deleteModule": "This also deletes its {{sessions}} and {{objectives}}.",
+      "deleteEvent": "This also deletes its {{objectives}}.",
+      "deleteNote": "The deletion is recorded in the change history.",
+      "fields": {
+        "name": "Name",
+        "kind": "Kind",
+        "code": "Code",
+        "title": "Title",
+        "acrossPhases": "None (runs across phases)",
+        "description": "Description",
+        "lmsRef": "LMS reference",
+        "lmsRefHint": "Optional: the course or item ID in your learning management system.",
+        "contactMinutes": "Contact time (minutes)",
+        "selfStudyMinutes": "Self-study (minutes)"
+      },
+      "errors": {
+        "codeTaken": "Another {{module}} in this version already uses this code. Choose a different code.",
+        "conflict": "This could not be saved because the version can no longer be changed.",
+        "forbidden": "Your account cannot make this change. Your access may have changed; reload the page.",
+        "gone": "This item no longer exists. Reload the page to see the current structure.",
+        "invalid": "Some values were not accepted. Check them and try again.",
+        "generic": "Nothing was saved. Check your connection and try again.",
+        "loadItem": "The current details could not be loaded. Close this and try again.",
+        "formats": "The list of formats could not be loaded. You can set the format later."
+      }
     }
   }
 }

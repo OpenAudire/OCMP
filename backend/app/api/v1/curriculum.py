@@ -94,6 +94,7 @@ def _module(node: ModuleNode) -> StructureModule:
         nqf_level=module.nqf_level,
         context_only=node.context_only,
         objective_count=node.objective_count,
+        can_edit=node.can_edit,
         events=[
             StructureEvent(
                 id=e.event.id,
@@ -101,9 +102,11 @@ def _module(node: ModuleNode) -> StructureModule:
                 position=e.event.position,
                 week=e.event.week,
                 format=e.format_label,
+                format_value_id=e.event.format_value_id,
                 contact_minutes=e.event.contact_minutes,
                 self_study_minutes=e.event.self_study_minutes,
                 objective_count=e.objective_count,
+                can_edit=e.can_edit,
             )
             for e in node.events
         ],
@@ -171,6 +174,7 @@ async def get_version_structure(
             for p in structure.phases
         ],
         modules_without_phase=[_module(m) for m in structure.modules_without_phase],
+        can_edit=structure.can_edit,
     )
 
 
@@ -223,6 +227,7 @@ async def get_learning_event(
         module_id=event.module_id,
         title=event.title,
         format=detail.format_label,
+        format_value_id=event.format_value_id,
         contact_minutes=event.contact_minutes,
         self_study_minutes=event.self_study_minutes,
         week=event.week,

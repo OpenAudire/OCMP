@@ -104,5 +104,8 @@ async def check_database_connection() -> bool:
         return False
 
 
-# Type alias for dependency injection
-DbSession = Annotated[AsyncSession, Depends(get_db_session)]
+# Type alias for dependency injection. "function" scope commits when the endpoint
+# returns, before the response is sent: a client that reads right after a write sees
+# the change, and a failed commit is an error response instead of a false success.
+# (FastAPI's default for dependencies with yield ends them after the response.)
+DbSession = Annotated[AsyncSession, Depends(get_db_session, scope="function")]

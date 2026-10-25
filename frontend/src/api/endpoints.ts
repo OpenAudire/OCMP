@@ -3,11 +3,18 @@ import type {
   AuthOptions,
   Institution,
   LearningEventDetail,
+  LearningEventInput,
   ModuleDetail,
+  ModuleInput,
   Objective,
+  PhaseInput,
   Programme,
   ProgrammeSummary,
   RoleAssignment,
+  SavedLearningEvent,
+  SavedModule,
+  SavedPhase,
+  TeachingFormat,
   User,
   VersionStructure,
 } from './types';
@@ -102,6 +109,56 @@ export async function fetchLearningEvent(id: string): Promise<LearningEventDetai
   return (await api.get<LearningEventDetail>(`/learning-events/${id}`)).data;
 }
 
+export async function createPhase(versionId: string, input: PhaseInput): Promise<SavedPhase> {
+  return (await api.post<SavedPhase>(`/curriculum-versions/${versionId}/phases`, input)).data;
+}
+
+export async function updatePhase(id: string, input: Partial<PhaseInput>): Promise<SavedPhase> {
+  return (await api.patch<SavedPhase>(`/phases/${id}`, input)).data;
+}
+
+export async function deletePhase(id: string): Promise<void> {
+  await api.delete(`/phases/${id}`);
+}
+
+export async function createModule(versionId: string, input: ModuleInput): Promise<SavedModule> {
+  return (await api.post<SavedModule>(`/curriculum-versions/${versionId}/modules`, input)).data;
+}
+
+/** Only the fields sent are changed. */
+export async function updateModule(id: string, input: Partial<ModuleInput>): Promise<SavedModule> {
+  return (await api.patch<SavedModule>(`/modules/${id}`, input)).data;
+}
+
+/** Deletes the module with its sessions and their objectives. */
+export async function deleteModule(id: string): Promise<void> {
+  await api.delete(`/modules/${id}`);
+}
+
+export async function createLearningEvent(
+  moduleId: string,
+  input: LearningEventInput
+): Promise<SavedLearningEvent> {
+  return (await api.post<SavedLearningEvent>(`/modules/${moduleId}/learning-events`, input)).data;
+}
+
+/** Only the fields sent are changed. */
+export async function updateLearningEvent(
+  id: string,
+  input: Partial<LearningEventInput>
+): Promise<SavedLearningEvent> {
+  return (await api.patch<SavedLearningEvent>(`/learning-events/${id}`, input)).data;
+}
+
+export async function deleteLearningEvent(id: string): Promise<void> {
+  await api.delete(`/learning-events/${id}`);
+}
+
+/** Values that can be chosen as a session's teaching format. */
+export async function fetchTeachingFormats(): Promise<TeachingFormat[]> {
+  return (await api.get<TeachingFormat[]>('/teaching-formats')).data;
+}
+
 /** TanStack Query keys, in one place so invalidation stays consistent. */
 export const queryKeys = {
   session: ['session'] as const,
@@ -114,4 +171,5 @@ export const queryKeys = {
   programmeOutcomes: (id: string) => ['curriculum-versions', id, 'outcomes'] as const,
   module: (id: string) => ['modules', id] as const,
   learningEvent: (id: string) => ['learning-events', id] as const,
+  teachingFormats: ['teaching-formats'] as const,
 };

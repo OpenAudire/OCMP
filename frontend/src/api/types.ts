@@ -106,9 +106,12 @@ export interface StructureEvent {
   position: number;
   week: number | null;
   format: string | null;
+  format_value_id: string | null;
   contact_minutes: number;
   self_study_minutes: number;
   objective_count: number;
+  /** The user may edit this session. */
+  can_edit: boolean;
 }
 
 export interface StructureModule {
@@ -123,6 +126,8 @@ export interface StructureModule {
   /** Shown only to place the user's sessions; its details are not available to them. */
   context_only: boolean;
   objective_count: number;
+  /** The user may edit the module and add or delete its sessions. */
+  can_edit: boolean;
   events: StructureEvent[];
 }
 
@@ -142,6 +147,8 @@ export interface VersionStructure {
   outcome_count: number | null;
   phases: StructurePhase[];
   modules_without_phase: StructureModule[];
+  /** The user may add, change and delete phases and modules. */
+  can_edit: boolean;
 }
 
 export interface Objective {
@@ -174,6 +181,7 @@ export interface LearningEventDetail {
   module_id: string;
   title: string;
   format: string | null;
+  format_value_id: string | null;
   contact_minutes: number;
   self_study_minutes: number;
   week: number | null;
@@ -181,4 +189,55 @@ export interface LearningEventDetail {
   description: string;
   external_lms_ref: string | null;
   objectives: Objective[];
+}
+
+export interface PhaseInput {
+  name: string;
+  kind: PhaseKind;
+}
+
+export interface SavedPhase extends PhaseInput {
+  id: string;
+  version_id: string;
+  position: number;
+}
+
+export interface ModuleInput {
+  code: string;
+  name: string;
+  /** Null: a longitudinal module that spans phases. */
+  phase_id: string | null;
+  /** Decimal, sent as a string. */
+  credits: string | null;
+  nqf_level: number | null;
+  description: string;
+  external_lms_ref: string | null;
+}
+
+export interface SavedModule extends ModuleInput {
+  id: string;
+  version_id: string;
+  position: number;
+}
+
+export interface LearningEventInput {
+  title: string;
+  format_value_id: string | null;
+  contact_minutes: number;
+  self_study_minutes: number;
+  week: number | null;
+  description: string;
+  external_lms_ref: string | null;
+}
+
+export interface SavedLearningEvent extends LearningEventInput {
+  id: string;
+  module_id: string;
+  position: number;
+}
+
+export interface TeachingFormat {
+  id: string;
+  label: string;
+  list_name: string;
 }

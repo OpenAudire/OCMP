@@ -37,6 +37,7 @@ from app.models import (
 )
 from app.models.curriculum import ObjectiveLevel, VersionStatus
 from app.services.authorization import role_permissions, user_assignments
+from app.services.curriculum_edit import is_editable
 
 Permissions = frozenset[Permission]
 _NONE: Permissions = frozenset()
@@ -247,6 +248,7 @@ class VisibleVersion:
     version: CurriculumVersion
     programme: Programme
     view: VersionView
+    access: CurriculumAccess
 
 
 async def visible_version(
@@ -270,7 +272,7 @@ async def visible_version(
     version, programme = row
     narrow = await _narrow_scopes(db, access, {version.id})
     view = _version_view(access, access.for_programme(programme), version, narrow)
-    return VisibleVersion(version, programme, view) if view.visible else None
+    return VisibleVersion(version, programme, view, access) if view.visible else None
 
 
 # --- Structure ----------------------------------------------------------------------
@@ -281,6 +283,8 @@ class EventNode:
     event: LearningEvent
     format_label: str | None
     objective_count: int
+    # Whether the user may edit this session (curriculum.edit at it or above).
+    can_edit: bool = False
 
 
 @dataclass
@@ -290,6 +294,8 @@ class ModuleNode:
     context_only: bool
     objective_count: int
     events: list[EventNode] = field(default_factory=list)
+    # Whether the user may edit the module and add or remove its sessions.
+    can_edit: bool = False
 
 
 @dataclass
@@ -306,6 +312,8 @@ class Structure:
     modules_without_phase: list[ModuleNode]
     # Programme outcomes; None when the user does not see the whole version.
     outcome_count: int | None
+    # Whether the user may add, change and remove phases and modules.
+    can_edit: bool = False
 
 
 async def _objective_counts(
@@ -348,6 +356,12 @@ async def version_structure(db: AsyncSession, visible: VisibleVersion) -> Struct
         .order_by(LearningEvent.position, LearningEvent.title)
     )
     counts = await _objective_counts(db, version.id)
+    access = visible.access
+    editable = is_editable(version)
+    programme_permissions = access.for_programme(visible.programme)
+
+    def edits(*held: Permissions) -> bool:
+        return editable and any(Permission.CURRICULUM_EDIT in p for p in held)
 
     nodes: dict[uuid.UUID, ModuleNode] = {}
     for module in modules:
@@ -356,6 +370,8 @@ async def version_structure(db: AsyncSession, visible: VisibleVersion) -> Struct
                 module=module,
                 context_only=not view.shows_module(module.id),
                 objective_count=counts.get((ObjectiveLevel.MODULE, module.id), 0),
+                can_edit=view.shows_module(module.id)
+                and edits(programme_permissions, access.at(ScopeType.MODULE, module.id)),
             )
     for event, format_label in event_rows:
         node = nodes.get(event.module_id)
@@ -365,6 +381,11 @@ async def version_structure(db: AsyncSession, visible: VisibleVersion) -> Struct
                     event=event,
                     format_label=format_label,
                     objective_count=counts.get((ObjectiveLevel.LEARNING_EVENT, event.id), 0),
+                    can_edit=edits(
+                        programme_permissions,
+                        access.at(ScopeType.MODULE, event.module_id),
+                        access.at(ScopeType.LEARNING_EVENT, event.id),
+                    ),
                 )
             )
 
@@ -382,6 +403,7 @@ async def version_structure(db: AsyncSession, visible: VisibleVersion) -> Struct
         phases=[p for p in phase_nodes.values() if view.full or p.modules],
         modules_without_phase=without_phase,
         outcome_count=counts.get((ObjectiveLevel.PROGRAMME, None), 0) if view.full else None,
+        can_edit=edits(programme_permissions),
     )
 
 

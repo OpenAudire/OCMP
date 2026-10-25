@@ -99,6 +99,7 @@ describe('curriculum builder (read-only)', () => {
       module_id: 'm2',
       title: 'Cardiac cycle',
       format: 'Lecture',
+      format_value_id: 'f-lecture',
       contact_minutes: 90,
       self_study_minutes: 120,
       week: 4,

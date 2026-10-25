@@ -40,6 +40,8 @@ describe.each([
     expect(contrast(tokens.brandInk, tokens.brandSoft)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(tokens.warmInk, tokens.warmSoft)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(tokens.bad, tokens.badSoft)).toBeGreaterThanOrEqual(4.5);
+    // Filled red (delete) buttons.
+    expect(contrast(tokens.onBrand, tokens.bad)).toBeGreaterThanOrEqual(4.5);
   });
 });
 
