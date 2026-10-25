@@ -475,6 +475,22 @@ This file tracks progress through the development phases.
 
 ---
 
+### Slice 0.21: Phase 0 Gaps from the Brief
+**Status**: Complete
+
+**Deliverables**:
+- [x] Dependabot: weekly grouped updates for backend and docs pip, frontend npm, Dockerfiles, compose file and GitHub Actions
+- [x] CodeQL workflow (Python, JavaScript/TypeScript, Actions; `security-extended`): fails on any error or warning and keeps the SARIF as an artifact, because code scanning is not enabled on the private repository; uploads to code scanning when `CODE_SCANNING_ENABLED=true`
+- [x] Release workflow: `vX.Y.Z` tags run CI, then push `ghcr.io/openaudire/ocmp-backend` and `ocmp-web` (version, `X.Y`, `latest`, sha); manual runs build without pushing; CI made callable (`workflow_call`); compose reads `OCMP_BACKEND_IMAGE` / `OCMP_WEB_IMAGE`; upgrade guide covers released images
+- [x] POPIA: `docs/privacy/data-inventory.md` (every personal data field in the database, Redis, logs, backups and outbound flows, with purpose and retention; data subject rights today) and `docs/privacy/privacy-notice-template.md` (POPIA section 18 contents)
+- [x] Container log rotation (5 x 10 MB per service): Docker's default kept logs with client IP addresses without limit
+- [x] Embeddings: **kept as an optional profile, off by default, no image built** (nothing uses embeddings before Phase 1). Image name points at its future GHCR location (`OCMP_EMBEDDINGS_IMAGE` overrides), compose comment and configuration guide say it is not available, `EMBEDDINGS_LOCAL` now defaults to `false`
+- [x] ADR 023; CLAUDE.md rules for the data inventory, CodeQL findings and releases
+
+**Commit**: `ci: add Dependabot, CodeQL and release images; add POPIA records`
+
+---
+
 ## Phase 0 Summary
 
 Built in 20 slices plus a CI fix. The platform installs with Docker Compose, runs a
@@ -490,7 +506,7 @@ scripts.
 | Backend | 69 modules, 515 tests, 96% coverage, ruff/mypy strict clean |
 | Frontend | App shell, sign-in, password reset, account, setup wizard; 55 tests, 91% line coverage |
 | Database | 12 migrations, 30 tables, `alembic check` drift test |
-| Decisions | ADR 001-022 |
+| Decisions | ADR 001-023 |
 | Docs | MkDocs site: install, configuration, upgrade, backup/restore, admin basics, users and roles, SSO |
 
 ### Deferred to later phases
@@ -500,9 +516,9 @@ Collected from the slices above so nothing is lost:
 - **Phase 1**: curriculum CRUD API and tree editor, publishing rules, copy-forward and version diff; framework pack and Excel import, framework browser, cross-framework search (pack schema to extend for crosswalks, tag lists and cross-references); tag inheritance rules and tagging UI; AI pipeline, review queue, coverage reports; eval harness with a fictional gold set; admin screens for users, roles and settings (API only today); user guides per role, glossary, FAQ, AI provider setup guide; a command to remove the demo data; Playwright end-to-end tests; personal API tokens (`ApiToken`)
 - **Phase 2**: SAML (account service is protocol-independent), framework version migration, Brightspace connector and setup guide
 - **SSO**: role mapping from claims, admin linking of existing local accounts, provider logout, multi-tenant Entra
-- **POPIA**: data inventory in `docs/privacy/`, privacy notice template, per-user data export and deletion
-- **CI/CD**: Dependabot and CodeQL, image builds pushed to GitHub Container Registry on tagged releases, first tagged release; GitHub Pages must be enabled for the docs workflow
-- **Deployment**: the optional `embeddings` profile names an image that does not exist yet (`ghcr.io/ocmp/embeddings`); move the docs from MkDocs Material (end of life 5 May 2027) to Zensical once it is stable
+- **POPIA**: per-user data export and deletion, email address changes (the inventory and notice template exist since Slice 0.21)
+- **CI/CD**: first tagged release; GitHub Pages must be enabled for the docs workflow; code scanning upload once available (`CODE_SCANNING_ENABLED`); multi-architecture images
+- **Deployment**: the embeddings image (optional profile, off by default) is built with the Phase 1 search features; move the docs from MkDocs Material (end of life 5 May 2027) to Zensical once it is stable
 
 ---
 

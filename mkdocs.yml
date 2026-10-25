@@ -65,6 +65,9 @@ nav:
       - Admin basics: admin/basics.md
       - Users and roles: admin/users-and-roles.md
       - Single sign-on (OIDC): admin/sso.md
+  - Privacy (POPIA):
+      - Personal data inventory: privacy/data-inventory.md
+      - Privacy notice template: privacy/privacy-notice-template.md
   - Project:
       - Architecture decisions: adr/index.md
       - Progress: PROGRESS.md

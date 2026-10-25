@@ -22,6 +22,7 @@ and reports on coverage, gaps and workload.
 | Run the platform after installation | [Admin basics](admin/basics.md) |
 | Give people access | [Users and roles](admin/users-and-roles.md) |
 | Let people sign in with the university account | [Single sign-on](admin/sso.md) |
+| Meet POPIA obligations | [Personal data inventory](privacy/data-inventory.md), [privacy notice template](privacy/privacy-notice-template.md) |
 | Understand why it is built this way | [Architecture decisions](adr/index.md) |
 
 ## How OCMP runs
@@ -44,4 +45,5 @@ The interactive API reference is served by every installation at `/api/docs`.
 
 OCMP is self-hosted: all data stays on the institution's server. The demo dataset and the
 demo framework are fictional. Personal data (names, email addresses) is never sent to AI
-providers.
+providers. The [personal data inventory](privacy/data-inventory.md) lists everything OCMP
+stores about people.

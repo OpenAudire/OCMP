@@ -110,7 +110,7 @@ class TestSettings:
         assert settings.log_level == "INFO"
         assert settings.session_expire_hours == 24
         assert settings.ai_enabled is False
-        assert settings.embeddings_local is True
+        assert settings.embeddings_local is False
 
 
 class TestListSettingsFromEnvironment:

@@ -115,7 +115,8 @@ class Settings(BaseSettings):
     audit_log_retention_days: int = Field(default=0, ge=0)
 
     # Embeddings
-    embeddings_local: bool = True
+    # Off by default: the local model is an optional compose profile (ADR 007).
+    embeddings_local: bool = False
     embeddings_local_url: str = "http://embeddings:8080"
     embeddings_openai: bool = False
     embeddings_openai_model: str = "text-embedding-3-small"

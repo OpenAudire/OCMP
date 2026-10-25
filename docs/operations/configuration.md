@@ -78,6 +78,23 @@ The purge commands are run on a schedule; see [Admin basics](../admin/basics.md#
 mapping arrives in Phase 1 and the Brightspace connector in Phase 2. Leave them as they
 are in the template.
 
+## Images
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `OCMP_BACKEND_IMAGE` | `ocmp-backend:local` | Image for `api`, `worker` and `migrate`. The default is built from the checkout; set a released image to skip the build (see [Upgrade](upgrade.md#use-released-images)). |
+| `OCMP_WEB_IMAGE` | `ocmp-web:local` | Image for `web`, as above. |
+
+## Optional services
+
+These Docker Compose profiles are off unless started with `--profile <name>`:
+
+| Profile | Service | State |
+|---|---|---|
+| `mailpit` | Catches all outgoing email, web UI on `http://localhost:8025` | Development only |
+| `embeddings` | Local embedding model (ADR 007) | Not available yet: its image is published with the Phase 1 search features. Leave it off; `EMBEDDINGS_LOCAL` defaults to `false` |
+| `ollama` | Local language model | For Phase 1 AI features; not used yet |
+
 ## Backup scripts
 
 The [backup script](backup-restore.md) reads two environment variables of its own (not from

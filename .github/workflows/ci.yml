@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Run by the release workflow before it publishes images.
+  workflow_call:
 
 jobs:
   backend-lint:

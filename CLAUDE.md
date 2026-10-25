@@ -257,6 +257,10 @@ chore: update dependencies
 
 - Never commit secrets (use `.env.example` with placeholders)
 - Never send personal data to AI providers (enforced in code)
+- Any change that adds, moves or changes personal data (a column, Redis key, log field,
+  outbound flow) updates `docs/privacy/data-inventory.md` in the same commit
+- CodeQL fails CI on any error or warning; fix it, or dismiss a false positive in code
+  with a justification
 - Parameterized queries only (SQLAlchemy handles this)
 - CSRF protection on all state-changing endpoints
 - Rate limiting on auth endpoints
@@ -290,6 +294,13 @@ chore: update dependencies
 - No Python tags in `mkdocs.yml` (the `check-yaml` hook rejects them)
 - Backup scripts in `deploy/` are POSIX `sh`; local deploy changes go in
   `deploy/caddy/*.caddy` or `deploy/docker-compose.override.yml`, never in tracked files
+
+## Releases
+
+- Tag `vX.Y.Z` on `main`; `.github/workflows/release.yml` runs CI and pushes
+  `ghcr.io/openaudire/ocmp-backend` and `ocmp-web`. Running it by hand is a build-only dry run
+- Compose uses `OCMP_BACKEND_IMAGE` / `OCMP_WEB_IMAGE` (default: local build)
+- Dependabot opens weekly grouped update PRs; review them like any other change
 
 ## Working in Slices
 

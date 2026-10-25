@@ -66,6 +66,34 @@ Sign in and open a few pages. Then remove old images to free disk space:
 docker image prune
 ```
 
+## Use released images
+
+From the first release, every version tag publishes ready-built images to GitHub
+Container Registry, so the server does not need to build them:
+
+- `ghcr.io/openaudire/ocmp-backend:<version>`
+- `ghcr.io/openaudire/ocmp-web:<version>`
+
+To use them, add to `.env` (with the version you install):
+
+```ini
+OCMP_BACKEND_IMAGE=ghcr.io/openaudire/ocmp-backend:0.2.0
+OCMP_WEB_IMAGE=ghcr.io/openaudire/ocmp-web:0.2.0
+```
+
+and replace step 5 with:
+
+```bash
+docker compose pull
+docker compose up -d --wait
+```
+
+Leave out `--build`: it would build the images from the checkout instead. Still check out
+the same tag in git, because the compose file, Caddyfile and scripts come from the
+checkout. While the repository is private, the images are private too: sign in first
+with `docker login ghcr.io` using a GitHub personal access token with the
+`read:packages` scope.
+
 ## If the upgrade fails
 
 **The `migrate` service failed** (`docker compose up` reports it and `api` does not

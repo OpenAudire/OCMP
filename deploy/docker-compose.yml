@@ -1,13 +1,24 @@
 # OCMP Docker Compose Configuration
-# See .env.example for configuration options
+# See .env.example for configuration options. By default the OCMP images are built
+# from this checkout (`up --build`); set OCMP_BACKEND_IMAGE and OCMP_WEB_IMAGE in
+# .env to run released images from GitHub Container Registry instead.
 
 name: ocmp
+
+# Container logs (Caddy's include client IP addresses) are rotated: at most
+# 5 files of 10 MB per service. See docs/privacy/data-inventory.md.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
 
 services:
   # PostgreSQL database with pgvector extension
   db:
     image: pgvector/pgvector:pg16
     restart: unless-stopped
+    logging: *logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-ocmp}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
@@ -24,6 +35,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    logging: *logging
     volumes:
       - redis_data:/data
     healthcheck:
@@ -34,7 +46,7 @@ services:
 
   # One-shot database migration (runs before api and worker start)
   migrate:
-    image: ocmp-backend:local
+    image: ${OCMP_BACKEND_IMAGE:-ocmp-backend:local}
     # All OCMP settings from .env; the entries under `environment` take precedence.
     env_file: .env
     build:
@@ -43,6 +55,7 @@ services:
     # Apply migrations, then create/update the built-in roles.
     command: sh -c "alembic upgrade head && python -m app.cli sync-roles"
     restart: "no"
+    logging: *logging
     environment:
       DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
@@ -52,10 +65,11 @@ services:
 
   # FastAPI backend
   api:
-    image: ocmp-backend:local
+    image: ${OCMP_BACKEND_IMAGE:-ocmp-backend:local}
     # All OCMP settings from .env; the entries under `environment` take precedence.
     env_file: .env
     restart: unless-stopped
+    logging: *logging
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
@@ -78,11 +92,12 @@ services:
 
   # Dramatiq worker for background jobs
   worker:
-    image: ocmp-backend:local
+    image: ${OCMP_BACKEND_IMAGE:-ocmp-backend:local}
     # All OCMP settings from .env; the entries under `environment` take precedence.
     env_file: .env
     command: dramatiq app.worker --processes 1 --threads 4
     restart: unless-stopped
+    logging: *logging
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
@@ -103,8 +118,9 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
-    image: ocmp-web:local
+    image: ${OCMP_WEB_IMAGE:-ocmp-web:local}
     restart: unless-stopped
+    logging: *logging
     depends_on:
       - api
 
@@ -112,6 +128,7 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    logging: *logging
     ports:
       - "80:80"
       - "443:443"
@@ -135,14 +152,18 @@ services:
     image: axllent/mailpit:v1.21
     profiles: ["mailpit"]
     restart: unless-stopped
+    logging: *logging
     ports:
       - "127.0.0.1:8025:8025"
 
-  # Optional: Local embedding model
+  # Optional, off by default: local embedding model (ADR 007). Not available yet:
+  # nothing uses embeddings before Phase 1, and the image is published from the
+  # Phase 1 embeddings slice. Starting this profile before then fails to pull.
   embeddings:
-    image: ghcr.io/ocmp/embeddings:latest
+    image: ${OCMP_EMBEDDINGS_IMAGE:-ghcr.io/openaudire/ocmp-embeddings:latest}
     profiles: ["embeddings"]
     restart: unless-stopped
+    logging: *logging
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -154,6 +175,7 @@ services:
     image: ollama/ollama:latest
     profiles: ["ollama"]
     restart: unless-stopped
+    logging: *logging
     volumes:
       - ollama_data:/root/.ollama
 

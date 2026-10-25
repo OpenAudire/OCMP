@@ -1,0 +1,75 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly, so new queries also run against unchanged code.
+    - cron: '27 4 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # Interpreted languages need no build step.
+        language: [python, javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+
+      # Results are checked here rather than only in code scanning, which needs
+      # GitHub Code Security on a private repository. Set the repository variable
+      # CODE_SCANNING_ENABLED=true once code scanning is available to upload too.
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
+          upload: never
+          output: sarif-results
+
+      - name: Upload to code scanning
+        if: vars.CODE_SCANNING_ENABLED == 'true'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif-results
+          category: /language:${{ matrix.language }}
+
+      - name: Keep results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: codeql-${{ matrix.language }}
+          path: sarif-results
+          if-no-files-found: ignore
+
+      # Errors and warnings fail the job; notes are listed only.
+      - name: Check findings
+        run: |
+          jq -r '.runs[].results[]
+                 | [.level // "warning", .ruleId,
+                    "\(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)",
+                    (.message.text | split("\n")[0])]
+                 | @tsv' sarif-results/*.sarif | sort > findings.tsv
+          cat findings.tsv
+          problems=$(grep -cE '^(error|warning)' findings.tsv || true)
+          if [ "$problems" -gt 0 ]; then
+            echo "::error::CodeQL found $problems problems (listed above)."
+            exit 1
+          fi

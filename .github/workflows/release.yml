@@ -1,0 +1,68 @@
+name: Release
+
+# Pushing a tag such as v0.2.0 runs CI on the tagged commit and, if it passes,
+# publishes the backend and web images to GitHub Container Registry:
+#   ghcr.io/openaudire/ocmp-backend:0.2.0 (also :0.2 and :latest)
+#   ghcr.io/openaudire/ocmp-web:0.2.0     (also :0.2 and :latest)
+# Pre-release tags (v0.2.0-rc.1) get only their own tag, not :0.2 or :latest.
+# Run it by hand ("Run workflow") to build the images without pushing them.
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  images:
+    name: Image (${{ matrix.image }})
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image: ocmp-backend
+            context: ./backend
+          - image: ocmp-web
+            context: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Image tags and labels
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+
+      - name: Log in to GitHub Container Registry
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
