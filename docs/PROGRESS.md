@@ -538,7 +538,7 @@ This file tracks progress through the development phases.
 
 1. Make the repository public
 2. From a machine without GitHub credentials, run the install guide's `git clone` (anonymous clone)
-3. Enable GitHub Pages (source: GitHub Actions) and re-run the Docs workflow
+3. Enable GitHub Pages (source: GitHub Actions), set the repository variable `PAGES_ENABLED=true` (until then the Docs workflow only builds the site and skips publishing) and re-run the Docs workflow
 4. Set the repository variable `CODE_SCANNING_ENABLED=true` (code scanning is free for public repositories)
 5. Tag the first release only after step 1; check that `ghcr.io/openaudire/ocmp-backend` and `ocmp-web` are public (otherwise set each to public in its package settings), and pull one without signing in
 6. Install on the pilot server with public DNS and Let's Encrypt (Phase 0 definition of done)
@@ -716,8 +716,11 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 - Frontend under Node 24.22.1: lint, typecheck, production build pass; 90 tests pass (90.8% line coverage), including token contrast tests (every text token 4.5:1 and field borders 3:1 on `bg`, `surface`, `soft` in both themes; sidebar colours)
 - Backend: ruff, ruff format, mypy (69 files) pass; pytest 515 passed against the test database, 96% coverage; `mkdocs build --strict` passes
 - Docker: web image rebuilt; Playwright 1.64.1 (Chromium) against the local Compose stack: 27 passed, twice in a row; screenshots of light and dark, the account menu and the phone navigation compared with the mockups by eye
-- Not verified here: the new CI job on GitHub Actions (runs on push); browsers other than Chromium; screen readers by hand
+- GitHub Actions: CI green on `acd15bb` with all seven jobs, including the new End-to-End Tests job (27 Playwright tests passed against the Compose stack on the runner); CodeQL green
+- Not verified here: browsers other than Chromium; screen readers by hand
 - Local note: the shell's default Node is 22.11, which cannot run Vitest 5 (`require()` of an ES module); the checks above used Node 24.22.1
+
+**Docs workflow**: it failed on every push because GitHub Pages is not enabled yet. The Pages steps and the deploy job now run only when the repository variable `PAGES_ENABLED` is `true`; the site still builds with `--strict` on every docs push (release checklist step 3 updated). Commit `ci: skip the GitHub Pages deploy until Pages is enabled`.
 
 **Not in this slice**: programme/version switcher in the header (Slice 1.2), header search (1.20), the review count source (1.13); a Content-Security-Policy header (not set by Caddy today) is worth adding with a later security slice.
 

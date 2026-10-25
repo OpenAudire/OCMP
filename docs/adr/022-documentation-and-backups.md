@@ -62,8 +62,9 @@ strict mode with no issues.
 
 ## Consequences
 
-- GitHub Pages must be enabled for the repository with "GitHub Actions" as the source;
-  until then the publish workflow fails while the CI docs build still checks the site.
+- GitHub Pages must be enabled for the repository with "GitHub Actions" as the source,
+  and the repository variable `PAGES_ENABLED=true` set; until then the Docs workflow only
+  builds the site and skips publishing (changed in Slice 1.1; it used to fail).
 - Restoring needs the same or a newer OCMP version than the backup (migrations only go
   forward).
 - The install guide links to Docker's official installation pages instead of copying
