@@ -58,11 +58,12 @@ cost one lineage lookup per row.
 
 ## Consequences
 
-- Module and session scopes are rows of one version. When a year is copied forward
-  (Slice 1.5), role assignments at module or session scope do not follow automatically;
-  that slice must decide whether to copy them.
-- A narrower role reveals the programme's name and details; this is intended (people
-  need to know which programme their module belongs to) and matches the scope parent
-  chain used for permissions.
+- Module and session scopes are rows of one version. Decided by the owner for Slice 1.5:
+  copying a year forward copies role assignments at module and session scope to the new
+  rows by default, listed in the copy-forward preview so each can be unticked; expired
+  assignments and deactivated or deleted accounts are skipped.
+- A narrower role reveals the programme's name and details, read-only; confirmed by the
+  owner (people need to know which programme their module belongs to), and it matches
+  the scope parent chain used for permissions.
 - Editing (Slice 1.3) checks `curriculum.edit` per item with `require_permission`; these
   read rules only decide what is shown.

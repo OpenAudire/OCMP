@@ -750,6 +750,10 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 - `mkdocs build --strict` passes
 - Not verified here: browsers other than Chromium; screen readers by hand; the CI run on GitHub (runs on push)
 
-**Not in this slice**: editing (1.3), objective quality flags and tags in the details panel (1.7, 1.8), the module credit check (1.9), "Publish version" and copy forward (1.5). Role assignments at module or session scope do not follow a copied-forward year; Slice 1.5 must decide (ADR 027).
+**Not in this slice**: editing (1.3), objective quality flags and tags in the details panel (1.7, 1.8), the module credit check (1.9), "Publish version" and copy forward (1.5).
+
+**Owner decisions (2026-10-25)**:
+1. People with only a module or session role keep seeing the programme's name and details, read-only (as built)
+2. For Slice 1.5: copying a year forward **copies role assignments at module and session scope** to the new rows by default. The copy-forward preview lists them so each can be unticked; assignments that have expired, or whose account is deactivated or deleted, are skipped (and shown as skipped)
 
 **Commit**: `feat: add curriculum read API, version switcher and read-only structure tree`
