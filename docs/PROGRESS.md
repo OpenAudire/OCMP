@@ -2,7 +2,7 @@
 
 This file tracks progress through the development phases.
 
-## Current Phase: Phase 0 - Foundations (complete; awaiting a real-server install and approval)
+## Current Phase: Phase 1 - Core Mapping (Phase 0 approved 2026-10-25)
 
 ### Slice 0.1: Project Scaffold
 **Status**: Complete
@@ -582,6 +582,23 @@ Collected from the slices above so nothing is lost:
 - [x] CI's backend lint job installed only ruff, mypy, pydantic and sqlalchemy and ran `mypy app --ignore-missing-imports`, so every other library became `Any` and strict mode failed with 45 errors on every commit. It now installs the project with dev extras and runs plain `mypy app` (settings from `pyproject.toml`), like local development (`cd8e46f`)
 - [x] CI green on GitHub Actions for `cd8e46f`
 - [x] CI and the frontend Docker image moved from Node 20 (end of life April 2026) to Node 22; the web image builds and serves on `node:22-alpine`
+
+---
+
+## Phase 0 Approval and Decisions (2026-10-25)
+
+**Phase 0 is approved** by the project owner, with the public-server install deferred (below).
+
+| # | Topic | Decision |
+|---|---|---|
+| 1 | Licence | Apache-2.0 confirmed; recorded in ADR 024 |
+| 2 | Public repository | Go public before the first release; the owner chooses the timing ("Before the Public Release" steps 1-5) |
+| 3 | Pilot server | Not chosen yet; the public-server install (DNS + Let's Encrypt) stays on the checklist (step 6) |
+| 4 | Dependency upgrades | **Slice 1.0** comes before other Phase 1 work, so new screens are built on current versions: major upgrades (Mantine 7 to 9, react-i18next 15 to 17, GitHub Actions majors, `eslint-plugin-react-refresh` 0.4 to 0.5) with tests green, and Node moved to the **current LTS release**, not simply the newest. Minor/patch updates are merged as soon as CI passes |
+| 5 | GitHub Pages | Enable after the repository is public (checklist step 3) |
+| 6 | Docs tooling | MkDocs Material reaches end of life on 5 May 2027. Revisit Zensical when it has a stable release, well before May 2027 (ADR 022) |
+
+Dependabot pull requests at approval: only #1 (Mailpit v1.21 to v1.31, development profile) was minor/patch; the others are majors for Slice 1.0. #8 bundled six GitHub Actions majors because the actions group had no update-type filter; the group now takes minor/patch only, so majors arrive as separate pull requests.
 
 ---
 

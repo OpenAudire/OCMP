@@ -29,3 +29,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [021](021-demo-dataset-and-pack-import.md) | Demo Dataset and Framework Pack Import |
 | [022](022-documentation-and-backups.md) | Documentation Site and Backups |
 | [023](023-supply-chain-releases-and-privacy-records.md) | Dependency Scanning, Release Images and Privacy Records |
+| [024](024-licence.md) | Licence |
