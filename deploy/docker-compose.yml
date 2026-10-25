@@ -149,7 +149,7 @@ services:
   # Optional, development only: catches all outgoing email.
   # Web UI at http://localhost:8025. Set SMTP_HOST=mailpit, SMTP_PORT=1025, SMTP_TLS=false.
   mailpit:
-    image: axllent/mailpit:v1.21
+    image: axllent/mailpit:v1.31
     profiles: ["mailpit"]
     restart: unless-stopped
     logging: *logging
