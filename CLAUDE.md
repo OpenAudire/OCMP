@@ -102,6 +102,7 @@ npm run test
 
 ### Important
 
+- **CI runs exactly the local commands** (`ruff check .`, `ruff format --check .`, `mypy app`, `pytest`) after `pip install -e ".[dev]"`; all tool settings live in `pyproject.toml`. Never add flags in CI that local runs do not use
 - **Always use the virtual environment** for backend work
 - **Never install packages globally** - add them to `pyproject.toml`
 - Line endings are normalized to LF via `.gitattributes`
