@@ -487,7 +487,14 @@ This file tracks progress through the development phases.
 - [x] Embeddings: **kept as an optional profile, off by default, no image built** (nothing uses embeddings before Phase 1). Image name points at its future GHCR location (`OCMP_EMBEDDINGS_IMAGE` overrides), compose comment and configuration guide say it is not available, `EMBEDDINGS_LOCAL` now defaults to `false`
 - [x] ADR 023; CLAUDE.md rules for the data inventory, CodeQL findings and releases
 
-**Commit**: `ci: add Dependabot, CodeQL and release images; add POPIA records`
+**Verification**:
+- Ruff, ruff format, mypy pass; config default test updated; `mkdocs build --strict` passes
+- Dev stack recreated with the new compose file: all services healthy, containers use the rotating json-file log options; `docker compose config` lists no `embeddings` service unless its profile is given
+- GitHub Actions on `764d194`: CI green; CodeQL green for Python, JavaScript/TypeScript and Actions; release workflow dry run (manual) ran CI and built both images without pushing; all six Dependabot update jobs succeeded and opened 8 pull requests (left for review: Mantine 7 to 9, react-i18next 15 to 17, Node 26 image and others are major upgrades)
+- CodeQL fixes on the way: the job needed `actions: read` on a private repository (`d4842d9`); the Actions analysis then found 14 warnings, fixed by explicit `permissions` in CI and SHA-pinned third-party actions (`764d194`)
+- Not verified: pushing images on a real tag (no release was tagged); the Docs publish workflow still stops because GitHub Pages is not enabled
+
+**Commits**: `ci: add Dependabot, CodeQL and release images; add POPIA records` (8cc9376), `ci: give CodeQL read access to workflow runs` (d4842d9), `ci: pin third-party actions and limit CI token permissions` (764d194)
 
 ---
 
@@ -534,6 +541,6 @@ Collected from the slices above so nothing is lost:
 ## Phase 0 Definition of Done
 
 - [ ] Fresh Linux server with Docker can be set up by following install guide
-- [x] CI is green (3e212d4)
+- [x] CI is green (764d194: CI and CodeQL)
 - [x] Demo data loads with one command
 - [x] Role permissions covered by tests
