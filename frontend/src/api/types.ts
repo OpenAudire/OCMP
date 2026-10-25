@@ -241,3 +241,16 @@ export interface TeachingFormat {
   label: string;
   list_name: string;
 }
+
+export interface PhaseCopyInput {
+  name: string;
+  /** A new, unused code for each module of the phase, by module id. */
+  module_codes: Record<string, string>;
+}
+
+export interface ModuleCopyInput {
+  code: string;
+  name: string;
+  /** Leave out to keep the module's phase; null puts the copy across phases. */
+  phase_id?: string | null;
+}

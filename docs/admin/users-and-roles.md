@@ -50,20 +50,30 @@ selected item, as far as their role reaches:
 
 | Change | Needs `curriculum.edit` at |
 |---|---|
-| Add, rename or delete a phase; add or delete a module; move a module to another phase | The programme (or its faculty, or the institution) |
-| Change a module's code, name, credits, NQF level, description or LMS reference; add or delete its sessions | The module (or above) |
+| Add, rename, reorder, copy or delete a phase; add, reorder, copy or delete a module; move a module to another phase | The programme (or its faculty, or the institution) |
+| Change a module's code, name, credits, NQF level, description or LMS reference; add, reorder, copy or delete its sessions | The module (or above) |
 | Change a session | The session (or above) |
 
-So a module coordinator can maintain their own module and its sessions, but cannot add
-modules, delete their module or move it to another phase. Lecturers and mappers cannot
+So a module coordinator can maintain their own module and put its sessions in order, but
+cannot add, copy or reorder modules, delete their module or move it to another phase. Lecturers and mappers cannot
 change the structure. The API checks every change; the buttons only follow the roles.
 
 - **Deleting** is a soft delete: the item disappears from the builder but its rows and
   history stay in the database. Deleting a module also deletes its sessions and all their
   objectives; deleting a session deletes its objectives. A phase can only be deleted once
   it holds no modules. There is no restore screen yet.
+- **Reordering**: drag a phase, module or session in the structure tree to another place
+  among its neighbours, or select it and use **Move up** and **Move down** (which work
+  with the keyboard). A module moves to another phase through **Edit**.
+- **Copying** places the copy right after the original (a module can also be copied into
+  another phase). A copied module takes its sessions; a copied phase takes its modules,
+  each under a new code that you enter; objectives, their upward links and tags come
+  along. Links to framework items, role assignments and the LMS reference are not copied:
+  the copy starts unmapped, and coordinators of the original are not coordinators of the
+  copy until someone assigns them.
 - Every change is recorded in the audit log with who made it (`curriculum.phase_create`,
-  `curriculum.module_update`, `curriculum.learning_event_delete` and so on).
+  `curriculum.module_update`, `curriculum.learning_event_delete`,
+  `curriculum.module_move`, `curriculum.phase_copy` and so on).
 - **Archived** versions cannot be changed. Until publishing rules arrive, draft and
   published versions can both be edited.
 - Roles held at a deleted module or session stay listed but give no access to anything.

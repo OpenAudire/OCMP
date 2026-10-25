@@ -16,6 +16,8 @@ async function openBuilder(page: Page) {
 
 test.describe('curriculum builder editing', () => {
   test('adds, changes and deletes a phase, module and session', async ({ page }, testInfo) => {
+    // A long journey; with the other journeys running in parallel it can pass 30 s.
+    test.slow();
     const suffix = `${testInfo.project.name}-${Date.now() % 1_000_000}`;
     const phaseName = `E2E phase ${suffix}`;
     const code = `E2E-${suffix}`;

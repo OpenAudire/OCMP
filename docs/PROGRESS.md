@@ -630,6 +630,14 @@ ADRs. Each can be changed; the last column says how much work that would be.
 | 1.3 | `require_permission` scope resolvers are now async and receive the database session and the user | Curriculum scopes need a lookup (version to programme) and a visibility check | Easy: no other endpoint used `scope=` yet |
 | 1.3 | The request's database session now commits when the endpoint returns, before the response is sent (`Depends(..., scope="function")`) | Found by the new end-to-end journey: FastAPI ended `yield` dependencies after the response, so a read straight after a save could miss it, and a failed commit still answered 2xx | Easy: one line in `app/core/database.py` |
 | 1.3 | Filled red (delete) buttons use the on-brand text colour, like filled brand buttons | White text on the dark theme's light red failed contrast (axe) | Easy |
+| 1.4 | Moving phases and modules (order and copy) needs `curriculum.edit` at the programme; moving and copying sessions needs it at the module, so a lecturer cannot reorder or copy their own session | Same split as adding and deleting in 1.3 (ADR 028) | Easy: scope per endpoint |
+| 1.4 | Reorder API takes the new index among siblings (`POST .../move {"position": n}`), not a full ordered list | One small request per move; a change elsewhere in the list does not make it fail | Easy |
+| 1.4 | Drag and drop moves items only among their siblings; a module changes phase through Edit | Keeps the drop rules simple and matches the 1.3 phase-move permission | Easy (UI and one endpoint) |
+| 1.4 | Native browser drag and drop, no library; keyboard and single-pointer path is Move up / Move down buttons in the details panel | The tree is our own ARIA tree; library keyboard sensors would compete with its arrow keys; WCAG 2.5.7 is met by the buttons | Easy: a library can replace the events, the API stays |
+| 1.4 | A copy goes right after the original; sessions are copied only within their module | Avoids broken upward links (a session objective links to its own module's outcomes) | Easy |
+| 1.4 | Copies take children, objectives (with status), upward links (remapped inside the copy) and tags; not framework mappings, role assignments or the LMS reference | Mappings are reviewed decisions about one objective and would double coverage; access and LMS links belong to the original | Medium: copies made so far would need their mappings added by hand |
+| 1.4 | Copying a phase asks for a new code for each of its modules (no generated codes); the name defaults to "<name> (copy)" | Codes are meaningful and unique per version; the user chooses them | Easy (UI) |
+| 1.4 | The long e2e journeys are marked `test.slow()` | With two more journeys in parallel, the 1.3 editing journey passed 30 s locally | Easy |
 
 ---
 
@@ -804,3 +812,27 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 **Not in this slice**: reordering and copying (1.4), publishing rules and making published versions read-only (1.5), a restore screen for deleted items, objective editing (1.6).
 
 **Commit**: `feat: edit phases, modules and sessions with scoped permissions`
+
+---
+
+### Slice 1.4: Reorder and Copy
+**Status**: Complete
+
+**Deliverables**:
+- [x] **Reorder API** (ADR 029): `POST /phases/{id}/move`, `/modules/{id}/move`, `/learning-events/{id}/move` with `{"position": n}` (new index among siblings: the version's phases, the modules of one phase or across phases, the sessions of one module); siblings renumbered through ORM objects, only changed rows written; audit labels `curriculum.*_move`
+- [x] **Copy API**: `POST /phases/{id}/copy` (name and a new code per module), `/modules/{id}/copy` (code, name, optional phase), `/learning-events/{id}/copy` (title), 201 with the new item. New service `app/services/curriculum_copy.py`: the copy goes right after the original (or to the end of another phase); children, objectives, upward links (remapped to copies), direct and inherited taggings (inherited ones remapped) are copied; mappings, role assignments, LMS references and deleted rows are not; codes checked unique ignoring case (409); audit labels `curriculum.*_copy` with the source id
+- [x] **Permissions** as ADR 028: phases and modules at the programme, sessions at the module; 404 for what the user cannot see, 403 for visible items they may not change; archived versions 409
+- [x] **Builder**: Move up, Move down and Copy buttons for the selected item (Delete stays last; move buttons hidden when an item has no siblings); after a move the confirmation is announced and focus stays on the pressed button, or moves to the confirmation when that button becomes unavailable; a failed move shows an alert. Native drag and drop in the tree among siblings only (grip icon, drop line, the selection stays); a hint under the tree title says how to change the order. Copy dialog says what is and is not copied, suggests "<name> (copy)", asks for new module code(s) (checked for blanks and repeats before sending) and selects the copy. Text from `curriculum.reorder.*`, `curriculum.copy.*` and `terms.*`
+- [x] ADR 029; admin guide "Who can change the curriculum structure" (reordering, copying, audit labels); CLAUDE.md
+
+**Verification**:
+- Backend: ruff, ruff format, mypy (75 files) pass; pytest 620 passed against the test database (26 new in `test_curriculum_reorder_copy_api.py`: sign-in required, moving phases, modules in a phase and across phases, sessions, position range, archived version, copying a session, a module (same phase, another phase, across phases) and a phase with links, inherited tags, mappings left out, deleted rows left out, code checks; module coordinator and lecturer limits; audit labels), 97% coverage
+- Frontend under Node 24.22.1: lint, typecheck pass; 128 tests pass (9 new in `Rearranging.test.tsx`: Move up with focus to the confirmation, focus kept on a usable button, failed move, drag and drop among siblings only, no controls without rights or without siblings, module coordinator limits, copy session, copy module with code checks and phase choice, copy phase with a code per module)
+- Docker: api, worker and web images rebuilt; Playwright (Chromium) against the Compose stack with the demo data: 45 passed, twice in a row (4 new in `e2e/curriculum-reorder.spec.ts`: move a module with Enter and Space on Move up / Move down and by dragging; copy a module (required and taken code), a session and a phase; axe WCAG 2.2 AA on each dialog and state, light and dark). Each journey makes its own phase and modules through the API and deletes them afterwards; the demo structure was checked unchanged after the runs
+- Screenshots of the module view with its new buttons and drag grips (light) and the copy dialog (dark) checked by eye; move buttons then hidden for items without siblings
+- `mkdocs build --strict` passes
+- Not verified here: browsers other than Chromium; touch drag and drop on a real phone or tablet; screen readers by hand; the CI run on GitHub (runs on push)
+
+**Not in this slice**: moving a session to another module, copying to another version (copy forward is Slice 1.5), a live preview while dragging.
+
+**Commit**: `feat: reorder and copy phases, modules and sessions`

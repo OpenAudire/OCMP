@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Button, Paper, Text } from '@mantine/core';
+import { Alert, Box, Button, Paper, Text } from '@mantine/core';
 import { IconStack2 } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +23,14 @@ import type { EditResult } from './editing';
 import { ItemActions } from './ItemActions';
 import { ItemDetails } from './ItemDetails';
 import { CURRICULUM_PATH, versionPath } from './paths';
+import {
+  canRearrange,
+  canRearrangeAny,
+  isMovable,
+  placementOf,
+  useMoveItem,
+  type MovableItem,
+} from './reorder';
 import { StructureTree } from './StructureTree';
 import { buildTree, findNode, hasNoModules, ROOT_ID } from './treeModel';
 import { VersionSwitcher } from './VersionSwitcher';
@@ -99,8 +107,34 @@ function Builder({ structure }: BuilderProps) {
     if (notice?.focus) noticeRef.current?.focus();
   }, [notice]);
 
+  // Moving (Move up and down buttons, or drag and drop in the tree) keeps the selection.
+  const focusAfterMove = useRef(false);
+  const mover = useMoveItem(versionId, (message) => {
+    setNotice({ key: Date.now(), message, focus: focusAfterMove.current });
+  });
+  const moveItem = (item: MovableItem, position: number, count: number, focusNotice: boolean) => {
+    focusAfterMove.current = focusNotice;
+    setNotice(null);
+    mover.move({ item, position, count });
+  };
+  const placement = placementOf(root, selectedId);
+  // Only items with siblings to move among.
+  const canDrag = (id: string) => {
+    const item = findNode(root, id)?.node.item;
+    const count = placementOf(root, id)?.count ?? 0;
+    return item !== undefined && count > 1 && canRearrange(item, structure);
+  };
+  const drop = (id: string, position: number) => {
+    const item = findNode(root, id)?.node.item;
+    const at = placementOf(root, id);
+    if (item && isMovable(item) && at && position !== at.index) {
+      moveItem(item, position, at.count, false);
+    }
+  };
+
   const select = (id: string) => {
     setNotice(null);
+    mover.reset();
     setSearchParams(id === ROOT_ID ? {} : { item: id }, { replace: true });
   };
   const saved = (result: EditResult) => {
@@ -147,6 +181,11 @@ function Builder({ structure }: BuilderProps) {
         <Text id="structure-title" className={classes.label}>
           {t('curriculum.tree.title')}
         </Text>
+        {canRearrangeAny(structure) && (
+          <Text size="sm" c="dimmed" className={classes.partial}>
+            {t('curriculum.reorder.hint')}
+          </Text>
+        )}
         {structure.partial && (
           <Text size="sm" c="dimmed" className={classes.partial}>
             {t('curriculum.tree.partial', terms)}
@@ -161,6 +200,8 @@ function Builder({ structure }: BuilderProps) {
           expanded={expanded}
           onSelect={select}
           onToggle={toggle}
+          canDrag={canDrag}
+          onDrop={drop}
         />
       </Paper>
       <section aria-label={t('curriculum.details.label')} className={classes.details}>
@@ -169,11 +210,20 @@ function Builder({ structure }: BuilderProps) {
             <SuccessNotice>{notice.message}</SuccessNotice>
           </div>
         )}
+        {mover.error && <Alert color="red">{mover.error}</Alert>}
         <ItemActions
           key={`actions-${selectedId}`}
           item={found.node.item}
           structure={structure}
           onSaved={saved}
+          placement={placement}
+          moving={mover.busy}
+          onMove={(position, focusNotice) => {
+            const item = found.node.item;
+            if (isMovable(item) && placement) {
+              moveItem(item, position, placement.count, focusNotice);
+            }
+          }}
         />
         <ItemDetails key={selectedId} item={found.node.item} />
       </section>

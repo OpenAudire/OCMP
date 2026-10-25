@@ -8,6 +8,9 @@ change (ADR 028):
 - changing a module and adding or deleting its sessions: the module;
 - changing a session: the session.
 
+Reordering and copying follow the same rules (ADR 029): phases and modules are the
+programme's structure, sessions belong to their module.
+
 A target the user cannot see is a 404, as in the read API (ADR 027); one they can
 see but not change is a 403. Archived versions are read-only (409).
 """
@@ -25,18 +28,22 @@ from app.core.database import DbSession
 from app.core.permissions import Permission, ScopeType
 from app.models import CurriculumVersion, LearningEvent, Module, Phase, User
 from app.schemas.curriculum import (
+    LearningEventCopy,
     LearningEventCreate,
     LearningEventSaved,
     LearningEventUpdate,
+    ModuleCopy,
     ModuleCreate,
     ModuleSaved,
     ModuleUpdate,
+    MoveRequest,
+    PhaseCopy,
     PhaseCreate,
     PhaseSaved,
     PhaseUpdate,
     TeachingFormat,
 )
-from app.services import curriculum_edit
+from app.services import curriculum_copy, curriculum_edit
 from app.services.audit import audit_operation
 from app.services.authorization import AuthorizationError, ScopeRef, has_permission
 from app.services.curriculum_read import VisibleVersion, curriculum_access, visible_version
@@ -188,6 +195,7 @@ PhaseEditor = Annotated[User, _editor(phase_programme)]
 ModuleEditor = Annotated[User, _editor(module_scope)]
 ModuleStructureEditor = Annotated[User, _editor(module_programme)]
 EventEditor = Annotated[User, _editor(event_scope)]
+# Removing, moving and copying a session change its module.
 EventRemover = Annotated[User, _editor(event_module)]
 
 
@@ -233,6 +241,38 @@ async def delete_phase(
     with audit_operation("curriculum.phase_delete", actor_id=actor.id):
         await curriculum_edit.delete_phase(db, target.phase, target.version)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/phases/{phase_id}/move", response_model=PhaseSaved)
+async def move_phase(
+    phase_id: uuid.UUID, body: MoveRequest, request: Request, actor: PhaseEditor, db: DbSession
+) -> Phase:
+    """Move a phase to another place in the version (0 is first)."""
+    target = _target(request)
+    assert target.phase is not None
+    with audit_operation("curriculum.phase_move", actor_id=actor.id):
+        return await curriculum_edit.move_phase(db, target.phase, target.version, body.position)
+
+
+@router.post(
+    "/phases/{phase_id}/copy", response_model=PhaseSaved, status_code=status.HTTP_201_CREATED
+)
+async def copy_phase(
+    phase_id: uuid.UUID, body: PhaseCopy, request: Request, actor: PhaseEditor, db: DbSession
+) -> Phase:
+    """Copy a phase with its modules, their sessions and objectives (one new code per
+    module), right after it."""
+    target = _target(request)
+    assert target.phase is not None
+    with audit_operation("curriculum.phase_copy", actor_id=actor.id, source_id=phase_id):
+        return await curriculum_copy.copy_phase(
+            db,
+            target.phase,
+            target.version,
+            name=body.name,
+            module_codes=body.module_codes,
+            created_by_id=actor.id,
+        )
 
 
 # --- Modules ------------------------------------------------------------------------
@@ -298,6 +338,48 @@ async def delete_module(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@router.post("/modules/{module_id}/move", response_model=ModuleSaved)
+async def move_module(
+    module_id: uuid.UUID,
+    body: MoveRequest,
+    request: Request,
+    actor: ModuleStructureEditor,
+    db: DbSession,
+) -> Module:
+    """Move a module to another place in its phase, or among the modules across phases."""
+    target = _target(request)
+    assert target.module is not None
+    with audit_operation("curriculum.module_move", actor_id=actor.id):
+        return await curriculum_edit.move_module(db, target.module, target.version, body.position)
+
+
+@router.post(
+    "/modules/{module_id}/copy", response_model=ModuleSaved, status_code=status.HTTP_201_CREATED
+)
+async def copy_module(
+    module_id: uuid.UUID,
+    body: ModuleCopy,
+    request: Request,
+    actor: ModuleStructureEditor,
+    db: DbSession,
+) -> Module:
+    """Copy a module with its sessions and objectives under a new code: right after it,
+    or at the end of the phase given."""
+    target = _target(request)
+    assert target.module is not None
+    with audit_operation("curriculum.module_copy", actor_id=actor.id, source_id=module_id):
+        return await curriculum_copy.copy_module(
+            db,
+            target.module,
+            target.version,
+            code=body.code,
+            name=body.name,
+            to_other_phase="phase_id" in body.model_fields_set,
+            phase_id=body.phase_id,
+            created_by_id=actor.id,
+        )
+
+
 # --- Learning events ----------------------------------------------------------------
 
 
@@ -354,6 +436,38 @@ async def delete_learning_event(
     with audit_operation("curriculum.learning_event_delete", actor_id=actor.id):
         await curriculum_edit.delete_event(db, target.event, target.version)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/learning-events/{event_id}/move", response_model=LearningEventSaved)
+async def move_learning_event(
+    event_id: uuid.UUID, body: MoveRequest, request: Request, actor: EventRemover, db: DbSession
+) -> LearningEvent:
+    """Move a session to another place in its module."""
+    target = _target(request)
+    assert target.event is not None
+    with audit_operation("curriculum.learning_event_move", actor_id=actor.id):
+        return await curriculum_edit.move_event(db, target.event, target.version, body.position)
+
+
+@router.post(
+    "/learning-events/{event_id}/copy",
+    response_model=LearningEventSaved,
+    status_code=status.HTTP_201_CREATED,
+)
+async def copy_learning_event(
+    event_id: uuid.UUID,
+    body: LearningEventCopy,
+    request: Request,
+    actor: EventRemover,
+    db: DbSession,
+) -> LearningEvent:
+    """Copy a session with its objectives, right after it."""
+    target = _target(request)
+    assert target.event is not None
+    with audit_operation("curriculum.learning_event_copy", actor_id=actor.id, source_id=event_id):
+        return await curriculum_copy.copy_event(
+            db, target.event, target.version, title=body.title, created_by_id=actor.id
+        )
 
 
 # --- Choices ------------------------------------------------------------------------

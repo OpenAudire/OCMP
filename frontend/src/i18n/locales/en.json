@@ -306,6 +306,31 @@
         "loadItem": "The current details could not be loaded. Close this and try again.",
         "formats": "The list of formats could not be loaded. You can set the format later."
       }
+    },
+    "reorder": {
+      "up": "Move up",
+      "down": "Move down",
+      "moved": "{{name}} moved to place {{position}} of {{count}}.",
+      "hint": "To change the order, drag an item in the tree or select it and use Move up and Move down."
+    },
+    "copy": {
+      "open": "Copy {{noun}}",
+      "title": "Copy {{name}}",
+      "submit": "Copy {{noun}}",
+      "defaultName": "{{name}} (copy)",
+      "copied": "{{name}} added as a copy.",
+      "includesPhase": "The copy is placed after the original, with all its {{modules}}, their {{sessions}}, {{objectives}} and tags.",
+      "includesModule": "The copy gets all {{sessions}}, {{objectives}} and tags of the original.",
+      "includesEvent": "The copy is placed after the original, with its {{objectives}} and tags.",
+      "notIncluded": "Links to framework items, role assignments and the LMS reference are not copied.",
+      "codeHint": "Must differ from {{code}} and every other code in this version.",
+      "newCodes": "New codes for the copied {{modules}}",
+      "newCodesHint": "Each copy needs a code that is not used in this version yet.",
+      "codeFor": "New code for {{name}}",
+      "errors": {
+        "sameCode": "Use a different code for each copy.",
+        "codesTaken": "One of the codes is already used by another {{module}} in this version. Choose different codes."
+      }
     }
   }
 }

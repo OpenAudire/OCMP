@@ -7,7 +7,9 @@ functions enforce the structural rules:
   draft and published versions can both be edited.
 - A module's phase must be a live phase of the same version (or none, for a
   longitudinal module); module codes are unique among a version's live modules.
-- New items go to the end of their parent.
+- New items go to the end of their parent. Moving an item changes its place among
+  its siblings only (phases in the version, modules in their phase or among the
+  modules across phases, sessions in their module).
 - Deleting is a soft delete. A phase that still holds modules cannot be deleted;
   deleting a module also removes its sessions and all their objectives, and
   deleting a session removes its objectives, with one timestamp so they can be
@@ -17,6 +19,7 @@ All changes go through ORM objects so the audit log records them (ADR 017).
 """
 
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -45,6 +48,72 @@ def ensure_editable(version: CurriculumVersion) -> None:
     """
     if not is_editable(version):
         raise ConflictError("This curriculum version is read-only.")
+
+
+def _place(
+    siblings: Sequence[Phase | Module | LearningEvent],
+    item: Phase | Module | LearningEvent,
+    position: int,
+) -> None:
+    """Put ``item`` at index ``position`` among ``siblings`` (in their current order)
+    and number them all from 0, changing only the rows whose position differs.
+
+    Raises:
+        InvalidRequestError: If the position is outside the list.
+    """
+    if not 0 <= position < len(siblings):
+        raise InvalidRequestError(f"The position must be from 0 to {len(siblings) - 1}.")
+    ordered: list[Phase | Module | LearningEvent] = [
+        sibling for sibling in siblings if sibling.id != item.id
+    ]
+    ordered.insert(position, item)
+    for index, sibling in enumerate(ordered):
+        if sibling.position != index:
+            sibling.position = index
+
+
+async def module_siblings(db: AsyncSession, module: Module) -> list[Module]:
+    """The live modules shown in the same group as ``module``, in order: its phase, or
+    the modules across phases (including those whose phase was deleted)."""
+    live_phases = set(
+        await db.scalars(
+            select(Phase.id).where(
+                Phase.version_id == module.version_id, Phase.deleted_at.is_(None)
+            )
+        )
+    )
+
+    def group(candidate: Module) -> uuid.UUID | None:
+        return candidate.phase_id if candidate.phase_id in live_phases else None
+
+    modules = await db.scalars(
+        select(Module)
+        .where(Module.version_id == module.version_id, Module.deleted_at.is_(None))
+        .order_by(Module.position, Module.code)
+    )
+    return [candidate for candidate in modules if group(candidate) == group(module)]
+
+
+async def phase_siblings(db: AsyncSession, version_id: uuid.UUID) -> list[Phase]:
+    """The version's live phases, in order."""
+    return list(
+        await db.scalars(
+            select(Phase)
+            .where(Phase.version_id == version_id, Phase.deleted_at.is_(None))
+            .order_by(Phase.position, Phase.name)
+        )
+    )
+
+
+async def event_siblings(db: AsyncSession, module_id: uuid.UUID) -> list[LearningEvent]:
+    """The module's live sessions, in order."""
+    return list(
+        await db.scalars(
+            select(LearningEvent)
+            .where(LearningEvent.module_id == module_id, LearningEvent.deleted_at.is_(None))
+            .order_by(LearningEvent.position, LearningEvent.title)
+        )
+    )
 
 
 async def _next_position(db: AsyncSession, column: Any, *conditions: Any) -> int:
@@ -87,6 +156,16 @@ async def update_phase(
     for key in ("name", "kind"):
         if key in changes and changes[key] is not None:
             setattr(phase, key, changes[key])
+    await db.flush()
+    return phase
+
+
+async def move_phase(
+    db: AsyncSession, phase: Phase, version: CurriculumVersion, position: int
+) -> Phase:
+    """Move a phase to ``position`` (from 0) among the version's phases."""
+    ensure_editable(version)
+    _place(await phase_siblings(db, version.id), phase, position)
     await db.flush()
     return phase
 
@@ -220,6 +299,17 @@ async def update_module(
     return module
 
 
+async def move_module(
+    db: AsyncSession, module: Module, version: CurriculumVersion, position: int
+) -> Module:
+    """Move a module to ``position`` (from 0) within its phase, or among the modules
+    across phases. Moving it to another phase is a change of its ``phase_id``."""
+    ensure_editable(version)
+    _place(await module_siblings(db, module), module, position)
+    await db.flush()
+    return module
+
+
 async def _soft_delete_objectives(db: AsyncSession, *conditions: Any, at: datetime) -> int:
     objectives = list(
         await db.scalars(select(Objective).where(Objective.deleted_at.is_(None), *conditions))
@@ -337,6 +427,16 @@ async def update_event(
             setattr(event, key, "" if key == "description" and value is None else value)
     if "format_value_id" in changes:
         await _set_format(db, event, changes["format_value_id"])
+    await db.flush()
+    return event
+
+
+async def move_event(
+    db: AsyncSession, event: LearningEvent, version: CurriculumVersion, position: int
+) -> LearningEvent:
+    """Move a session to ``position`` (from 0) within its module."""
+    ensure_editable(version)
+    _place(await event_siblings(db, event.module_id), event, position)
     await db.flush()
     return event
 

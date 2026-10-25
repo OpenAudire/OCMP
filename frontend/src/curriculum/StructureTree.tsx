@@ -1,5 +1,5 @@
-import { useRef, useState, type KeyboardEvent } from 'react';
-import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
+import { useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
+import { IconChevronDown, IconChevronRight, IconGripVertical } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 
 import { visibleNodes, type TreeNode, type VisibleNode } from './treeModel';
@@ -12,6 +12,19 @@ interface StructureTreeProps {
   expanded: ReadonlySet<string>;
   onSelect: (id: string) => void;
   onToggle: (id: string, open: boolean) => void;
+  /** Whether the item may be dragged to another place among its siblings. */
+  canDrag?: (id: string) => boolean;
+  /** An item was dropped at `position` (from 0) among its siblings. */
+  onDrop?: (id: string, position: number) => void;
+}
+
+/** The item being dragged and where it would land. */
+interface DragState {
+  id: string;
+  parentId: string | null;
+  kind: string;
+  index: number;
+  over: { id: string; index: number } | null;
 }
 
 function NodeLabel({ node }: { node: TreeNode }) {
@@ -69,6 +82,10 @@ function NodeLabel({ node }: { node: TreeNode }) {
  * order; arrow keys move, Right and Left open and close, Home and End jump, Enter or
  * Space selects. Items are rendered flat with aria-level so each one's name is its own
  * label only.
+ *
+ * Items the user may move can be dragged among their siblings with a mouse or touch
+ * (native drag and drop). Drag and drop is never the only way: the details panel has
+ * Move up and Move down buttons for keyboards and single pointers (WCAG 2.5.7).
  */
 export function StructureTree({
   root,
@@ -77,9 +94,60 @@ export function StructureTree({
   expanded,
   onSelect,
   onToggle,
+  canDrag = () => false,
+  onDrop,
 }: StructureTreeProps) {
   const rows = visibleNodes(root, expanded);
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [drag, setDrag] = useState<DragState | null>(null);
+
+  const dragProps = (row: VisibleNode) => {
+    const { node } = row;
+    const index = row.posInSet - 1;
+    const draggable = onDrop !== undefined && canDrag(node.id);
+    // Only among siblings of the same kind (phases, not the "Across phases" group).
+    const sibling =
+      drag !== null &&
+      drag.parentId === row.parentId &&
+      drag.kind === node.item.kind &&
+      drag.id !== node.id;
+    return {
+      draggable: draggable || undefined,
+      onDragStart: draggable
+        ? (event: DragEvent<HTMLLIElement>) => {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', node.id);
+            setDrag({
+              id: node.id,
+              parentId: row.parentId,
+              kind: node.item.kind,
+              index,
+              over: null,
+            });
+          }
+        : undefined,
+      onDragEnd: () => setDrag(null),
+      onDragOver: (event: DragEvent<HTMLLIElement>) => {
+        if (!drag || !sibling) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        if (drag.over?.id !== node.id) setDrag({ ...drag, over: { id: node.id, index } });
+      },
+      onDrop: (event: DragEvent<HTMLLIElement>) => {
+        if (!drag || !sibling) return;
+        event.preventDefault();
+        setDrag(null);
+        onDrop?.(drag.id, index);
+      },
+    };
+  };
+
+  // Where the dragged item would land: before the target when moving up, after it
+  // when moving down.
+  const dropSide = (id: string): 'before' | 'after' | undefined => {
+    if (!drag?.over || drag.over.id !== id) return undefined;
+    return drag.over.index < drag.index ? 'before' : 'after';
+  };
   const refs = useRef(new Map<string, HTMLLIElement>());
 
   // The item in the tab order: the focused one while it is visible, else the selected
@@ -153,6 +221,9 @@ export function StructureTree({
             tabIndex={node.id === tabStop ? 0 : -1}
             className={classes.item}
             data-kind={node.item.kind}
+            data-dragging={drag?.id === node.id || undefined}
+            data-drop={dropSide(node.id)}
+            {...dragProps(row)}
             style={{
               paddingInlineStart: `calc(${row.level - 1} * 16px + 8px)`,
             }}
@@ -178,6 +249,11 @@ export function StructureTree({
             <span className={classes.label}>
               <NodeLabel node={node} />
             </span>
+            {onDrop !== undefined && canDrag(node.id) && (
+              <span className={classes.grip} aria-hidden="true">
+                <IconGripVertical size={16} />
+              </span>
+            )}
           </li>
         );
       })}

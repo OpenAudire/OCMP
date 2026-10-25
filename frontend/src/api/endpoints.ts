@@ -5,8 +5,10 @@ import type {
   LearningEventDetail,
   LearningEventInput,
   ModuleDetail,
+  ModuleCopyInput,
   ModuleInput,
   Objective,
+  PhaseCopyInput,
   PhaseInput,
   Programme,
   ProgrammeSummary,
@@ -152,6 +154,36 @@ export async function updateLearningEvent(
 
 export async function deleteLearningEvent(id: string): Promise<void> {
   await api.delete(`/learning-events/${id}`);
+}
+
+/** Moves a phase to `position` (0 is first) among the version's phases. */
+export async function movePhase(id: string, position: number): Promise<SavedPhase> {
+  return (await api.post<SavedPhase>(`/phases/${id}/move`, { position })).data;
+}
+
+/** Moves a module to `position` within its phase (or among the modules across phases). */
+export async function moveModule(id: string, position: number): Promise<SavedModule> {
+  return (await api.post<SavedModule>(`/modules/${id}/move`, { position })).data;
+}
+
+/** Moves a session to `position` within its module. */
+export async function moveLearningEvent(id: string, position: number): Promise<SavedLearningEvent> {
+  return (await api.post<SavedLearningEvent>(`/learning-events/${id}/move`, { position })).data;
+}
+
+/** Copies a phase with its modules (one new code per module id), right after it. */
+export async function copyPhase(id: string, input: PhaseCopyInput): Promise<SavedPhase> {
+  return (await api.post<SavedPhase>(`/phases/${id}/copy`, input)).data;
+}
+
+/** Copies a module with its sessions and objectives; leave out phase_id to keep its phase. */
+export async function copyModule(id: string, input: ModuleCopyInput): Promise<SavedModule> {
+  return (await api.post<SavedModule>(`/modules/${id}/copy`, input)).data;
+}
+
+/** Copies a session with its objectives, right after it. */
+export async function copyLearningEvent(id: string, title: string): Promise<SavedLearningEvent> {
+  return (await api.post<SavedLearningEvent>(`/learning-events/${id}/copy`, { title })).data;
 }
 
 /** Values that can be chosen as a session's teaching format. */

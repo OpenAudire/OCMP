@@ -205,6 +205,9 @@ export function ModuleCount({ count }: { count: number }) {
 - Curriculum reads filter by what the user may see via `app/services/curriculum_read.py` (ADR 027); not visible = 404
 - Structure changes go through `app/services/curriculum_edit.py`; endpoints resolve their scope with an async
   resolver that answers 404 for what the user cannot see, then check `curriculum.edit` (ADR 028)
+- Reorder with the `move_*` functions there (positions renumbered per sibling group, via the ORM);
+  copy items with children through `app/services/curriculum_copy.py` (ADR 029)
+- Drag and drop always has a keyboard and single-pointer alternative (Move up / Move down buttons)
 - Enumerations: `StrEnum` stored as VARCHAR + CHECK (`str_enum()` in `app/models/base.py`), not native Postgres enums
 - Uniqueness on soft-deletable tables: partial unique index via `live_unique()` (`WHERE deleted_at IS NULL`)
 - Framework model fields follow the pack format in `packs/schema/` (ADR 014); import packs with `app/services/packs.py`

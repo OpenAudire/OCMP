@@ -272,6 +272,31 @@ class LearningEventSaved(BaseModel):
     external_lms_ref: str | None
 
 
+class MoveRequest(BaseModel):
+    """Where to put an item among its siblings: 0 is first."""
+
+    position: Annotated[int, Field(ge=0, le=10_000)]
+
+
+class PhaseCopy(BaseModel):
+    name: Name
+    # A new code for each module of the phase (module id to code); codes must be unused.
+    module_codes: dict[uuid.UUID, Code] = Field(default_factory=dict)
+
+
+class ModuleCopy(BaseModel):
+    """Leave out ``phase_id`` to keep the copy in the module's phase; null puts it
+    across phases."""
+
+    code: Code
+    name: Name
+    phase_id: uuid.UUID | None = None
+
+
+class LearningEventCopy(BaseModel):
+    title: Name
+
+
 class TeachingFormat(BaseModel):
     """A value that can be chosen as a session's teaching format."""
 

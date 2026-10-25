@@ -1,14 +1,23 @@
-import { useState, type ReactNode } from 'react';
+import { isValidElement, useState, type ReactNode } from 'react';
 import { Button, Group } from '@mantine/core';
-import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import {
+  IconArrowDown,
+  IconArrowUp,
+  IconCopy,
+  IconPencil,
+  IconPlus,
+  IconTrash,
+} from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 
 import type { VersionStructure } from '../api/types';
+import { CopyDialog } from './CopyDialog';
 import { DeleteDialog, type DeleteTarget } from './DeleteDialog';
 import { nounsFor, type EditResult } from './editing';
 import { EventDialog } from './EventDialog';
 import { ModuleDialog } from './ModuleDialog';
 import { PhaseDialog } from './PhaseDialog';
+import { canRearrange, isMovable, type Placement } from './reorder';
 import type { TreeItem } from './treeModel';
 
 type Dialog =
@@ -18,25 +27,34 @@ type Dialog =
   | 'editModule'
   | 'addEvent'
   | 'editEvent'
+  | 'copy'
   | 'delete';
 
 interface ItemActionsProps {
   item: TreeItem;
   structure: VersionStructure;
   onSaved: (result: EditResult) => void;
+  /** Where the item sits among its siblings; null for the programme and groups. */
+  placement: Placement | null;
+  /** Move the item to `position` among its siblings; `focusNotice` when the pressed
+   * button becomes unavailable (first or last place). */
+  onMove: (position: number, focusNotice: boolean) => void;
+  moving: boolean;
 }
 
 function ActionButton({
   icon,
   onClick,
+  disabled,
   children,
 }: {
   icon: ReactNode;
   onClick: () => void;
+  disabled?: boolean;
   children: ReactNode;
 }) {
   return (
-    <Button variant="default" leftSection={icon} onClick={onClick}>
+    <Button variant="default" leftSection={icon} onClick={onClick} disabled={disabled}>
       {children}
     </Button>
   );
@@ -46,7 +64,14 @@ function ActionButton({
  * Add, change and delete buttons for the selected item, as far as the user may change
  * it (from the structure's `can_edit` flags; the API checks every change itself).
  */
-export function ItemActions({ item, structure, onSaved }: ItemActionsProps) {
+export function ItemActions({
+  item,
+  structure,
+  onSaved,
+  placement,
+  onMove,
+  moving,
+}: ItemActionsProps) {
   const { t } = useTranslation();
   const nouns = nounsFor(t);
   const [dialog, setDialog] = useState<Dialog | null>(null);
@@ -165,6 +190,48 @@ export function ItemActions({ item, structure, onSaved }: ItemActionsProps) {
       break;
   }
 
+  // Move up and down (the keyboard and single-pointer way to reorder), and copy.
+  const rearrange = isMovable(item) && canRearrange(item, structure);
+  const extra: ReactNode[] = [];
+  if (rearrange) {
+    const term = item.kind === 'event' ? 'learning_event' : item.kind;
+    extra.push(
+      button(
+        'copy',
+        <IconCopy size={18} aria-hidden />,
+        t('curriculum.copy.open', { noun: nouns.noun(term) })
+      )
+    );
+  }
+  if (rearrange && placement && placement.count > 1) {
+    const { index, count } = placement;
+    // Not disabled while a move runs: that would take focus away from the button.
+    const moveTo = (position: number) => {
+      if (!moving) onMove(position, position === 0 || position === count - 1);
+    };
+    extra.push(
+      <ActionButton
+        key="up"
+        icon={<IconArrowUp size={18} aria-hidden />}
+        disabled={index === 0}
+        onClick={() => moveTo(index - 1)}
+      >
+        {t('curriculum.reorder.up')}
+      </ActionButton>,
+      <ActionButton
+        key="down"
+        icon={<IconArrowDown size={18} aria-hidden />}
+        disabled={index >= count - 1}
+        onClick={() => moveTo(index + 1)}
+      >
+        {t('curriculum.reorder.down')}
+      </ActionButton>
+    );
+  }
+  // Delete stays last.
+  const deleteAt = buttons.findIndex((node) => isValidElement(node) && node.key === 'delete');
+  buttons.splice(deleteAt < 0 ? buttons.length : deleteAt, 0, ...extra);
+
   if (buttons.length === 0) return null;
   return (
     <>
@@ -172,6 +239,15 @@ export function ItemActions({ item, structure, onSaved }: ItemActionsProps) {
         {buttons}
       </Group>
       {dialogs}
+      {rearrange && isMovable(item) && (
+        <CopyDialog
+          opened={dialog === 'copy'}
+          structure={structure}
+          item={item}
+          onClose={close}
+          onSaved={saved}
+        />
+      )}
       {deleteTarget && (
         <DeleteDialog opened={dialog === 'delete'} target={deleteTarget} {...common} />
       )}

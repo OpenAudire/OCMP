@@ -82,3 +82,24 @@
 .item[aria-selected='true'] .meta {
   color: var(--cic-brand-ink);
 }
+
+.grip {
+  margin-inline-start: auto;
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--cic-muted);
+  cursor: grab;
+}
+
+.item[data-dragging] {
+  opacity: 0.6;
+}
+
+/* Where a dragged item would land: a line above or below the target. */
+.item[data-drop='before'] {
+  box-shadow: inset 0 3px 0 var(--cic-brand);
+}
+
+.item[data-drop='after'] {
+  box-shadow: inset 0 -3px 0 var(--cic-brand);
+}
