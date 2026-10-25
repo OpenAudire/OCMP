@@ -1,0 +1,94 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 26px;
+}
+
+@media (max-width: 48em) {
+  .card {
+    padding: 20px;
+  }
+}
+
+.title {
+  overflow-wrap: anywhere;
+}
+
+.sectionTitle {
+  font-size: 19px;
+}
+
+.mono {
+  font-family: var(--mantine-font-family-monospace);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px 20px;
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fact dt {
+  font-size: 13px;
+  color: var(--cic-muted);
+}
+
+.fact dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.description {
+  white-space: pre-line;
+  line-height: 1.55;
+}
+
+.objectives {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.objective {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+}
+
+.objectiveText {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+/* Chips from the builder mockup: soft fill, muted text; brand tone for upward links. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--cic-soft);
+  color: var(--cic-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.chip[data-tone='brand'] {
+  background: var(--cic-brand-soft);
+  color: var(--cic-brand-ink);
+}

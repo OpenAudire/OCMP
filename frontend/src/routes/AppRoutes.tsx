@@ -1,9 +1,11 @@
+import type { ReactNode } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router';
 
 import { AccountPage } from '../account/AccountPage';
 import { ForgotPasswordPage } from '../auth/ForgotPasswordPage';
 import { LoginPage } from '../auth/LoginPage';
 import { ResetPasswordPage } from '../auth/ResetPasswordPage';
+import { CurriculumSection } from '../curriculum/CurriculumPage';
 import { InstitutionProvider } from '../institution/InstitutionProvider';
 import { AppLayout } from '../layout/AppLayout';
 import { NAV_ITEMS, visibleNavItems, type NavItem } from '../layout/navigation';
@@ -42,11 +44,16 @@ function StartPage() {
   return first ? <Navigate to={first.path} replace /> : <NoAccessPage noRoles />;
 }
 
+/** Sections that are built; the others show a placeholder. */
+const SECTIONS: Partial<Record<string, () => ReactNode>> = {
+  curriculum: () => <CurriculumSection />,
+};
+
 /** A section page, shown only to users whose permissions include it. */
 function Section({ item }: { item: NavItem }) {
   const { data: session } = useSession();
   if (!item.isVisible(session?.permissions ?? new Set())) return <NoAccessPage />;
-  return <PlaceholderPage titleKey={`nav.${item.key}`} />;
+  return SECTIONS[item.key]?.() ?? <PlaceholderPage titleKey={`nav.${item.key}`} />;
 }
 
 export function AppRoutes() {

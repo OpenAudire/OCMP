@@ -38,7 +38,7 @@ ai/, connectors/  Placeholders for Phase 1 (AI) and Phase 2 (LMS connectors)
 ```
 
 Frontend (`frontend/src/`): one folder per feature (`auth/`, `account/`, `setup/`,
-`layout/`, `routes/`, `session/`, `institution/`, `api/`, `pages/`), plus `theme/` (tokens,
+`layout/`, `routes/`, `session/`, `institution/`, `curriculum/`, `api/`, `pages/`), plus `theme/` (tokens,
 Mantine theme, fonts) and `ui/` (shared `Page` and state components); tests beside the code.
 Playwright journeys live in `frontend/e2e/`.
 
@@ -202,6 +202,7 @@ export function ModuleCount({ count }: { count: number }) {
 - Relationships use `lazy="raise"`; load related rows explicitly with `selectinload`
 - Register every model in `app/models/__init__.py` so Alembic sees it
 - Scope resolvers for programme, module and learning event live in `app/services/curriculum_scopes.py`
+- Curriculum reads filter by what the user may see via `app/services/curriculum_read.py` (ADR 027); not visible = 404
 - Enumerations: `StrEnum` stored as VARCHAR + CHECK (`str_enum()` in `app/models/base.py`), not native Postgres enums
 - Uniqueness on soft-deletable tables: partial unique index via `live_unique()` (`WHERE deleted_at IS NULL`)
 - Framework model fields follow the pack format in `packs/schema/` (ADR 014); import packs with `app/services/packs.py`

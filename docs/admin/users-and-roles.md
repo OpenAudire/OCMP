@@ -25,6 +25,23 @@ to assign roles at that scope **and** every permission of the role there, so nob
 give more access than they have. The last active platform admin cannot be removed or
 deactivated.
 
+## Who sees which curriculum
+
+The **Curriculum** section (the curriculum builder) and the curriculum API show each
+person only what their roles allow:
+
+- A role at the institution, a faculty or a programme shows whole curriculum versions:
+  every phase, module and session, and the programme outcomes.
+- A role at a module shows that module with its sessions. A role at a session shows that
+  session, under its module's name.
+- Roles with `curriculum.view` (staff roles) show draft, published and archived
+  versions. Roles with only `curriculum.view_published` (students, external reviewers)
+  show published versions only.
+
+People with a module or session role see a note that they see only the parts they work
+on. Anything a person cannot see is answered as "not found", so nobody learns which
+other programmes or modules exist.
+
 ## Managing users before the admin screens exist
 
 User and role screens arrive in Phase 1. Until then, platform admins manage access

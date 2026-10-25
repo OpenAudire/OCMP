@@ -1,0 +1,15 @@
+.target {
+  max-width: 100%;
+}
+
+/* Long programme names shorten with an ellipsis instead of widening the header. */
+.targetText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown {
+  max-height: min(70dvh, 480px);
+  overflow-y: auto;
+}

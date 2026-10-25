@@ -107,7 +107,8 @@ async def user_assignments(db: AsyncSession, user_id: uuid.UUID) -> list[RoleAss
     return list(result.scalars())
 
 
-def _role_permissions(role: Role) -> frozenset[Permission]:
+def role_permissions(role: Role) -> frozenset[Permission]:
+    """A role's permissions (known ones only) plus everything they imply."""
     known = {p.value for p in Permission}
     return expand({Permission(p) for p in role.permissions if p in known})
 
@@ -124,7 +125,7 @@ async def permissions_at(db: AsyncSession, user: User, scope: ScopeRef) -> froze
     for assignment in assignments:
         held_at = ScopeRef(ScopeType(assignment.scope_type), assignment.scope_id)
         if held_at in scopes:
-            granted |= _role_permissions(assignment.role)
+            granted |= role_permissions(assignment.role)
     return frozenset(granted)
 
 
@@ -152,7 +153,7 @@ async def _check_may_grant(db: AsyncSession, actor: User, role: Role, scope: Sco
     held = await permissions_at(db, actor, scope)
     if Permission.ROLES_ASSIGN not in held:
         raise AuthorizationError("You may not assign roles here.")
-    if not _role_permissions(role) <= held:
+    if not role_permissions(role) <= held:
         raise AuthorizationError("You may not grant permissions you do not hold here.")
 
 

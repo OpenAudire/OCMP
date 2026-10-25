@@ -13,9 +13,10 @@ import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { IconLogout, IconMoon, IconSun, IconUser } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Outlet, useLocation, useNavigate } from 'react-router';
+import { Outlet, useLocation, useMatch, useNavigate } from 'react-router';
 
 import { logout } from '../api/endpoints';
+import { VersionSwitcher } from '../curriculum/VersionSwitcher';
 import { useInstitution } from '../institution/useInstitution';
 import { useSession } from '../session/useSession';
 import { initials } from './initials';
@@ -93,6 +94,8 @@ export function AppLayout() {
   // hide it so keyboard and screen-reader users do not reach it either.
   const isPhone = useMediaQuery('(max-width: 47.99em)');
   const navHidden = isPhone === true && !opened;
+  const versionMatch = useMatch('/curriculum/versions/:versionId/*');
+  const versionId = versionMatch?.params.versionId;
 
   return (
     <AppShell
@@ -122,6 +125,12 @@ export function AppLayout() {
             <Group hiddenFrom="sm">
               <Wordmark size="sm" />
             </Group>
+            {/* On phones the page shows the switcher instead (no room here). */}
+            {versionId && (
+              <Group visibleFrom="sm" miw={0}>
+                <VersionSwitcher versionId={versionId} />
+              </Group>
+            )}
           </Group>
           <Group gap="sm" wrap="nowrap">
             <ColorSchemeToggle />

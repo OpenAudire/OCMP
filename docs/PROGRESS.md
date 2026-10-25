@@ -727,3 +727,29 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 **Commit**: `feat: rename to Curriculum in Context with design tokens, shared layout and axe checks`
 
 **CI follow-up**: the first run of the new End-to-End job failed before any test ran. On the GitHub runner's Docker Compose, `docker compose up --wait` fails with "container ocmp-worker-1 has no healthcheck configured", because the worker had `healthcheck: disable: true` (local Compose v5.6.1 accepted it). The install, upgrade and restore guides use the same command, so installations on that Compose version would have failed too. The worker now has a real healthcheck: the Dramatiq process runs and Redis answers. Fixed in `fix: give the worker a healthcheck so compose up --wait succeeds`.
+
+---
+
+### Slice 1.2: Curriculum Read API, Version Switcher and Structure Tree
+**Status**: Complete
+
+**Deliverables**:
+- [x] **Curriculum read API** (ADR 027), signed-in users only, each answer filtered to what the user may see: `GET /programmes` (with visible versions, newest first), `/programmes/{id}` (qualification, NQF, credits, SAQA ID, accreditation), `/curriculum-versions/{id}/structure` (phases, modules, sessions in order with formats and objective counts; longitudinal modules separately; `partial` flag), `/curriculum-versions/{id}/outcomes`, `/modules/{id}` (totals of contact and self-study time, outcomes with upward links), `/learning-events/{id}` (objectives with upward links). Not visible = 404
+- [x] **Who sees what** (`app/services/curriculum_read.py`): permissions gathered once per request from the user's role assignments. Programme level and above: whole version; module role: that module and its sessions; session role: that session, under its module as context only. `curriculum.view_published` shows published versions only. Deleted rows and programmes of deleted faculties are hidden. `role_permissions` in the authorization service made public so both paths expand implied permissions the same way
+- [x] **Programme and version switcher**: a menu in the header (in the page on phones) grouped by programme, the open version marked with `aria-current`; the last opened version is remembered in this browser and `/curriculum` opens it while it is still visible, otherwise the newest version of the first programme
+- [x] **Read-only builder** (`/curriculum/versions/{id}?item=...`): structure tree (own ARIA tree: roving tab stop, arrow keys, Home/End, Enter/Space; flat with `aria-level`/`aria-posinset`/`aria-setsize`; root and phases open by default, the way to an item named in the address opened) and a details panel per item: programme facts and programme outcomes, phase and "Across phases" totals, module facts and outcomes, session facts and objectives (domain, status, upward-link chips as in the mockup). Curriculum nouns come from `terms.*`, so institution terminology applies
+- [x] **States**: loading (skeletons), load error with retry, unknown or hidden version (explains and links to the latest version), no programmes (admins get the `load-demo` hint), version without modules, narrower roles told they see only their modules and sessions
+- [x] Test setup: Testing Library waits up to 3 s for `findBy*`/`waitFor` (the first full-app render in a busy parallel run sometimes took over 1 s and failed an existing route test once)
+- [x] ADR 027; admin guide "Who sees which curriculum"; CLAUDE.md (folder and service)
+
+**Verification**:
+- Backend: ruff, ruff format, mypy (72 files) pass; pytest 543 passed against the test database (28 new API tests: sign-in required, full, faculty, instance, published-only, module-scope, session-scope and no-role users, ordering, deleted rows, qualification type), 96% coverage (`curriculum_read.py` 96%)
+- Frontend under Node 24.22.1: lint, typecheck, production build pass; 110 tests pass, twice in a row (20 new: tree model, version choice, page states, keyboard navigation, deep links, switcher, terminology), 92% line coverage
+- Docker: api, worker and web images rebuilt; Playwright (Chromium) against the Compose stack with the demo data: 37 passed, twice in a row (10 new in `e2e/curriculum.spec.ts`: structure and programme details, keyboard to a session and reload, open switcher menu, unknown version, phone layout; axe WCAG 2.2 AA on each, light and dark)
+- Screenshots of light, dark (session selected) and phone compared with `Builder.dc.html` by eye; chips and lowercase counts adjusted to match
+- `mkdocs build --strict` passes
+- Not verified here: browsers other than Chromium; screen readers by hand; the CI run on GitHub (runs on push)
+
+**Not in this slice**: editing (1.3), objective quality flags and tags in the details panel (1.7, 1.8), the module credit check (1.9), "Publish version" and copy forward (1.5). Role assignments at module or session scope do not follow a copied-forward year; Slice 1.5 must decide (ADR 027).
+
+**Commit**: `feat: add curriculum read API, version switcher and read-only structure tree`

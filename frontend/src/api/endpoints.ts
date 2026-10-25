@@ -1,5 +1,16 @@
 import { api } from './client';
-import type { AuthOptions, Institution, RoleAssignment, User } from './types';
+import type {
+  AuthOptions,
+  Institution,
+  LearningEventDetail,
+  ModuleDetail,
+  Objective,
+  Programme,
+  ProgrammeSummary,
+  RoleAssignment,
+  User,
+  VersionStructure,
+} from './types';
 
 export async function fetchMe(): Promise<User> {
   return (await api.get<User>('/auth/me')).data;
@@ -65,10 +76,42 @@ export async function fetchInstitution(): Promise<Institution> {
   return (await api.get<Institution>('/institution')).data;
 }
 
+/** Programmes the user may see, each with its visible versions (newest first). */
+export async function fetchProgrammes(): Promise<ProgrammeSummary[]> {
+  return (await api.get<ProgrammeSummary[]>('/programmes')).data;
+}
+
+export async function fetchProgramme(id: string): Promise<Programme> {
+  return (await api.get<Programme>(`/programmes/${id}`)).data;
+}
+
+/** The tree of a version, as far as the user may see it. */
+export async function fetchVersionStructure(versionId: string): Promise<VersionStructure> {
+  return (await api.get<VersionStructure>(`/curriculum-versions/${versionId}/structure`)).data;
+}
+
+export async function fetchProgrammeOutcomes(versionId: string): Promise<Objective[]> {
+  return (await api.get<Objective[]>(`/curriculum-versions/${versionId}/outcomes`)).data;
+}
+
+export async function fetchModule(id: string): Promise<ModuleDetail> {
+  return (await api.get<ModuleDetail>(`/modules/${id}`)).data;
+}
+
+export async function fetchLearningEvent(id: string): Promise<LearningEventDetail> {
+  return (await api.get<LearningEventDetail>(`/learning-events/${id}`)).data;
+}
+
 /** TanStack Query keys, in one place so invalidation stays consistent. */
 export const queryKeys = {
   session: ['session'] as const,
   institution: ['institution'] as const,
   authOptions: ['auth-options'] as const,
   setupStatus: ['setup-status'] as const,
+  programmes: ['programmes'] as const,
+  programme: (id: string) => ['programmes', id] as const,
+  versionStructure: (id: string) => ['curriculum-versions', id, 'structure'] as const,
+  programmeOutcomes: (id: string) => ['curriculum-versions', id, 'outcomes'] as const,
+  module: (id: string) => ['modules', id] as const,
+  learningEvent: (id: string) => ['learning-events', id] as const,
 };

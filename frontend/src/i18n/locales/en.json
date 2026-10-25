@@ -179,5 +179,88 @@
     "changed": "Your password has been changed. Your other sessions were signed out.",
     "wrongCurrent": "The current password is not correct.",
     "ssoOnly": "You sign in through your organisation, so your password is managed there."
+  },
+  "curriculum": {
+    "title": "Curriculum builder",
+    "versionLabel": "{{year}} · {{status}}",
+    "versionStatus": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "switcher": {
+      "current": "{{programme}} · {{version}}"
+    },
+    "tree": {
+      "title": "Structure",
+      "label": "Structure of {{programme}}",
+      "partial": "You see the {{modules}} and {{sessions}} you work on.",
+      "longitudinal": "Across phases",
+      "count": "{{count}} {{noun}}",
+      "week": "Week {{week}}"
+    },
+    "details": {
+      "label": "Selected item",
+      "code": "Code",
+      "qualification": "Qualification",
+      "nqfExitLevel": "NQF exit level",
+      "totalCredits": "Total credits",
+      "minimumDuration": "Minimum duration",
+      "years_one": "{{value}} year",
+      "years_other": "{{value}} years",
+      "saqaId": "SAQA ID",
+      "faculty": "Faculty",
+      "programmeError": "Some details could not be loaded. Try again later.",
+      "programmeOutcomes": "{{programme}} outcomes",
+      "moduleOutcomes": "{{module}} outcomes",
+      "objectives": "Learning objectives",
+      "noOutcomes": "No outcomes yet.",
+      "noObjectives": "No learning objectives yet.",
+      "objectivesError": "These could not be loaded.",
+      "kind": "Kind",
+      "credits": "Credits",
+      "nqfLevel": "NQF level",
+      "contactTime": "Contact time",
+      "selfStudy": "Self-study",
+      "hours": "{{value}} h",
+      "minutes": "{{value}} min",
+      "format": "Format",
+      "notSet": "Not set",
+      "week": "Week",
+      "contextOnly": "You can see only your {{sessions}} in this {{module}}.",
+      "linkedUp_one": "Linked to {{count}} broader outcome",
+      "linkedUp_other": "Linked to {{count}} broader outcomes"
+    },
+    "domain": {
+      "knowledge": "Knowledge",
+      "skill": "Skill",
+      "attitude": "Attitude",
+      "none": "Domain not set"
+    },
+    "objectiveStatus": {
+      "draft": "Draft",
+      "approved": "Approved",
+      "retired": "Retired"
+    },
+    "phaseKind": {
+      "year": "Year",
+      "phase": "Phase",
+      "block": "Block",
+      "longitudinal_thread": "Longitudinal thread"
+    },
+    "empty": {
+      "noProgrammesTitle": "No {{programmes}} to show",
+      "noProgrammes": "There is no {{programme}} you can see yet. Ask your curriculum office for access if you expected one here.",
+      "noProgrammesAdmin": "No {{programme}} has been added yet. To look around first, load the fictional demo programme with: docker compose exec api python -m app.cli load-demo",
+      "noModulesTitle": "No {{modules}} yet",
+      "noModules": "This version has no {{modules}} yet. When {{modules}} and their {{sessions}} are added, they appear here."
+    },
+    "errors": {
+      "loadTitle": "Couldn't load the curriculum",
+      "loadBody": "Nothing was changed. Check your connection and try again.",
+      "notFoundTitle": "This curriculum version isn't available",
+      "notFoundBody": "It may have been removed, or your account cannot see it.",
+      "openDefault": "Open the latest version"
+    }
   }
 }
