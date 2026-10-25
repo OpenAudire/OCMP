@@ -573,6 +573,7 @@ Collected from the slices above so nothing is lost:
 - **POPIA**: per-user data export and deletion, email address changes (the inventory and notice template exist since Slice 0.21)
 - **CI/CD**: first tagged release, GitHub Pages and code scanning upload (see "Before the Public Release"); multi-architecture images
 - **Deployment**: the embeddings image (optional profile, off by default) is built with the Phase 1 search features; move the docs from MkDocs Material (end of life 5 May 2027) to Zensical once it is stable
+- **Security (later security slice)**: add a Content-Security-Policy header in Caddy (none is set today). Start in report-only mode, then enforce: `default-src 'self'`, no inline scripts (the colour-scheme bootstrap is already an external file, `public/color-scheme.js`), `style-src` allowing Mantine's inline style attributes, `font-src 'self'` (fonts are self-hosted), `connect-src 'self'`, `frame-ancestors 'none'`, plus the OIDC provider's address only where redirects need it. Check every screen with the Playwright suite while the policy is in report-only mode (recorded at Slice 1.1)
 
 ---
 
