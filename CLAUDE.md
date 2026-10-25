@@ -60,6 +60,9 @@ docker run -d --name ocmp-test-db -e POSTGRES_USER=test -e POSTGRES_PASSWORD=tes
   -e POSTGRES_DB=ocmp_test -p 55432:5432 pgvector/pgvector:pg16
 TEST_DATABASE_URL=postgresql+asyncpg://test:test@localhost:55432/ocmp_test pytest
 
+# Load the fictional demo dataset (BSc Health Sciences (Demo))
+python -m app.cli load-demo
+
 # First-run setup token (while no institution exists)
 python -m app.cli setup-token
 
@@ -161,7 +164,8 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
 - Scope resolvers for programme, module and learning event live in `app/services/curriculum_scopes.py`
 - Enumerations: `StrEnum` stored as VARCHAR + CHECK (`str_enum()` in `app/models/base.py`), not native Postgres enums
 - Uniqueness on soft-deletable tables: partial unique index via `live_unique()` (`WHERE deleted_at IS NULL`)
-- Framework model fields follow the pack format in `packs/schema/` (ADR 014)
+- Framework model fields follow the pack format in `packs/schema/` (ADR 014); import packs with `app/services/packs.py`
+- `packs/demo/demo-graduate-competencies.json` and `backend/app/demo/data/` copy must stay identical (tested)
 - Data migrations are separate files and use table stubs (`sa.table`), never app models
 - Institution settings are read through `app/services/institution_settings.py` (typed sections), never raw JSON
 
@@ -257,5 +261,5 @@ chore: update dependencies
 - [x] Roles and permissions
 - [x] Curriculum models
 - [x] Framework models
-- [ ] Demo dataset
+- [x] Demo dataset
 - [ ] Documentation skeleton

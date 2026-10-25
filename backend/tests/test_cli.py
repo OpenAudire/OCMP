@@ -102,3 +102,36 @@ def test_setup_token(cli_settings: str, capsys: pytest.CaptureFixture[str]) -> N
     out = capsys.readouterr().out
     # The test database has no institution, so setup is pending.
     assert setup_token(cli.get_settings()) in out
+
+
+def test_load_demo(
+    cli_settings: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Command wiring only; loading itself is tested in test_demo.py (rolled back)."""
+    from types import SimpleNamespace
+
+    from app.services.authorization import ConflictError
+
+    calls = []
+
+    async def fake_load_demo(_db: object) -> SimpleNamespace:
+        if calls:
+            raise ConflictError("The demo programme BHS-DEMO is already loaded.")
+        calls.append(1)
+        return SimpleNamespace(
+            programme=SimpleNamespace(name="BSc Health Sciences (Demo)"),
+            modules=3,
+            learning_events=20,
+            objectives=60,
+            objective_links=58,
+            framework_items=8,
+            mappings=12,
+            tag_lists=3,
+        )
+
+    monkeypatch.setattr(cli, "load_demo", fake_load_demo)
+
+    assert cli.main(["load-demo"]) == 0
+    assert "3 modules, 20 sessions, 60 objectives" in capsys.readouterr().out
+    assert cli.main(["load-demo"]) == 0
+    assert "already loaded" in capsys.readouterr().out

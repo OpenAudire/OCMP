@@ -7,83 +7,69 @@
     "publisher": "OCMP Demo",
     "licence": "CC0 - Public Domain (fictional framework for demonstration)",
     "profile": "core",
-    "description": "A fictional graduate competency framework for demonstrating OCMP features"
+    "description": "A fictional graduate competency framework (8 items in 2 levels) for demonstrating OCMP. Not based on any real framework."
   },
   "items": [
     {
-      "code": "DGC",
-      "title": "Demo Graduate Competencies",
-      "description": "Root node for the demo graduate competencies framework",
-      "parent_code": null,
-      "order": 1
-    },
-    {
       "code": "DGC-1",
-      "title": "Critical Thinking",
-      "description": "Ability to analyze information, evaluate evidence, and form reasoned conclusions",
-      "parent_code": "DGC",
+      "title": "Scholar and Practitioner",
+      "description": "Uses knowledge and evidence to understand problems and act on them safely.",
+      "parent_code": null,
       "order": 1
     },
     {
       "code": "DGC-1.1",
       "title": "Analysis",
-      "description": "Break down complex information into component parts",
+      "description": "Breaks down complex health information into its parts and explains how they relate.",
       "parent_code": "DGC-1",
       "order": 1
     },
     {
       "code": "DGC-1.2",
-      "title": "Evaluation",
-      "description": "Assess the validity and reliability of information and arguments",
+      "title": "Evaluation of evidence",
+      "description": "Judges the quality and relevance of evidence before using it in decisions.",
       "parent_code": "DGC-1",
       "order": 2
     },
     {
+      "code": "DGC-1.3",
+      "title": "Applied practice",
+      "description": "Performs practical procedures safely and correctly in simulated and real settings.",
+      "parent_code": "DGC-1",
+      "order": 3
+    },
+    {
       "code": "DGC-2",
-      "title": "Communication",
-      "description": "Effective written and oral communication skills",
-      "parent_code": "DGC",
+      "title": "Communicator and Professional",
+      "description": "Communicates clearly and behaves ethically as a member of a team.",
+      "parent_code": null,
       "order": 2
     },
     {
       "code": "DGC-2.1",
-      "title": "Written Communication",
-      "description": "Express ideas clearly and effectively in writing",
+      "title": "Communication",
+      "description": "Explains information clearly in writing and in conversation, adapted to the audience.",
       "parent_code": "DGC-2",
       "order": 1
     },
     {
       "code": "DGC-2.2",
-      "title": "Oral Communication",
-      "description": "Present information effectively to diverse audiences",
+      "title": "Ethical conduct",
+      "description": "Applies ethical principles, respects confidentiality and acts with integrity.",
       "parent_code": "DGC-2",
       "order": 2
     },
     {
-      "code": "DGC-3",
-      "title": "Professional Practice",
-      "description": "Ethical and professional conduct in academic and workplace settings",
-      "parent_code": "DGC",
-      "order": 3
-    },
-    {
-      "code": "DGC-3.1",
-      "title": "Ethics",
-      "description": "Apply ethical principles in decision-making",
-      "parent_code": "DGC-3",
-      "order": 1
-    },
-    {
-      "code": "DGC-3.2",
+      "code": "DGC-2.3",
       "title": "Collaboration",
-      "description": "Work effectively in teams with diverse members",
-      "parent_code": "DGC-3",
-      "order": 2
+      "description": "Works effectively in teams, including with other professions.",
+      "parent_code": "DGC-2",
+      "order": 3
     }
   ],
   "cross_references": [
     {
-      "from_code": "DGC-1.1",
+      "from_code": "DGC-1.2",
       "to_code": "DGC-2.1",
       "type": "related"
     }
@@ -98,37 +84,92 @@
           "order": 1,
           "name": "Remember",
           "description": "Recall facts and basic concepts",
-          "verbs": ["define", "describe", "identify", "label", "list", "match", "name", "recall", "recognize", "state"]
+          "verbs": [
+            "define",
+            "describe",
+            "identify",
+            "label",
+            "list",
+            "match",
+            "name",
+            "recall",
+            "recognize",
+            "state"
+          ]
         },
         {
           "order": 2,
           "name": "Understand",
           "description": "Explain ideas or concepts",
-          "verbs": ["classify", "compare", "contrast", "explain", "interpret", "paraphrase", "summarize", "translate"]
+          "verbs": [
+            "classify",
+            "compare",
+            "contrast",
+            "explain",
+            "interpret",
+            "paraphrase",
+            "summarize",
+            "translate"
+          ]
         },
         {
           "order": 3,
           "name": "Apply",
           "description": "Use information in new situations",
-          "verbs": ["apply", "demonstrate", "execute", "implement", "solve", "use", "calculate", "perform"]
+          "verbs": [
+            "apply",
+            "demonstrate",
+            "execute",
+            "implement",
+            "solve",
+            "use",
+            "calculate",
+            "perform"
+          ]
         },
         {
           "order": 4,
           "name": "Analyze",
           "description": "Draw connections among ideas",
-          "verbs": ["analyze", "categorize", "differentiate", "distinguish", "examine", "organize", "relate"]
+          "verbs": [
+            "analyze",
+            "categorize",
+            "differentiate",
+            "distinguish",
+            "examine",
+            "organize",
+            "relate"
+          ]
         },
         {
           "order": 5,
           "name": "Evaluate",
           "description": "Justify a decision or course of action",
-          "verbs": ["appraise", "argue", "assess", "critique", "defend", "evaluate", "judge", "justify"]
+          "verbs": [
+            "appraise",
+            "argue",
+            "assess",
+            "critique",
+            "defend",
+            "evaluate",
+            "judge",
+            "justify"
+          ]
         },
         {
           "order": 6,
           "name": "Create",
           "description": "Produce new or original work",
-          "verbs": ["construct", "create", "design", "develop", "formulate", "generate", "plan", "produce"]
+          "verbs": [
+            "construct",
+            "create",
+            "design",
+            "develop",
+            "formulate",
+            "generate",
+            "plan",
+            "produce"
+          ]
         }
       ]
     },
@@ -141,25 +182,45 @@
           "order": 1,
           "name": "Knows",
           "description": "Knowledge - recall of facts",
-          "verbs": ["define", "describe", "list", "recall"]
+          "verbs": [
+            "define",
+            "describe",
+            "list",
+            "recall"
+          ]
         },
         {
           "order": 2,
           "name": "Knows How",
           "description": "Competence - ability to apply knowledge",
-          "verbs": ["explain", "interpret", "apply", "analyze"]
+          "verbs": [
+            "explain",
+            "interpret",
+            "apply",
+            "analyze"
+          ]
         },
         {
           "order": 3,
           "name": "Shows How",
           "description": "Performance - demonstration in controlled settings",
-          "verbs": ["demonstrate", "perform", "simulate", "practice"]
+          "verbs": [
+            "demonstrate",
+            "perform",
+            "simulate",
+            "practice"
+          ]
         },
         {
           "order": 4,
           "name": "Does",
           "description": "Action - performance in real practice",
-          "verbs": ["perform independently", "manage", "conduct", "execute in practice"]
+          "verbs": [
+            "perform independently",
+            "manage",
+            "conduct",
+            "execute in practice"
+          ]
         }
       ]
     }

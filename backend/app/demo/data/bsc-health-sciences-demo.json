@@ -1,0 +1,213 @@
+{
+  "_comment": "Fictional demo curriculum for OCMP. All names and texts are invented for demonstration.",
+  "institution": {
+    "name": "OCMP Demo University",
+    "short_code": "DEMO-UNI",
+    "country": "ZA"
+  },
+  "faculty": {
+    "code": "FHS-DEMO",
+    "name": "Faculty of Health Sciences (Demo)",
+    "department": {"code": "DHSE-DEMO", "name": "Department of Health Sciences Education (Demo)"}
+  },
+  "framework_pack": "demo-graduate-competencies.json",
+  "taxonomy_scale": "bloom-revised",
+  "tag_lists": [
+    {
+      "key": "teaching-methods",
+      "name": "Teaching methods",
+      "kind": "teaching_method",
+      "entity_types": ["learning_event"],
+      "values": [
+        {"code": "lecture", "label": "Lecture"},
+        {"code": "pbl", "label": "PBL tutorial"},
+        {"code": "practical", "label": "Practical"},
+        {"code": "small_group", "label": "Small-group discussion"},
+        {"code": "clinical_skills", "label": "Clinical skills session"},
+        {"code": "community_placement", "label": "Community placement"},
+        {"code": "self_directed", "label": "Self-directed learning"}
+      ]
+    },
+    {
+      "key": "assessment-methods",
+      "name": "Assessment methods",
+      "kind": "assessment_method",
+      "entity_types": ["module", "objective"],
+      "values": [
+        {"code": "mcq", "label": "Multiple-choice questions"},
+        {"code": "osce", "label": "OSCE"},
+        {"code": "written", "label": "Written assignment"},
+        {"code": "portfolio", "label": "Portfolio"},
+        {"code": "practical_exam", "label": "Practical examination"}
+      ]
+    },
+    {
+      "key": "themes",
+      "name": "Themes",
+      "kind": "theme",
+      "entity_types": ["programme", "module", "learning_event", "objective"],
+      "values": [
+        {"code": "ethics", "label": "Ethics"},
+        {"code": "patient_safety", "label": "Patient safety"},
+        {"code": "ipe", "label": "Interprofessional practice"},
+        {"code": "community", "label": "Community health"}
+      ]
+    }
+  ],
+  "programme": {
+    "code": "BHS-DEMO",
+    "name": "BSc Health Sciences (Demo)",
+    "qualification_type": "bachelors",
+    "nqf_exit_level": 7,
+    "total_credits": 360,
+    "minimum_duration_years": 3,
+    "saqa_id": "DEMO-00001",
+    "outcomes": [
+      {"ref": "PO1", "text": "Explain the structure and function of the human body in health and disease.", "domain": "knowledge", "level": "Understand"},
+      {"ref": "PO2", "text": "Analyse health information and research evidence to support decisions.", "domain": "knowledge", "level": "Analyze"},
+      {"ref": "PO3", "text": "Perform basic clinical and laboratory procedures safely.", "domain": "skill", "level": "Apply"},
+      {"ref": "PO4", "text": "Communicate clearly with patients, communities and colleagues.", "domain": "skill", "level": "Apply"},
+      {"ref": "PO5", "text": "Act ethically and professionally in health settings.", "domain": "attitude", "level": "Evaluate"},
+      {"ref": "PO6", "text": "Work effectively in interprofessional teams.", "domain": "attitude", "level": "Apply"}
+    ]
+  },
+  "phases": [
+    {"ref": "Y1", "name": "Year 1", "kind": "year"},
+    {"ref": "Y2", "name": "Year 2", "kind": "year"}
+  ],
+  "modules": [
+    {
+      "code": "HBIO101",
+      "name": "Foundations of Human Biology (Demo)",
+      "phase": "Y1",
+      "credits": 24,
+      "nqf_level": 5,
+      "description": "Cells, tissues and the main organ systems, with an introduction to laboratory work.",
+      "assessment_methods": ["mcq", "practical_exam"],
+      "outcomes": [
+        {"ref": "HBIO-O1", "text": "Describe the organisation of cells, tissues and organ systems.", "domain": "knowledge", "level": "Understand", "links": ["PO1"], "maps": [{"item": "DGC-1.1", "coverage": 3, "depth": "matches"}]},
+        {"ref": "HBIO-O2", "text": "Explain how the cardiovascular and respiratory systems maintain homeostasis.", "domain": "knowledge", "level": "Understand", "links": ["PO1"], "maps": [{"item": "DGC-1.1", "coverage": 4, "depth": "matches"}]},
+        {"ref": "HBIO-O3", "text": "Interpret basic physiological measurements against normal ranges.", "domain": "skill", "level": "Apply", "links": ["PO2"], "maps": [{"item": "DGC-1.2", "coverage": 3, "depth": "below"}]},
+        {"ref": "HBIO-O4", "text": "Carry out laboratory safety procedures correctly.", "domain": "skill", "level": "Apply", "links": ["PO3"], "maps": [{"item": "DGC-1.3", "coverage": 4, "depth": "matches"}]}
+      ],
+      "events": [
+        {"title": "Cells and tissues", "format": "lecture", "contact_minutes": 90, "self_study_minutes": 120, "week": 1, "objectives": [
+          {"text": "Identify the main cell organelles and state their functions.", "domain": "knowledge", "level": "Remember", "links": ["HBIO-O1"]},
+          {"text": "Distinguish the four basic tissue types under the microscope.", "domain": "skill", "level": "Analyze", "links": ["HBIO-O1"]}
+        ]},
+        {"title": "Laboratory safety induction", "format": "practical", "contact_minutes": 120, "self_study_minutes": 30, "week": 1, "themes": ["patient_safety"], "objectives": [
+          {"text": "Demonstrate correct use of personal protective equipment in the laboratory.", "domain": "skill", "level": "Apply", "links": ["HBIO-O4"]},
+          {"text": "Explain the procedure for reporting a laboratory incident.", "domain": "knowledge", "level": "Understand", "links": ["HBIO-O4"]}
+        ]},
+        {"title": "The heart as a pump", "format": "lecture", "contact_minutes": 90, "self_study_minutes": 120, "week": 2, "objectives": [
+          {"text": "Describe the phases of the cardiac cycle.", "domain": "knowledge", "level": "Understand", "links": ["HBIO-O2"]},
+          {"text": "Relate the heart sounds to the closure of the heart valves.", "domain": "knowledge", "level": "Understand", "links": ["HBIO-O2"]}
+        ]},
+        {"title": "Measuring blood pressure", "format": "clinical_skills", "contact_minutes": 120, "self_study_minutes": 60, "week": 3, "themes": ["patient_safety"], "objectives": [
+          {"text": "Measure blood pressure with a manual sphygmomanometer.", "domain": "skill", "level": "Apply", "links": ["HBIO-O3"]},
+          {"text": "Compare a measured blood pressure with normal adult ranges.", "domain": "skill", "level": "Evaluate", "links": ["HBIO-O3"]},
+          {"text": "Explain the measurement to the person being examined.", "domain": "skill", "level": "Apply", "links": ["HBIO-O3"]}
+        ]},
+        {"title": "Breathing and gas exchange", "format": "pbl", "contact_minutes": 120, "self_study_minutes": 180, "week": 4, "objectives": [
+          {"text": "Explain how ventilation and perfusion affect gas exchange in the lungs.", "domain": "knowledge", "level": "Understand", "links": ["HBIO-O2"]},
+          {"text": "Use a case to identify gaps in your own knowledge of respiration.", "domain": "attitude", "level": "Analyze", "links": ["HBIO-O2"]}
+        ]},
+        {"title": "Homeostasis case discussion", "format": "small_group", "contact_minutes": 90, "self_study_minutes": 90, "week": 5, "objectives": [
+          {"text": "Analyse how the body responds to dehydration.", "domain": "knowledge", "level": "Analyze", "links": ["HBIO-O2"]},
+          {"text": "Present a concept map of a feedback loop to your peers.", "domain": "skill", "level": "Create", "links": ["HBIO-O1"]}
+        ]},
+        {"title": "Self-directed review: body systems", "format": "self_directed", "contact_minutes": 0, "self_study_minutes": 240, "week": 6, "objectives": [
+          {"text": "Summarise the main functions of each organ system.", "domain": "knowledge", "level": "Understand", "links": ["HBIO-O1"]},
+          {"text": "Assess your own progress using practice questions.", "domain": "attitude", "level": "Evaluate", "links": ["HBIO-O3"]}
+        ]}
+      ]
+    },
+    {
+      "code": "HIC201",
+      "name": "Health, Illness and Community (Demo)",
+      "phase": "Y2",
+      "credits": 24,
+      "nqf_level": 6,
+      "description": "Determinants of health, reading research, and planning health promotion with a community partner.",
+      "assessment_methods": ["written", "portfolio"],
+      "outcomes": [
+        {"ref": "HIC-O1", "text": "Explain common determinants of health in South African communities.", "domain": "knowledge", "level": "Understand", "links": ["PO1", "PO2"], "maps": [{"item": "DGC-1.1", "coverage": 3, "depth": "matches"}]},
+        {"ref": "HIC-O2", "text": "Appraise a published study on a community health intervention.", "domain": "knowledge", "level": "Evaluate", "links": ["PO2"], "maps": [{"item": "DGC-1.2", "coverage": 5, "depth": "matches"}]},
+        {"ref": "HIC-O3", "text": "Plan a simple health promotion activity with a community partner.", "domain": "skill", "level": "Create", "links": ["PO4", "PO6"], "maps": [{"item": "DGC-2.3", "coverage": 3, "depth": "matches"}, {"item": "DGC-2.1", "coverage": 3, "depth": "above"}]},
+        {"ref": "HIC-O4", "text": "Reflect on ethical issues in community-based research.", "domain": "attitude", "level": "Evaluate", "links": ["PO5"], "maps": [{"item": "DGC-2.2", "coverage": 4, "depth": "matches"}]}
+      ],
+      "events": [
+        {"title": "Determinants of health", "format": "lecture", "contact_minutes": 90, "self_study_minutes": 120, "week": 1, "themes": ["community"], "objectives": [
+          {"text": "List the social determinants of health.", "domain": "knowledge", "level": "Remember", "links": ["HIC-O1"]},
+          {"text": "Explain how housing and income affect health outcomes.", "domain": "knowledge", "level": "Understand", "links": ["HIC-O1"]}
+        ]},
+        {"title": "Reading a research paper", "format": "small_group", "contact_minutes": 90, "self_study_minutes": 120, "week": 2, "objectives": [
+          {"text": "Identify the research question, design and main findings of a study.", "domain": "knowledge", "level": "Analyze", "links": ["HIC-O2"]},
+          {"text": "Judge whether a study's conclusions follow from its results.", "domain": "knowledge", "level": "Evaluate", "links": ["HIC-O2"]}
+        ]},
+        {"title": "Critical appraisal workshop", "format": "practical", "contact_minutes": 120, "self_study_minutes": 120, "week": 3, "objectives": [
+          {"text": "Use an appraisal checklist to assess a community health study.", "domain": "skill", "level": "Apply", "links": ["HIC-O2"]},
+          {"text": "Summarise the strengths and weaknesses of a study in writing.", "domain": "skill", "level": "Evaluate", "links": ["HIC-O2"]}
+        ]},
+        {"title": "Community visit", "format": "community_placement", "contact_minutes": 240, "self_study_minutes": 60, "week": 4, "themes": ["community"], "objectives": [
+          {"text": "Describe the health services available in a local community.", "domain": "knowledge", "level": "Understand", "links": ["HIC-O1"]},
+          {"text": "Communicate respectfully with community members during a visit.", "domain": "attitude", "level": "Apply", "links": ["HIC-O3"]}
+        ]},
+        {"title": "Health promotion planning", "format": "pbl", "contact_minutes": 120, "self_study_minutes": 180, "week": 5, "objectives": [
+          {"text": "Set measurable goals for a health promotion activity.", "domain": "skill", "level": "Create", "links": ["HIC-O3"]},
+          {"text": "Choose suitable communication methods for the target group.", "domain": "skill", "level": "Evaluate", "links": ["HIC-O3"]}
+        ]},
+        {"title": "Ethics in community research", "format": "lecture", "contact_minutes": 90, "self_study_minutes": 90, "week": 6, "themes": ["ethics"], "objectives": [
+          {"text": "Explain the principles of informed consent in community research.", "domain": "knowledge", "level": "Understand", "links": ["HIC-O4"]},
+          {"text": "Discuss how power imbalances can affect research participants.", "domain": "attitude", "level": "Analyze", "links": ["HIC-O4"]}
+        ]},
+        {"title": "Project presentations", "format": "small_group", "contact_minutes": 120, "self_study_minutes": 60, "week": 8, "objectives": [
+          {"text": "Present a health promotion plan to peers and a community partner.", "domain": "skill", "level": "Apply", "links": ["HIC-O3"]},
+          {"text": "Give constructive feedback on a peer's plan.", "domain": "attitude", "level": "Evaluate", "links": ["HIC-O3"]},
+          {"text": "Reflect in writing on your contribution to the project team.", "domain": "attitude", "level": "Evaluate", "links": ["HIC-O4"]}
+        ]}
+      ]
+    },
+    {
+      "code": "CPP100",
+      "name": "Communication and Professional Practice (Demo)",
+      "phase": null,
+      "credits": 12,
+      "nqf_level": 5,
+      "description": "A longitudinal module running through the first two years.",
+      "assessment_methods": ["osce", "portfolio"],
+      "outcomes": [
+        {"ref": "CPP-O1", "text": "Use clear, respectful language when speaking with patients.", "domain": "skill", "level": "Apply", "links": ["PO4"], "maps": [{"item": "DGC-2.1", "coverage": 4, "depth": "matches"}]},
+        {"ref": "CPP-O2", "text": "Maintain the confidentiality of personal health information.", "domain": "attitude", "level": "Apply", "links": ["PO5"], "maps": [{"item": "DGC-2.2", "coverage": 5, "depth": "matches"}]},
+        {"ref": "CPP-O3", "text": "Contribute constructively to interprofessional team tasks.", "domain": "attitude", "level": "Apply", "links": ["PO6"], "maps": [{"item": "DGC-2.3", "coverage": 4, "depth": "matches"}]},
+        {"ref": "CPP-O4", "text": "Write accurate, concise clinical notes.", "domain": "skill", "level": "Apply", "links": ["PO4"], "maps": [{"item": "DGC-2.1", "coverage": 3, "depth": "below"}]}
+      ],
+      "events": [
+        {"title": "Introduction to professional communication", "format": "lecture", "contact_minutes": 90, "self_study_minutes": 60, "week": 1, "objectives": [
+          {"text": "Describe the elements of patient-centred communication.", "domain": "knowledge", "level": "Understand", "links": ["CPP-O1"]},
+          {"text": "Recognise common barriers to effective communication.", "domain": "knowledge", "level": "Remember", "links": ["CPP-O1"]}
+        ]},
+        {"title": "Simulated patient interviews", "format": "clinical_skills", "contact_minutes": 180, "self_study_minutes": 60, "week": 3, "objectives": [
+          {"text": "Open a consultation with an introduction and a request for consent.", "domain": "skill", "level": "Apply", "links": ["CPP-O1"]},
+          {"text": "Use open and closed questions appropriately.", "domain": "skill", "level": "Apply", "links": ["CPP-O1"]}
+        ]},
+        {"title": "Confidentiality and record-keeping", "format": "small_group", "contact_minutes": 90, "self_study_minutes": 60, "week": 5, "themes": ["ethics"], "objectives": [
+          {"text": "Explain when health information may be shared with others.", "domain": "knowledge", "level": "Understand", "links": ["CPP-O2"]},
+          {"text": "Identify confidentiality breaches in case scenarios.", "domain": "attitude", "level": "Analyze", "links": ["CPP-O2"]}
+        ]},
+        {"title": "Writing clinical notes", "format": "practical", "contact_minutes": 120, "self_study_minutes": 60, "week": 7, "objectives": [
+          {"text": "Write a structured note from a simulated consultation.", "domain": "skill", "level": "Apply", "links": ["CPP-O4"]},
+          {"text": "Correct the errors in a sample clinical note.", "domain": "skill", "level": "Evaluate", "links": ["CPP-O4"]}
+        ]},
+        {"title": "Interprofessional team exercise", "format": "small_group", "contact_minutes": 120, "self_study_minutes": 30, "week": 10, "themes": ["ipe"], "objectives": [
+          {"text": "Describe the roles of different health professions in a care team.", "domain": "knowledge", "level": "Understand", "links": ["CPP-O3"]},
+          {"text": "Share tasks fairly within an interprofessional group.", "domain": "attitude", "level": "Apply", "links": ["CPP-O3"]}
+        ]},
+        {"title": "Portfolio reflection", "format": "self_directed", "contact_minutes": 0, "self_study_minutes": 180, "week": 12, "objectives": [
+          {"text": "Reflect on feedback received during the year.", "domain": "attitude", "level": "Evaluate", "links": ["CPP-O1"]},
+          {"text": "Set personal learning goals for the next year.", "domain": "attitude", "level": "Create", "links": ["CPP-O3"]}
+        ]}
+      ]
+    }
+  ]
+}

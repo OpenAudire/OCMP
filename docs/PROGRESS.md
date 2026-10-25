@@ -411,7 +411,23 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.18: Demo Dataset
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] Framework pack validation and import (`app/services/packs.py`): unique codes, known parents, no cycles, valid cross-references and scales; reuses existing scales
+- [x] Demo framework pack rewritten to match the brief: 8 items in 2 levels, fictional text, Bloom (revised) and Miller scales; bundled copy in the backend kept identical by a test
+- [x] Demo curriculum data (`app/demo/data/bsc-health-sciences-demo.json`): BSc Health Sciences (Demo), 3 modules (one longitudinal), 20 sessions, 60 objectives (6 programme, 12 module, 42 session) linked upward with domains and Bloom levels, 3 tag lists, 13 accepted mappings
+- [x] Loader (`app/demo/loader.py`) and `python -m app.cli load-demo`: one transaction, normal services, audited as `demo.load`, reuses the institution, framework and tag lists, refuses a second load
+- [x] ADR 021: demo dataset and framework pack import
+
+**Not in this slice**: a command to remove the demo; the fictional gold mapping set for the AI evaluation harness (phase 1).
+
+**Verification**:
+- Ruff, ruff format, mypy (69 files) pass
+- Pytest: 515 passed in 3 min 19 s, 96% total coverage; pack importer 100%, demo loader 97% (demo checks merged into fewer loads, cutting the run from 5 min 25 s)
+- End to end in Docker: setup through the API, then `load-demo` created 3 modules, 20 sessions, 60 objectives, 56 upward links, 13 mappings and the Bloom and Miller scales; a second run reported the demo already loaded
+
+**Commit**: `feat: add demo dataset and framework pack import`
 
 ---
 
@@ -429,5 +445,5 @@ This file tracks progress through the development phases.
 
 - [ ] Fresh Linux server with Docker can be set up by following install guide
 - [ ] CI is green
-- [ ] Demo data loads with one command
+- [x] Demo data loads with one command
 - [x] Role permissions covered by tests

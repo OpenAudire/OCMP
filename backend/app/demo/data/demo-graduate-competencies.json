@@ -1,0 +1,228 @@
+{
+  "$schema": "../schema/framework-pack.schema.json",
+  "metadata": {
+    "key": "demo-graduate-competencies",
+    "name": "Demo Graduate Competencies",
+    "version": "1.0.0",
+    "publisher": "OCMP Demo",
+    "licence": "CC0 - Public Domain (fictional framework for demonstration)",
+    "profile": "core",
+    "description": "A fictional graduate competency framework (8 items in 2 levels) for demonstrating OCMP. Not based on any real framework."
+  },
+  "items": [
+    {
+      "code": "DGC-1",
+      "title": "Scholar and Practitioner",
+      "description": "Uses knowledge and evidence to understand problems and act on them safely.",
+      "parent_code": null,
+      "order": 1
+    },
+    {
+      "code": "DGC-1.1",
+      "title": "Analysis",
+      "description": "Breaks down complex health information into its parts and explains how they relate.",
+      "parent_code": "DGC-1",
+      "order": 1
+    },
+    {
+      "code": "DGC-1.2",
+      "title": "Evaluation of evidence",
+      "description": "Judges the quality and relevance of evidence before using it in decisions.",
+      "parent_code": "DGC-1",
+      "order": 2
+    },
+    {
+      "code": "DGC-1.3",
+      "title": "Applied practice",
+      "description": "Performs practical procedures safely and correctly in simulated and real settings.",
+      "parent_code": "DGC-1",
+      "order": 3
+    },
+    {
+      "code": "DGC-2",
+      "title": "Communicator and Professional",
+      "description": "Communicates clearly and behaves ethically as a member of a team.",
+      "parent_code": null,
+      "order": 2
+    },
+    {
+      "code": "DGC-2.1",
+      "title": "Communication",
+      "description": "Explains information clearly in writing and in conversation, adapted to the audience.",
+      "parent_code": "DGC-2",
+      "order": 1
+    },
+    {
+      "code": "DGC-2.2",
+      "title": "Ethical conduct",
+      "description": "Applies ethical principles, respects confidentiality and acts with integrity.",
+      "parent_code": "DGC-2",
+      "order": 2
+    },
+    {
+      "code": "DGC-2.3",
+      "title": "Collaboration",
+      "description": "Works effectively in teams, including with other professions.",
+      "parent_code": "DGC-2",
+      "order": 3
+    }
+  ],
+  "cross_references": [
+    {
+      "from_code": "DGC-1.2",
+      "to_code": "DGC-2.1",
+      "type": "related"
+    }
+  ],
+  "taxonomy_scales": [
+    {
+      "key": "bloom-revised",
+      "name": "Bloom's Taxonomy (Revised)",
+      "description": "Cognitive domain taxonomy for educational objectives",
+      "levels": [
+        {
+          "order": 1,
+          "name": "Remember",
+          "description": "Recall facts and basic concepts",
+          "verbs": [
+            "define",
+            "describe",
+            "identify",
+            "label",
+            "list",
+            "match",
+            "name",
+            "recall",
+            "recognize",
+            "state"
+          ]
+        },
+        {
+          "order": 2,
+          "name": "Understand",
+          "description": "Explain ideas or concepts",
+          "verbs": [
+            "classify",
+            "compare",
+            "contrast",
+            "explain",
+            "interpret",
+            "paraphrase",
+            "summarize",
+            "translate"
+          ]
+        },
+        {
+          "order": 3,
+          "name": "Apply",
+          "description": "Use information in new situations",
+          "verbs": [
+            "apply",
+            "demonstrate",
+            "execute",
+            "implement",
+            "solve",
+            "use",
+            "calculate",
+            "perform"
+          ]
+        },
+        {
+          "order": 4,
+          "name": "Analyze",
+          "description": "Draw connections among ideas",
+          "verbs": [
+            "analyze",
+            "categorize",
+            "differentiate",
+            "distinguish",
+            "examine",
+            "organize",
+            "relate"
+          ]
+        },
+        {
+          "order": 5,
+          "name": "Evaluate",
+          "description": "Justify a decision or course of action",
+          "verbs": [
+            "appraise",
+            "argue",
+            "assess",
+            "critique",
+            "defend",
+            "evaluate",
+            "judge",
+            "justify"
+          ]
+        },
+        {
+          "order": 6,
+          "name": "Create",
+          "description": "Produce new or original work",
+          "verbs": [
+            "construct",
+            "create",
+            "design",
+            "develop",
+            "formulate",
+            "generate",
+            "plan",
+            "produce"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "miller",
+      "name": "Miller's Pyramid",
+      "description": "Clinical competence assessment framework",
+      "levels": [
+        {
+          "order": 1,
+          "name": "Knows",
+          "description": "Knowledge - recall of facts",
+          "verbs": [
+            "define",
+            "describe",
+            "list",
+            "recall"
+          ]
+        },
+        {
+          "order": 2,
+          "name": "Knows How",
+          "description": "Competence - ability to apply knowledge",
+          "verbs": [
+            "explain",
+            "interpret",
+            "apply",
+            "analyze"
+          ]
+        },
+        {
+          "order": 3,
+          "name": "Shows How",
+          "description": "Performance - demonstration in controlled settings",
+          "verbs": [
+            "demonstrate",
+            "perform",
+            "simulate",
+            "practice"
+          ]
+        },
+        {
+          "order": 4,
+          "name": "Does",
+          "description": "Action - performance in real practice",
+          "verbs": [
+            "perform independently",
+            "manage",
+            "conduct",
+            "execute in practice"
+          ]
+        }
+      ]
+    }
+  ]
+}

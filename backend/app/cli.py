@@ -5,6 +5,7 @@
     python -m app.cli purge-ai-content [--days N]
     python -m app.cli purge-audit-log [--days N]
     python -m app.cli setup-token
+    python -m app.cli load-demo
 
 ``create-admin`` reads the password from OCMP_ADMIN_PASSWORD or prompts for it.
 If the account already exists (e.g. created by SSO), it is made a platform
@@ -22,6 +23,7 @@ from app.core import database
 from app.core.config import get_settings
 from app.core.permissions import ScopeType
 from app.core.security import PasswordPolicyError
+from app.demo.loader import load_demo
 from app.services.ai_runs import purge_ai_call_content
 from app.services.audit import purge_audit_log
 from app.services.authorization import (
@@ -84,6 +86,23 @@ async def _purge_audit_log(days: int) -> int:
     return 0
 
 
+async def _load_demo() -> int:
+    try:
+        async with database.session_scope() as db:
+            summary = await load_demo(db)
+            name = summary.programme.name
+    except ConflictError as exc:
+        print(str(exc))  # noqa: T201
+        return 0
+    print(  # noqa: T201
+        f"Loaded {name}: {summary.modules} modules, {summary.learning_events} sessions, "
+        f"{summary.objectives} objectives ({summary.objective_links} upward links), "
+        f"{summary.framework_items} framework items, {summary.mappings} mappings, "
+        f"{summary.tag_lists} tag lists."
+    )
+    return 0
+
+
 async def _setup_token() -> int:
     async with database.session_scope() as db:
         pending = await setup_needed(db)
@@ -106,6 +125,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     purge.add_argument("--days", type=int, default=None, help="Default: AI_CALL_RETENTION_DAYS.")
     commands.add_parser("setup-token", help="Show the first-run setup token.")
+    commands.add_parser("load-demo", help="Load the fictional BSc Health Sciences (Demo) data.")
     audit_purge = commands.add_parser(
         "purge-audit-log", help="Delete audit log entries past retention."
     )
@@ -121,6 +141,8 @@ def main(argv: list[str] | None = None) -> int:
         try:
             if args.command == "sync-roles":
                 return await _sync_roles()
+            if args.command == "load-demo":
+                return await _load_demo()
             if args.command == "setup-token":
                 return await _setup_token()
             if args.command == "purge-audit-log":
