@@ -7,18 +7,22 @@ technician and takes about 30 minutes, most of it waiting for the first build.
 
 **Server**
 
-- A 64-bit Linux server (these steps were written for Ubuntu Server 24.04 LTS; any
-  distribution supported by Docker works).
+- A 64-bit Linux server. These steps were rehearsed on Ubuntu 24.04 LTS; Docker also
+  supports Ubuntu 22.04 and 26.04 LTS and other distributions.
 - At least 4 vCPU, 8 GB RAM and 40 GB free disk space (the images take about 3 GB; leave
   room for the database and [backups](backup-restore.md)). A local AI model needs more;
   it is optional and not part of this guide.
 - Shell access with `sudo`.
+- The tools `git`, `curl`, `openssl` and a text editor. Ubuntu Server includes them; on a
+  minimal installation add them with `sudo apt install git curl openssl nano`.
 
 **Network**
 
 - A DNS name for the site, for example `curriculum.example.ac.za`, pointing at the server.
 - Inbound TCP ports **80** and **443** open to your users. OCMP publishes no other ports;
-  the database and Redis are reachable only inside Docker.
+  the database and Redis are reachable only inside Docker. Docker opens published ports
+  in the server's own firewall itself, even when `ufw` is enabled, so no `ufw` rule is
+  needed for them; a network firewall in front of the server still needs them opened.
 - For an automatic Let's Encrypt certificate, ports 80 and 443 must also be reachable from
   the internet. If the server is internal only, use your institution's certificate instead
   (see [Use your own certificate](#use-your-own-certificate)).
@@ -31,6 +35,10 @@ technician and takes about 30 minutes, most of it waiting for the first build.
   email, "forgotten password" cannot work.
 - Optional: an OpenID Connect app registration for single sign-on, see
   [Single sign-on](../admin/sso.md). You can add it later.
+- Read access to the OCMP repository on GitHub. While the repository is private, you need
+  a GitHub account that has been given access, and a
+  [personal access token](https://github.com/settings/personal-access-tokens) for it
+  (fine-grained, repository `OpenAudire/OCMP`, permission **Contents: read-only**).
 
 ## 2. Install Docker
 
@@ -44,7 +52,7 @@ Check the installation:
 
 ```bash
 sudo docker run --rm hello-world
-docker compose version    # Docker Compose version v2.24 or later
+docker compose version    # v2.24 or later; current releases are v5.x
 ```
 
 The remaining commands assume your user may run Docker. Either prefix every `docker`
@@ -60,6 +68,10 @@ sudo chown "$USER" /opt/ocmp
 git clone https://github.com/OpenAudire/OCMP.git /opt/ocmp
 cd /opt/ocmp/deploy
 ```
+
+While the repository is private, `git clone` asks for a username and password: enter
+your GitHub username, and the personal access token (not your GitHub password) as the
+password. The token is not saved; `git` asks again when you [upgrade](upgrade.md).
 
 All later commands run in `/opt/ocmp/deploy`.
 
@@ -101,9 +113,25 @@ SMTP_FROM_EMAIL=noreply@example.ac.za
 SMTP_TLS=true
 ```
 
-Remove the `#` in front of each line you set. `PUBLIC_URL` defaults to
-`https://<DOMAIN>`; set it only if users reach the site under a different address. Every
-setting is described in [Configuration](configuration.md).
+Remove the `#` in front of each line you set; a comment left after a value on the same
+line is ignored. Adjust the email lines to your mail server:
+
+- port 587 with STARTTLS (above): the usual case;
+- port 465 with implicit TLS: `SMTP_PORT=465` and `SMTP_SSL=true`;
+- an internal relay without encryption, often port 25: `SMTP_TLS=false`;
+- no sign-in needed: leave `SMTP_USER` and `SMTP_PASSWORD` commented out.
+
+`PUBLIC_URL` defaults to `https://<DOMAIN>`; set it only if users reach the site under a
+different address. Every setting is described in [Configuration](configuration.md).
+
+**Certificate.** Decide now how the site gets its HTTPS certificate:
+
+- **Server reachable from the internet** on ports 80 and 443, with public DNS: nothing to
+  do. Caddy gets a Let's Encrypt certificate automatically when it starts.
+- **Server only reachable inside the institution:** Let's Encrypt cannot reach it. Before
+  step 5, put your institution's certificate in place as described in
+  [Use your own certificate](#use-your-own-certificate) (the restart in its last step is
+  not needed yet).
 
 ## 5. Start
 
@@ -127,8 +155,11 @@ Check the site from the server and from your own computer:
 curl https://curriculum.example.ac.za/ready
 ```
 
-The answer reports `"status":"ready"` with the database and Redis up. If it does not,
-see [Troubleshooting](#troubleshooting).
+The answer is `{"status":"ready","database":"up","redis":"up"}`. If it is not, see
+[Troubleshooting](#troubleshooting).
+
+If the server cannot resolve its own DNS name (common behind NAT), point `curl` at the
+server itself: `curl --resolve curriculum.example.ac.za:443:127.0.0.1 https://curriculum.example.ac.za/ready`.
 
 ## 6. Run the setup wizard
 
@@ -209,8 +240,15 @@ rather than the production server.
 :   Show the error with `docker compose logs migrate`. A database password changed after
     the first start is a common cause (see the warning in step 4).
 
-The browser warns about the certificate
-:   Check `docker compose logs caddy`. Let's Encrypt needs the DNS name to point at the
+`curl: (35) ... tlsv1 alert internal error`, or the browser cannot connect securely
+:   Caddy has no certificate for the name yet. On a server that Let's Encrypt cannot
+    reach this never resolves on its own: [use your own certificate](#use-your-own-certificate).
+    On a public server, wait a minute and check `docker compose logs caddy`.
+
+`curl: (60) SSL certificate problem`, or the browser warns about the certificate
+:   The certificate is not trusted by this computer. With your own certificate, check that
+    `cert.pem` contains the intermediate chain and that the computer trusts your
+    institution's certificate authority. Otherwise check `docker compose logs caddy`. Let's Encrypt needs the DNS name to point at the
     server and ports 80 and 443 to be reachable from the internet; otherwise
     [use your own certificate](#use-your-own-certificate). With `DOMAIN` unset, Caddy
     serves `localhost` with its own internal certificate, which browsers do not trust.

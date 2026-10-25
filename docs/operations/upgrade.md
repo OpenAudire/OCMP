@@ -33,6 +33,9 @@ git fetch --tags
 git checkout v0.2.0        # the release to install; before releases: git pull
 ```
 
+While the repository is private, `git fetch` asks for your GitHub username and personal
+access token, as during [installation](install.md#3-get-ocmp).
+
 If git refuses because of local changes, a tracked file was edited by hand. Move local
 changes into `docker-compose.override.yml` or `deploy/caddy/` (see [Install](install.md))
 and restore the file with `git checkout -- <file>`.

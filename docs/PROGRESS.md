@@ -498,6 +498,28 @@ This file tracks progress through the development phases.
 
 ---
 
+### Install Guide Rehearsal
+**Status**: Complete
+
+`docs/operations/install.md` followed literally, as a new technician, on a fresh stand-in server: an Ubuntu 24.04.5 container with a normal `sudo` user, Docker Engine installed from Docker's current official instructions (Docker 29.x, Compose v5.6.1), a fresh clone of `main` (d7b8e36) into `/opt/ocmp`, DNS simulated with `/etc/hosts`, and a Mailpit container standing in for the institution's SMTP server.
+
+**Worked as written**: Docker checks and the `docker` group; `.env` commands (secrets generated, file mode 600); `up -d --build --wait` (4.5 minutes on 8 CPUs; services as described); own certificate from an institution CA; setup token; setup; password reset email with the right link (`PUBLIC_URL` default); a comment left after `SMTP_TLS=false` is ignored; backup (owner-only file), the cron command line, restore test; demo load; token refused after setup; the troubleshooting text for a missing `SECRET_KEY` matches Compose's message.
+
+**Fixed in the guide**:
+- Cloning failed at a username prompt: the repository is private and the guide did not say so. Added the need for repository access and a read-only fine-grained token, and what to type at the prompt (also in the upgrade guide)
+- On a server Let's Encrypt cannot reach, step 5's own check failed with `curl: (35) ... tlsv1 alert internal error`, and the certificate instructions came only after the setup wizard. Step 4 now asks the technician to choose the certificate route and put an own certificate in place before the first start (re-tested: works without a restart); troubleshooting explains curl errors 35 and 60
+- Named the tools the guide uses (`git`, `curl`, `openssl`, an editor) and the Ubuntu releases Docker supports
+- Compose version check: "v2.24 or later; current releases are v5.x"
+- Email settings for port 465, an unencrypted internal relay and servers without sign-in
+- `curl --resolve` for servers that cannot resolve their own name (re-tested)
+- Docker opens ports 80/443 in the host firewall itself, even with `ufw`
+
+**Not covered**: the setup wizard was submitted with the same request its page sends, because the stand-in server has no browser (the page itself was served, and the wizard UI was tested in Slice 0.17); `systemctl` steps (the container has no systemd, so Docker was started with `service`); cron scheduling itself (the command line was run by hand).
+
+**Deferred**: the real public-server test (public DNS, inbound internet access, Let's Encrypt certificate) is deferred until a pilot server is available.
+
+---
+
 ## Phase 0 Summary
 
 Built in 20 slices plus a CI fix. The platform installs with Docker Compose, runs a
@@ -540,7 +562,7 @@ Collected from the slices above so nothing is lost:
 
 ## Phase 0 Definition of Done
 
-- [ ] Fresh Linux server with Docker can be set up by following install guide
+- [ ] Fresh Linux server with Docker can be set up by following install guide: rehearsed end to end on a fresh Ubuntu 24.04 stand-in server, with the guide fixed (see "Install Guide Rehearsal"); **the real public-server test (DNS + Let's Encrypt) is deferred until we have a pilot server**
 - [x] CI is green (764d194: CI and CodeQL)
 - [x] Demo data loads with one command
 - [x] Role permissions covered by tests
