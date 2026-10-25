@@ -32,6 +32,11 @@ action majors are `github/codeql-action@v4`, `docker/metadata-action@v6`,
   and the job **fails on any error or warning**, listing them in the log. Setting the
   repository variable `CODE_SCANNING_ENABLED=true` also uploads them to code scanning
   once it is available (for example when the repository becomes public).
+- The Actions analysis is held to the same rule. Its first run found 14 warnings, all
+  fixed rather than suppressed: every workflow sets an explicit, minimal `permissions`
+  block, and third-party actions are pinned to a commit SHA with the version in a comment
+  (`uses: docker/login-action@<sha> # v4.7.0`), which Dependabot keeps up to date.
+  GitHub's own `actions/*` and `github/*` actions keep version tags.
 
 ### Release images (`.github/workflows/release.yml`)
 - A `vX.Y.Z` tag runs the full CI workflow (now callable with `workflow_call`) and, only

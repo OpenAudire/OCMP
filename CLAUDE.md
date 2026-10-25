@@ -261,6 +261,8 @@ chore: update dependencies
   outbound flow) updates `docs/privacy/data-inventory.md` in the same commit
 - CodeQL fails CI on any error or warning; fix it, or dismiss a false positive in code
   with a justification
+- Workflows: explicit minimal `permissions`; third-party actions pinned to a commit SHA
+  with a `# vX.Y.Z` comment (GitHub's own actions may use version tags)
 - Parameterized queries only (SQLAlchemy handles this)
 - CSRF protection on all state-changing endpoints
 - Rate limiting on auth endpoints
