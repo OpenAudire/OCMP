@@ -1,0 +1,71 @@
+site_name: OCMP Documentation
+site_description: Open Curriculum Mapping Platform - install, operate and use OCMP.
+site_url: https://openaudire.github.io/OCMP/
+repo_url: https://github.com/OpenAudire/OCMP
+repo_name: OpenAudire/OCMP
+edit_uri: edit/main/docs/
+copyright: Apache-2.0
+
+docs_dir: docs
+# Kept beside the docs but not published.
+exclude_docs: |
+  requirements.txt
+# Reached through the ADR index.
+not_in_nav: |
+  adr/0*.md
+
+theme:
+  name: material
+  language: en
+  features:
+    - content.code.copy
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-4
+        name: Dark theme
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-7
+        name: Light theme
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+validation:
+  links:
+    absolute_links: warn
+    anchors: warn
+    unrecognized_links: warn
+
+nav:
+  - Home: index.md
+  - Operations:
+      - Install: operations/install.md
+      - Configuration: operations/configuration.md
+      - Upgrade: operations/upgrade.md
+      - Backup and restore: operations/backup-restore.md
+  - Administration:
+      - Admin basics: admin/basics.md
+      - Users and roles: admin/users-and-roles.md
+      - Single sign-on (OIDC): admin/sso.md
+  - Project:
+      - Architecture decisions: adr/index.md
+      - Progress: PROGRESS.md
+      - Project brief: PROJECT_BRIEF.md

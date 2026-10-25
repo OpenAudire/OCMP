@@ -1,0 +1,4 @@
+# Documentation site (MkDocs Material). Install into its own virtual environment:
+#   python -m venv .venv-docs && .venv-docs/bin/pip install -r docs/requirements.txt
+mkdocs==1.6.1
+mkdocs-material==9.8.0

@@ -2,6 +2,10 @@
 # Caddy provides automatic HTTPS with Let's Encrypt
 
 {$DOMAIN:localhost} {
+    # Local additions such as your own TLS certificate: *.caddy files in deploy/caddy/
+    # (see deploy/caddy/README.md). None are shipped; a missing match is not an error.
+    import /etc/caddy/site.d/*.caddy
+
     # Security headers
     header {
         X-Content-Type-Options "nosniff"

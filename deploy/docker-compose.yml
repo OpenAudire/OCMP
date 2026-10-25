@@ -117,6 +117,8 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Local site additions (e.g. your own certificate); see caddy/README.md.
+      - ./caddy:/etc/caddy/site.d:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

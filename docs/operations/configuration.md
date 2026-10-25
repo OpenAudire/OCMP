@@ -1,0 +1,84 @@
+# Configuration
+
+OCMP reads its settings from `deploy/.env`, created from `deploy/.env.example` during
+[installation](install.md). After changing `.env`, apply it with:
+
+```bash
+docker compose up -d
+```
+
+Settings that the institution manages in the application (terminology, profiles, mapping
+review policy) are not in `.env`; see [Admin basics](../admin/basics.md).
+
+## Required
+
+| Setting | Meaning |
+|---|---|
+| `SECRET_KEY` | Random secret of at least 32 characters (`openssl rand -hex 32`). Protects sessions against cross-site request forgery and derives the setup token. After changing it, people must sign in again before they can save changes. |
+| `POSTGRES_PASSWORD` | Database password, set when the database is first created. Letters and digits only. |
+| `POSTGRES_USER`, `POSTGRES_DB` | Database user and name. Default `ocmp`. |
+| `DATABASE_URL` | Built from the three values above; leave as it is. |
+| `REDIS_URL` | Default `redis://redis:6379/0`; leave as it is. |
+
+## Site address
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `DOMAIN` | `localhost` | DNS name Caddy serves and gets a certificate for. |
+| `PUBLIC_URL` | `https://<DOMAIN>` | Address users type, used in email links and the single sign-on redirect address. |
+| `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING` or `ERROR`. |
+| `TRUSTED_PROXIES` | `caddy` | Proxies whose `X-Forwarded-For` header is believed (IPs, CIDR networks or hostnames, comma-separated). Only change it if another proxy or load balancer sits in front of Caddy. |
+
+## Sign-in and sessions
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `SESSION_EXPIRE_HOURS` | `24` | Sessions end after this long without activity. |
+| `SESSION_COOKIE_SECURE` | `true` | Keep `true`; `false` only for local development over plain HTTP. |
+| `LOGIN_RATE_LIMIT_PER_IP` | `20` | Sign-in attempts per client address per 15 minutes; more are refused for a while. |
+| `LOGIN_DELAY_FREE_FAILURES` | `3` | Failed sign-ins for one account before attempts are slowed down. |
+| `LOGIN_DELAY_BASE_SECONDS` | `1` | First delay; doubles with each further failure. |
+| `LOGIN_DELAY_MAX_SECONDS` | `20` | Longest delay. Accounts are never locked. |
+
+Passwords must have 12 to 256 characters and must not be the email address.
+
+## Email
+
+Needed for password reset and "password changed" notices.
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `SMTP_HOST` | (none) | SMTP server. Email is off while this or `SMTP_FROM_EMAIL` is empty. |
+| `SMTP_PORT` | `587` | Usually 587 (STARTTLS) or 465 (implicit TLS). |
+| `SMTP_USER`, `SMTP_PASSWORD` | (none) | Leave empty if the server accepts mail without signing in. |
+| `SMTP_FROM_EMAIL` | (none) | Sender address. |
+| `SMTP_FROM_NAME` | `OCMP` | Sender name. |
+| `SMTP_TLS` | `true` | STARTTLS. |
+| `SMTP_SSL` | `false` | Implicit TLS; takes precedence over `SMTP_TLS`. |
+| `PASSWORD_RESET_TOKEN_MINUTES` | `60` | How long a reset link works. |
+
+## Single sign-on (OpenID Connect)
+
+`OIDC_ENABLED`, `OIDC_PROVIDER_NAME`, `OIDC_DISCOVERY_URL`, `OIDC_CLIENT_ID`,
+`OIDC_CLIENT_SECRET`, `OIDC_SCOPES`, `OIDC_AUTO_PROVISION`: see
+[Single sign-on](../admin/sso.md).
+
+## Retention
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `AUDIT_LOG_RETENTION_DAYS` | `0` | Audit log entries older than this are deleted by `purge-audit-log`. `0` keeps them forever. |
+| `AI_CALL_RETENTION_DAYS` | `365` | Stored AI prompts and responses older than this are cleared by `purge-ai-content`. Run records and counts are kept. `0` keeps them. |
+
+The purge commands are run on a schedule; see [Admin basics](../admin/basics.md#retention).
+
+## Reserved for later phases
+
+`AI_*`, `EMBEDDINGS_*` and `CONNECTOR_ENCRYPTION_KEY` are read but not used yet: AI
+mapping arrives in Phase 1 and the Brightspace connector in Phase 2. Leave them as they
+are in the template.
+
+## Backup scripts
+
+The [backup script](backup-restore.md) reads two environment variables of its own (not from
+`.env`): `BACKUP_DIR` (default `deploy/backups`) and `BACKUP_KEEP_DAYS` (default `14`).

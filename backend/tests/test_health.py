@@ -87,7 +87,7 @@ async def test_ready_with_database_down(client: AsyncClient):
         ),
     ):
         response = await client.get("/ready")
-        assert response.status_code == 200
+        assert response.status_code == 503
         data = response.json()
         assert data["status"] == "not_ready"
         assert data["database"] == "down"
@@ -110,7 +110,7 @@ async def test_ready_with_redis_down(client: AsyncClient):
         ),
     ):
         response = await client.get("/ready")
-        assert response.status_code == 200
+        assert response.status_code == 503
         data = response.json()
         assert data["status"] == "not_ready"
         assert data["database"] == "up"
@@ -133,7 +133,7 @@ async def test_ready_with_all_dependencies_down(client: AsyncClient):
         ),
     ):
         response = await client.get("/ready")
-        assert response.status_code == 200
+        assert response.status_code == 503
         data = response.json()
         assert data["status"] == "not_ready"
         assert data["database"] == "down"

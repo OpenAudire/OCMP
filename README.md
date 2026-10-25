@@ -14,30 +14,21 @@ An open-source, self-hosted curriculum mapping platform for universities.
 
 ## Quick Start
 
-### Prerequisites
-
-- Docker and Docker Compose
-- Git
-
-### Installation
+You need a Linux server with Docker Engine and the Compose plugin. The
+[install guide](https://openaudire.github.io/OCMP/operations/install/) covers every step,
+including DNS, certificates, email and backups.
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/ocmp.git
-cd ocmp
+git clone https://github.com/OpenAudire/OCMP.git
+cd OCMP/deploy
+cp .env.example .env
+sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$(openssl rand -hex 32)/" .env
+sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 24)/" .env
+# set DOMAIN (and SMTP_*) in .env, then:
+docker compose up -d --build --wait
 
-# Copy environment template
-cp deploy/.env.example deploy/.env
-
-# Edit .env with your settings
-# At minimum, set SECRET_KEY to a random string
-
-# Start the stack
-cd deploy
-docker compose up -d
-
-# Open http://localhost in your browser
-# Complete the first-run setup wizard
+# Show the setup token, then open https://<DOMAIN>/setup
+docker compose exec api python -m app.cli setup-token
 ```
 
 ## Development
@@ -69,12 +60,23 @@ pre-commit install
 
 ## Documentation
 
-Full documentation is available at [docs site URL].
+The documentation site is at **[openaudire.github.io/OCMP](https://openaudire.github.io/OCMP/)**
+(source in [`docs/`](docs/)):
 
-- [Installation Guide](docs/install.md)
-- [User Guides](docs/user-guides/)
-- [API Reference](/api/docs)
-- [Architecture Decisions](docs/adr/)
+- [Install](docs/operations/install.md), [Upgrade](docs/operations/upgrade.md),
+  [Backup and restore](docs/operations/backup-restore.md)
+- [Admin basics](docs/admin/basics.md), [Users and roles](docs/admin/users-and-roles.md),
+  [Single sign-on](docs/admin/sso.md)
+- [Architecture decisions](docs/adr/index.md)
+- API reference: `/api/docs` on every installation
+
+Build the site locally:
+
+```bash
+python -m venv .venv-docs
+.venv-docs/bin/pip install -r docs/requirements.txt   # Windows: .venv-docs\Scripts\pip
+.venv-docs/bin/mkdocs serve
+```
 
 ## Contributing
 

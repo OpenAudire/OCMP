@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
 
 from app.core.database import check_database_connection
@@ -38,18 +38,21 @@ async def health() -> HealthResponse:
 
 
 @router.get("/ready", response_model=ReadyResponse)
-async def ready() -> ReadyResponse:
+async def ready(response: Response) -> ReadyResponse:
     """Readiness check endpoint.
 
     Checks if the service is ready to handle requests by verifying
     connections to all required dependencies (database, Redis).
 
-    Returns detailed status of each component.
+    Returns detailed status of each component, with HTTP 503 when not ready so
+    monitoring and load balancers can rely on the status code.
     """
     db_healthy = await check_database_connection()
     redis_healthy = await check_redis_connection()
 
     all_healthy = db_healthy and redis_healthy
+    if not all_healthy:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
 
     return ReadyResponse(
         status="ready" if all_healthy else "not_ready",

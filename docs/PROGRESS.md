@@ -432,7 +432,32 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.19: Documentation Skeleton
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] MkDocs Material site (`mkdocs.yml`, `docs/requirements.txt` pinning MkDocs 1.6.1 and Material 9.8.0, own `.venv-docs`); home page, ADR index
+- [x] Operations guides: install (fresh Linux server, DNS, certificates, setup wizard, troubleshooting), configuration reference, upgrade (with rollback), backup and restore (schedule, off-site copies, restore test, new-server recovery)
+- [x] Administration guides: admin basics (terminology, profiles, mapping policy, audit log, retention, monitoring, CLI), users and roles (API with `curl`/`jq` until the admin screens exist, admin recovery), single sign-on (OIDC, Entra ID)
+- [x] `deploy/backup.sh` (`pg_dump` custom format, verified, owner-only, 14-day retention), `deploy/restore-test.sh` (restores into a scratch database, prints row counts), `deploy/restore.sh` (restores into a side database first, then swaps; flushes Redis; migrations upgrade older backups)
+- [x] Local deployment changes that survive upgrades: `deploy/caddy/*.caddy` imported into the Caddy site (e.g. own certificate), `deploy/docker-compose.override.yml`; both git-ignored
+- [x] `/ready` returns HTTP 503 when the database or Redis is down (was 200 with `not_ready`)
+- [x] CI `docs` job (`mkdocs build --strict`); `docs.yml` publishes `main` to GitHub Pages
+- [x] README quick start and docs links fixed; CONTRIBUTING (docs, Node 22) and CLAUDE.md updated; stale `scripts/seed_demo.py` stub removed (`load-demo` replaces it)
+- [x] ADR 022: documentation site and backups
+
+**Not in this slice**: user guides per role, glossary and FAQ (with the Phase 1 screens); AI provider and Brightspace setup guides (Phases 1 and 2); POPIA data inventory (`docs/privacy/`).
+
+**Verification**:
+- `mkdocs build --strict` passes (links and anchors checked); Zensical 0.0.72 also builds the same config without issues
+- Ruff, ruff format, mypy (69 files) pass; pytest 515 passed, 96% coverage
+- Shellcheck clean on the three scripts
+- Install guide followed on a fresh compose project (copy of the tree, empty volumes, ports moved with the documented override file): `.env` commands, `up -d --build --wait` (all services as described, `migrate` exited 0), `/ready`, setup token, setup, `load-demo`
+- Every API command in the users-and-roles and admin-basics guides run verbatim in a Linux container with `bash`, `curl` and `jq`
+- Backup and restore test on the demo data (3 modules, 20 sessions, 60 objectives, 13 mappings); a truncated dump that passes `pg_restore --list` was refused by `restore.sh` with live data and services untouched; a real restore removed a user created after the backup, ended existing sessions (401) and left the site ready
+- Own certificate in `deploy/caddy/` served by Caddy; `/ready` answered 503 with the database stopped
+- Not verified here: a real Linux server with public DNS and Let's Encrypt (Phase 0 definition of done)
+
+**Commit**: `feat: add documentation site, install guides and backup scripts`
 
 ---
 

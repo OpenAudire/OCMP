@@ -99,3 +99,13 @@ coverage/
 # TypeScript build artefacts
 *.tsbuildinfo
 frontend/vite.config.d.ts
+
+# Local deployment files
+deploy/backups/
+deploy/docker-compose.override.yml
+deploy/caddy/*
+!deploy/caddy/README.md
+
+# Documentation
+.venv-docs/
+site/

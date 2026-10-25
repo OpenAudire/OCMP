@@ -100,6 +100,15 @@ npm run typecheck
 npm run test
 ```
 
+### Documentation site
+
+```bash
+# From the repository root, in its own virtual environment
+python -m venv .venv-docs
+.venv-docs/Scripts/pip install -r docs/requirements.txt   # Unix: .venv-docs/bin/pip
+.venv-docs/Scripts/mkdocs build --strict                  # as CI; serve to preview
+```
+
 ### Important
 
 - **CI runs exactly the local commands** (`ruff check .`, `ruff format --check .`, `mypy app`, `pytest`) after `pip install -e ".[dev]"`; all tool settings live in `pyproject.toml`. Never add flags in CI that local runs do not use
@@ -247,10 +256,16 @@ chore: update dependencies
 
 ## Documentation
 
-- ADRs in `/docs/adr/` for major decisions
+- ADRs in `/docs/adr/` for major decisions; add new ones to `docs/adr/index.md`
 - Update `PROGRESS.md` after each slice
-- API docs auto-generated from OpenAPI
-- User docs in MkDocs format
+- API docs auto-generated from OpenAPI (`/api/docs`)
+- MkDocs Material site (ADR 022): `mkdocs.yml` at the root, operator guides in
+  `docs/operations/`, admin guides in `docs/admin/`; new pages go in `nav`
+- Update the guides in the same slice as the behaviour they describe (settings, commands,
+  deploy files); `mkdocs build --strict` must pass
+- No Python tags in `mkdocs.yml` (the `check-yaml` hook rejects them)
+- Backup scripts in `deploy/` are POSIX `sh`; local deploy changes go in
+  `deploy/caddy/*.caddy` or `deploy/docker-compose.override.yml`, never in tracked files
 
 ## Phase 0 Checklist
 
@@ -263,4 +278,4 @@ chore: update dependencies
 - [x] Curriculum models
 - [x] Framework models
 - [x] Demo dataset
-- [ ] Documentation skeleton
+- [x] Documentation skeleton

@@ -49,7 +49,7 @@ chore: update dependencies
 ### Prerequisites
 
 - Python 3.12+
-- Node.js 20+
+- Node.js 22+
 - Docker and Docker Compose
 - PostgreSQL 16 (or use Docker)
 
@@ -109,6 +109,21 @@ npm run test           # Run tests once
 npm run test:watch     # Watch mode
 npm run test:coverage  # With coverage
 ```
+
+### Documentation
+
+The documentation site uses MkDocs Material (`mkdocs.yml`, pages in `docs/`). Install it
+in its own virtual environment and check your changes with a strict build, as CI does:
+
+```bash
+python -m venv .venv-docs
+.venv-docs/bin/pip install -r docs/requirements.txt   # Windows: .venv-docs\Scripts\pip
+.venv-docs/bin/mkdocs serve            # preview at http://127.0.0.1:8000
+.venv-docs/bin/mkdocs build --strict   # fails on broken links
+```
+
+Update the operator and admin guides in the same pull request as the change they
+describe.
 
 ### Line Endings
 
