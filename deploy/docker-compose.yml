@@ -105,8 +105,19 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       # The worker builds links in emails (e.g. password reset).
       PUBLIC_URL: ${PUBLIC_URL:-https://${DOMAIN:-localhost}}
+    # The worker serves no HTTP, so the image's curl check does not apply. Healthy means
+    # the Dramatiq process runs and its Redis broker answers. Newer Docker Compose
+    # versions fail `up --wait` for running services without a healthcheck.
     healthcheck:
-      disable: true
+      test:
+        - CMD
+        - python
+        - -c
+        - "import os, redis; assert b'dramatiq' in open('/proc/1/cmdline', 'rb').read(); redis.Redis.from_url(os.environ['REDIS_URL'], socket_timeout=5).ping()"
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
     depends_on:
       migrate:
         condition: service_completed_successfully

@@ -722,3 +722,5 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 **Not in this slice**: programme/version switcher in the header (Slice 1.2), header search (1.20), the review count source (1.13); a Content-Security-Policy header (not set by Caddy today) is worth adding with a later security slice.
 
 **Commit**: `feat: rename to Curriculum in Context with design tokens, shared layout and axe checks`
+
+**CI follow-up**: the first run of the new End-to-End job failed before any test ran. On the GitHub runner's Docker Compose, `docker compose up --wait` fails with "container ocmp-worker-1 has no healthcheck configured", because the worker had `healthcheck: disable: true` (local Compose v5.6.1 accepted it). The install, upgrade and restore guides use the same command, so installations on that Compose version would have failed too. The worker now has a real healthcheck: the Dramatiq process runs and Redis answers. Fixed in `fix: give the worker a healthcheck so compose up --wait succeeds`.
