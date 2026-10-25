@@ -391,7 +391,22 @@ This file tracks progress through the development phases.
 ---
 
 ### Slice 0.17: First-Run Setup Wizard
-**Status**: Pending
+**Status**: Complete
+
+**Deliverables**:
+- [x] Setup token derived from `SECRET_KEY`, printed in the API log while setup is pending and shown by `python -m app.cli setup-token`
+- [x] `GET /api/v1/setup/status` and `POST /api/v1/setup`: once only (advisory lock, re-check), all or nothing (savepoint), rate limited, audited as `setup.complete`, admin signed in immediately
+- [x] Creates the institution (name, short code, country, optional health profile), the first admin and the `platform_admin` role
+- [x] `/setup` wizard (institution with token, administrator, confirm); sign-in page sends visitors there while setup is pending
+- [x] Shared `too_many_attempts` 429 helper
+- [x] ADR 020: first-run setup
+
+**Verification**:
+- Backend: ruff, mypy pass; 496 tests pass, 96% coverage; setup service and API 100%
+- Frontend: lint, typecheck, build pass; 55 tests (91% line coverage)
+- Fresh install in Docker (new compose project, empty volumes): migrations ran, the API log and CLI showed the setup token; wrong token refused (403); setup with the token created the institution with the health profile and a signed-in platform admin; status then reported done; a second attempt was refused (409); the CLI and a restarted API no longer offered the token; audit entries recorded under `setup.complete`
+
+**Commit**: `feat: add first-run setup wizard`
 
 ---
 

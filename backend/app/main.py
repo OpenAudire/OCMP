@@ -10,15 +10,31 @@ from fastapi.responses import JSONResponse
 from app.api.health import router as health_router
 from app.api.v1 import router as v1_router
 from app.core.audit_context import AuditContextMiddleware
-from app.core.config import get_settings
+from app.core.config import Settings, get_settings
 from app.core.csrf import CSRFMiddleware
-from app.core.database import close_database, init_database
+from app.core.database import close_database, init_database, session_scope
 from app.core.logging import get_logger, setup_logging
 from app.core.proxy import TrustedProxies
 from app.core.redis import close_redis, init_redis
 from app.services.authorization import AuthorizationError, ConflictError, InvalidRequestError
+from app.services.setup import setup_needed, setup_token
 
 logger = get_logger(__name__)
+
+
+async def _announce_setup_token(settings: Settings) -> None:
+    """While first-run setup is pending, log the token the operator needs for it."""
+    try:
+        async with session_scope() as db:
+            pending = await setup_needed(db)
+    except Exception:  # database not reachable or not migrated yet
+        logger.warning("setup_status_unknown")
+        return
+    if pending:
+        logger.warning(
+            "First-run setup is pending: open the site and enter this setup token",
+            setup_token=setup_token(settings),
+        )
 
 
 @asynccontextmanager
@@ -48,6 +64,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize Redis
     init_redis(settings)
     logger.info("Redis initialized")
+
+    await _announce_setup_token(settings)
 
     yield
 

@@ -15,6 +15,7 @@ import {
   PlaceholderPage,
 } from '../pages/StatusPages';
 import { useSession } from '../session/useSession';
+import { SetupPage } from '../setup/SetupPage';
 
 /** Only for signed-in users; others go to the sign-in page and come back after. */
 function RequireAuth() {
@@ -54,6 +55,7 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/setup" element={<SetupPage />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>
           <Route index element={<StartPage />} />

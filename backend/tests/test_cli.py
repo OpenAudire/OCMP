@@ -92,3 +92,13 @@ def test_purge_audit_log(
     assert cli.main(["purge-audit-log", "--days", days]) == 0
 
     assert message in capsys.readouterr().out
+
+
+def test_setup_token(cli_settings: str, capsys: pytest.CaptureFixture[str]) -> None:
+    from app.services.setup import setup_token
+
+    assert cli.main(["setup-token"]) == 0
+
+    out = capsys.readouterr().out
+    # The test database has no institution, so setup is pending.
+    assert setup_token(cli.get_settings()) in out

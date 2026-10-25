@@ -14,6 +14,7 @@ from app.api.deps import (
     clear_session_cookies,
     session_ttl_seconds,
     set_session_cookies,
+    too_many_attempts,
 )
 from app.core.config import Settings
 from app.core.database import DbSession
@@ -46,11 +47,7 @@ _ACCOUNT_SCOPE = "login-account"
 
 
 def _too_many_attempts(retry_after: int) -> HTTPException:
-    return HTTPException(
-        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        detail="Too many sign-in attempts. Try again later.",
-        headers={"Retry-After": str(retry_after)},
-    )
+    return too_many_attempts(retry_after)
 
 
 async def _throttle_account(redis: Redis, settings: Settings, email: str) -> None:

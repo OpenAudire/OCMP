@@ -4,6 +4,7 @@
     python -m app.cli create-admin --email admin@example.org --name "Admin"
     python -m app.cli purge-ai-content [--days N]
     python -m app.cli purge-audit-log [--days N]
+    python -m app.cli setup-token
 
 ``create-admin`` reads the password from OCMP_ADMIN_PASSWORD or prompts for it.
 If the account already exists (e.g. created by SSO), it is made a platform
@@ -30,6 +31,7 @@ from app.services.authorization import (
     get_role,
     sync_system_roles,
 )
+from app.services.setup import setup_needed, setup_token
 from app.services.users import InvalidEmailError, create_local_user, get_user_by_email
 
 
@@ -82,6 +84,16 @@ async def _purge_audit_log(days: int) -> int:
     return 0
 
 
+async def _setup_token() -> int:
+    async with database.session_scope() as db:
+        pending = await setup_needed(db)
+    if not pending:
+        print("Setup is already complete; the setup token is no longer accepted.")  # noqa: T201
+        return 0
+    print(f"Setup token: {setup_token(get_settings())}")  # noqa: T201
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -93,6 +105,7 @@ def main(argv: list[str] | None = None) -> int:
         "purge-ai-content", help="Clear stored AI prompts and responses past retention."
     )
     purge.add_argument("--days", type=int, default=None, help="Default: AI_CALL_RETENTION_DAYS.")
+    commands.add_parser("setup-token", help="Show the first-run setup token.")
     audit_purge = commands.add_parser(
         "purge-audit-log", help="Delete audit log entries past retention."
     )
@@ -108,6 +121,8 @@ def main(argv: list[str] | None = None) -> int:
         try:
             if args.command == "sync-roles":
                 return await _sync_roles()
+            if args.command == "setup-token":
+                return await _setup_token()
             if args.command == "purge-audit-log":
                 days = args.days if args.days is not None else settings.audit_log_retention_days
                 return await _purge_audit_log(days)

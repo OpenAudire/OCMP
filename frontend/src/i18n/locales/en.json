@@ -86,14 +86,40 @@
     "explorer": "Explorer"
   },
   "setup": {
-    "title": "Welcome to OCMP",
-    "description": "Let's set up your institution",
-    "adminEmail": "Admin email",
-    "adminPassword": "Admin password",
+    "title": "Set up OCMP",
+    "intro": "Create your institution and the first administrator. This is done once, on a new installation.",
+    "steps": {
+      "institution": "Institution",
+      "admin": "Administrator",
+      "confirm": "Confirm"
+    },
+    "token": "Setup token",
+    "tokenHelp": "Shown in the API log while setup is pending (docker compose logs api), or run: docker compose exec api python -m app.cli setup-token",
     "institutionName": "Institution name",
     "institutionShortCode": "Short code",
-    "country": "Country",
-    "complete": "Complete setup"
+    "shortCodeHelp": "Letters, digits and dashes, e.g. UNI-HS.",
+    "country": "Country code",
+    "countryHelp": "Two letters (ISO 3166), e.g. ZA.",
+    "healthProfile": "Health sciences features",
+    "healthProfileHelp": "Adds the role balance report, council evidence packs and clinical placements.",
+    "adminName": "Your name",
+    "adminEmail": "Your email address",
+    "adminPassword": "Password",
+    "confirmPassword": "Repeat password",
+    "review": "Check the details, then create the institution and your administrator account. You will be signed in.",
+    "yes": "Yes",
+    "no": "No",
+    "next": "Next",
+    "back": "Back",
+    "submit": "Create and sign in",
+    "errors": {
+      "required": "This field is required.",
+      "shortCode": "Use 2 to 32 letters, digits or dashes.",
+      "country": "Enter a two-letter country code.",
+      "token": "The setup token is not correct. Check the API log.",
+      "alreadyDone": "OCMP has already been set up. Sign in instead.",
+      "invalidAccount": "The administrator account was not accepted. Check the email address, and use a password of at least {{min}} characters that is not your email address."
+    }
   },
   "terms": {
     "programme_one": "Programme",

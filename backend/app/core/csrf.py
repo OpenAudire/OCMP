@@ -5,8 +5,8 @@ send the session's CSRF token (see ``csrf_token_for``) in the CSRF header.
 Requests without a session cookie are not authenticated by cookie, so they are
 not exposed to CSRF; endpoints that need a user reject them anyway.
 
-Sign-in is exempt: a stale cookie from an expired session must not block
-signing in again, and sign-in always issues a fresh session.
+Sign-in and first-run setup are exempt: a stale cookie from an expired
+session must not block them, and both always issue a fresh session.
 """
 
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -18,7 +18,7 @@ from app.core.config import Settings
 from app.core.security import csrf_token_matches
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
-EXEMPT_PATHS = frozenset({"/api/v1/auth/login"})
+EXEMPT_PATHS = frozenset({"/api/v1/auth/login", "/api/v1/setup"})
 
 
 class CSRFMiddleware(BaseHTTPMiddleware):

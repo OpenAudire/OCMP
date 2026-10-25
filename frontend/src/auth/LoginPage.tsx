@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Alert, Anchor, Button, Divider, PasswordInput, Stack, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { isApiError } from '../api/client';
-import { login, queryKeys, ssoLoginUrl } from '../api/endpoints';
+import { fetchSetupStatus, login, queryKeys, ssoLoginUrl } from '../api/endpoints';
 import { FullPageLoader } from '../pages/StatusPages';
 import { useSession } from '../session/useSession';
 import { AuthCard } from './AuthCard';
@@ -37,6 +37,7 @@ export function LoginPage() {
   const queryClient = useQueryClient();
   const { data: session, isPending: sessionPending } = useSession();
   const { data: options } = useAuthOptions();
+  const setupStatus = useQuery({ queryKey: queryKeys.setupStatus, queryFn: fetchSetupStatus });
   const [error, setError] = useState<string | null>(null);
   const [slow, setSlow] = useState(false);
 
@@ -72,8 +73,10 @@ export function LoginPage() {
     return () => clearTimeout(timer);
   }, [signIn.isPending]);
 
-  if (sessionPending) return <FullPageLoader />;
+  if (sessionPending || setupStatus.isPending) return <FullPageLoader />;
   if (session) return <Navigate to={next} replace />;
+  // A fresh installation has no accounts yet: go to first-run setup.
+  if (setupStatus.data?.needs_setup) return <Navigate to="/setup" replace />;
 
   const ssoMessage = ssoError && t(`auth.sso.${SSO_ERRORS.has(ssoError) ? ssoError : 'sso_failed'}`);
 

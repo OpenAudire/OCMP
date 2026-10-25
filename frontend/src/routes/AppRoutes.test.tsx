@@ -14,6 +14,7 @@ vi.mock('../api/endpoints', async (importOriginal) => ({
   fetchMyRoles: vi.fn(),
   fetchInstitution: vi.fn(),
   fetchAuthOptions: vi.fn(),
+  fetchSetupStatus: vi.fn(),
   logout: vi.fn(),
 }));
 
@@ -28,6 +29,7 @@ function signedInWith(...roles: RoleAssignment[]) {
 describe('app routes', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mocked.fetchSetupStatus.mockResolvedValue({ needs_setup: false });
     applyTerminology(i18n, {});
     mocked.fetchAuthOptions.mockResolvedValue({
       password_min_length: 12,

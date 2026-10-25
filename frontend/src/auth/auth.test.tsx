@@ -12,6 +12,7 @@ vi.mock('../api/endpoints', async (importOriginal) => ({
   fetchMyRoles: vi.fn(),
   fetchInstitution: vi.fn(),
   fetchAuthOptions: vi.fn(),
+  fetchSetupStatus: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
   requestPasswordReset: vi.fn(),
@@ -55,6 +56,7 @@ function submit(name: string | RegExp) {
 beforeEach(() => {
   vi.resetAllMocks();
   options();
+  mocked.fetchSetupStatus.mockResolvedValue({ needs_setup: false });
   mocked.fetchInstitution.mockResolvedValue(testInstitution);
 });
 

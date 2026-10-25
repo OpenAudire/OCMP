@@ -153,3 +153,12 @@ def require_permission(
         return user
 
     return check
+
+
+def too_many_attempts(retry_after: int) -> HTTPException:
+    """429 with Retry-After, for sign-in, reset and setup limits."""
+    return HTTPException(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        detail="Too many attempts. Try again later.",
+        headers={"Retry-After": str(retry_after)},
+    )

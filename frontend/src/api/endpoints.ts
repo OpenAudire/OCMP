@@ -36,6 +36,26 @@ export async function changePassword(currentPassword: string, newPassword: strin
   });
 }
 
+export async function fetchSetupStatus(): Promise<{ needs_setup: boolean }> {
+  return (await api.get<{ needs_setup: boolean }>('/setup/status')).data;
+}
+
+export interface SetupInput {
+  token: string;
+  institution_name: string;
+  institution_short_code: string;
+  country: string;
+  health_profile: boolean;
+  admin_display_name: string;
+  admin_email: string;
+  admin_password: string;
+}
+
+/** First-run setup: creates the institution and first admin, and signs the admin in. */
+export async function runSetup(input: SetupInput): Promise<void> {
+  await api.post('/setup', input);
+}
+
 /** Where the browser goes to start SSO sign-in (a full page navigation, not an API call). */
 export function ssoLoginUrl(next: string): string {
   return `/api/v1/auth/oidc/login?next=${encodeURIComponent(next)}`;
@@ -50,4 +70,5 @@ export const queryKeys = {
   session: ['session'] as const,
   institution: ['institution'] as const,
   authOptions: ['auth-options'] as const,
+  setupStatus: ['setup-status'] as const,
 };

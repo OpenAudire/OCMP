@@ -60,6 +60,9 @@ docker run -d --name ocmp-test-db -e POSTGRES_USER=test -e POSTGRES_PASSWORD=tes
   -e POSTGRES_DB=ocmp_test -p 55432:5432 pgvector/pgvector:pg16
 TEST_DATABASE_URL=postgresql+asyncpg://test:test@localhost:55432/ocmp_test pytest
 
+# First-run setup token (while no institution exists)
+python -m app.cli setup-token
+
 # Create or promote a platform admin (password from OCMP_ADMIN_PASSWORD or prompt)
 python -m app.cli create-admin --email admin@example.org --name "Admin"
 
