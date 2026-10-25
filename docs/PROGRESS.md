@@ -441,9 +441,18 @@ This file tracks progress through the development phases.
 
 ---
 
+### CI fix and Node 22
+**Status**: Complete
+
+- [x] CI's backend lint job installed only ruff, mypy, pydantic and sqlalchemy and ran `mypy app --ignore-missing-imports`, so every other library became `Any` and strict mode failed with 45 errors on every commit. It now installs the project with dev extras and runs plain `mypy app` (settings from `pyproject.toml`), like local development (`cd8e46f`)
+- [x] CI green on GitHub Actions for `cd8e46f`
+- [x] CI and the frontend Docker image moved from Node 20 (end of life April 2026) to Node 22; the web image builds and serves on `node:22-alpine`
+
+---
+
 ## Phase 0 Definition of Done
 
 - [ ] Fresh Linux server with Docker can be set up by following install guide
-- [ ] CI is green
+- [x] CI is green
 - [x] Demo data loads with one command
 - [x] Role permissions covered by tests
