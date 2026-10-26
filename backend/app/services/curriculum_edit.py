@@ -3,8 +3,8 @@
 Permissions are checked by the API before these functions run (ADR 012); these
 functions enforce the structural rules:
 
-- Archived versions are read-only. Until publishing rules arrive (Slice 1.5),
-  draft and published versions can both be edited.
+- Only draft versions can be changed; published and archived versions are
+  read-only (ADR 030: return a version to draft, or copy it forward, to change it).
 - A module's phase must be a live phase of the same version (or none, for a
   longitudinal module); module codes are unique among a version's live modules.
 - New items go to the end of their parent. Moving an item changes its place among
@@ -33,8 +33,8 @@ from app.models.curriculum import PhaseKind, VersionStatus
 from app.services.authorization import ConflictError, InvalidRequestError
 from app.services.tagging import set_teaching_format
 
-# Statuses whose structure can be edited. Slice 1.5 makes published versions read-only.
-EDITABLE_STATUSES = frozenset({VersionStatus.DRAFT, VersionStatus.PUBLISHED})
+# Statuses whose structure can be edited (ADR 030).
+EDITABLE_STATUSES = frozenset({VersionStatus.DRAFT})
 
 
 def is_editable(version: CurriculumVersion) -> bool:
@@ -44,10 +44,10 @@ def is_editable(version: CurriculumVersion) -> bool:
 
 def ensure_editable(version: CurriculumVersion) -> None:
     """Raises:
-    ConflictError: If the version is read-only (archived or deleted).
+    ConflictError: If the version is read-only (published, archived or deleted).
     """
     if not is_editable(version):
-        raise ConflictError("This curriculum version is read-only.")
+        raise ConflictError("Only draft curriculum versions can be changed.")
 
 
 def _place(

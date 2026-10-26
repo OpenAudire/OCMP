@@ -1,6 +1,8 @@
 import { api } from './client';
 import type {
   AuthOptions,
+  CopyForwardPreview,
+  CurriculumVersion,
   Institution,
   LearningEventDetail,
   LearningEventInput,
@@ -18,6 +20,8 @@ import type {
   SavedPhase,
   TeachingFormat,
   User,
+  VersionDiff,
+  VersionStatus,
   VersionStructure,
 } from './types';
 
@@ -191,6 +195,47 @@ export async function fetchTeachingFormats(): Promise<TeachingFormat[]> {
   return (await api.get<TeachingFormat[]>('/teaching-formats')).data;
 }
 
+/** Publish, return to draft, archive or unarchive a version. */
+export async function changeVersionStatus(
+  versionId: string,
+  status: VersionStatus
+): Promise<CurriculumVersion> {
+  return (
+    await api.post<CurriculumVersion>(`/curriculum-versions/${versionId}/status`, { status })
+  ).data;
+}
+
+/** Deletes a draft version with everything in it. */
+export async function deleteVersion(versionId: string): Promise<void> {
+  await api.delete(`/curriculum-versions/${versionId}`);
+}
+
+export async function fetchCopyForwardPreview(versionId: string): Promise<CopyForwardPreview> {
+  return (await api.get<CopyForwardPreview>(`/curriculum-versions/${versionId}/copy-forward`))
+    .data;
+}
+
+/** Copies the version to a new draft for `academicYear`, with the chosen role assignments. */
+export async function copyForward(
+  versionId: string,
+  academicYear: number,
+  roleAssignmentIds: string[]
+): Promise<CurriculumVersion> {
+  return (
+    await api.post<CurriculumVersion>(`/curriculum-versions/${versionId}/copy-forward`, {
+      academic_year: academicYear,
+      role_assignment_ids: roleAssignmentIds,
+    })
+  ).data;
+}
+
+/** What changed from the `base` version to this one. */
+export async function fetchVersionDiff(versionId: string, base: string): Promise<VersionDiff> {
+  return (
+    await api.get<VersionDiff>(`/curriculum-versions/${versionId}/diff`, { params: { base } })
+  ).data;
+}
+
 /** TanStack Query keys, in one place so invalidation stays consistent. */
 export const queryKeys = {
   session: ['session'] as const,
@@ -204,4 +249,6 @@ export const queryKeys = {
   module: (id: string) => ['modules', id] as const,
   learningEvent: (id: string) => ['learning-events', id] as const,
   teachingFormats: ['teaching-formats'] as const,
+  copyForward: (id: string) => ['curriculum-versions', id, 'copy-forward'] as const,
+  versionDiff: (id: string, base: string) => ['curriculum-versions', id, 'diff', base] as const,
 };

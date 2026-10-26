@@ -3,18 +3,21 @@
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.models.curriculum import (
     AccreditationStatus,
     ObjectiveDomain,
+    ObjectiveLevel,
     ObjectiveStatus,
     PhaseKind,
     ProgrammeStatus,
     VersionStatus,
 )
+from app.services.curriculum_diff import Change, ItemKind
+from app.services.curriculum_versions import SkipReason
 
 
 class VersionRead(BaseModel):
@@ -119,8 +122,12 @@ class VersionStructure(BaseModel):
     phases: list[StructurePhase]
     # Longitudinal modules that span phases.
     modules_without_phase: list[StructureModule]
-    # Whether the user may add, change and remove phases and modules.
+    # Whether the user may add, change and remove phases and modules (drafts only).
     can_edit: bool
+    # Whether the user may publish, unpublish, archive or unarchive the version.
+    can_change_status: bool
+    # Whether the user may copy the version forward, and delete it while it is a draft.
+    can_copy_forward: bool
 
 
 class ObjectiveRead(BaseModel):
@@ -303,3 +310,80 @@ class TeachingFormat(BaseModel):
     id: uuid.UUID
     label: str
     list_name: str
+
+
+# --- Versions (Slice 1.5) --------------------------------------------------------------
+
+AcademicYear = Annotated[int, Field(ge=1900, le=2200)]
+
+
+class VersionStatusChange(BaseModel):
+    """Publish (draft to published), unpublish (back to draft), archive, or unarchive."""
+
+    status: VersionStatus
+
+
+class RoleAssignmentCopy(BaseModel):
+    """A role assignment at a module or session of the version being copied."""
+
+    id: uuid.UUID
+    user_name: str
+    role_name: str
+    scope_type: Literal["module", "learning_event"]
+    # The module or session it is held at.
+    item: str
+    expires_at: datetime | None
+    # Why it cannot be copied; null when it is copied unless unticked.
+    skip_reason: SkipReason | None
+
+
+class CopyForwardPreview(BaseModel):
+    academic_year: int
+    taken_years: list[int]
+    phases: int
+    modules: int
+    learning_events: int
+    objectives: int
+    mappings: int
+    # False when the user may not assign roles in the programme: none are copied.
+    can_copy_roles: bool
+    role_assignments: list[RoleAssignmentCopy]
+
+
+class CopyForwardRequest(BaseModel):
+    academic_year: AcademicYear
+    # Role assignments from the preview to copy to the new items.
+    role_assignment_ids: list[uuid.UUID] = Field(default_factory=list, max_length=10_000)
+
+
+class FieldChangeRead(BaseModel):
+    field: str
+    before: str | int | None
+    after: str | int | None
+
+
+class ItemChangeRead(BaseModel):
+    kind: ItemKind
+    change: Change
+    id: uuid.UUID | None
+    base_id: uuid.UUID | None
+    label: str
+    context: str | None
+    level: ObjectiveLevel | None
+    fields: list[FieldChangeRead]
+
+
+class ChangeCounts(BaseModel):
+    added: int
+    removed: int
+    changed: int
+
+
+class VersionDiffRead(BaseModel):
+    """What changed from ``base`` to ``version``."""
+
+    programme: ProgrammeRef
+    base: VersionRead
+    version: VersionRead
+    summary: dict[ItemKind, ChangeCounts]
+    changes: list[ItemChangeRead]

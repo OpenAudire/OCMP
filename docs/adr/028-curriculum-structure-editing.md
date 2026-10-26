@@ -38,8 +38,9 @@ each module and each session, computed in bulk from the same permissions. The UI
 its buttons from these flags only; the API checks every change.
 
 ### Rules in the service (`app/services/curriculum_edit.py`)
-- Archived (and deleted) versions are read-only: **409**. Draft and published versions
-  can be edited until Slice 1.5 adds the publishing rules (one constant to change).
+- Only draft versions can be edited; published, archived and deleted versions are
+  read-only: **409** (ADR 030 replaced the temporary rule that let published versions be
+  edited until Slice 1.5).
 - A module's phase must be a live phase of the same version, or none (longitudinal).
 - Module codes are unique among a version's live modules, compared without case: **409**.
 - New items go to the end of their parent; reordering is Slice 1.4.

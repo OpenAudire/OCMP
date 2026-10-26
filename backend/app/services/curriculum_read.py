@@ -314,6 +314,10 @@ class Structure:
     outcome_count: int | None
     # Whether the user may add, change and remove phases and modules.
     can_edit: bool = False
+    # Whether the user may publish, unpublish, archive or unarchive the version.
+    can_change_status: bool = False
+    # Whether the user may copy the version forward (and delete it while a draft).
+    can_copy_forward: bool = False
 
 
 async def _objective_counts(
@@ -404,6 +408,8 @@ async def version_structure(db: AsyncSession, visible: VisibleVersion) -> Struct
         modules_without_phase=without_phase,
         outcome_count=counts.get((ObjectiveLevel.PROGRAMME, None), 0) if view.full else None,
         can_edit=edits(programme_permissions),
+        can_change_status=view.full and Permission.CURRICULUM_PUBLISH in programme_permissions,
+        can_copy_forward=view.full and Permission.CURRICULUM_EDIT in programme_permissions,
     )
 
 

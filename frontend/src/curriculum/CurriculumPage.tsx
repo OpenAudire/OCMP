@@ -3,7 +3,16 @@ import { Alert, Box, Button, Paper, Text } from '@mantine/core';
 import { IconStack2 } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Link, Navigate, Route, Routes, useParams, useSearchParams } from 'react-router';
+import {
+  Link,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router';
 
 import { isApiError } from '../api/client';
 import { fetchVersionStructure, queryKeys } from '../api/endpoints';
@@ -13,8 +22,10 @@ import { Permission } from '../session/permissions';
 import { SuccessNotice } from '../pages/SuccessNotice';
 import { Page } from '../ui/Page';
 import { EmptyState, ErrorState, LoadingState } from '../ui/States';
+import { ComparePage } from './ComparePage';
 import {
   defaultVersionId,
+  findVersion,
   rememberedVersion,
   rememberVersion,
   useProgrammes,
@@ -33,6 +44,8 @@ import {
 } from './reorder';
 import { StructureTree } from './StructureTree';
 import { buildTree, findNode, hasNoModules, ROOT_ID } from './treeModel';
+import { VersionBar } from './VersionBar';
+import type { NoticeState } from './versions';
 import { VersionSwitcher } from './VersionSwitcher';
 import classes from './CurriculumPage.module.css';
 
@@ -98,10 +111,22 @@ function Builder({ structure }: BuilderProps) {
   );
   const versionId = structure.version.id;
   useEffect(() => rememberVersion(versionId), [versionId]);
-  // What the last change did; announced, and focused when the selection moved.
+  const { data: programmes } = useProgrammes();
+  const programme = programmes ? (findVersion(programmes, versionId)?.programme ?? null) : null;
+  // What the last change did; announced, and focused when the selection moved. A copy
+  // forward or a deleted draft brings its notice along from the previous version.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const carried = (location.state as NoticeState | null)?.notice;
   const [notice, setNotice] = useState<{ key: number; message: string; focus: boolean } | null>(
-    null
+    () => (carried ? { key: Date.now(), message: carried, focus: true } : null)
   );
+  useEffect(() => {
+    // Shown once: not again after a reload.
+    if (carried) {
+      navigate({ pathname: location.pathname, search: location.search }, { replace: true });
+    }
+  }, [carried, navigate, location.pathname, location.search]);
   const noticeRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (notice?.focus) noticeRef.current?.focus();
@@ -159,75 +184,91 @@ function Builder({ structure }: BuilderProps) {
     sessions: t('terms.learning_event', { count: 2 }).toLocaleLowerCase(),
   };
 
+  const versionBar = (
+    <VersionBar
+      structure={structure}
+      programme={programme}
+      onNotice={(message) => setNotice({ key: Date.now(), message, focus: true })}
+    />
+  );
+  const noticeBox = notice && (
+    <div key={notice.key} ref={noticeRef} tabIndex={-1} className={classes.notice}>
+      <SuccessNotice>{notice.message}</SuccessNotice>
+    </div>
+  );
+
   // People who may add modules get the builder, with its "Add" buttons, instead.
   if (hasNoModules(structure) && !structure.can_edit) {
     return (
-      <EmptyState
-        icon={IconStack2}
-        title={t('curriculum.empty.noModulesTitle', { modules: terms.modules })}
-        body={t('curriculum.empty.noModules', terms)}
-      />
+      <>
+        {versionBar}
+        {noticeBox}
+        <EmptyState
+          icon={IconStack2}
+          title={t('curriculum.empty.noModulesTitle', { modules: terms.modules })}
+          body={t('curriculum.empty.noModules', terms)}
+        />
+      </>
     );
   }
 
   return (
-    <div className={classes.layout}>
-      <Paper
-        withBorder
-        component="section"
-        aria-labelledby="structure-title"
-        className={classes.tree}
-      >
-        <Text id="structure-title" className={classes.label}>
-          {t('curriculum.tree.title')}
-        </Text>
-        {canRearrangeAny(structure) && (
-          <Text size="sm" c="dimmed" className={classes.partial}>
-            {t('curriculum.reorder.hint')}
+    <>
+      {versionBar}
+      <div className={classes.layout}>
+        <Paper
+          withBorder
+          component="section"
+          aria-labelledby="structure-title"
+          className={classes.tree}
+        >
+          <Text id="structure-title" className={classes.label}>
+            {t('curriculum.tree.title')}
           </Text>
-        )}
-        {structure.partial && (
-          <Text size="sm" c="dimmed" className={classes.partial}>
-            {t('curriculum.tree.partial', terms)}
-          </Text>
-        )}
-        <StructureTree
-          root={root}
-          label={t('curriculum.tree.label', {
-            programme: structure.programme.name,
-          })}
-          selectedId={selectedId}
-          expanded={expanded}
-          onSelect={select}
-          onToggle={toggle}
-          canDrag={canDrag}
-          onDrop={drop}
-        />
-      </Paper>
-      <section aria-label={t('curriculum.details.label')} className={classes.details}>
-        {notice && (
-          <div key={notice.key} ref={noticeRef} tabIndex={-1} className={classes.notice}>
-            <SuccessNotice>{notice.message}</SuccessNotice>
-          </div>
-        )}
-        {mover.error && <Alert color="red">{mover.error}</Alert>}
-        <ItemActions
-          key={`actions-${selectedId}`}
-          item={found.node.item}
-          structure={structure}
-          onSaved={saved}
-          placement={placement}
-          moving={mover.busy}
-          onMove={(position, focusNotice) => {
-            const item = found.node.item;
-            if (isMovable(item) && placement) {
-              moveItem(item, position, placement.count, focusNotice);
-            }
-          }}
-        />
-        <ItemDetails key={selectedId} item={found.node.item} />
-      </section>
-    </div>
+          {canRearrangeAny(structure) && (
+            <Text size="sm" c="dimmed" className={classes.partial}>
+              {t('curriculum.reorder.hint')}
+            </Text>
+          )}
+          {structure.partial && (
+            <Text size="sm" c="dimmed" className={classes.partial}>
+              {t('curriculum.tree.partial', terms)}
+            </Text>
+          )}
+          <StructureTree
+            root={root}
+            label={t('curriculum.tree.label', {
+              programme: structure.programme.name,
+            })}
+            selectedId={selectedId}
+            expanded={expanded}
+            onSelect={select}
+            onToggle={toggle}
+            canDrag={canDrag}
+            onDrop={drop}
+          />
+        </Paper>
+        <section aria-label={t('curriculum.details.label')} className={classes.details}>
+          {noticeBox}
+          {mover.error && <Alert color="red">{mover.error}</Alert>}
+          <ItemActions
+            key={`actions-${selectedId}`}
+            item={found.node.item}
+            structure={structure}
+            onSaved={saved}
+            placement={placement}
+            moving={mover.busy}
+            onMove={(position, focusNotice) => {
+              const item = found.node.item;
+              if (isMovable(item) && placement) {
+                moveItem(item, position, placement.count, focusNotice);
+              }
+            }}
+          />
+          <ItemDetails key={selectedId} item={found.node.item} />
+        </section>
+      </div>
+    </>
   );
 }
 
@@ -286,6 +327,7 @@ export function CurriculumSection() {
     <Routes>
       <Route index element={<CurriculumStart />} />
       <Route path="versions/:versionId" element={<VersionPage />} />
+      <Route path="versions/:versionId/compare" element={<ComparePage />} />
       <Route path="*" element={<Navigate to={CURRICULUM_PATH} replace />} />
     </Routes>
   );

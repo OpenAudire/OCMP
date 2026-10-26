@@ -619,7 +619,7 @@ ADRs. Each can be changed; the last column says how much work that would be.
 
 | Slice | Decision | Why | How hard to reverse |
 |---|---|---|---|
-| 1.3 | Published versions stay editable until Slice 1.5; only archived versions are read-only | Publishing rules are scheduled for 1.5, and the demo has only a published version, so nothing could be edited otherwise | Easy: one constant (`EDITABLE_STATUSES`) |
+| 1.3, replaced in 1.5 | ~~Published versions stay editable until Slice 1.5~~ Only draft versions are editable; published and archived are read-only (ADR 030). The demo now has a 2027 draft to edit | The publishing rules arrived with 1.5 | Easy: one constant (`EDITABLE_STATUSES`) |
 | 1.3 | Phases, adding and deleting modules, and moving a module to another phase need `curriculum.edit` at the programme; a module's own fields and its sessions need it at the module; a session's fields at the session | Brief section 4: directors own the structure, coordinators their modules and sessions | Easy: scope per endpoint |
 | 1.3 | Deleting is a soft delete that takes the children with it (module: its sessions and all their objectives; session: its objectives), with one shared timestamp | Keeps later reports and copy-forward from seeing orphaned objectives; a restore can bring back what went together | Medium: data already deleted this way would need a restore step |
 | 1.3 | A phase holding modules cannot be deleted (the dialog explains why) | Avoids deleting many modules by accident | Easy |
@@ -638,6 +638,16 @@ ADRs. Each can be changed; the last column says how much work that would be.
 | 1.4 | Copies take children, objectives (with status), upward links (remapped inside the copy) and tags; not framework mappings, role assignments or the LMS reference | Mappings are reviewed decisions about one objective and would double coverage; access and LMS links belong to the original | Medium: copies made so far would need their mappings added by hand |
 | 1.4 | Copying a phase asks for a new code for each of its modules (no generated codes); the name defaults to "<name> (copy)" | Codes are meaningful and unique per version; the user chooses them | Easy (UI) |
 | 1.4 | The long e2e journeys are marked `test.slow()` | With two more journeys in parallel, the 1.3 editing journey passed 30 s locally | Easy |
+| 1.5 | A published version can be returned to draft (and an archived one published again) by people with `curriculum.publish`; archiving is one more step from published | Lets a mistake in a published year be corrected without copying the whole year; students stop seeing it meanwhile | Easy: the `TRANSITIONS` table |
+| 1.5 | Publishing needs at least one module | An empty version should not reach students | Easy |
+| 1.5 | Only drafts can be deleted (soft delete with contents, one timestamp); needs `curriculum.edit` | Published history must not vanish; drafts made by mistake can go, and the year becomes free | Easy |
+| 1.5 | Per-item lineage: nullable `based_on_id` (self reference, `ON DELETE SET NULL`, indexed) on phases, modules, learning events and objectives, set by copy forward only (migration 0013) | The diff and later reports follow items across years even when renamed; additive, no data rewritten, clean downgrade | Medium: dropping the columns is simple, but the diff then falls back to matching by name and code |
+| 1.5 | Copy forward also copies framework mappings with their review state, unlike a single-item copy (ADR 029); LMS references are not copied | A new year continues the same curriculum; a copy of one item would double coverage | Easy: one function (`_copy_mappings`); mappings already copied would need removing by hand |
+| 1.5 | Copy forward keeps module codes and the order; the new year is chosen by the user (suggested: newest + 1), must be free | Codes are unique per version, so no clash | Easy |
+| 1.5 | Copying roles needs `roles.assign` and every permission of each role (the assign rule); people without it get no names in the preview and copy the structure only | The preview shows holders' display names; the assign rule keeps escalation out | Easy |
+| 1.5 | Version diff matches by lineage first, then by phase name, module code, session title and objective text; order, upward links, tags and mappings are not compared | Keeps the first diff readable; the rest can be added later | Easy |
+| 1.5 | Only whole-visible versions of one programme can be compared; the UI offers "Compare versions" to people who see the whole version | Narrow roles see parts of versions only | Easy |
+| 1.5 | Running `load-demo` on an install that has only the published demo version adds the 2027 draft instead of refusing; the draft is made by copy forward plus a few scripted changes | Existing trial installs get the new demo content without a reset | Easy |
 
 ---
 
@@ -836,3 +846,29 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 **Not in this slice**: moving a session to another module, copying to another version (copy forward is Slice 1.5), a live preview while dragging.
 
 **Commit**: `feat: reorder and copy phases, modules and sessions`
+
+---
+
+### Slice 1.5: Curriculum Versions
+**Status**: Complete
+
+**Deliverables**:
+- [x] **Publish rules** (ADR 030, `app/services/curriculum_versions.py`): `POST /curriculum-versions/{id}/status` (publish, return to draft, archive, publish again; needs `curriculum.publish`; a draft needs a module); only drafts are editable (`EDITABLE_STATUSES`), so published and archived versions are read-only (409); `DELETE /curriculum-versions/{id}` for drafts. Audit labels `curriculum.version_publish`, `_unpublish`, `_archive`, `_unarchive`, `_copy_forward`, `_delete`. Structure response gained `can_change_status` and `can_copy_forward`
+- [x] **Copy forward**: `GET`/`POST /curriculum-versions/{id}/copy-forward` (preview with counts, suggested year, years in use, role assignments; the copy is a new draft with phases, modules, sessions, objectives of every level, upward links, tags and framework mappings with their review state; LMS references are not copied). Reuses the ADR 029 copy machinery (`Copies` with a target version). **Role assignments** at module and session scope are copied as the owner decided: ticked by default in the preview, each can be unticked; ended assignments, deactivated or deleted accounts and roles the caller may not grant are listed as not copied with the reason
+- [x] **Lineage**: migration `0013` adds nullable `based_on_id` to phases, modules, learning events and objectives (additive, indexed, `ON DELETE SET NULL`, downgrade drops them)
+- [x] **Version diff**: `GET /curriculum-versions/{id}/diff?base=` (`app/services/curriculum_diff.py`): lineage first, then phase name, module code, session title and objective text; added, removed and changed items with field before and after
+- [x] **Builder**: version bar with status text and Publish / Return to draft / Archive / Publish again / Copy forward / Compare versions / Delete draft (from the structure flags), confirm dialogs, copy-forward dialog with counts and role ticks, notices carried to the next page; compare page (`/curriculum/versions/:id/compare?base=`) with summary, per-kind lists and a "Compare with" choice. All text from `curriculum.versions.*` and `curriculum.compare.*`
+- [x] **Demo**: published current-year version plus a next-year draft made by copy forward with scripted changes (renamed, longer, added, removed session, reworded objective); `load-demo` on an install with only the published version adds the draft
+- [x] ADR 030; admin guide section "Publishing and copying a year forward"; install guide demo text; data inventory note; the 1.3 decision row replaced
+
+**Verification**:
+- Backend: ruff, ruff format, mypy (78 files) pass; pytest 656 passed against the test database, 97% coverage (35 new in `test_curriculum_versions_api.py`: sign-in required, publish and the read-only rule, return to draft, archive and unarchive, refused changes, publishing without a module, deleting drafts, copy forward with lineage, links, tags, mappings and deleted rows left out, role assignments copied and skipped with reasons, editors without `roles.assign`, other roles, diff by lineage, across years and by code; demo tests updated for the draft and for adding the draft to an earlier load); migration drift test passes
+- Frontend under Node 24.22.1: lint and typecheck pass; 139 tests pass (11 new in `Versions.test.tsx`: publish, read-only published version, failed change, no actions without rights, copy forward with role ticks, taken year, roles that cannot be copied, delete draft, compare, no differences, failed compare). Running the suite right after the Playwright run made 6 unrelated tests time out once; it passed alone
+- Docker: images rebuilt, `migrate` applied `0013` on the existing database, `load-demo` on the existing install added the 2027 draft (the 2026 published version untouched); Playwright (Chromium) against the stack: 49 passed (4 new in `e2e/curriculum-versions.spec.ts`: copy a year forward through the dialog (counts, taken year refused), publish, return to draft and delete it, and the comparison of the demo draft with the published version; axe WCAG 2.2 AA on each dialog and state, light and dark). The existing editing and reorder journeys now run on the draft; the demo data was left as found (2026 published, 2027 draft)
+- Found by axe/e2e: the copy dialog's year field was not focused because the form appears after the preview loads (now focused by a ref)
+- `mkdocs build --strict` passes
+- Not verified here: browsers other than Chromium; screen readers by hand; the CI run on GitHub (runs on push); role copying through the UI with real role holders (covered by API tests and a mocked UI test only)
+
+**Not in this slice**: compare for people who see only part of a version; comparing order, links, tags or mappings; restoring a deleted draft.
+
+**Commit**: `feat: publish rules, copy academic year forward and version diff`

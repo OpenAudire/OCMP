@@ -133,7 +133,7 @@ describe('reordering and copying in the curriculum builder', () => {
 
     expect(
       await screen.findByText(
-        'This could not be saved because the version can no longer be changed.'
+        'This could not be saved because the version can no longer be changed. Only draft versions can be changed; reload the page.'
       )
     ).toBeInTheDocument();
     expect(mocked.moveModule).toHaveBeenCalledWith('m4', 0);

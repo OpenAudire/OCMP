@@ -35,3 +35,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [027](027-curriculum-read-access.md) | Curriculum Read API and Who Sees What |
 | [028](028-curriculum-structure-editing.md) | Curriculum Structure Editing |
 | [029](029-reorder-and-copy.md) | Reordering and Copying Curriculum Items |
+| [030](030-curriculum-versions.md) | Curriculum Versions: Publishing, Copy Forward and Diff |

@@ -147,8 +147,12 @@ export interface VersionStructure {
   outcome_count: number | null;
   phases: StructurePhase[];
   modules_without_phase: StructureModule[];
-  /** The user may add, change and delete phases and modules. */
+  /** The user may add, change and delete phases and modules (drafts only). */
   can_edit: boolean;
+  /** The user may publish, unpublish, archive and unarchive the version. */
+  can_change_status: boolean;
+  /** The user may copy the version forward, and delete it while it is a draft. */
+  can_copy_forward: boolean;
 }
 
 export interface Objective {
@@ -253,4 +257,63 @@ export interface ModuleCopyInput {
   name: string;
   /** Leave out to keep the module's phase; null puts the copy across phases. */
   phase_id?: string | null;
+}
+
+export type SkipReason = 'expired' | 'account_inactive' | 'account_deleted' | 'not_allowed';
+
+/** A role assignment at a module or session of the version being copied forward. */
+export interface RoleAssignmentCopy {
+  id: string;
+  user_name: string;
+  role_name: string;
+  scope_type: 'module' | 'learning_event';
+  /** The module or session it is held at. */
+  item: string;
+  expires_at: string | null;
+  /** Why it cannot be copied; null when it is copied unless unticked. */
+  skip_reason: SkipReason | null;
+}
+
+export interface CopyForwardPreview {
+  /** Suggested: the year after the programme's newest version. */
+  academic_year: number;
+  taken_years: number[];
+  phases: number;
+  modules: number;
+  learning_events: number;
+  objectives: number;
+  mappings: number;
+  /** False when the user may not assign roles in the programme: none are copied. */
+  can_copy_roles: boolean;
+  role_assignments: RoleAssignmentCopy[];
+}
+
+export type ItemKind = 'phase' | 'module' | 'learning_event' | 'objective';
+export type ChangeType = 'added' | 'removed' | 'changed';
+
+export interface FieldChange {
+  field: string;
+  before: string | number | null;
+  after: string | number | null;
+}
+
+export interface ItemChange {
+  kind: ItemKind;
+  change: ChangeType;
+  id: string | null;
+  base_id: string | null;
+  label: string;
+  /** The module of a session, the owner of an objective. */
+  context: string | null;
+  level: 'programme' | 'module' | 'learning_event' | null;
+  fields: FieldChange[];
+}
+
+/** What changed from `base` to `version`. */
+export interface VersionDiff {
+  programme: { id: string; code: string; name: string };
+  base: CurriculumVersion;
+  version: CurriculumVersion;
+  summary: Record<ItemKind, { added: number; removed: number; changed: number }>;
+  changes: ItemChange[];
 }

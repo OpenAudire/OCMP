@@ -94,11 +94,14 @@ async def _load_demo() -> int:
     except ConflictError as exc:
         print(str(exc))  # noqa: T201
         return 0
+    if summary.draft_only:
+        print(f"Added the {summary.draft_year} draft to {name}.")  # noqa: T201
+        return 0
     print(  # noqa: T201
         f"Loaded {name}: {summary.modules} modules, {summary.learning_events} sessions, "
         f"{summary.objectives} objectives ({summary.objective_links} upward links), "
         f"{summary.framework_items} framework items, {summary.mappings} mappings, "
-        f"{summary.tag_lists} tag lists."
+        f"{summary.tag_lists} tag lists; draft for {summary.draft_year} copied forward."
     )
     return 0
 

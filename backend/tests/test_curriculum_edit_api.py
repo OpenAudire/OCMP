@@ -441,14 +441,23 @@ class TestProgrammeDirector:
         events = (await structure(api_client, world))["phases"][1]["modules"][0]["events"]
         assert [e["title"] for e in events] == ["Skills lab"]
 
-    async def test_published_versions_stay_editable_until_publishing_rules(
+    async def test_published_versions_are_read_only(
         self, api_client: AsyncClient, world: World
     ) -> None:
         response = await api_client.patch(
             f"{API}/modules/{world.published_module.id}", json={"name": "Renamed"}
         )
+        added = await api_client.post(
+            f"{API}/curriculum-versions/{world.published.id}/phases", json={"name": "Year 3"}
+        )
+        tree = await api_client.get(f"{API}/curriculum-versions/{world.published.id}/structure")
 
-        assert response.status_code == 200
+        assert response.status_code == 409
+        assert added.status_code == 409
+        assert tree.json()["can_edit"] is False
+        # The director may still publish, unpublish and copy it forward.
+        assert tree.json()["can_change_status"] is True
+        assert tree.json()["can_copy_forward"] is True
 
     async def test_archived_versions_are_read_only(
         self, api_client: AsyncClient, world: World

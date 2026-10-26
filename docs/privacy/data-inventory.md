@@ -34,7 +34,7 @@ students or patients.
 | Password hash (Argon2id) | `users.password_hash` | Local sign-in; the password itself is never stored | User | Until changed or the account is removed; empty for SSO-only accounts |
 | Active flag, last sign-in time | `users.is_active`, `users.last_login_at` | Access control, finding unused accounts | System | While the account exists |
 | SSO identity: provider and subject id | `user_identities.issuer`, `.subject`, `.last_login_at` | Matching single sign-on to the account (never by email) | Identity provider | Deleted with the account |
-| Roles held, their scope and expiry | `role_assignments` | Authorisation | Admins | Until removed; time-limited roles expire |
+| Roles held, their scope and expiry | `role_assignments` | Authorisation. Copying a year forward can copy module and session assignments to the new year's items; the copy dialog shows holders' display names to people who may assign roles | Admins | Until removed; time-limited roles expire |
 | Authorship of records | `created_by_id` on every table | Accountability for curriculum changes | System | Kept; set to empty when the user is deleted |
 | Review decisions | `mapping_links.first_reviewer_id`, `.second_reviewer_id`, review times | Four-eyes review of mappings | System | Kept with the mapping; set to empty when the user is deleted |
 | Review assignments | `review_assignments.reviewer_id` | Allocating review work | Admins | Deleted with the user |

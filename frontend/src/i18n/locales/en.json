@@ -298,7 +298,7 @@
       },
       "errors": {
         "codeTaken": "Another {{module}} in this version already uses this code. Choose a different code.",
-        "conflict": "This could not be saved because the version can no longer be changed.",
+        "conflict": "This could not be saved because the version can no longer be changed. Only draft versions can be changed; reload the page.",
         "forbidden": "Your account cannot make this change. Your access may have changed; reload the page.",
         "gone": "This item no longer exists. Reload the page to see the current structure.",
         "invalid": "Some values were not accepted. Check them and try again.",
@@ -331,6 +331,125 @@
         "sameCode": "Use a different code for each copy.",
         "codesTaken": "One of the codes is already used by another {{module}} in this version. Choose different codes."
       }
+    },
+    "versions": {
+      "name": "{{year}} {{status}}",
+      "label": "Version {{version}}",
+      "actions": "Version actions",
+      "status": {
+        "draft": "Draft: it can be changed, and students do not see it until it is published.",
+        "published": "Published on {{date}}: it is read-only and visible to students. To change it, return it to draft or copy it forward.",
+        "archived": "Archived: it is read-only and no longer visible to students."
+      },
+      "action": {
+        "publish": "Publish version",
+        "unpublish": "Return to draft",
+        "archive": "Archive",
+        "unarchive": "Publish again",
+        "copyForward": "Copy forward",
+        "delete": "Delete draft",
+        "compare": "Compare versions"
+      },
+      "confirm": {
+        "publishTitle": "Publish the {{version}}?",
+        "publish": "Once published, the version can no longer be changed, and everyone with access to published versions, including students, can see it. You can return it to draft later if something needs correcting.",
+        "unpublishTitle": "Return the {{version}} to draft?",
+        "unpublish": "The version can be changed again. Students no longer see it until it is published again.",
+        "archiveTitle": "Archive the {{version}}?",
+        "archive": "The version stays read-only, and students no longer see it. You can publish it again later.",
+        "unarchiveTitle": "Publish the {{version}} again?",
+        "unarchive": "The version becomes visible to students again. It stays read-only.",
+        "note": "The change is recorded in the change history."
+      },
+      "done": {
+        "publish": "{{year}} published.",
+        "unpublish": "{{year}} returned to draft.",
+        "archive": "{{year}} archived.",
+        "unarchive": "{{year}} published again."
+      },
+      "errors": {
+        "status": "This could not be done. A version needs at least one {{module}} before it can be published, and its status may have changed in the meantime; reload the page.",
+        "yearTaken": "This {{programme}} already has a version for this year. Choose another year."
+      },
+      "copy": {
+        "title": "Copy the {{version}} forward",
+        "year": "Academic year of the new version",
+        "yearHint": "Years already used: {{years}}.",
+        "yearRange": "Enter a year from 1900 to 2200.",
+        "yearTaken": "This year already has a version. Choose another year.",
+        "includes": "The new version is a draft with everything in this one:",
+        "counts": "What is copied",
+        "frameworkLinks": "Links to framework items",
+        "notIncluded": "LMS references are not copied. Upward links, tags and the review state of framework links are.",
+        "roles": "Role assignments",
+        "rolesHint": "People keep their roles on the copied {{modules}} and {{sessions}}. Untick anyone who should not.",
+        "roleOption": "{{name}}, {{role}}: {{item}}",
+        "skipped": "Not copied",
+        "skippedItem": "{{name}}, {{role}}: {{item}} ({{reason}})",
+        "reason": {
+          "expired": "the assignment has ended",
+          "account_inactive": "the account is deactivated",
+          "account_deleted": "the account was deleted",
+          "not_allowed": "your account cannot grant this role"
+        },
+        "noRoles": "No one holds a role at a {{module}} or {{session}} of this version.",
+        "cannotCopyRoles": "Role assignments are not copied, because your account cannot assign roles in this {{programme}}.",
+        "submit": "Copy forward",
+        "done": "{{year}} draft created as a copy of {{source}}. Changes made to it do not affect {{source}}.",
+        "loadError": "What would be copied could not be loaded. Close this and try again.",
+        "loading": "Counting what would be copied…"
+      },
+      "delete": {
+        "title": "Delete the {{version}}?",
+        "body": "This deletes the draft with all its {{phases}}, {{modules}}, {{sessions}} and {{objectives}}.",
+        "note": "The deletion is recorded in the change history.",
+        "submit": "Delete draft",
+        "done": "The {{version}} was deleted."
+      }
+    },
+    "compare": {
+      "title": "Compare versions",
+      "description": "{{programme}}: what changed from one version to another.",
+      "base": "Compare with",
+      "heading": "Changes from {{base}} to {{version}}",
+      "back": "Back to the builder",
+      "summary": "Summary",
+      "summaryLine": "{{added}} added, {{removed}} removed, {{changed}} changed",
+      "change": {
+        "added": "Added",
+        "removed": "Removed",
+        "changed": "Changed"
+      },
+      "before": "Before",
+      "after": "After",
+      "empty": "(empty)",
+      "programmeOutcome": "{{programme}} outcome",
+      "fields": {
+        "name": "Name",
+        "kind": "Kind",
+        "code": "Code",
+        "phase": "Phase",
+        "credits": "Credits",
+        "nqf_level": "NQF level",
+        "description": "Description",
+        "external_lms_ref": "LMS reference",
+        "title": "Title",
+        "format": "Format",
+        "contact_minutes": "Contact time (minutes)",
+        "self_study_minutes": "Self-study (minutes)",
+        "week": "Week",
+        "text": "Text",
+        "domain": "Domain",
+        "taxonomy_level": "Taxonomy level",
+        "status": "Status"
+      },
+      "notCompared": "Order, upward links, tags and framework links are not compared.",
+      "noChangesTitle": "No differences",
+      "noChanges": "These versions have the same {{phases}}, {{modules}}, {{sessions}} and {{objectives}}.",
+      "nothingTitle": "Nothing to compare with",
+      "nothing": "This {{programme}} has no other version you can see.",
+      "loadTitle": "Couldn't compare the versions",
+      "loadBody": "Nothing was changed. Check your connection and try again."
     }
   }
 }

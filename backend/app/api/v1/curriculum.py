@@ -175,6 +175,8 @@ async def get_version_structure(
         ],
         modules_without_phase=[_module(m) for m in structure.modules_without_phase],
         can_edit=structure.can_edit,
+        can_change_status=structure.can_change_status,
+        can_copy_forward=structure.can_copy_forward,
     )
 
 

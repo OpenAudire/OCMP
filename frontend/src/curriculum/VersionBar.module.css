@@ -1,0 +1,51 @@
+/* The open version's status and actions, above the structure and details. */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+
+.text {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+/* Counts in the copy forward dialog. */
+.counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.count {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.count dt {
+  font-size: 13px;
+  color: var(--cic-muted);
+}
+
+.count dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* Each choice is a 44px target. */
+.option {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.skipped {
+  margin: 4px 0 0;
+  padding-left: 20px;
+}

@@ -6,6 +6,12 @@ and ``data/demo-graduate-competencies.json`` (framework pack, identical to
 usual rules apply and the audit log records it as the ``demo.load`` operation.
 Existing pieces are reused: the institution (from the setup wizard), the demo
 framework if already imported, and tag lists with the same keys.
+
+The programme gets a published version for the current academic year and a draft
+for the next year, made by copy forward with the changes in ``next_year`` (so the
+version diff has something to show). Loading again on an install that has only the
+published version (loaded before the draft existed) adds the draft; otherwise a
+second load is refused.
 """
 
 import json
@@ -51,6 +57,8 @@ from app.models.tagging import TagListKind
 from app.services.audit import audit_operation
 from app.services.authorization import ConflictError, InvalidRequestError
 from app.services.curriculum import add_objective, link_objectives
+from app.services.curriculum_edit import EventFields, create_event, delete_event, update_event
+from app.services.curriculum_versions import copy_forward
 from app.services.frameworks import activate_framework
 from app.services.institution_settings import get_institution
 from app.services.mapping import create_link
@@ -154,6 +162,41 @@ class DemoFaculty(_Model):
     department: DemoDepartment
 
 
+class DemoSessionChange(_Model):
+    module: str
+    title: str
+    new_title: str | None = None
+    contact_minutes: int | None = None
+
+
+class DemoSessionAdd(_Model):
+    module: str
+    event: DemoEvent
+
+
+class DemoSessionRef(_Model):
+    module: str
+    title: str
+
+
+class DemoReword(_Model):
+    module: str
+    session: str
+    text: str
+    new_text: str
+
+
+class DemoNextYear(BaseModel):
+    """Changes made to the next year's draft after copying it forward."""
+
+    model_config = ConfigDict(extra="ignore", frozen=True)
+
+    change_sessions: list[DemoSessionChange] = []
+    add_sessions: list[DemoSessionAdd] = []
+    remove_sessions: list[DemoSessionRef] = []
+    reword_objectives: list[DemoReword] = []
+
+
 class DemoData(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
 
@@ -165,6 +208,7 @@ class DemoData(BaseModel):
     programme: DemoProgramme
     phases: list[DemoPhase]
     modules: list[DemoModule]
+    next_year: DemoNextYear = DemoNextYear()
 
     @model_validator(mode="after")
     def references_resolve(self) -> "DemoData":
@@ -198,6 +242,10 @@ class DemoSummary:
     framework_items: int
     mappings: int
     tag_lists: int
+    # The next year's draft (None if it was not added).
+    draft_year: int | None = None
+    # True when only the draft was added to a demo loaded earlier.
+    draft_only: bool = False
 
 
 class _Loader:
@@ -328,7 +376,7 @@ class _Loader:
             await link_objectives(self.db, child, parent)
             self.links += 1
 
-    async def curriculum(self, faculty: Faculty) -> tuple[Programme, int, int]:
+    async def curriculum(self, faculty: Faculty) -> tuple[Programme, CurriculumVersion, int, int]:
         raw = self.data.programme
         qualification = await self.db.scalar(
             select(QualificationType).where(QualificationType.key == raw.qualification_type)
@@ -371,7 +419,7 @@ class _Loader:
         events_total = 0
         for position, raw_module in enumerate(self.data.modules):
             events_total += await self.module(version, phases, outcomes, raw_module, position)
-        return programme, len(self.data.modules), events_total
+        return programme, version, len(self.data.modules), events_total
 
     async def module(
         self,
@@ -434,29 +482,149 @@ class _Loader:
                 await self.link(objective, [outcomes[ref] for ref in raw_objective.links])
         return len(raw.events)
 
+    async def _event(self, module: Module, title: str) -> LearningEvent:
+        event = await self.db.scalar(
+            select(LearningEvent).where(
+                LearningEvent.module_id == module.id,
+                LearningEvent.title == title,
+                LearningEvent.deleted_at.is_(None),
+            )
+        )
+        if event is None:
+            raise InvalidRequestError(f"{module.code} has no session '{title}'.")
+        return event
+
+    async def next_year(self, published: CurriculumVersion) -> CurriculumVersion:
+        """Copy the published version forward to a draft and make the demo changes."""
+        changes = self.data.next_year
+        draft = await copy_forward(
+            self.db, None, published, academic_year=published.academic_year + 1
+        )
+        modules = {
+            module.code: module
+            for module in await self.db.scalars(
+                select(Module).where(Module.version_id == draft.id, Module.deleted_at.is_(None))
+            )
+        }
+        raw_modules = {module.code: module for module in self.data.modules}
+
+        for change in changes.change_sessions:
+            event = await self._event(modules[change.module], change.title)
+            fields: dict[str, object] = {}
+            if change.new_title is not None:
+                fields["title"] = change.new_title
+            if change.contact_minutes is not None:
+                fields["contact_minutes"] = change.contact_minutes
+            await update_event(self.db, event, draft, fields)
+
+        for added in changes.add_sessions:
+            module, raw = modules[added.module], added.event
+            event = await create_event(
+                self.db,
+                module,
+                draft,
+                EventFields(
+                    title=raw.title,
+                    format_value_id=self.tags["teaching-methods"][raw.format].id,
+                    contact_minutes=raw.contact_minutes,
+                    self_study_minutes=raw.self_study_minutes,
+                    week=raw.week,
+                ),
+            )
+            for theme in raw.themes:
+                await tag_item(self.db, self.tags["themes"][theme], event)
+            outcome_texts = {o.ref: o.text for o in raw_modules[added.module].outcomes}
+            for position, raw_objective in enumerate(raw.objectives):
+                objective = await add_objective(
+                    self.db,
+                    event,
+                    raw_objective.text,
+                    domain=ObjectiveDomain(raw_objective.domain),
+                    position=position,
+                )
+                objective.taxonomy_level_id = self.levels[raw_objective.level].id
+                objective.status = ObjectiveStatus.APPROVED
+                for ref in raw_objective.links:
+                    parent = await self.db.scalar(
+                        select(Objective).where(
+                            Objective.module_id == module.id,
+                            Objective.text == outcome_texts[ref],
+                            Objective.deleted_at.is_(None),
+                        )
+                    )
+                    if parent is None:
+                        raise InvalidRequestError(f"{module.code}: outcome {ref} is missing.")
+                    await link_objectives(self.db, objective, parent)
+
+        for removed in changes.remove_sessions:
+            event = await self._event(modules[removed.module], removed.title)
+            await delete_event(self.db, event, draft)
+
+        for reword in changes.reword_objectives:
+            event = await self._event(modules[reword.module], reword.session)
+            found = await self.db.scalar(
+                select(Objective).where(
+                    Objective.learning_event_id == event.id,
+                    Objective.text == reword.text,
+                    Objective.deleted_at.is_(None),
+                )
+            )
+            if found is None:
+                raise InvalidRequestError(f"{reword.session}: objective not found.")
+            found.text = reword.new_text
+        await self.db.flush()
+        return draft
+
 
 async def load_demo(db: AsyncSession, data: DemoData | None = None) -> DemoSummary:
-    """Load the demo dataset in one transaction.
+    """Load the demo dataset in one transaction (or add the draft to an earlier load).
 
     Raises:
-        ConflictError: If the demo programme is already loaded.
+        ConflictError: If the demo programme is already loaded with its draft.
     """
     data = data or load_data()
-    already = await db.scalar(
-        select(Programme.id).where(
+    existing = await db.scalar(
+        select(Programme).where(
             Programme.code == data.programme.code, Programme.deleted_at.is_(None)
         )
     )
-    if already:
-        raise ConflictError(f"The demo programme {data.programme.code} is already loaded.")
-
     loader = _Loader(db, data)
+    if existing is not None:
+        versions = list(
+            await db.scalars(
+                select(CurriculumVersion).where(
+                    CurriculumVersion.programme_id == existing.id,
+                    CurriculumVersion.deleted_at.is_(None),
+                )
+            )
+        )
+        if len(versions) != 1 or versions[0].status != VersionStatus.PUBLISHED:
+            raise ConflictError(f"The demo programme {data.programme.code} is already loaded.")
+        # Loaded before the demo had a draft: add it.
+        with audit_operation("demo.load"):
+            await loader.framework()
+            await loader.tag_lists()
+            draft = await loader.next_year(versions[0])
+        return DemoSummary(
+            programme=existing,
+            modules=0,
+            learning_events=0,
+            objectives=0,
+            objective_links=0,
+            framework_items=len(loader.items),
+            mappings=0,
+            tag_lists=len(loader.tags),
+            draft_year=draft.academic_year,
+            draft_only=True,
+        )
+
     with audit_operation("demo.load"):
         institution = await loader.institution()
         faculty = await loader.faculty(institution)
         await loader.framework()
         await loader.tag_lists()
-        programme, modules, events = await loader.curriculum(faculty)
+        programme, published, modules, events = await loader.curriculum(faculty)
+        draft = await loader.next_year(published)
     return DemoSummary(
         programme=programme,
         modules=modules,
@@ -466,4 +634,5 @@ async def load_demo(db: AsyncSession, data: DemoData | None = None) -> DemoSumma
         framework_items=len(loader.items),
         mappings=loader.mappings,
         tag_lists=len(loader.tags),
+        draft_year=draft.academic_year,
     )

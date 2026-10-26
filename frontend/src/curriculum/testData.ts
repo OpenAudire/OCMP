@@ -107,4 +107,6 @@ export const structure: VersionStructure = {
   ],
   modules_without_phase: [module({ id: 'm3', code: 'HSC300', name: 'Research thread' })],
   can_edit: false,
+  can_change_status: false,
+  can_copy_forward: false,
 };

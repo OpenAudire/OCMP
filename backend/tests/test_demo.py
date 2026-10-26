@@ -24,6 +24,7 @@ from app.models.curriculum import ObjectiveLevel, VersionStatus
 from app.models.framework import FrameworkStatus
 from app.models.mapping import MappingStatus
 from app.services.authorization import ConflictError
+from app.services.curriculum_diff import Change, ItemKind, diff_versions
 from tests.factories import InstitutionFactory
 
 
@@ -68,14 +69,23 @@ class TestLoad:
         """One load, checked from every side (each load takes seconds)."""
         summary = await load_demo(db_session)
 
-        # Counts from the brief.
+        # Counts from the brief, in the published version.
         assert (summary.modules, summary.learning_events, summary.objectives) == (3, 20, 60)
         assert (summary.framework_items, summary.mappings, summary.tag_lists) == (8, 13, 3)
-        assert await count(db_session, Module) == 3
-        assert await count(db_session, Module, Module.phase_id.is_(None)) == 1  # longitudinal
-        assert await count(db_session, LearningEvent) == 20
+        version = (
+            await db_session.execute(
+                select(CurriculumVersion).where(CurriculumVersion.status == VersionStatus.PUBLISHED)
+            )
+        ).scalar_one()
+        in_version = Module.version_id == version.id
+        modules = select(Module.id).where(in_version)
+        assert await count(db_session, Module, in_version) == 3
+        assert await count(db_session, Module, in_version, Module.phase_id.is_(None)) == 1
+        assert await count(db_session, LearningEvent, LearningEvent.module_id.in_(modules)) == 20
         by_level = {
-            level: await count(db_session, Objective, Objective.level == level)
+            level: await count(
+                db_session, Objective, Objective.level == level, Objective.version_id == version.id
+            )
             for level in ObjectiveLevel
         }
         assert by_level == {
@@ -84,10 +94,7 @@ class TestLoad:
             ObjectiveLevel.LEARNING_EVENT: 42,
         }
 
-        # Published version; every non-programme objective linked upward and classified.
-        version = (await db_session.execute(select(CurriculumVersion))).scalar_one()
-        assert version.status == VersionStatus.PUBLISHED
-        assert await count(db_session, ObjectiveLink) == summary.objective_links
+        # Every non-programme objective linked upward and classified.
         unlinked = await db_session.scalar(
             select(func.count())
             .select_from(Objective)
@@ -102,12 +109,51 @@ class TestLoad:
 
         # Formats, tags, mappings, active framework.
         assert await count(db_session, LearningEvent, LearningEvent.format_value_id.is_(None)) == 0
-        assert await count(db_session, Tagging, Tagging.module_id.is_not(None)) == 6
+        assert await count(db_session, Tagging, Tagging.module_id.in_(modules)) == 6
         assert await count(db_session, Tagging, Tagging.learning_event_id.is_not(None)) > 0
         accepted = MappingLink.status == MappingStatus.ACCEPTED
-        assert await count(db_session, MappingLink, accepted) == 13
+        published_objectives = select(Objective.id).where(Objective.version_id == version.id)
+        assert (
+            await count(
+                db_session,
+                MappingLink,
+                accepted,
+                MappingLink.objective_id.in_(published_objectives),
+            )
+            == 13
+        )
         framework = (await db_session.execute(select(Framework))).scalar_one()
         assert framework.status == FrameworkStatus.ACTIVE
+
+        # The next year's draft, copied forward and changed.
+        draft = (
+            await db_session.execute(
+                select(CurriculumVersion).where(CurriculumVersion.status == VersionStatus.DRAFT)
+            )
+        ).scalar_one()
+        assert summary.draft_year == draft.academic_year == version.academic_year + 1
+        assert draft.based_on_id == version.id
+        draft_modules = select(Module.id).where(Module.version_id == draft.id)
+        live_events = (
+            LearningEvent.module_id.in_(draft_modules),
+            LearningEvent.deleted_at.is_(None),
+        )
+        assert await count(db_session, LearningEvent, *live_events) == 20
+        titles = set(await db_session.scalars(select(LearningEvent.title).where(*live_events)))
+        assert "Reading and summarising a research paper" in titles
+        assert "The nervous system" in titles
+        assert "Portfolio reflection" not in titles
+        assert await count(db_session, MappingLink, accepted) == 26
+        diff = await diff_versions(db_session, version, draft)
+        assert {(c.kind, c.change) for c in diff.changes} == {
+            (ItemKind.LEARNING_EVENT, Change.CHANGED),
+            (ItemKind.LEARNING_EVENT, Change.ADDED),
+            (ItemKind.LEARNING_EVENT, Change.REMOVED),
+            (ItemKind.OBJECTIVE, Change.ADDED),
+            (ItemKind.OBJECTIVE, Change.REMOVED),
+            (ItemKind.OBJECTIVE, Change.CHANGED),
+        }
+        assert diff.count(ItemKind.LEARNING_EVENT, Change.CHANGED) == 2
 
         # A bare install gets the demo institution, with the health profile.
         institution = (await db_session.execute(select(Institution))).scalar_one()
@@ -123,7 +169,30 @@ class TestLoad:
         # Loading again is refused and changes nothing.
         with pytest.raises(ConflictError, match="already loaded"):
             await load_demo(db_session)
-        assert await count(db_session, Module) == 3
+        assert await count(db_session, Module) == 6
+
+    async def test_adds_the_draft_to_an_earlier_load(self, db_session: AsyncSession) -> None:
+        """Installs that loaded the demo before it had a draft get the draft added."""
+        await load_demo(db_session)
+        draft = (
+            await db_session.execute(
+                select(CurriculumVersion).where(CurriculumVersion.status == VersionStatus.DRAFT)
+            )
+        ).scalar_one()
+        draft.soft_delete()
+        await db_session.flush()
+
+        summary = await load_demo(db_session)
+
+        assert summary.draft_only is True
+        drafts = await count(
+            db_session,
+            CurriculumVersion,
+            CurriculumVersion.status == VersionStatus.DRAFT,
+            CurriculumVersion.deleted_at.is_(None),
+        )
+        assert drafts == 1
+        assert summary.draft_year == draft.academic_year
 
     async def test_uses_the_existing_institution(self, db_session: AsyncSession) -> None:
         mine = InstitutionFactory(name="My University", short_code="MINE")

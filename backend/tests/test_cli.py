@@ -115,10 +115,12 @@ def test_load_demo(
     calls = []
 
     async def fake_load_demo(_db: object) -> SimpleNamespace:
-        if calls:
+        if len(calls) == 2:
             raise ConflictError("The demo programme BHS-DEMO is already loaded.")
         calls.append(1)
         return SimpleNamespace(
+            draft_only=len(calls) == 2,
+            draft_year=2027,
             programme=SimpleNamespace(name="BSc Health Sciences (Demo)"),
             modules=3,
             learning_events=20,
@@ -132,6 +134,11 @@ def test_load_demo(
     monkeypatch.setattr(cli, "load_demo", fake_load_demo)
 
     assert cli.main(["load-demo"]) == 0
-    assert "3 modules, 20 sessions, 60 objectives" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "3 modules, 20 sessions, 60 objectives" in out
+    assert "draft for 2027 copied forward" in out
+    # An earlier load without the draft gets it added.
+    assert cli.main(["load-demo"]) == 0
+    assert "Added the 2027 draft" in capsys.readouterr().out
     assert cli.main(["load-demo"]) == 0
     assert "already loaded" in capsys.readouterr().out

@@ -1,0 +1,147 @@
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.select {
+  flex: 0 1 280px;
+  min-width: 200px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 26px;
+}
+
+@media (max-width: 48em) {
+  .card {
+    padding: 20px;
+  }
+}
+
+.sectionTitle {
+  font-size: 19px;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summaryItem dt {
+  font-size: 13px;
+  color: var(--cic-muted);
+}
+
+.summaryItem dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 0;
+  border-top: 1px solid var(--cic-line);
+}
+
+.item:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.itemHead {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.itemText {
+  min-width: 0;
+}
+
+.label {
+  overflow-wrap: anywhere;
+}
+
+/* The change is named in text; the colour only repeats it. */
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--cic-soft);
+  color: var(--cic-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chip[data-change='added'] {
+  background: var(--cic-brand-soft);
+  color: var(--cic-brand-ink);
+}
+
+.chip[data-change='removed'] {
+  background: var(--cic-warm-soft);
+  color: var(--cic-warm-ink);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--cic-line);
+}
+
+.field dt {
+  font-size: 13px;
+  color: var(--cic-muted);
+}
+
+.field dd {
+  margin: 2px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.valueLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cic-muted);
+}
+
+.before {
+  color: var(--cic-muted);
+}
+
+.after {
+  color: var(--cic-ink);
+}

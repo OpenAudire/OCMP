@@ -209,5 +209,23 @@
         ]}
       ]
     }
-  ]
+  ],
+  "next_year": {
+    "_comment": "The next academic year's draft is copied forward from the published version, then these changes are made, so the version diff has something to show.",
+    "change_sessions": [
+      {"module": "HIC201", "title": "Reading a research paper", "new_title": "Reading and summarising a research paper"},
+      {"module": "HIC201", "title": "Community visit", "contact_minutes": 300}
+    ],
+    "add_sessions": [
+      {"module": "HBIO101", "event": {"title": "The nervous system", "format": "lecture", "contact_minutes": 90, "self_study_minutes": 120, "week": 4, "objectives": [
+        {"text": "Describe how a nerve impulse travels along a neuron.", "domain": "knowledge", "level": "Understand", "links": ["HBIO-O2"]}
+      ]}}
+    ],
+    "remove_sessions": [
+      {"module": "CPP100", "title": "Portfolio reflection"}
+    ],
+    "reword_objectives": [
+      {"module": "HBIO101", "session": "Cells and tissues", "text": "Identify the main cell organelles and state their functions.", "new_text": "Identify the main cell organelles and explain the function of each."}
+    ]
+  }
 }

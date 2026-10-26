@@ -74,9 +74,43 @@ change the structure. The API checks every change; the buttons only follow the r
 - Every change is recorded in the audit log with who made it (`curriculum.phase_create`,
   `curriculum.module_update`, `curriculum.learning_event_delete`,
   `curriculum.module_move`, `curriculum.phase_copy` and so on).
-- **Archived** versions cannot be changed. Until publishing rules arrive, draft and
-  published versions can both be edited.
+- Only **draft** versions can be changed; published and archived versions are read-only
+  (409). See "Publishing and copying a year forward" below.
 - Roles held at a deleted module or session stay listed but give no access to anything.
+
+## Publishing and copying a year forward
+
+Each programme has one version per academic year. A version is a **draft** (editable, seen
+only by staff), **published** (read-only, seen by students and everyone who may view
+published versions) or **archived** (read-only, hidden from students).
+
+| Action | Needs | Notes |
+|---|---|---|
+| Publish a draft | `curriculum.publish` at the programme | The draft needs at least one module. |
+| Return a published version to draft | `curriculum.publish` | To correct it; students stop seeing it until it is published again. |
+| Archive a published version, or publish an archived one again | `curriculum.publish` | |
+| Copy a version forward | `curriculum.edit` at the programme | Makes a new draft for a free academic year. |
+| Copy role assignments along | also `roles.assign` and every permission of each role | |
+| Delete a draft | `curriculum.edit` at the programme | Soft delete of the version and its contents; the year becomes free. |
+| Compare two versions | seeing both whole | Added, removed and changed items. |
+
+- **Copy forward** copies every phase, module, session and objective (programme outcomes
+  too), their upward links, tags and framework links with their review state. LMS
+  references are not copied. Each copied item remembers its original, so the comparison
+  follows items across years even when they are renamed.
+- **Role assignments** at modules and sessions are listed in the copy dialog with every
+  person's name; each is ticked by default and can be unticked. Assignments that have ended,
+  or whose account is deactivated or deleted, or whose role you may not grant, are shown as
+  not copied. People who cannot assign roles copy the structure without roles.
+- **Compare versions** lists phases, modules, sessions and objectives that were added,
+  removed or changed, with the old and new value of each changed field. Items are matched
+  by their copy history first, then by phase name, module code, session title and
+  objective text. Order, upward links, tags and framework links are not compared.
+- Audit labels: `curriculum.version_publish`, `_unpublish`, `_archive`, `_unarchive`,
+  `_copy_forward` and `_delete`.
+- The demo programme has a published version for the current year and a draft for the
+  next year, made by copy forward with a few changes so the comparison has something to
+  show. Running `load-demo` again on an install loaded earlier adds the draft.
 
 ## Managing users before the admin screens exist
 

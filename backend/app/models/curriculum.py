@@ -215,6 +215,10 @@ class Phase(Audited, SoftDeleteMixin, CoreModel):
         default=PhaseKind.YEAR,
         server_default=PhaseKind.YEAR.value,
     )
+    # Copy forward: the item of the earlier version this one continues (version diff).
+    based_on_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("phases.id", ondelete="SET NULL"), default=None, index=True
+    )
 
     version: Mapped[CurriculumVersion] = relationship(back_populates="phases", lazy="raise")
 
@@ -250,6 +254,10 @@ class Module(Audited, SoftDeleteMixin, CoreModel):
     description: Mapped[str] = mapped_column(Text, default="", server_default="")
     external_lms_ref: Mapped[str | None] = mapped_column(String(255), default=None)
     position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    # Copy forward: the item of the earlier version this one continues (version diff).
+    based_on_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("modules.id", ondelete="SET NULL"), default=None, index=True
+    )
 
     version: Mapped[CurriculumVersion] = relationship(back_populates="modules", lazy="raise")
     phase: Mapped[Phase | None] = relationship(
@@ -287,6 +295,10 @@ class LearningEvent(Audited, SoftDeleteMixin, CoreModel):
     week: Mapped[int | None] = mapped_column(Integer, default=None)
     description: Mapped[str] = mapped_column(Text, default="", server_default="")
     external_lms_ref: Mapped[str | None] = mapped_column(String(255), default=None)
+    # Copy forward: the item of the earlier version this one continues (version diff).
+    based_on_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("learning_events.id", ondelete="SET NULL"), default=None, index=True
+    )
 
     module: Mapped[Module] = relationship(back_populates="learning_events", lazy="raise")
 
@@ -339,6 +351,10 @@ class Objective(Audited, SoftDeleteMixin, CoreModel):
         server_default=ObjectiveStatus.DRAFT.value,
     )
     position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    # Copy forward: the item of the earlier version this one continues (version diff).
+    based_on_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("objectives.id", ondelete="SET NULL"), default=None, index=True
+    )
 
     parent_links: Mapped[list["ObjectiveLink"]] = relationship(
         foreign_keys="ObjectiveLink.child_id", back_populates="child", lazy="raise"

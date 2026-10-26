@@ -228,8 +228,10 @@ To explore Curriculum in Context before entering real curricula, load the fictio
 docker compose exec api python -m app.cli load-demo
 ```
 
-It adds 3 modules, 20 sessions, 60 objectives, a demo competency framework and Bloom and
-Miller scales. There is no command to remove it yet, so load it on a trial installation
+It adds a published version for the current year (3 modules, 20 sessions, 60 objectives), a
+draft for the next year copied forward from it with a few changes, a demo competency
+framework and Bloom and Miller scales. Running it again on an install loaded before the
+draft existed adds the draft. There is no command to remove it yet, so load it on a trial installation
 rather than the production server.
 
 ## Troubleshooting

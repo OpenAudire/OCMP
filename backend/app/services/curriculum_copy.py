@@ -16,6 +16,11 @@ another phase goes to the end of that phase). What a copy takes along (ADR 029):
 Not copied: framework mappings (reviewed decisions about one objective), role
 assignments, deleted rows and links from objectives outside the copy.
 
+Copying a whole version forward to a new academic year (``curriculum_versions``)
+reuses these helpers with ``Copies.version_id`` set: the rows go to the new
+version, programme outcomes come along, and every copy records its original in
+``based_on_id`` (ADR 030).
+
 Permissions are checked by the API; all rows are added through the ORM so the
 audit log records them (ADR 017).
 """
@@ -24,7 +29,7 @@ import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
@@ -36,6 +41,7 @@ from app.models import (
     Phase,
     Tagging,
 )
+from app.models.curriculum import ObjectiveLevel
 from app.services.authorization import ConflictError, InvalidRequestError
 from app.services.curriculum_edit import (
     ensure_editable,
@@ -46,13 +52,24 @@ from app.services.curriculum_edit import (
 
 
 @dataclass
-class _Copies:
+class Copies:
     """Old id to copied row, for remapping links and taggings."""
 
     actor_id: uuid.UUID | None
+    # Copy forward: the version copied from and the new version (None: same version).
+    source_version_id: uuid.UUID | None = None
+    version_id: uuid.UUID | None = None
     modules: dict[uuid.UUID, Module] = field(default_factory=dict)
     events: dict[uuid.UUID, LearningEvent] = field(default_factory=dict)
     objectives: dict[uuid.UUID, Objective] = field(default_factory=dict)
+
+    @property
+    def forward(self) -> bool:
+        return self.version_id is not None
+
+    def based_on(self, original_id: uuid.UUID) -> uuid.UUID | None:
+        """The original's id, recorded on copies made by copy forward only."""
+        return original_id if self.forward else None
 
 
 def _insert_after(
@@ -90,7 +107,7 @@ async def _check_codes(db: AsyncSession, version_id: uuid.UUID, codes: Iterable[
 
 
 def _copy_event(
-    event: LearningEvent, module_id: uuid.UUID, position: int, copies: _Copies, title: str
+    event: LearningEvent, module_id: uuid.UUID, position: int, copies: Copies, title: str
 ) -> LearningEvent:
     copy = LearningEvent(
         module_id=module_id,
@@ -102,13 +119,14 @@ def _copy_event(
         week=event.week,
         description=event.description,
         external_lms_ref=None,
+        based_on_id=copies.based_on(event.id),
         created_by_id=copies.actor_id,
     )
     copies.events[event.id] = copy
     return copy
 
 
-async def _copy_module_rows(
+async def copy_module_rows(
     db: AsyncSession,
     module: Module,
     *,
@@ -116,10 +134,10 @@ async def _copy_module_rows(
     name: str,
     phase_id: uuid.UUID | None,
     position: int,
-    copies: _Copies,
+    copies: Copies,
 ) -> Module:
     copy = Module(
-        version_id=module.version_id,
+        version_id=copies.version_id or module.version_id,
         phase_id=phase_id,
         code=code,
         name=name,
@@ -128,6 +146,7 @@ async def _copy_module_rows(
         description=module.description,
         external_lms_ref=None,
         position=position,
+        based_on_id=copies.based_on(module.id),
         created_by_id=copies.actor_id,
     )
     db.add(copy)
@@ -138,10 +157,18 @@ async def _copy_module_rows(
     return copy
 
 
-async def _copy_objectives(db: AsyncSession, copies: _Copies) -> None:
-    """Copy the live objectives of the copied modules and sessions, then their links."""
+async def _copy_objectives(db: AsyncSession, copies: Copies) -> None:
+    """Copy the live objectives of the copied modules and sessions (and, for copy
+    forward, the programme outcomes), then their links."""
     await db.flush()
     owners = []
+    if copies.source_version_id is not None:
+        owners.append(
+            and_(
+                Objective.version_id == copies.source_version_id,
+                Objective.level == ObjectiveLevel.PROGRAMME,
+            )
+        )
     if copies.modules:
         owners.append(Objective.module_id.in_(list(copies.modules)))
     if copies.events:
@@ -161,7 +188,7 @@ async def _copy_objectives(db: AsyncSession, copies: _Copies) -> None:
             copies.events.get(objective.learning_event_id) if objective.learning_event_id else None
         )
         copy = Objective(
-            version_id=objective.version_id,
+            version_id=copies.version_id or objective.version_id,
             level=objective.level,
             module_id=module.id if module else None,
             learning_event_id=event.id if event else None,
@@ -172,6 +199,7 @@ async def _copy_objectives(db: AsyncSession, copies: _Copies) -> None:
             quality_flags=list(objective.quality_flags),
             status=objective.status,
             position=objective.position,
+            based_on_id=copies.based_on(objective.id),
             created_by_id=copies.actor_id,
         )
         db.add(copy)
@@ -187,6 +215,8 @@ async def _copy_objectives(db: AsyncSession, copies: _Copies) -> None:
     )
     for link in links.scalars():
         parent = copies.objectives.get(link.parent_id)
+        if parent is None and copies.forward:
+            continue  # links never leave a version
         db.add(
             ObjectiveLink(
                 child_id=copies.objectives[link.child_id].id,
@@ -197,7 +227,7 @@ async def _copy_objectives(db: AsyncSession, copies: _Copies) -> None:
     await db.flush()
 
 
-async def _copy_taggings(db: AsyncSession, copies: _Copies) -> None:
+async def _copy_taggings(db: AsyncSession, copies: Copies) -> None:
     """Copy the taggings of every copied item; inherited ones from a copied source
     come from the source's copy."""
     columns = (
@@ -242,7 +272,7 @@ async def _copy_taggings(db: AsyncSession, copies: _Copies) -> None:
         pending = waiting
 
 
-async def _copy_children(db: AsyncSession, copies: _Copies) -> None:
+async def copy_children(db: AsyncSession, copies: Copies) -> None:
     await _copy_objectives(db, copies)
     await _copy_taggings(db, copies)
 
@@ -271,11 +301,11 @@ async def copy_event(
 ) -> LearningEvent:
     """Copy a session, with its objectives, right after it in the same module."""
     ensure_editable(version)
-    copies = _Copies(created_by_id)
+    copies = Copies(created_by_id)
     position = _insert_after(await event_siblings(db, event.module_id), event.id)
     copy = _copy_event(event, event.module_id, position, copies, title)
     db.add(copy)
-    await _copy_children(db, copies)
+    await copy_children(db, copies)
     return copy
 
 
@@ -324,8 +354,8 @@ async def copy_module(
             )
         )
         position = 0 if highest is None else highest + 1
-    copies = _Copies(created_by_id)
-    copy = await _copy_module_rows(
+    copies = Copies(created_by_id)
+    copy = await copy_module_rows(
         db,
         module,
         code=code,
@@ -334,7 +364,7 @@ async def copy_module(
         position=position,
         copies=copies,
     )
-    await _copy_children(db, copies)
+    await copy_children(db, copies)
     return copy
 
 
@@ -377,9 +407,9 @@ async def copy_phase(
         )
     )
     start = 0 if highest is None else highest + 1
-    copies = _Copies(created_by_id)
+    copies = Copies(created_by_id)
     for offset, module in enumerate(modules):
-        await _copy_module_rows(
+        await copy_module_rows(
             db,
             module,
             code=module_codes[module.id],
@@ -388,5 +418,5 @@ async def copy_phase(
             position=start + offset,
             copies=copies,
         )
-    await _copy_children(db, copies)
+    await copy_children(db, copies)
     return copy
