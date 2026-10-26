@@ -10,6 +10,8 @@ import type {
   ModuleCopyInput,
   ModuleInput,
   Objective,
+  ObjectiveInput,
+  ObjectiveOption,
   PhaseCopyInput,
   PhaseInput,
   Programme,
@@ -17,7 +19,9 @@ import type {
   RoleAssignment,
   SavedLearningEvent,
   SavedModule,
+  SavedObjective,
   SavedPhase,
+  TaxonomyScale,
   TeachingFormat,
   User,
   VersionDiff,
@@ -195,6 +199,56 @@ export async function fetchTeachingFormats(): Promise<TeachingFormat[]> {
   return (await api.get<TeachingFormat[]>('/teaching-formats')).data;
 }
 
+/** Taxonomy scales (Bloom, Miller...) with their levels. */
+export async function fetchTaxonomyScales(): Promise<TaxonomyScale[]> {
+  return (await api.get<TaxonomyScale[]>('/taxonomy-scales')).data;
+}
+
+/** Programme outcomes a module outcome can link to (those the user sees). */
+export async function fetchModuleLinkOptions(moduleId: string): Promise<ObjectiveOption[]> {
+  return (await api.get<ObjectiveOption[]>(`/modules/${moduleId}/outcome-link-options`)).data;
+}
+
+/** Outcomes a session objective can link to (those the user sees). */
+export async function fetchEventLinkOptions(eventId: string): Promise<ObjectiveOption[]> {
+  return (await api.get<ObjectiveOption[]>(`/learning-events/${eventId}/objective-link-options`))
+    .data;
+}
+
+export async function createProgrammeOutcome(
+  versionId: string,
+  input: ObjectiveInput
+): Promise<SavedObjective> {
+  return (await api.post<SavedObjective>(`/curriculum-versions/${versionId}/outcomes`, input))
+    .data;
+}
+
+export async function createModuleOutcome(
+  moduleId: string,
+  input: ObjectiveInput
+): Promise<SavedObjective> {
+  return (await api.post<SavedObjective>(`/modules/${moduleId}/outcomes`, input)).data;
+}
+
+export async function createEventObjective(
+  eventId: string,
+  input: ObjectiveInput
+): Promise<SavedObjective> {
+  return (await api.post<SavedObjective>(`/learning-events/${eventId}/objectives`, input)).data;
+}
+
+/** Only the fields sent are changed. */
+export async function updateObjective(
+  id: string,
+  input: Partial<ObjectiveInput>
+): Promise<SavedObjective> {
+  return (await api.patch<SavedObjective>(`/objectives/${id}`, input)).data;
+}
+
+export async function deleteObjective(id: string): Promise<void> {
+  await api.delete(`/objectives/${id}`);
+}
+
 /** Publish, return to draft, archive or unarchive a version. */
 export async function changeVersionStatus(
   versionId: string,
@@ -249,6 +303,8 @@ export const queryKeys = {
   module: (id: string) => ['modules', id] as const,
   learningEvent: (id: string) => ['learning-events', id] as const,
   teachingFormats: ['teaching-formats'] as const,
+  taxonomyScales: ['taxonomy-scales'] as const,
+  linkOptions: (kind: 'module' | 'event', id: string) => ['link-options', kind, id] as const,
   copyForward: (id: string) => ['curriculum-versions', id, 'copy-forward'] as const,
   versionDiff: (id: string, base: string) => ['curriculum-versions', id, 'diff', base] as const,
 };

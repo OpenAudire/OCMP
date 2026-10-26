@@ -153,15 +153,54 @@ export interface VersionStructure {
   can_change_status: boolean;
   /** The user may copy the version forward, and delete it while it is a draft. */
   can_copy_forward: boolean;
+  /** The user may add, change and delete programme outcomes (drafts only). */
+  can_edit_outcomes: boolean;
 }
 
 export interface Objective {
   id: string;
   text: string;
   domain: ObjectiveDomain | null;
+  taxonomy_level_id: string | null;
   status: ObjectiveStatus;
   position: number;
   parent_ids: string[];
+}
+
+/** Fields of an objective that can be saved; `parent_ids` replaces the links on offer. */
+export interface ObjectiveInput {
+  text: string;
+  domain: ObjectiveDomain | null;
+  taxonomy_level_id: string | null;
+  status: ObjectiveStatus;
+  parent_ids: string[];
+}
+
+export interface SavedObjective extends Objective {
+  level: 'programme' | 'module' | 'learning_event';
+}
+
+/** A broader objective that can be chosen as an upward link. */
+export interface ObjectiveOption {
+  id: string;
+  level: 'programme' | 'module';
+  text: string;
+  /** Code of the module the outcome belongs to; null for programme outcomes. */
+  module_code: string | null;
+}
+
+export interface TaxonomyLevel {
+  id: string;
+  name: string;
+  position: number;
+  description: string;
+}
+
+export interface TaxonomyScale {
+  key: string;
+  name: string;
+  description: string;
+  levels: TaxonomyLevel[];
 }
 
 export interface ModuleDetail {
@@ -178,6 +217,8 @@ export interface ModuleDetail {
   contact_minutes: number;
   self_study_minutes: number;
   outcomes: Objective[];
+  /** The user may add, change and delete the module's outcomes (drafts only). */
+  can_edit_objectives: boolean;
 }
 
 export interface LearningEventDetail {
@@ -193,6 +234,8 @@ export interface LearningEventDetail {
   description: string;
   external_lms_ref: string | null;
   objectives: Objective[];
+  /** The user may add, change and delete the session's objectives (drafts only). */
+  can_edit_objectives: boolean;
 }
 
 export interface PhaseInput {

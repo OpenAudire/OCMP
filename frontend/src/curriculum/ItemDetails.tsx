@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Button, Group, Paper, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
@@ -8,6 +9,7 @@ import {
   fetchModule,
   fetchProgramme,
   fetchProgrammeOutcomes,
+  fetchTaxonomyScales,
   queryKeys,
 } from '../api/endpoints';
 import type {
@@ -17,6 +19,8 @@ import type {
   StructurePhase,
   VersionStructure,
 } from '../api/types';
+import { objectiveNoun, type EditResult, type ObjectiveOwner } from './editing';
+import { ObjectiveDeleteDialog, ObjectiveDialog } from './ObjectiveDialog';
 import type { TreeItem } from './treeModel';
 import classes from './ItemDetails.module.css';
 
@@ -70,6 +74,16 @@ interface ObjectivesProps {
   isPending: boolean;
   isError: boolean;
   onRetry: () => void;
+  /** Who owns the objectives; with `canEdit` the list offers Add, Edit and Delete. */
+  owner: ObjectiveOwner;
+  versionId: string;
+  canEdit: boolean;
+  onSaved: (result: EditResult) => void;
+}
+
+/** A short form of the text for button names, so each button is told apart. */
+function excerpt(text: string): string {
+  return text.length > 60 ? `${text.slice(0, 57)}…` : text;
 }
 
 function Objectives({
@@ -79,13 +93,52 @@ function Objectives({
   isPending,
   isError,
   onRetry,
+  owner,
+  versionId,
+  canEdit,
+  onSaved,
 }: ObjectivesProps) {
   const { t } = useTranslation();
+  const noun = objectiveNoun(t, owner);
+  const [dialog, setDialog] = useState<'add' | 'edit' | 'delete' | null>(null);
+  // The objective being changed; kept while the dialog closes so it does not flash.
+  const [current, setCurrent] = useState<Objective | null>(null);
+  const open = (kind: 'edit' | 'delete', objective: Objective) => {
+    setCurrent(objective);
+    setDialog(kind);
+  };
+  const scales = useQuery({
+    queryKey: queryKeys.taxonomyScales,
+    queryFn: fetchTaxonomyScales,
+    enabled: (objectives ?? []).some((objective) => objective.taxonomy_level_id !== null),
+  });
+  const levelNames = new Map(
+    (scales.data ?? []).flatMap((scale) =>
+      scale.levels.map((level) => [level.id, `${scale.name}: ${level.name}`] as const)
+    )
+  );
+  const close = () => setDialog(null);
+  const saved = (result: EditResult) => {
+    setDialog(null);
+    onSaved(result);
+  };
+  const common = { versionId, owner, onClose: close, onSaved: saved };
   return (
     <Paper withBorder className={classes.card} component="section" aria-label={title}>
-      <Title order={3} className={classes.sectionTitle}>
-        {title}
-      </Title>
+      <Group justify="space-between" gap="sm">
+        <Title order={3} className={classes.sectionTitle}>
+          {title}
+        </Title>
+        {canEdit && (
+          <Button
+            variant="default"
+            leftSection={<IconPlus size={18} aria-hidden />}
+            onClick={() => setDialog('add')}
+          >
+            {t('curriculum.edit.add', { noun })}
+          </Button>
+        )}
+      </Group>
       {isPending ? (
         <Stack gap={10} aria-busy="true">
           <Text role="status" size="sm" c="dimmed">
@@ -114,6 +167,9 @@ function Objectives({
                     ? t(`curriculum.domain.${objective.domain}`)
                     : t('curriculum.domain.none')}
                 </span>
+                {objective.taxonomy_level_id && levelNames.has(objective.taxonomy_level_id) && (
+                  <span className={classes.chip}>{levelNames.get(objective.taxonomy_level_id)}</span>
+                )}
                 <span className={classes.chip}>
                   {t(`curriculum.objectiveStatus.${objective.status}`)}
                 </span>
@@ -125,15 +181,58 @@ function Objectives({
                   </span>
                 )}
               </Group>
+              {canEdit && (
+                <Group gap="sm">
+                  <Button
+                    variant="default"
+                    leftSection={<IconPencil size={18} aria-hidden />}
+                    aria-label={t('curriculum.objectives.editOne', {
+                      noun,
+                      text: excerpt(objective.text),
+                    })}
+                    onClick={() => open('edit', objective)}
+                  >
+                    {t('curriculum.edit.edit', { noun })}
+                  </Button>
+                  <Button
+                    variant="default"
+                    leftSection={<IconTrash size={18} aria-hidden />}
+                    aria-label={t('curriculum.objectives.deleteOne', {
+                      noun,
+                      text: excerpt(objective.text),
+                    })}
+                    onClick={() => open('delete', objective)}
+                  >
+                    {t('curriculum.edit.delete', { noun })}
+                  </Button>
+                </Group>
+              )}
             </li>
           ))}
         </ol>
+      )}
+      {canEdit && (
+        <>
+          <ObjectiveDialog opened={dialog === 'add'} {...common} />
+          {current && (
+            <>
+              <ObjectiveDialog opened={dialog === 'edit'} objective={current} {...common} />
+              <ObjectiveDeleteDialog opened={dialog === 'delete'} objective={current} {...common} />
+            </>
+          )}
+        </>
       )}
     </Paper>
   );
 }
 
-function ProgrammeDetails({ structure }: { structure: VersionStructure }) {
+function ProgrammeDetails({
+  structure,
+  onSaved,
+}: {
+  structure: VersionStructure;
+  onSaved: (result: EditResult) => void;
+}) {
   const { t } = useTranslation();
   const number = useNumber();
   const programme = useQuery({
@@ -196,6 +295,10 @@ function ProgrammeDetails({ structure }: { structure: VersionStructure }) {
           isPending={outcomes.isPending}
           isError={outcomes.isError}
           onRetry={() => void outcomes.refetch()}
+          owner={{ kind: 'programme' }}
+          versionId={structure.version.id}
+          canEdit={structure.can_edit_outcomes}
+          onSaved={onSaved}
         />
       )}
     </>
@@ -238,9 +341,13 @@ function GroupDetails({
 function ModuleDetails({
   module,
   phase,
+  versionId,
+  onSaved,
 }: {
   module: StructureModule;
   phase: StructurePhase | null;
+  versionId: string;
+  onSaved: (result: EditResult) => void;
 }) {
   const { t } = useTranslation();
   const number = useNumber();
@@ -313,6 +420,10 @@ function ModuleDetails({
           isPending={detail.isPending}
           isError={detail.isError}
           onRetry={() => void detail.refetch()}
+          owner={{ kind: 'module', module }}
+          versionId={versionId}
+          canEdit={data?.can_edit_objectives ?? false}
+          onSaved={onSaved}
         />
       )}
     </>
@@ -323,10 +434,14 @@ function EventDetails({
   event,
   module,
   phase,
+  versionId,
+  onSaved,
 }: {
   event: StructureEvent;
   module: StructureModule;
   phase: StructurePhase | null;
+  versionId: string;
+  onSaved: (result: EditResult) => void;
 }) {
   const { t } = useTranslation();
   const number = useNumber();
@@ -369,17 +484,29 @@ function EventDetails({
         isPending={detail.isPending}
         isError={detail.isError}
         onRetry={() => void detail.refetch()}
+        owner={{ kind: 'event', event, module }}
+        versionId={versionId}
+        canEdit={detail.data?.can_edit_objectives ?? false}
+        onSaved={onSaved}
       />
     </>
   );
 }
 
-/** Read-only details of the item selected in the structure tree. */
-export function ItemDetails({ item }: { item: TreeItem }) {
+/** Details of the item selected in the structure tree, with its objectives. */
+export function ItemDetails({
+  item,
+  structure,
+  onSaved,
+}: {
+  item: TreeItem;
+  structure: VersionStructure;
+  onSaved: (result: EditResult) => void;
+}) {
   const { t } = useTranslation();
   switch (item.kind) {
     case 'programme':
-      return <ProgrammeDetails structure={item.structure} />;
+      return <ProgrammeDetails structure={item.structure} onSaved={onSaved} />;
     case 'phase':
       return (
         <GroupDetails
@@ -397,8 +524,23 @@ export function ItemDetails({ item }: { item: TreeItem }) {
         />
       );
     case 'module':
-      return <ModuleDetails module={item.module} phase={item.phase} />;
+      return (
+        <ModuleDetails
+          module={item.module}
+          phase={item.phase}
+          versionId={structure.version.id}
+          onSaved={onSaved}
+        />
+      );
     case 'event':
-      return <EventDetails event={item.event} module={item.module} phase={item.phase} />;
+      return (
+        <EventDetails
+          event={item.event}
+          module={item.module}
+          phase={item.phase}
+          versionId={structure.version.id}
+          onSaved={onSaved}
+        />
+      );
   }
 }

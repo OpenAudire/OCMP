@@ -201,7 +201,7 @@ export function ModuleCount({ count }: { count: number }) {
 - Soft delete via `SoftDeleteMixin` where history matters
 - Relationships use `lazy="raise"`; load related rows explicitly with `selectinload`
 - Register every model in `app/models/__init__.py` so Alembic sees it
-- Scope resolvers for programme, module and learning event live in `app/services/curriculum_scopes.py`
+- Scope resolvers for programme, module and learning event live in `app/services/curriculum_scopes.py`; objectives are edited in `app/services/curriculum_objectives.py` (`objectives.edit` at `objective_scope`, ADR 031)
 - Only draft versions are editable; publishing, copy forward and the version diff live in `app/services/curriculum_versions.py` and `curriculum_diff.py` (ADR 030); copy forward records `based_on_id` on every copied row
 - Curriculum reads filter by what the user may see via `app/services/curriculum_read.py` (ADR 027); not visible = 404
 - Structure changes go through `app/services/curriculum_edit.py`; endpoints resolve their scope with an async

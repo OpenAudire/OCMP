@@ -648,6 +648,13 @@ ADRs. Each can be changed; the last column says how much work that would be.
 | 1.5 | Version diff matches by lineage first, then by phase name, module code, session title and objective text; order, upward links, tags and mappings are not compared | Keeps the first diff readable; the rest can be added later | Easy |
 | 1.5 | Only whole-visible versions of one programme can be compared; the UI offers "Compare versions" to people who see the whole version | Narrow roles see parts of versions only | Easy |
 | 1.5 | Running `load-demo` on an install that has only the published demo version adds the 2027 draft instead of refusing; the draft is made by copy forward plus a few scripted changes | Existing trial installs get the new demo content without a reset | Easy |
+| 1.6 | Objectives are edited with `objectives.edit` (not `curriculum.edit`) at the scope that owns them: programme for programme outcomes, module for module outcomes, session for session objectives (ADR 031) | The permission already exists and matches the brief (lecturers edit their own session objectives, coordinators their module's outcomes) | Easy: scope per endpoint |
+| 1.6 | A person can choose upward links only to outcomes they can see (programme outcomes need the whole version, module outcomes the module); links to outcomes they cannot see stay untouched when they save | Keeps the read rules of ADR 027 (no widening of what a lecturer sees); a lecturer with only a session role cannot choose links yet | Easy: one function (`parent_options`) widens the list |
+| 1.6 | A session objective may link to its own module's outcomes or directly to programme outcomes; a module outcome only to programme outcomes | Matches the existing `link_objectives` rule; traceability works either way | Easy |
+| 1.6 | Any editor may set an objective's status (draft, approved, retired); there is no approval permission | The brief has no approval step for objectives; quality checks arrive in 1.7 | Easy to restrict later |
+| 1.6 | The taxonomy level selector offers the levels of all scales (grouped by scale), not only the institution's default scale | The data model holds one level per objective; the default scale may be Bloom or Miller or a combined scale | Easy |
+| 1.6 | Objective text is limited to 2000 characters; programme and module objectives are called "outcomes" in the UI text, session objectives use `terms.objective` | Longer text is a sign of several objectives in one; the existing screens already say "outcomes" | Easy |
+| 1.6 | Objectives are added at the end; reordering and moving an objective to another session are not part of this slice | The plan lists upward links, domain and level only | Easy: a move endpoint like ADR 029 |
 
 ---
 
@@ -872,3 +879,28 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 **Not in this slice**: compare for people who see only part of a version; comparing order, links, tags or mappings; restoring a deleted draft.
 
 **Commit**: `feat: publish rules, copy academic year forward and version diff`
+
+---
+
+### Slice 1.6: Objective Editor
+**Status**: Complete
+
+**Deliverables**:
+- [x] **Objective API** (ADR 031, `app/services/curriculum_objectives.py`, `app/api/v1/curriculum_objectives.py`): `POST /curriculum-versions/{id}/outcomes` (programme outcome), `POST /modules/{id}/outcomes`, `POST /learning-events/{id}/objectives`, `PATCH`/`DELETE /objectives/{id}`, `GET /modules/{id}/outcome-link-options`, `GET /learning-events/{id}/objective-link-options`, `GET /taxonomy-scales`. No schema change: `Objective` and `ObjectiveLink` already held domain, taxonomy level, status and position
+- [x] **Permissions**: `objectives.edit` at the programme, module or session that owns the objective (`objective_scope`); 404 for what the user cannot see, 403 for visible but not allowed, 409 for non-draft versions. Read responses gained `taxonomy_level_id` on objectives and the flags `can_edit_outcomes` (structure), `can_edit_objectives` (module, session)
+- [x] **Upward links**: `parent_ids` replaces the links to the outcomes the user may see (and so choose); links to outcomes they cannot see are left alone when they save. Rules from `link_objectives` (same version, broader level, a session objective links to its own module's outcomes or programme outcomes) answer 422. Audit labels `curriculum.objective_create`, `_update`, `_delete`
+- [x] **Builder**: Add, Edit and Delete buttons per level in the details panel (named with an excerpt of the wording); one dialog for wording, domain, taxonomy level (grouped by scale), status and the upward-link checkboxes; domain, taxonomy level, status and link chips on each objective; delete confirmation takes focus after deleting. Text from `curriculum.objectives.*` and `terms.*`
+- [x] ADR 031; admin guide section "Who can edit objectives"; CLAUDE.md; seven rows in "Decisions to review"
+- Tidy: the `_`-prefixed target helpers of `curriculum_edit.py` are public (`Target`, `target_of`, ...) because the objective router reuses them
+
+**Verification**:
+- Backend: ruff, ruff format, mypy (80 files) pass; pytest 691 passed against the test database, 97% coverage (35 new in `test_curriculum_objectives_api.py`: sign-in required, director, module coordinator, lecturer, mapper and student, links at each level and their refusals, hidden links kept, null clearing, soft delete, published versions read-only, audit entries, taxonomy scales)
+- Frontend under Node 24.22.1: lint and typecheck pass; 149 tests pass (10 new in `Objectives.test.tsx`: no buttons without rights, chips, add with domain/level/links, edit keeping unseen links, no options, failed save, module outcome, programme outcome, delete, institution wording). The first full run had 3 unrelated timeouts under load; the second run passed (as noted in 1.5)
+- Docker: images rebuilt; Playwright (Chromium) against the stack with the demo data: 53 passed in one full run (4 new in `e2e/curriculum-objectives.spec.ts`, light and dark: add, change and delete a session objective with domain, level and a link; add a module outcome; edit a programme outcome; axe WCAG 2.2 AA on each dialog and state). Each journey makes its own phase, module, session and programme outcome through the API and deletes them afterwards
+- `mkdocs build --strict` passes
+- Not verified here: browsers other than Chromium; screen readers by hand; screenshots of the new dialog by eye; a lecturer-only session in the UI (API tests only); the CI run on GitHub (runs on push)
+
+**Not in this slice**: reordering or moving objectives, the objective quality checker and level suggestion (1.7), tags (1.8), choosing links for people who see only their session.
+
+**Commit**: `feat: edit objectives at each level with upward links, domain and taxonomy level`
+

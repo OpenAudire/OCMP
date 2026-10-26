@@ -318,6 +318,8 @@ class Structure:
     can_change_status: bool = False
     # Whether the user may copy the version forward (and delete it while a draft).
     can_copy_forward: bool = False
+    # Whether the user may add, change and remove programme outcomes (drafts only).
+    can_edit_outcomes: bool = False
 
 
 async def _objective_counts(
@@ -410,6 +412,9 @@ async def version_structure(db: AsyncSession, visible: VisibleVersion) -> Struct
         can_edit=edits(programme_permissions),
         can_change_status=view.full and Permission.CURRICULUM_PUBLISH in programme_permissions,
         can_copy_forward=view.full and Permission.CURRICULUM_EDIT in programme_permissions,
+        can_edit_outcomes=view.full
+        and editable
+        and Permission.OBJECTIVES_EDIT in programme_permissions,
     )
 
 
@@ -465,6 +470,7 @@ class ModuleDetail:
     self_study_minutes: int
     event_count: int
     outcomes: list[ObjectiveWithLinks]
+    can_edit_objectives: bool = False
 
 
 async def module_detail(
@@ -491,7 +497,18 @@ async def module_detail(
     outcomes = await _objectives(
         db, Objective.module_id == module.id, Objective.level == ObjectiveLevel.MODULE
     )
-    return ModuleDetail(module, visible, int(contact), int(self_study), int(events), outcomes)
+    held = visible.access.for_programme(visible.programme) | visible.access.at(
+        ScopeType.MODULE, module.id
+    )
+    return ModuleDetail(
+        module,
+        visible,
+        int(contact),
+        int(self_study),
+        int(events),
+        outcomes,
+        can_edit_objectives=is_editable(visible.version) and Permission.OBJECTIVES_EDIT in held,
+    )
 
 
 @dataclass(frozen=True)
@@ -501,6 +518,7 @@ class EventDetail:
     version: VisibleVersion
     format_label: str | None
     objectives: list[ObjectiveWithLinks]
+    can_edit_objectives: bool = False
 
 
 async def event_detail(
@@ -533,4 +551,16 @@ async def event_detail(
         Objective.learning_event_id == event.id,
         Objective.level == ObjectiveLevel.LEARNING_EVENT,
     )
-    return EventDetail(event, module, visible, format_label, objectives)
+    held = (
+        visible.access.for_programme(visible.programme)
+        | visible.access.at(ScopeType.MODULE, module.id)
+        | visible.access.at(ScopeType.LEARNING_EVENT, event.id)
+    )
+    return EventDetail(
+        event,
+        module,
+        visible,
+        format_label,
+        objectives,
+        can_edit_objectives=is_editable(visible.version) and Permission.OBJECTIVES_EDIT in held,
+    )

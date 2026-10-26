@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import CurrentUser, ScopeFromRequest, require_permission
 from app.core.database import DbSession
 from app.core.permissions import Permission, ScopeType
-from app.models import CurriculumVersion, LearningEvent, Module, Phase, User
+from app.models import CurriculumVersion, LearningEvent, Module, Objective, Phase, User
 from app.schemas.curriculum import (
     LearningEventCopy,
     LearningEventCreate,
@@ -53,13 +53,14 @@ router = APIRouter(tags=["curriculum"])
 
 
 @dataclass
-class _Target:
+class Target:
     """What a request edits, found (and checked visible) while resolving its scope."""
 
     visible: VisibleVersion
     phase: Phase | None = None
     module: Module | None = None
     event: LearningEvent | None = None
+    objective: Objective | None = None
 
     @property
     def version(self) -> CurriculumVersion:
@@ -70,70 +71,70 @@ class _Target:
         return ScopeRef(ScopeType.PROGRAMME, self.visible.programme.id)
 
 
-def _not_found(what: str) -> HTTPException:
+def not_found(what: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{what} not found.")
 
 
-def _path_id(request: Request, name: str, what: str) -> uuid.UUID:
+def path_id(request: Request, name: str, what: str) -> uuid.UUID:
     try:
         return uuid.UUID(str(request.path_params[name]))
     except (KeyError, ValueError):
-        raise _not_found(what) from None
+        raise not_found(what) from None
 
 
-async def _visible(
+async def visible_or_404(
     db: AsyncSession, user: User, version_id: uuid.UUID, what: str
 ) -> VisibleVersion:
     visible = await visible_version(db, await curriculum_access(db, user), version_id)
     if visible is None:
-        raise _not_found(what)
+        raise not_found(what)
     return visible
 
 
-def _store(request: Request, target: _Target) -> None:
+def store_target(request: Request, target: Target) -> None:
     request.state.curriculum_target = target
 
 
-def _target(request: Request) -> _Target:
-    target: _Target = request.state.curriculum_target
+def target_of(request: Request) -> Target:
+    target: Target = request.state.curriculum_target
     return target
 
 
-async def _version_target(request: Request, db: AsyncSession, user: User) -> _Target:
+async def _version_target(request: Request, db: AsyncSession, user: User) -> Target:
     what = "Curriculum version"
-    version_id = _path_id(request, "version_id", what)
-    target = _Target(await _visible(db, user, version_id, what))
-    _store(request, target)
+    version_id = path_id(request, "version_id", what)
+    target = Target(await visible_or_404(db, user, version_id, what))
+    store_target(request, target)
     return target
 
 
-async def _phase_target(request: Request, db: AsyncSession, user: User) -> _Target:
-    phase_id = _path_id(request, "phase_id", "Phase")
+async def _phase_target(request: Request, db: AsyncSession, user: User) -> Target:
+    phase_id = path_id(request, "phase_id", "Phase")
     phase = await db.scalar(select(Phase).where(Phase.id == phase_id, Phase.deleted_at.is_(None)))
     if phase is None:
-        raise _not_found("Phase")
-    target = _Target(await _visible(db, user, phase.version_id, "Phase"), phase=phase)
-    _store(request, target)
+        raise not_found("Phase")
+    target = Target(await visible_or_404(db, user, phase.version_id, "Phase"), phase=phase)
+    store_target(request, target)
     return target
 
 
-async def _module_target(request: Request, db: AsyncSession, user: User) -> _Target:
-    module_id = _path_id(request, "module_id", "Module")
+async def _module_target(request: Request, db: AsyncSession, user: User) -> Target:
+    module_id = path_id(request, "module_id", "Module")
     module = await db.scalar(
         select(Module).where(Module.id == module_id, Module.deleted_at.is_(None))
     )
     if module is None:
-        raise _not_found("Module")
-    visible = await _visible(db, user, module.version_id, "Module")
+        raise not_found("Module")
+    visible = await visible_or_404(db, user, module.version_id, "Module")
     if not visible.view.shows_module(module.id):
-        raise _not_found("Module")
-    target = _Target(visible, module=module)
-    _store(request, target)
+        raise not_found("Module")
+    target = Target(visible, module=module)
+    store_target(request, target)
     return target
 
 
-async def _event_target(request: Request, db: AsyncSession, user: User) -> _Target:
-    event_id = _path_id(request, "event_id", "Learning event")
+async def _event_target(request: Request, db: AsyncSession, user: User) -> Target:
+    event_id = path_id(request, "event_id", "Learning event")
     row = (
         await db.execute(
             select(LearningEvent, Module)
@@ -146,13 +147,13 @@ async def _event_target(request: Request, db: AsyncSession, user: User) -> _Targ
         )
     ).one_or_none()
     if row is None:
-        raise _not_found("Learning event")
+        raise not_found("Learning event")
     event, module = row
-    visible = await _visible(db, user, module.version_id, "Learning event")
+    visible = await visible_or_404(db, user, module.version_id, "Learning event")
     if not visible.view.shows_event(module.id, event.id):
-        raise _not_found("Learning event")
-    target = _Target(visible, module=module, event=event)
-    _store(request, target)
+        raise not_found("Learning event")
+    target = Target(visible, module=module, event=event)
+    store_target(request, target)
     return target
 
 
@@ -211,7 +212,7 @@ async def create_phase(
     version_id: uuid.UUID, body: PhaseCreate, request: Request, actor: VersionEditor, db: DbSession
 ) -> Phase:
     """Add a phase (year, block...) at the end of a version."""
-    target = _target(request)
+    target = target_of(request)
     with audit_operation("curriculum.phase_create", actor_id=actor.id):
         return await curriculum_edit.create_phase(
             db, target.version, name=body.name, kind=body.kind, created_by_id=actor.id
@@ -223,7 +224,7 @@ async def update_phase(
     phase_id: uuid.UUID, body: PhaseUpdate, request: Request, actor: PhaseEditor, db: DbSession
 ) -> Phase:
     """Rename a phase or change its kind."""
-    target = _target(request)
+    target = target_of(request)
     assert target.phase is not None
     with audit_operation("curriculum.phase_update", actor_id=actor.id):
         return await curriculum_edit.update_phase(
@@ -236,7 +237,7 @@ async def delete_phase(
     phase_id: uuid.UUID, request: Request, actor: PhaseEditor, db: DbSession
 ) -> Response:
     """Delete an empty phase (409 while it holds modules)."""
-    target = _target(request)
+    target = target_of(request)
     assert target.phase is not None
     with audit_operation("curriculum.phase_delete", actor_id=actor.id):
         await curriculum_edit.delete_phase(db, target.phase, target.version)
@@ -248,7 +249,7 @@ async def move_phase(
     phase_id: uuid.UUID, body: MoveRequest, request: Request, actor: PhaseEditor, db: DbSession
 ) -> Phase:
     """Move a phase to another place in the version (0 is first)."""
-    target = _target(request)
+    target = target_of(request)
     assert target.phase is not None
     with audit_operation("curriculum.phase_move", actor_id=actor.id):
         return await curriculum_edit.move_phase(db, target.phase, target.version, body.position)
@@ -262,7 +263,7 @@ async def copy_phase(
 ) -> Phase:
     """Copy a phase with its modules, their sessions and objectives (one new code per
     module), right after it."""
-    target = _target(request)
+    target = target_of(request)
     assert target.phase is not None
     with audit_operation("curriculum.phase_copy", actor_id=actor.id, source_id=phase_id):
         return await curriculum_copy.copy_phase(
@@ -291,7 +292,7 @@ async def create_module(
     db: DbSession,
 ) -> Module:
     """Add a module to a phase of the version, or as a longitudinal module."""
-    target = _target(request)
+    target = target_of(request)
     fields = curriculum_edit.ModuleFields(
         **body.model_dump(exclude={"external_lms_ref"}),
         external_lms_ref=body.external_lms_ref or None,
@@ -311,7 +312,7 @@ async def update_module(
     db: DbSession,
 ) -> Module:
     """Change a module. Moving it to another phase needs edit rights for the programme."""
-    target = _target(request)
+    target = target_of(request)
     module = target.module
     assert module is not None
     changes = body.model_dump(exclude_unset=True)
@@ -331,7 +332,7 @@ async def delete_module(
     module_id: uuid.UUID, request: Request, actor: ModuleStructureEditor, db: DbSession
 ) -> Response:
     """Delete a module with its sessions and their objectives (soft delete)."""
-    target = _target(request)
+    target = target_of(request)
     assert target.module is not None
     with audit_operation("curriculum.module_delete", actor_id=actor.id):
         await curriculum_edit.delete_module(db, target.module, target.version)
@@ -347,7 +348,7 @@ async def move_module(
     db: DbSession,
 ) -> Module:
     """Move a module to another place in its phase, or among the modules across phases."""
-    target = _target(request)
+    target = target_of(request)
     assert target.module is not None
     with audit_operation("curriculum.module_move", actor_id=actor.id):
         return await curriculum_edit.move_module(db, target.module, target.version, body.position)
@@ -365,7 +366,7 @@ async def copy_module(
 ) -> Module:
     """Copy a module with its sessions and objectives under a new code: right after it,
     or at the end of the phase given."""
-    target = _target(request)
+    target = target_of(request)
     assert target.module is not None
     with audit_operation("curriculum.module_copy", actor_id=actor.id, source_id=module_id):
         return await curriculum_copy.copy_module(
@@ -396,7 +397,7 @@ async def create_learning_event(
     db: DbSession,
 ) -> LearningEvent:
     """Add a session at the end of a module."""
-    target = _target(request)
+    target = target_of(request)
     assert target.module is not None
     fields = curriculum_edit.EventFields(
         **body.model_dump(exclude={"external_lms_ref"}),
@@ -417,7 +418,7 @@ async def update_learning_event(
     db: DbSession,
 ) -> LearningEvent:
     """Change a session."""
-    target = _target(request)
+    target = target_of(request)
     assert target.event is not None
     changes = body.model_dump(exclude_unset=True)
     if "external_lms_ref" in changes:
@@ -431,7 +432,7 @@ async def delete_learning_event(
     event_id: uuid.UUID, request: Request, actor: EventRemover, db: DbSession
 ) -> Response:
     """Delete a session and its objectives (soft delete)."""
-    target = _target(request)
+    target = target_of(request)
     assert target.event is not None
     with audit_operation("curriculum.learning_event_delete", actor_id=actor.id):
         await curriculum_edit.delete_event(db, target.event, target.version)
@@ -443,7 +444,7 @@ async def move_learning_event(
     event_id: uuid.UUID, body: MoveRequest, request: Request, actor: EventRemover, db: DbSession
 ) -> LearningEvent:
     """Move a session to another place in its module."""
-    target = _target(request)
+    target = target_of(request)
     assert target.event is not None
     with audit_operation("curriculum.learning_event_move", actor_id=actor.id):
         return await curriculum_edit.move_event(db, target.event, target.version, body.position)
@@ -462,7 +463,7 @@ async def copy_learning_event(
     db: DbSession,
 ) -> LearningEvent:
     """Copy a session with its objectives, right after it."""
-    target = _target(request)
+    target = target_of(request)
     assert target.event is not None
     with audit_operation("curriculum.learning_event_copy", actor_id=actor.id, source_id=event_id):
         return await curriculum_copy.copy_event(

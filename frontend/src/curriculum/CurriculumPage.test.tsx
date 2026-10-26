@@ -74,6 +74,7 @@ describe('curriculum builder (read-only)', () => {
         id: 'o1',
         text: 'Apply clinical reasoning.',
         domain: 'skill',
+        taxonomy_level_id: null,
         status: 'approved',
         position: 0,
         parent_ids: [],
@@ -93,6 +94,7 @@ describe('curriculum builder (read-only)', () => {
       contact_minutes: 210,
       self_study_minutes: 210,
       outcomes: [],
+      can_edit_objectives: false,
     });
     mocked.fetchLearningEvent.mockResolvedValue({
       id: 'e1',
@@ -111,11 +113,13 @@ describe('curriculum builder (read-only)', () => {
           id: 'o3',
           text: 'Describe the phases of the cardiac cycle.',
           domain: null,
+          taxonomy_level_id: null,
           status: 'draft',
           position: 0,
           parent_ids: ['o2'],
         },
       ],
+      can_edit_objectives: false,
     });
   });
 

@@ -36,3 +36,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [028](028-curriculum-structure-editing.md) | Curriculum Structure Editing |
 | [029](029-reorder-and-copy.md) | Reordering and Copying Curriculum Items |
 | [030](030-curriculum-versions.md) | Curriculum Versions: Publishing, Copy Forward and Diff |
+| [031](031-objective-editing.md) | Objective Editing: Permissions, Upward Links and Taxonomy Levels |

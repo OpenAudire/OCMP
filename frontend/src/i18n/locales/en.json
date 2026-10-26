@@ -307,6 +307,31 @@
         "formats": "The list of formats could not be loaded. You can set the format later."
       }
     },
+    "objectives": {
+      "outcome": "outcome",
+      "addTitle": "Add {{noun}}",
+      "editTitle": "Edit {{noun}}",
+      "deleteTitle": "Delete this {{noun}}?",
+      "deleteNote": "The deletion is recorded in the change history.",
+      "editOne": "Edit {{noun}}: {{text}}",
+      "deleteOne": "Delete {{noun}}: {{text}}",
+      "added": "The {{noun}} was added.",
+      "saved": "Changes to the {{noun}} saved.",
+      "deleted": "The {{noun}} was deleted.",
+      "text": "Wording",
+      "textHint": "Describe what a learner can do, using one measurable verb.",
+      "domain": "Domain",
+      "taxonomyLevel": "Taxonomy level",
+      "scalesError": "The taxonomy levels could not be loaded. You can set the level later.",
+      "status": "Status",
+      "parents": "Contributes to",
+      "parentsHint": "Tick the broader outcomes this one helps to achieve.",
+      "programmeLevel": "{{programme}} outcome",
+      "noOptions": "There are no broader outcomes you can link to.",
+      "optionsError": "The broader outcomes could not be loaded. Close this and try again.",
+      "hiddenLinks_one": "It also contributes to {{count}} outcome you cannot see; that link stays.",
+      "hiddenLinks_other": "It also contributes to {{count}} outcomes you cannot see; those links stay."
+    },
     "reorder": {
       "up": "Move up",
       "down": "Move down",

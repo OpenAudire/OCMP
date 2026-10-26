@@ -2,12 +2,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 
 import { isApiError } from '../api/client';
+import type { StructureEvent, StructureModule } from '../api/types';
 import { queryKeys } from '../api/endpoints';
 import { LONGITUDINAL_ID, ROOT_ID } from './treeModel';
 
 /** What the builder does after a change: say what happened, select and reveal an item. */
 export interface EditResult {
   message: string;
+  /** Move focus to the confirmation (the button that made the change is gone). */
+  focus?: boolean;
   /** Tree node id to select (a new item, or the parent of a deleted one). */
   select?: string;
   /** Tree node ids to open so the selected item shows. */
@@ -32,6 +35,7 @@ export function useRefreshCurriculum(versionId: string) {
       client.invalidateQueries({ queryKey: queryKeys.versionStructure(versionId) }),
       client.invalidateQueries({ queryKey: ['modules'] }),
       client.invalidateQueries({ queryKey: ['learning-events'] }),
+      client.invalidateQueries({ queryKey: queryKeys.programmeOutcomes(versionId) }),
     ]);
 }
 
@@ -68,4 +72,17 @@ export function optionalText(value: string): string | null {
 /** Mantine number inputs give '' when empty. */
 export function optionalNumber(value: number | string): number | null {
   return value === '' || value === null ? null : Number(value);
+}
+
+/** What owns the objectives: the programme version, a module or a session. */
+export type ObjectiveOwner =
+  | { kind: 'programme' }
+  | { kind: 'module'; module: StructureModule }
+  | { kind: 'event'; event: StructureEvent; module: StructureModule };
+
+/** The word for the thing being edited: outcomes at programme and module level. */
+export function objectiveNoun(t: TFunction, owner: ObjectiveOwner): string {
+  return owner.kind === 'event'
+    ? t('terms.objective', { count: 1 }).toLocaleLowerCase()
+    : t('curriculum.objectives.outcome');
 }

@@ -78,6 +78,32 @@ change the structure. The API checks every change; the buttons only follow the r
   (409). See "Publishing and copying a year forward" below.
 - Roles held at a deleted module or session stay listed but give no access to anything.
 
+## Who can edit objectives
+
+Programme outcomes, module outcomes and session objectives are edited in the curriculum
+builder, in the selected item's details. People with `objectives.edit` see **Add**,
+**Edit** and **Delete** buttons next to the objectives they may change:
+
+| Change | Needs `objectives.edit` at |
+|---|---|
+| Programme outcomes | The programme (or its faculty, or the institution): curriculum office, programme directors |
+| A module's outcomes | The module (or above): also module coordinators |
+| A session's objectives | The session (or above): also lecturers of that session |
+
+Each objective has its wording, a **domain** (knowledge, skill, attitude), a **taxonomy
+level** (from any scale, such as Bloom or Miller), a status (draft, approved, retired) and
+**upward links** to the broader outcomes it contributes to: a module outcome to programme
+outcomes, a session objective to its module's outcomes or to programme outcomes.
+
+- Someone can only choose links to outcomes they are allowed to see. A lecturer who sees
+  only their session therefore cannot choose links, but changing their objective never
+  removes links that others set.
+- Only **draft** versions can be changed. Deleting an objective is a soft delete; it
+  disappears from the builder and reports, and the deletion is recorded in the change
+  history.
+- Audit labels: `curriculum.objective_create`, `curriculum.objective_update`,
+  `curriculum.objective_delete`.
+
 ## Publishing and copying a year forward
 
 Each programme has one version per academic year. A version is a **draft** (editable, seen

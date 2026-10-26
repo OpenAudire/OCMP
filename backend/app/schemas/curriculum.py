@@ -128,12 +128,15 @@ class VersionStructure(BaseModel):
     can_change_status: bool
     # Whether the user may copy the version forward, and delete it while it is a draft.
     can_copy_forward: bool
+    # Whether the user may add, change and remove programme outcomes (drafts only).
+    can_edit_outcomes: bool
 
 
 class ObjectiveRead(BaseModel):
     id: uuid.UUID
     text: str
     domain: ObjectiveDomain | None
+    taxonomy_level_id: uuid.UUID | None
     status: ObjectiveStatus
     position: int
     # Broader objectives this one contributes to.
@@ -155,6 +158,8 @@ class ModuleRead(BaseModel):
     contact_minutes: int
     self_study_minutes: int
     outcomes: list[ObjectiveRead]
+    # Whether the user may add, change and remove the module's outcomes (drafts only).
+    can_edit_objectives: bool
 
 
 class LearningEventRead(BaseModel):
@@ -170,6 +175,8 @@ class LearningEventRead(BaseModel):
     description: str
     external_lms_ref: str | None
     objectives: list[ObjectiveRead]
+    # Whether the user may add, change and remove the session's objectives (drafts only).
+    can_edit_objectives: bool
 
 
 # --- Editing (Slice 1.3) ---------------------------------------------------------------
@@ -277,6 +284,70 @@ class LearningEventSaved(BaseModel):
     position: int
     description: str
     external_lms_ref: str | None
+
+
+# --- Objectives (Slice 1.6) -----------------------------------------------------------
+
+ObjectiveText = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)
+]
+
+
+class ObjectiveCreate(BaseModel):
+    text: ObjectiveText
+    domain: ObjectiveDomain | None = None
+    taxonomy_level_id: uuid.UUID | None = None
+    status: ObjectiveStatus = ObjectiveStatus.DRAFT
+    # Broader objectives to link to, from the options for the owner.
+    parent_ids: list[uuid.UUID] = Field(default_factory=list, max_length=100)
+
+
+class ObjectiveUpdate(BaseModel):
+    """Only the fields sent are changed; send null to clear the domain or taxonomy level.
+    ``parent_ids`` replaces the links to the objectives on offer."""
+
+    text: ObjectiveText | None = None
+    domain: ObjectiveDomain | None = None
+    taxonomy_level_id: uuid.UUID | None = None
+    status: ObjectiveStatus | None = None
+    parent_ids: list[uuid.UUID] | None = Field(default=None, max_length=100)
+
+
+class ObjectiveSaved(BaseModel):
+    id: uuid.UUID
+    level: ObjectiveLevel
+    text: str
+    domain: ObjectiveDomain | None
+    taxonomy_level_id: uuid.UUID | None
+    status: ObjectiveStatus
+    position: int
+    parent_ids: list[uuid.UUID]
+
+
+class ObjectiveOption(BaseModel):
+    """A broader objective that can be chosen as an upward link."""
+
+    id: uuid.UUID
+    level: ObjectiveLevel
+    text: str
+    # The module the outcome belongs to (code); null for programme outcomes.
+    module_code: str | None
+
+
+class TaxonomyLevelRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    position: int
+    description: str
+
+
+class TaxonomyScaleRead(BaseModel):
+    key: str
+    name: str
+    description: str
+    levels: list[TaxonomyLevelRead]
 
 
 class MoveRequest(BaseModel):

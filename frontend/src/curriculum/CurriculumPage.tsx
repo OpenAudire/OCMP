@@ -168,7 +168,7 @@ function Builder({ structure }: BuilderProps) {
     if (result.reveal?.length) {
       setExpanded((current) => new Set([...current, ...(result.reveal ?? [])]));
     }
-    setNotice({ key: Date.now(), message: result.message, focus: moves });
+    setNotice({ key: Date.now(), message: result.message, focus: moves || !!result.focus });
   };
   const toggle = (id: string, open: boolean) => {
     setExpanded((current) => {
@@ -265,7 +265,12 @@ function Builder({ structure }: BuilderProps) {
               }
             }}
           />
-          <ItemDetails key={selectedId} item={found.node.item} />
+          <ItemDetails
+            key={selectedId}
+            item={found.node.item}
+            structure={structure}
+            onSaved={saved}
+          />
         </section>
       </div>
     </>

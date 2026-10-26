@@ -1,0 +1,16 @@
+/* Each upward-link choice is at least a 44px target; long texts wrap. */
+.option {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.optionLevel {
+  color: var(--cic-muted);
+}
+
+.quote {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

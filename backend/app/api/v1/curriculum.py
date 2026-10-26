@@ -74,6 +74,7 @@ def _objectives(items: list[ObjectiveWithLinks]) -> list[ObjectiveRead]:
             id=item.objective.id,
             text=item.objective.text,
             domain=item.objective.domain,
+            taxonomy_level_id=item.objective.taxonomy_level_id,
             status=item.objective.status,
             position=item.objective.position,
             parent_ids=item.parent_ids,
@@ -177,6 +178,7 @@ async def get_version_structure(
         can_edit=structure.can_edit,
         can_change_status=structure.can_change_status,
         can_copy_forward=structure.can_copy_forward,
+        can_edit_outcomes=structure.can_edit_outcomes,
     )
 
 
@@ -212,6 +214,7 @@ async def get_module(module_id: uuid.UUID, access: Access, db: DbSession) -> Mod
         contact_minutes=detail.contact_minutes,
         self_study_minutes=detail.self_study_minutes,
         outcomes=_objectives(detail.outcomes),
+        can_edit_objectives=detail.can_edit_objectives,
     )
 
 
@@ -237,4 +240,5 @@ async def get_learning_event(
         description=event.description,
         external_lms_ref=event.external_lms_ref,
         objectives=_objectives(detail.objectives),
+        can_edit_objectives=detail.can_edit_objectives,
     )

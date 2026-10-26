@@ -6,6 +6,7 @@ from app.api.v1.audit import router as audit_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.curriculum import router as curriculum_router
 from app.api.v1.curriculum_edit import router as curriculum_edit_router
+from app.api.v1.curriculum_objectives import router as curriculum_objectives_router
 from app.api.v1.curriculum_versions import router as curriculum_versions_router
 from app.api.v1.institution import router as institution_router
 from app.api.v1.oidc import router as oidc_router
@@ -22,5 +23,6 @@ router.include_router(audit_router)
 router.include_router(institution_router)
 router.include_router(curriculum_router)
 router.include_router(curriculum_edit_router)
+router.include_router(curriculum_objectives_router)
 router.include_router(curriculum_versions_router)
 router.include_router(setup_router)
