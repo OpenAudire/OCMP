@@ -154,6 +154,9 @@ export function TagListsPage() {
                     {list.name}
                   </Title>
                   <span className={classes.chip}>{t(`admin.tagLists.kind.${list.kind}`)}</span>
+                  <span className={classes.chip}>
+                    {list.faculty_name ?? t('admin.tagLists.institutionWide')}
+                  </span>
                   {!list.is_active && (
                     <span className={classes.chip} data-tone="attention">
                       {t('admin.tagLists.inactive')}
@@ -168,44 +171,51 @@ export function TagListsPage() {
                       .join(', '),
                   })}
                 </Text>
-                <Group gap="sm">
-                  <Button
-                    variant="default"
-                    leftSection={<IconPencil size={18} aria-hidden />}
-                    aria-label={t('admin.tagLists.editListLabel', { name: list.name })}
-                    onClick={() => open({ kind: 'editList', list })}
-                  >
-                    {t('admin.tagLists.editList')}
-                  </Button>
-                  <Button
-                    variant="default"
-                    leftSection={
-                      list.is_active ? (
-                        <IconEyeOff size={18} aria-hidden />
-                      ) : (
-                        <IconEye size={18} aria-hidden />
-                      )
-                    }
-                    aria-label={t(
-                      list.is_active ? 'admin.tagLists.deactivateListLabel' : 'admin.tagLists.activateListLabel',
-                      { name: list.name }
-                    )}
-                    loading={toggle.isPending && toggle.variables?.list.id === list.id && !toggle.variables.value}
-                    onClick={() => toggle.mutate({ list })}
-                  >
-                    {t(list.is_active ? 'admin.tagLists.deactivate' : 'admin.tagLists.activate')}
-                  </Button>
-                  <Button
-                    variant="default"
-                    leftSection={<IconTrash size={18} aria-hidden />}
-                    aria-label={t('admin.tagLists.deleteListLabel', { name: list.name })}
-                    disabled={inUse}
-                    onClick={() => open({ kind: 'delete', target: { kind: 'list', list } })}
-                  >
-                    {t('admin.tagLists.deleteList')}
-                  </Button>
-                </Group>
-                {inUse && (
+                {!list.can_manage && (
+                  <Text size="sm" c="dimmed">
+                    {t('admin.tagLists.readOnly')}
+                  </Text>
+                )}
+                {list.can_manage && (
+                  <Group gap="sm">
+                    <Button
+                      variant="default"
+                      leftSection={<IconPencil size={18} aria-hidden />}
+                      aria-label={t('admin.tagLists.editListLabel', { name: list.name })}
+                      onClick={() => open({ kind: 'editList', list })}
+                    >
+                      {t('admin.tagLists.editList')}
+                    </Button>
+                    <Button
+                      variant="default"
+                      leftSection={
+                        list.is_active ? (
+                          <IconEyeOff size={18} aria-hidden />
+                        ) : (
+                          <IconEye size={18} aria-hidden />
+                        )
+                      }
+                      aria-label={t(
+                        list.is_active ? 'admin.tagLists.deactivateListLabel' : 'admin.tagLists.activateListLabel',
+                        { name: list.name }
+                      )}
+                      loading={toggle.isPending && toggle.variables?.list.id === list.id && !toggle.variables.value}
+                      onClick={() => toggle.mutate({ list })}
+                    >
+                      {t(list.is_active ? 'admin.tagLists.deactivate' : 'admin.tagLists.activate')}
+                    </Button>
+                    <Button
+                      variant="default"
+                      leftSection={<IconTrash size={18} aria-hidden />}
+                      aria-label={t('admin.tagLists.deleteListLabel', { name: list.name })}
+                      disabled={inUse}
+                      onClick={() => open({ kind: 'delete', target: { kind: 'list', list } })}
+                    >
+                      {t('admin.tagLists.deleteList')}
+                    </Button>
+                  </Group>
+                )}
+                {list.can_manage && inUse && (
                   <Text size="sm" c="dimmed">
                     {t('admin.tagLists.listInUse')}
                   </Text>
@@ -215,14 +225,16 @@ export function TagListsPage() {
                   <Title order={3} className={classes.valuesTitle}>
                     {t('admin.tagLists.tags')}
                   </Title>
-                  <Button
-                    variant="default"
-                    leftSection={<IconPlus size={18} aria-hidden />}
-                    aria-label={t('admin.tagLists.addTagTo', { list: list.name })}
-                    onClick={() => open({ kind: 'addTag', list })}
-                  >
-                    {t('admin.tagLists.addTag')}
-                  </Button>
+                  {list.can_manage && (
+                    <Button
+                      variant="default"
+                      leftSection={<IconPlus size={18} aria-hidden />}
+                      aria-label={t('admin.tagLists.addTagTo', { list: list.name })}
+                      onClick={() => open({ kind: 'addTag', list })}
+                    >
+                      {t('admin.tagLists.addTag')}
+                    </Button>
+                  )}
                 </Group>
                 {list.values.length === 0 ? (
                   <Text c="dimmed">{t('admin.tagLists.noTags')}</Text>
@@ -244,47 +256,49 @@ export function TagListsPage() {
                               : t('admin.tagLists.unused')}
                           </span>
                         </div>
-                        <Group gap="sm">
-                          <Button
-                            variant="default"
-                            leftSection={<IconPencil size={18} aria-hidden />}
-                            aria-label={t('admin.tagLists.editTagLabel', { label: value.label })}
-                            onClick={() => open({ kind: 'editTag', list, value })}
-                          >
-                            {t('admin.tagLists.editTag')}
-                          </Button>
-                          <Button
-                            variant="default"
-                            leftSection={
-                              value.is_active ? (
-                                <IconEyeOff size={18} aria-hidden />
-                              ) : (
-                                <IconEye size={18} aria-hidden />
-                              )
-                            }
-                            aria-label={t(
-                              value.is_active
-                                ? 'admin.tagLists.deactivateTagLabel'
-                                : 'admin.tagLists.activateTagLabel',
-                              { label: value.label }
-                            )}
-                            loading={toggle.isPending && toggle.variables?.value?.id === value.id}
-                            onClick={() => toggle.mutate({ list, value })}
-                          >
-                            {t(value.is_active ? 'admin.tagLists.deactivate' : 'admin.tagLists.activate')}
-                          </Button>
-                          <Button
-                            variant="default"
-                            leftSection={<IconTrash size={18} aria-hidden />}
-                            aria-label={t('admin.tagLists.deleteTagLabel', { label: value.label })}
-                            disabled={value.usage_count > 0}
-                            onClick={() =>
-                              open({ kind: 'delete', target: { kind: 'value', value, list } })
-                            }
-                          >
-                            {t('admin.tagLists.deleteTag')}
-                          </Button>
-                        </Group>
+                        {list.can_manage && (
+                          <Group gap="sm">
+                            <Button
+                              variant="default"
+                              leftSection={<IconPencil size={18} aria-hidden />}
+                              aria-label={t('admin.tagLists.editTagLabel', { label: value.label })}
+                              onClick={() => open({ kind: 'editTag', list, value })}
+                            >
+                              {t('admin.tagLists.editTag')}
+                            </Button>
+                            <Button
+                              variant="default"
+                              leftSection={
+                                value.is_active ? (
+                                  <IconEyeOff size={18} aria-hidden />
+                                ) : (
+                                  <IconEye size={18} aria-hidden />
+                                )
+                              }
+                              aria-label={t(
+                                value.is_active
+                                  ? 'admin.tagLists.deactivateTagLabel'
+                                  : 'admin.tagLists.activateTagLabel',
+                                { label: value.label }
+                              )}
+                              loading={toggle.isPending && toggle.variables?.value?.id === value.id}
+                              onClick={() => toggle.mutate({ list, value })}
+                            >
+                              {t(value.is_active ? 'admin.tagLists.deactivate' : 'admin.tagLists.activate')}
+                            </Button>
+                            <Button
+                              variant="default"
+                              leftSection={<IconTrash size={18} aria-hidden />}
+                              aria-label={t('admin.tagLists.deleteTagLabel', { label: value.label })}
+                              disabled={value.usage_count > 0}
+                              onClick={() =>
+                                open({ kind: 'delete', target: { kind: 'value', value, list } })
+                              }
+                            >
+                              {t('admin.tagLists.deleteTag')}
+                            </Button>
+                          </Group>
+                        )}
                       </li>
                     ))}
                   </ul>

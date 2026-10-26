@@ -26,6 +26,32 @@ export function demoDraft(versions: { id: string; status: string; academic_year:
   return drafts[0].id;
 }
 
+/**
+ * Removes a framework version a journey imported (frameworks have no screen to delete from),
+ * so the local demo stays clean. Tolerates one that is already gone.
+ */
+export async function removeFramework(page: Page, frameworkId: string): Promise<void> {
+  const csrf = (await page.context().cookies()).find((cookie) => cookie.name === 'ocmp_csrf');
+  if (!csrf) return;
+  await page.request.delete(`/api/v1/frameworks/${frameworkId}`, {
+    headers: { 'X-CSRF-Token': csrf.value },
+  });
+}
+
+/** Removes the tag list with this key (and its unused tags), if a journey left it behind. */
+export async function removeTagListByKey(page: Page, key: string): Promise<void> {
+  const csrf = (await page.context().cookies()).find((cookie) => cookie.name === 'ocmp_csrf');
+  if (!csrf) return;
+  const lists = await page.request.get('/api/v1/tag-lists');
+  if (!lists.ok()) return;
+  const found = ((await lists.json()) as { id: string; key: string }[]).find((l) => l.key === key);
+  if (found) {
+    await page.request.delete(`/api/v1/tag-lists/${found.id}`, {
+      headers: { 'X-CSRF-Token': csrf.value },
+    });
+  }
+}
+
 /** For tests of the signed-out pages. */
 export const SIGNED_OUT = { cookies: [], origins: [] };
 

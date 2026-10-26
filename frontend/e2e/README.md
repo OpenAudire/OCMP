@@ -35,6 +35,11 @@ certificate is not checked). After a frontend change, rebuild the web image firs
   `e2e.lecturer@example.org` with the password `<E2E_PASSWORD>-lecturer`, and saves the
   session in `e2e/.auth/lecturer.json`. Journeys that need a user with only a session role
   grant the role through the admin API and remove it afterwards.
+- **Journeys leave nothing behind** (ADR 037). Each removes what it creates through the API:
+  modules, phases, tag lists, imported frameworks (`DELETE /frameworks/{id}`), role grants, and
+  `cleanup.teardown.ts` deletes the lecturer account after the run. Only the admin account from
+  step 2 (made by you, not by the tests) stays. Any new journey that creates data must clean it
+  up in `afterEach`, also when it fails. Never delete with SQL.
 - Call `expectNoAccessibilityViolations(page)` on every new screen and state (for
   example an open menu or an error message).
 - On failure, `playwright-report/` and `test-results/` hold traces and screenshots

@@ -9,8 +9,24 @@ curriculum office tag modules, sessions and objectives with them. The design is 
 ## Keeping the lists
 
 Open **Admin**, then **Tag lists** (`/admin/tag-lists`). You need the `taglists.manage`
-permission for the whole institution: the curriculum office and platform admin roles have it
-when assigned for the institution. Custom roles need it added by hand.
+permission. The curriculum office and platform admin roles have it; custom roles need it added
+by hand. Where you hold it decides which lists you keep:
+
+| You hold `taglists.manage` for | You can keep |
+|---|---|
+| The whole institution (curriculum office or platform admin assigned to the institution) | Every list: institution-wide ones and every faculty's |
+| One faculty (curriculum office assigned to that faculty) | That faculty's lists only. You can also create lists for it, but not institution-wide lists, and you cannot change another faculty's lists or the institution-wide ones |
+
+Each list shows who keeps it: **Whole institution** or a faculty name. Lists you cannot change
+are shown without edit buttons. When you create a list, **Kept for** says where it belongs; it
+cannot be changed afterwards (neither can the key or kind).
+
+**Who sees and uses a list.** Institution-wide lists can be used by everyone who tags. A
+faculty's list is visible to people who hold a role in that faculty (or in one of its
+programmes, modules or sessions) and to people with an institution-wide role, and it can be
+used only on items of that faculty, including as a session's format or an assessment's method.
+Packs import tag lists as institution-wide lists, so importing a pack with tag lists needs the
+permission for the whole institution.
 
 - **New tag list**: a name, a short **key** (lower-case letters, digits, hyphens and
   underscores; imports use it), a **kind** and which items it may tag (modules, sessions,
@@ -70,12 +86,22 @@ Inheritance is applied when you tag. A session or objective added or linked afte
 not receive the tag by itself; copying an item or copying a year forward keeps the tags and
 their sources.
 
+**Passing a tag on later.** When a tag you set on a module or an outcome has not reached items
+that were added or linked below it afterwards, the details panel says so ("PBL has not reached 2
+newer items below") and offers **Pass it on**. The dialog lists those items first, exactly as
+when you add a tag; confirming gives them the tag, with this item as the source. Items that
+already have the tag set directly are left alone. Only people who may tag see the notice, and
+only in draft versions.
+
 ## Through the API
 
-`GET /api/v1/tag-lists` returns the lists (everyone signed in gets the active ones; managers
-also get inactive ones and each tag's usage). The management endpoints are `POST
-/tag-lists`, `PATCH`/`DELETE /tag-lists/{id}`, `POST /tag-lists/{id}/values` and
+`GET /api/v1/tag-lists` returns the lists (everyone signed in gets the active ones they can
+see; managers of a list also get its inactive tags and each tag's usage, and `can_manage` says
+which lists you may change). `GET /tag-lists/places` says where you may create lists. The
+management endpoints are `POST
+/tag-lists` (with `faculty_id` for a faculty's list), `PATCH`/`DELETE /tag-lists/{id}`, `POST /tag-lists/{id}/values` and
 `PATCH`/`DELETE /tag-values/{id}`. Tagging uses `GET
 /curriculum-items/{module|learning_event|objective}/{id}/tag-preview?tag_value_id=`, `POST
 /curriculum-items/{...}/{id}/tags` (`{"tag_value_id": "...", "inherit": true}`) and `DELETE
-/taggings/{id}`. See the interactive API docs for the details.
+/taggings/{id}`; `GET /taggings/{id}/pass-on-preview` and `POST /taggings/{id}/pass-on` pass a
+direct tag on to newer items. See the interactive API docs for the details.

@@ -36,6 +36,7 @@ import type {
   PackTemplate,
   TagList,
   TagListInput,
+  TagListPlaces,
   TagValue,
   TagValueInput,
   TaxonomyScale,
@@ -383,6 +384,11 @@ export async function fetchTagLists(): Promise<TagList[]> {
   return (await api.get<TagList[]>('/tag-lists')).data;
 }
 
+/** Where the user may create tag lists: the institution and/or some faculties. */
+export async function fetchTagListPlaces(): Promise<TagListPlaces> {
+  return (await api.get<TagListPlaces>('/tag-lists/places')).data;
+}
+
 export async function createTagList(input: TagListInput): Promise<TagList> {
   return (await api.post<TagList>('/tag-lists', input)).data;
 }
@@ -431,6 +437,16 @@ export async function fetchTagPreview(
       params: { tag_value_id: tagValueId },
     })
   ).data;
+}
+
+/** Items below a directly tagged item that the tag has not reached yet; `new` ones would get it. */
+export async function fetchPassOnPreview(taggingId: string): Promise<InheritancePreview> {
+  return (await api.get<InheritancePreview>(`/taggings/${taggingId}/pass-on-preview`)).data;
+}
+
+/** Gives the tag to the items the preview lists as new. */
+export async function passTagOn(taggingId: string): Promise<TagApplied> {
+  return (await api.post<TagApplied>(`/taggings/${taggingId}/pass-on`)).data;
 }
 
 /** Tags the item; with `inherit` the tag also goes to the items the preview lists as new. */
@@ -506,6 +522,8 @@ export const queryKeys = {
   creditCheck: (id: string) => ['curriculum-versions', id, 'credit-check'] as const,
   tagLists: ['tag-lists'] as const,
   packTemplates: ['framework-pack-templates'] as const,
+  tagListPlaces: ['tag-list-places'] as const,
+  passOnPreview: (taggingId: string) => ['tag-preview', 'pass-on', taggingId] as const,
   tagPreview: (kind: string, itemId: string, valueId: string) =>
     ['tag-preview', kind, itemId, valueId] as const,
   taxonomyScales: ['taxonomy-scales'] as const,

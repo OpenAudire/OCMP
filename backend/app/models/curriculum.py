@@ -92,12 +92,18 @@ class QualificationType(Audited, CoreModel):
     __table_args__ = (
         CheckConstraint("nqf_exit_level BETWEEN 1 AND 10", name="nqf_exit_level_range"),
         CheckConstraint("min_total_credits >= 0", name="min_total_credits_positive"),
+        CheckConstraint(
+            "min_exit_level_credits IS NULL OR min_exit_level_credits >= 0",
+            name="min_exit_level_credits_positive",
+        ),
     )
 
     key: Mapped[str] = mapped_column(String(64), unique=True)
     name: Mapped[str] = mapped_column(String(255))
     nqf_exit_level: Mapped[int] = mapped_column(Integer)
     min_total_credits: Mapped[int] = mapped_column(Integer)
+    # Credits wanted at the type's own NQF exit level; null = no such rule (ADR 035).
+    min_exit_level_credits: Mapped[int | None] = mapped_column(Integer, default=None)
     # Where the values come from; seeded rows say they must be verified.
     notes: Mapped[str] = mapped_column(Text, default="", server_default="")
     is_active: Mapped[bool] = mapped_column(default=True, server_default="true")

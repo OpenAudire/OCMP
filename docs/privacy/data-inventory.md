@@ -29,7 +29,7 @@ students or patients.
 
 | Data | Where | Purpose | Source | Retention |
 |---|---|---|---|---|
-| Email address | `users.email` | Sign-in, password reset, notices | Admin, setup wizard or identity provider | While the account exists |
+| Email address | `users.email` | Sign-in, password reset, notices | Admin, setup wizard or identity provider | While the account exists. Deleting an account (`DELETE /api/v1/users/{id}`) replaces it with a placeholder, replaces the display name, clears the password hash and removes roles and sign-in identities; the row stays for authorship |
 | Display name | `users.display_name` | Shown to colleagues, attribution of work | As above | While the account exists |
 | Password hash (Argon2id) | `users.password_hash` | Local sign-in; the password itself is never stored | User | Until changed or the account is removed; empty for SSO-only accounts |
 | Active flag, last sign-in time | `users.is_active`, `users.last_login_at` | Access control, finding unused accounts | System | While the account exists |

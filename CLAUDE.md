@@ -217,6 +217,9 @@ export function ModuleCount({ count }: { count: number }) {
 - Objective quality checker (ADR 033): pure rules in `app/services/objective_quality.py`, wording lists per language in `app/services/objective_rules/<code>.json`, verbs per taxonomy level stay in `taxonomy_levels.verbs`; findings are advice, never block saving, and use no AI. A finding's texts are i18n keys `curriculum.quality.<code>.*`: add all three (name, message, suggestion) with a new rule
 - Tag lists are managed with `taglists.manage` (instance) and items are tagged with `tagging.edit` at the item's scope (ADR 034); inheritance rules, the preview and tag reads live in `app/services/tagging.py`: module to sessions, objective to the objectives linked beneath it, every inherited tagging points to the direct tagging it came from, only direct tags are removed (delete inherited rows through the ORM so they are audited); a list or tag in use is made inactive, not deleted
 - Framework packs (ADR 036): format in `packs/schema/` (version 2 adds crosswalks, tag lists and references to other frameworks; no `format_version` means 1); validate with `check_pack` (all problems, no database) then `resolve_pack`; the import screen goes through `app/api/v1/framework_packs.py` (preview with a Redis token, then confirm). Blank templates live in `packs/templates/` and an identical copy in `backend/app/pack_templates/` (tested); they are structure only, never official text
+- Tag lists are institution-wide (`faculty_id` null, `taglists.manage` at the instance) or a faculty's own
+  (`taglists.manage` at that faculty); a faculty list tags only items of its faculty (ADR 015, 034).
+  A tag already set is passed on to newer items only by the explicit `pass-on` action (ADR 034)
 - Institution settings are read through `app/services/institution_settings.py` (typed sections), never raw JSON
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
@@ -250,6 +253,8 @@ export function ModuleCount({ count }: { count: number }) {
 - E2E: Playwright in `frontend/e2e/` against the Docker stack, light and dark projects, axe
   WCAG checks on every screen and state (`expectNoAccessibilityViolations`); never sign in
   inside a test (rate limits): use the saved session from `auth.setup.ts`
+- End-to-end journeys remove everything they create (modules, tag lists, imported frameworks,
+  grants) in `afterEach`, and `e2e/cleanup.teardown.ts` deletes the test lecturer (ADR 037)
 - Backend tests are flat files `tests/test_<area>.py`; database tests skip unless `TEST_DATABASE_URL` is set, and CI always sets it
 - Factories: factory_boy for models (`tests/factories.py`)
 - API tests use the `api_client` fixture (test DB session, fakeredis, test settings)

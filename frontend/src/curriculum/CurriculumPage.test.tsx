@@ -31,6 +31,7 @@ const programmeDetail: Programme = {
     name: "Bachelor's degree",
     nqf_exit_level: 7,
     min_total_credits: 360,
+    min_exit_level_credits: 120,
   },
   nqf_exit_level: 7,
   saqa_id: '00000',

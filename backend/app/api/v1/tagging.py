@@ -1,6 +1,7 @@
 """Tag lists (managed by the curriculum office) and tagging curriculum items (ADR 034).
 
-Managing lists and values needs ``taglists.manage`` for the whole instance. Tagging a
+Managing a list needs ``taglists.manage`` at the list's scope: its faculty, or the whole
+instance for an institution-wide list (a faculty manager cannot change those). Tagging a
 module, session or objective needs ``tagging.edit`` at the scope that owns the item (the
 module, the session, or the programme for a programme outcome); an item the user cannot
 see is a 404 (ADR 027), and only draft versions can be changed (409). Inherited tags
@@ -26,14 +27,25 @@ from app.api.v1.curriculum_edit import (
 from app.api.v1.curriculum_objectives import objective_scope_for
 from app.core.database import DbSession
 from app.core.permissions import Permission, ScopeType
-from app.models import LearningEvent, Module, Objective, Tagging, TagList, TagValue, User
+from app.models import (
+    Faculty,
+    LearningEvent,
+    Module,
+    Objective,
+    Tagging,
+    TagList,
+    TagValue,
+    User,
+)
 from app.models.tagging import TaggableType
 from app.schemas.tagging import (
+    FacultyRef,
     InheritancePreviewRead,
     PreviewItem,
     TagApplied,
     TaggableKind,
     TagListCreate,
+    TagListPlaces,
     TagListRead,
     TagListUpdate,
     TagRequest,
@@ -44,13 +56,11 @@ from app.schemas.tagging import (
 )
 from app.services import tagging as tagging_service
 from app.services.audit import audit_operation
-from app.services.authorization import InvalidRequestError, ScopeRef, has_permission
+from app.services.authorization import INSTANCE, InvalidRequestError, ScopeRef, has_permission
 from app.services.curriculum_edit import ensure_editable
 from app.services.tagging import Taggable
 
 router = APIRouter(tags=["tagging"])
-
-TagListManager = Annotated[User, Depends(require_permission(Permission.TAGLISTS_MANAGE))]
 
 
 # --- Tag lists and values -----------------------------------------------------------
@@ -80,6 +90,28 @@ async def _value_or_404(db: AsyncSession, value_id: uuid.UUID) -> TagValue:
     return value
 
 
+async def list_manage_scope(request: Request, db: AsyncSession, user: User) -> ScopeRef:
+    """The scope that manages the list in the path: its faculty, else the instance."""
+    tag_list = await _list_or_404(db, path_id(request, "list_id", "Tag list"))
+    return tagging_service.list_scope(tag_list)
+
+
+async def value_manage_scope(request: Request, db: AsyncSession, user: User) -> ScopeRef:
+    """The scope that manages the list of the tag in the path."""
+    value = await _value_or_404(db, path_id(request, "value_id", "Tag"))
+    tag_list = await db.get(TagList, value.tag_list_id)
+    assert tag_list is not None
+    return tagging_service.list_scope(tag_list)
+
+
+def _manager(scope: Any) -> Any:
+    return Depends(require_permission(Permission.TAGLISTS_MANAGE, scope=scope))
+
+
+ListManager = Annotated[User, _manager(list_manage_scope)]
+ValueManager = Annotated[User, _manager(value_manage_scope)]
+
+
 def _value_read(value: TagValue, usage: int = 0) -> TagValueRead:
     return TagValueRead(
         id=value.id,
@@ -92,7 +124,9 @@ def _value_read(value: TagValue, usage: int = 0) -> TagValueRead:
     )
 
 
-async def _list_read(db: AsyncSession, tag_list: TagList, *, manager: bool) -> TagListRead:
+async def _list_read(
+    db: AsyncSession, tag_list: TagList, *, manager: bool, faculty_name: str | None = None
+) -> TagListRead:
     values = list(
         await db.scalars(
             select(TagValue)
@@ -101,6 +135,10 @@ async def _list_read(db: AsyncSession, tag_list: TagList, *, manager: bool) -> T
         )
     )
     usage = await tagging_service.value_usage(db, [v.id for v in values]) if manager else {}
+    if tag_list.faculty_id is not None and faculty_name is None:
+        faculty_name = await db.scalar(
+            select(Faculty.name).where(Faculty.id == tag_list.faculty_id)
+        )
     return TagListRead(
         id=tag_list.id,
         key=tag_list.key,
@@ -109,25 +147,66 @@ async def _list_read(db: AsyncSession, tag_list: TagList, *, manager: bool) -> T
         description=tag_list.description,
         entity_types=list(tag_list.entity_types),
         is_active=tag_list.is_active,
+        faculty_id=tag_list.faculty_id,
+        faculty_name=faculty_name,
+        can_manage=manager,
         values=[_value_read(v, usage.get(v.id, 0)) for v in values if manager or v.is_active],
     )
 
 
 @router.get("/tag-lists", response_model=list[TagListRead])
 async def list_tag_lists(user: CurrentUser, db: DbSession) -> list[TagListRead]:
-    """Tag lists with their values. Everyone signed in gets the active ones (to tag with);
-    people who manage tag lists also get inactive ones and how often each tag is used."""
-    manager = await has_permission(db, user, Permission.TAGLISTS_MANAGE)
-    query = select(TagList).where(TagList.deleted_at.is_(None))
-    if not manager:
-        query = query.where(TagList.is_active.is_(True))
-    lists = await db.scalars(query.order_by(TagList.name))
-    return [await _list_read(db, tag_list, manager=manager) for tag_list in lists]
+    """Tag lists with their values. Everyone signed in gets the active institution-wide
+    lists and those of their faculties (to tag with). People who manage a list also get
+    its inactive tags and how often each tag is used, and see it when it is inactive."""
+    management = await tagging_service.list_management(db, user)
+    visible = await tagging_service.visible_faculty_ids(db, user)
+    lists = await db.scalars(
+        select(TagList)
+        .where(TagList.deleted_at.is_(None), tagging_service.list_visibility(visible))
+        .order_by(TagList.name)
+    )
+    names = dict((await db.execute(select(Faculty.id, Faculty.name))).all())
+    reads = []
+    for tag_list in lists:
+        manager = management.covers(tag_list.faculty_id)
+        if not tag_list.is_active and not manager:
+            continue
+        reads.append(
+            await _list_read(
+                db,
+                tag_list,
+                manager=manager,
+                faculty_name=names.get(tag_list.faculty_id) if tag_list.faculty_id else None,
+            )
+        )
+    return reads
+
+
+@router.get("/tag-lists/places", response_model=TagListPlaces)
+async def tag_list_places(user: CurrentUser, db: DbSession) -> TagListPlaces:
+    """Where this user may create tag lists: the whole institution and/or some faculties."""
+    management = await tagging_service.list_management(db, user)
+    query = select(Faculty.id, Faculty.name).where(Faculty.deleted_at.is_(None))
+    if not management.instance:
+        query = query.where(Faculty.id.in_(management.faculties))
+    faculties = (await db.execute(query.order_by(Faculty.name))).all()
+    return TagListPlaces(
+        institution=management.instance,
+        faculties=[FacultyRef(id=i, name=n) for i, n in faculties],
+    )
 
 
 @router.post("/tag-lists", response_model=TagListRead, status_code=status.HTTP_201_CREATED)
-async def create_tag_list(body: TagListCreate, actor: TagListManager, db: DbSession) -> TagListRead:
-    """Add a tag list."""
+async def create_tag_list(body: TagListCreate, actor: CurrentUser, db: DbSession) -> TagListRead:
+    """Add a tag list: institution-wide, or for one faculty with ``faculty_id``. Needs
+    ``taglists.manage`` for that faculty (a faculty manager cannot add institution-wide lists)."""
+    scope = INSTANCE if body.faculty_id is None else ScopeRef(ScopeType.FACULTY, body.faculty_id)
+    if not await has_permission(db, actor, Permission.TAGLISTS_MANAGE, scope):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to do this.",
+        )
     with audit_operation("taglist.create", actor_id=actor.id):
         tag_list = await tagging_service.create_tag_list(
             db,
@@ -136,6 +215,7 @@ async def create_tag_list(body: TagListCreate, actor: TagListManager, db: DbSess
             kind=body.kind,
             description=body.description,
             entity_types=[TaggableType(t) for t in body.entity_types],
+            faculty_id=body.faculty_id,
             created_by_id=actor.id,
         )
     return await _list_read(db, tag_list, manager=True)
@@ -143,7 +223,7 @@ async def create_tag_list(body: TagListCreate, actor: TagListManager, db: DbSess
 
 @router.patch("/tag-lists/{list_id}", response_model=TagListRead)
 async def update_tag_list(
-    list_id: uuid.UUID, body: TagListUpdate, actor: TagListManager, db: DbSession
+    list_id: uuid.UUID, body: TagListUpdate, actor: ListManager, db: DbSession
 ) -> TagListRead:
     """Change a list's name, description, item types or active flag."""
     tag_list = await _list_or_404(db, list_id)
@@ -162,7 +242,7 @@ async def update_tag_list(
 
 
 @router.delete("/tag-lists/{list_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_tag_list(list_id: uuid.UUID, actor: TagListManager, db: DbSession) -> Response:
+async def delete_tag_list(list_id: uuid.UUID, actor: ListManager, db: DbSession) -> Response:
     """Delete a list nothing uses (409 if any of its tags is in use: make it inactive)."""
     tag_list = await _list_or_404(db, list_id)
     with audit_operation("taglist.delete", actor_id=actor.id):
@@ -176,7 +256,7 @@ async def delete_tag_list(list_id: uuid.UUID, actor: TagListManager, db: DbSessi
     status_code=status.HTTP_201_CREATED,
 )
 async def create_tag_value(
-    list_id: uuid.UUID, body: TagValueCreate, actor: TagListManager, db: DbSession
+    list_id: uuid.UUID, body: TagValueCreate, actor: ListManager, db: DbSession
 ) -> TagValueRead:
     """Add a tag at the end of a list."""
     tag_list = await _list_or_404(db, list_id)
@@ -195,7 +275,7 @@ async def create_tag_value(
 
 @router.patch("/tag-values/{value_id}", response_model=TagValueRead)
 async def update_tag_value(
-    value_id: uuid.UUID, body: TagValueUpdate, actor: TagListManager, db: DbSession
+    value_id: uuid.UUID, body: TagValueUpdate, actor: ValueManager, db: DbSession
 ) -> TagValueRead:
     """Change a tag's label, code, description or active flag."""
     value = await _value_or_404(db, value_id)
@@ -214,7 +294,7 @@ async def update_tag_value(
 
 
 @router.delete("/tag-values/{value_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_tag_value(value_id: uuid.UUID, actor: TagListManager, db: DbSession) -> Response:
+async def delete_tag_value(value_id: uuid.UUID, actor: ValueManager, db: DbSession) -> Response:
     """Delete a tag nothing uses (409 if it is in use: make it inactive)."""
     value = await _value_or_404(db, value_id)
     with audit_operation("tagvalue.delete", actor_id=actor.id):
@@ -387,6 +467,55 @@ async def tag_curriculum_item(
         )
     applied = await _tags_of(db, item)
     applied.inherited_count = len(inherited)
+    return applied
+
+
+async def _tagging_and_item(
+    request: Request, tagging_id: uuid.UUID, db: AsyncSession
+) -> tuple[Tagging, Taggable]:
+    """The tagging in the path and the (module or objective) item it is on."""
+    tagging = await db.get(Tagging, tagging_id)
+    if tagging is None:  # pragma: no cover - the scope resolver found it
+        raise not_found("Tag")
+    item_type, _ = tagging_service.tagging_item(tagging)
+    return tagging, _item(target_of(request), item_type.value)
+
+
+@router.get("/taggings/{tagging_id}/pass-on-preview", response_model=InheritancePreviewRead)
+async def preview_pass_on(
+    tagging_id: uuid.UUID, request: Request, actor: TaggingTagger, db: DbSession
+) -> InheritancePreviewRead:
+    """The items below a directly tagged item that the tag has not reached yet (linked or
+    added after it was set), before passing it on. Items marked ``new`` would get it."""
+    tagging, item = await _tagging_and_item(request, tagging_id, db)
+    value, preview, _ = await tagging_service.pass_on_preview(db, tagging, item)
+    return InheritancePreviewRead(
+        tag_value_id=value.id,
+        label=value.label,
+        list_name=preview.tag_list.name,
+        item_has_tag=True,
+        items=await _preview_items(db, preview.entries),
+    )
+
+
+@router.post(
+    "/taggings/{tagging_id}/pass-on",
+    response_model=TagApplied,
+    status_code=status.HTTP_201_CREATED,
+)
+async def pass_tag_on(
+    tagging_id: uuid.UUID, request: Request, actor: TaggingTagger, db: DbSession
+) -> TagApplied:
+    """Give a directly set tag to the items below that it has not reached yet (what the
+    preview lists as new). Draft versions only; "apply once" still holds, this is a
+    new, explicit application."""
+    target = target_of(request)
+    ensure_editable(target.version)
+    tagging, item = await _tagging_and_item(request, tagging_id, db)
+    with audit_operation("tagging.pass_on", actor_id=actor.id, tag_value_id=tagging.tag_value_id):
+        passed = await tagging_service.pass_on(db, tagging, item, created_by_id=actor.id)
+    applied = await _tags_of(db, item)
+    applied.inherited_count = len(passed)
     return applied
 
 

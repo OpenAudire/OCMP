@@ -71,6 +71,11 @@ class TagList(Audited, SoftDeleteMixin, CoreModel):
         server_default="{programme,module,learning_event,objective}",
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    # Null: an institution-wide list, managed at the instance. Otherwise the faculty's own
+    # list: managed at that faculty, and used only on items of that faculty (ADR 015).
+    faculty_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("faculties.id", ondelete="RESTRICT"), default=None, index=True
+    )
 
     values: Mapped[list["TagValue"]] = relationship(
         back_populates="tag_list", lazy="raise", order_by="TagValue.position"

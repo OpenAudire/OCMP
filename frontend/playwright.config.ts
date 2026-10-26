@@ -19,7 +19,14 @@ export default defineConfig({
   },
   projects: [
     { name: 'setup', testMatch: /auth\.setup\.ts/ },
-    { name: 'setup-lecturer', testMatch: /lecturer\.setup\.ts/, dependencies: ['setup'] },
+    {
+      name: 'setup-lecturer',
+      testMatch: /lecturer\.setup\.ts/,
+      dependencies: ['setup'],
+      // Runs after every project that depends on it: deletes the test lecturer again.
+      teardown: 'cleanup',
+    },
+    { name: 'cleanup', testMatch: /cleanup\.teardown\.ts/ },
     {
       name: 'light',
       use: { ...devices['Desktop Chrome'], colorScheme: 'light', storageState: 'e2e/.auth/signed-in.json' },

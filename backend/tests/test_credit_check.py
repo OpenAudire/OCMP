@@ -198,6 +198,58 @@ class TestYearsAndLevels:
         }
         assert result.qualification_name == "Bachelor's degree"
 
+    def test_the_qualification_type_sets_the_exit_level_minimum(self) -> None:
+        bachelor = QualificationType(
+            key="bachelor",
+            name="Bachelor's degree",
+            nqf_exit_level=7,
+            min_total_credits=360,
+            min_exit_level_credits=120,
+        )
+        few = [module("90", 7, "A"), module("270", 6, "B")]
+
+        low = check([], few, qualification=bachelor, exit_level=7)
+        assert low.exit_level_minimum == 120
+        assert {f.code: f.params for f in low.findings if f.code == "exit_level_credits_low"} == {
+            "exit_level_credits_low": {"level": 7, "credits": "90", "minimum": 120}
+        }
+
+        enough = check(
+            [], [module("120", 7, "A"), module("240", 6, "B")], qualification=bachelor, exit_level=7
+        )
+        assert enough.exit_level_minimum == 120
+        assert all(f.code != "exit_level_credits_low" for f in enough.findings)
+
+    def test_the_institutions_figure_wins_over_the_qualification_type(self) -> None:
+        bachelor = QualificationType(
+            key="bachelor",
+            name="Bachelor's degree",
+            nqf_exit_level=7,
+            min_total_credits=360,
+            min_exit_level_credits=120,
+        )
+        result = check(
+            [],
+            [module("120", 7, "A")],
+            policy=CreditPolicy(min_exit_level_credits=60),
+            qualification=bachelor,
+            exit_level=7,
+        )
+        assert result.exit_level_minimum == 60
+        assert all(f.code != "exit_level_credits_low" for f in result.findings)
+
+    def test_the_type_minimum_applies_only_at_its_own_exit_level(self) -> None:
+        bachelor = QualificationType(
+            key="bachelor",
+            name="Bachelor's degree",
+            nqf_exit_level=7,
+            min_total_credits=360,
+            min_exit_level_credits=120,
+        )
+        # The programme sets a different exit level, so the type's figure does not fit it.
+        result = check([], [module("30", 8, "A")], qualification=bachelor, exit_level=8)
+        assert result.exit_level_minimum is None
+
     def test_no_findings_when_everything_fits(self) -> None:
         result = check([], [module("360", 7)], programme_total=360, exit_level=7)
 

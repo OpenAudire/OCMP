@@ -169,7 +169,13 @@ def _record_changes(session: Session, _flush_context: UOWTransaction) -> None:
             entries.append(_entry(obj, "delete", before=_snapshot(obj)))
     if entries:
         # A plain table insert on the flush's connection: no nested ORM flush.
-        session.connection().execute(insert(AuditLog), entries)
+        # One insert per shape of entry: creates have no "before", deletes no "after", and a
+        # single executemany needs the same keys in every row.
+        shapes: dict[frozenset[str], list[dict[str, Any]]] = {}
+        for entry in entries:
+            shapes.setdefault(frozenset(entry), []).append(entry)
+        for group in shapes.values():
+            session.connection().execute(insert(AuditLog), group)
 
 
 async def record_event(

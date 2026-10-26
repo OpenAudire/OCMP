@@ -47,7 +47,7 @@ from app.services import curriculum_copy, curriculum_edit
 from app.services.audit import audit_operation
 from app.services.authorization import AuthorizationError, ScopeRef, has_permission
 from app.services.curriculum_read import VisibleVersion, curriculum_access, visible_version
-from app.services.tagging import teaching_formats
+from app.services.tagging import teaching_formats, visible_faculty_ids
 
 router = APIRouter(tags=["curriculum"])
 
@@ -491,5 +491,5 @@ async def list_teaching_formats(user: CurrentUser, db: DbSession) -> list[Teachi
     """Values that can be chosen as a session's format (active teaching-method lists)."""
     return [
         TeachingFormat(id=value.id, label=value.label, list_name=tag_list.name)
-        for value, tag_list in await teaching_formats(db)
+        for value, tag_list in await teaching_formats(db, await visible_faculty_ids(db, user))
     ]

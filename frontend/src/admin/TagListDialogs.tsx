@@ -1,7 +1,7 @@
 import type { FormEvent } from 'react';
 import { Checkbox, NativeSelect, Text, Textarea, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { isApiError } from '../api/client';
@@ -10,6 +10,7 @@ import {
   createTagValue,
   deleteTagList,
   deleteTagValue,
+  fetchTagListPlaces,
   queryKeys,
   updateTagList,
   updateTagValue,
@@ -45,6 +46,8 @@ interface ListValues {
   kind: TagListKind;
   description: string;
   entityTypes: string[];
+  /** '' is the whole institution, otherwise a faculty id. */
+  place: string;
 }
 
 const KEY_PATTERN = /^[a-z0-9_-]+$/;
@@ -56,8 +59,14 @@ function ListForm({
 }: Omit<BaseProps, 'opened'> & { list?: TagList }) {
   const { t } = useTranslation();
   const refresh = useRefreshLists();
+  const places = useQuery({
+    queryKey: queryKeys.tagListPlaces,
+    queryFn: fetchTagListPlaces,
+    enabled: !list,
+  });
   const form = useForm<ListValues>({
     initialValues: {
+      place: '',
       name: list?.name ?? '',
       key: list?.key ?? '',
       kind: list?.kind ?? 'custom',
@@ -75,6 +84,10 @@ function ListForm({
   });
   const mutation = useMutation({
     mutationFn: (values: ListValues) => {
+      // Who may create where decides the choices; with only faculties on offer the first one.
+      const place =
+        values.place ||
+        (places.data && !places.data.institution ? (places.data.faculties[0]?.id ?? '') : '');
       // A list made before this screen may also list programmes; keep that as it is.
       const kept = list?.entity_types.includes('programme') ? ['programme'] : [];
       const entity_types = [...values.entityTypes, ...kept];
@@ -90,6 +103,7 @@ function ListForm({
             kind: values.kind,
             description: values.description.trim(),
             entity_types,
+            faculty_id: place || null,
           });
     },
     onSuccess: async (saved) => {
@@ -116,6 +130,27 @@ function ListForm({
         data-autofocus
         {...form.getInputProps('name')}
       />
+      {!list && places.data && (places.data.institution || places.data.faculties.length > 1) && (
+        <NativeSelect
+          label={t('admin.tagLists.placeLabel')}
+          description={t('admin.tagLists.placeHint')}
+          data={[
+            ...(places.data.institution
+              ? [{ value: '', label: t('admin.tagLists.institutionWide') }]
+              : []),
+            ...places.data.faculties.map((faculty) => ({ value: faculty.id, label: faculty.name })),
+          ]}
+          {...form.getInputProps('place')}
+        />
+      )}
+      {!list &&
+        places.data &&
+        !places.data.institution &&
+        places.data.faculties.length === 1 && (
+          <Text size="sm" c="dimmed">
+            {t('admin.tagLists.placeFixed', { faculty: places.data.faculties[0].name })}
+          </Text>
+        )}
       {list ? (
         <Text size="sm" c="dimmed">
           {t('admin.tagLists.keyFixed', {

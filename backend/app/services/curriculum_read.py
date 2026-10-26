@@ -486,7 +486,9 @@ async def _objectives(
             .group_by(MappingLink.objective_id)
         )
         recheck = {row[0]: row[1] for row in rows}
-    tags = await item_tags(db, {TaggableType.OBJECTIVE: [o.id for o in objectives]})
+    tags = await item_tags(
+        db, {TaggableType.OBJECTIVE: [o.id for o in objectives]}, with_reach=True
+    )
     return [
         ObjectiveWithLinks(
             o, parents[o.id], recheck.get(o.id, 0), tags.get((TaggableType.OBJECTIVE, o.id), [])
@@ -555,7 +557,7 @@ async def module_detail(
         can_edit_objectives=is_editable(visible.version) and Permission.OBJECTIVES_EDIT in held,
         can_approve_objectives=is_editable(visible.version)
         and Permission.OBJECTIVES_APPROVE in held,
-        tags=(await item_tags(db, {TaggableType.MODULE: [module.id]})).get(
+        tags=(await item_tags(db, {TaggableType.MODULE: [module.id]}, with_reach=True)).get(
             (TaggableType.MODULE, module.id), []
         ),
         can_edit_tags=is_editable(visible.version) and Permission.TAGGING_EDIT in held,

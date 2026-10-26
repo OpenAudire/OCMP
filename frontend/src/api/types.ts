@@ -98,6 +98,8 @@ export interface Programme extends ProgrammeSummary {
     name: string;
     nqf_exit_level: number;
     min_total_credits: number;
+    /** Credits wanted at the type's own exit level, when it has such a rule. */
+    min_exit_level_credits: number | null;
   } | null;
   nqf_exit_level: number | null;
   saqa_id: string | null;
@@ -353,6 +355,8 @@ export interface VersionCreditCheck {
   programme_total_credits: number | null;
   qualification_name: string | null;
   qualification_min_credits: number | null;
+  /** Credits wanted at the exit level (the institution's figure, else the qualification type's). */
+  exit_level_minimum: number | null;
   exit_level: number | null;
   findings: CreditFinding[];
 }
@@ -587,7 +591,18 @@ export interface TagList {
   /** Item types the list may tag: programme, module, learning_event, objective. */
   entity_types: string[];
   is_active: boolean;
+  /** Null: an institution-wide list; otherwise the faculty it belongs to. */
+  faculty_id: string | null;
+  faculty_name: string | null;
+  /** The user may change this list and its tags. */
+  can_manage: boolean;
   values: TagValue[];
+}
+
+/** Where the user may create tag lists. */
+export interface TagListPlaces {
+  institution: boolean;
+  faculties: { id: string; name: string }[];
 }
 
 export interface TagListInput {
@@ -596,6 +611,8 @@ export interface TagListInput {
   kind: TagListKind;
   description: string;
   entity_types: string[];
+  /** Omitted or null: an institution-wide list. */
+  faculty_id?: string | null;
 }
 
 export interface TagValueInput {
@@ -619,6 +636,8 @@ export interface ItemTag {
   list_name: string;
   direct_tagging_id: string | null;
   sources: TagSource[];
+  /** Items below that this tag has not reached yet (added or linked after it was set). */
+  not_reached?: number;
 }
 
 export type PreviewStatus = 'new' | 'has_tag' | 'not_applicable';

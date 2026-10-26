@@ -14,6 +14,7 @@ vi.mock('../api/endpoints', async (importOriginal) => ({
   fetchMyRoles: vi.fn(),
   fetchInstitution: vi.fn(),
   fetchTagLists: vi.fn(),
+  fetchTagListPlaces: vi.fn(),
   createTagList: vi.fn(),
   updateTagList: vi.fn(),
   deleteTagList: vi.fn(),
@@ -42,6 +43,9 @@ function list(overrides: Partial<TagList> & Pick<TagList, 'id' | 'name'>): TagLi
     description: '',
     entity_types: ['module', 'learning_event', 'objective'],
     is_active: true,
+    faculty_id: null,
+    faculty_name: null,
+    can_manage: true,
     values: [],
     ...overrides,
   };
@@ -74,6 +78,7 @@ describe('tag lists screen', () => {
     mocked.fetchMyRoles.mockResolvedValue([role('curriculum_office', ['taglists.manage'])]);
     mocked.fetchInstitution.mockResolvedValue(testInstitution);
     mocked.fetchTagLists.mockResolvedValue([methods, themes]);
+    mocked.fetchTagListPlaces.mockResolvedValue({ institution: true, faculties: [] });
   });
 
   it('shows the lists with their tags, usage and state', async () => {
@@ -131,6 +136,84 @@ describe('tag lists screen', () => {
     expect(await screen.findByRole('region', { name: 'Teaching methods' })).toBeInTheDocument();
   });
 
+  it('shows who keeps each list and offers changes only on the lists the person manages', async () => {
+    mocked.fetchMyRoles.mockResolvedValue([role('curriculum_office', ['taglists.manage'])]);
+    const faculty = list({
+      id: 'fac',
+      name: 'Health themes',
+      faculty_id: 'f1',
+      faculty_name: 'Faculty of Health',
+      can_manage: true,
+    });
+    const wide = list({ id: 'wide', name: 'Teaching formats', can_manage: false });
+    mocked.fetchTagLists.mockResolvedValue([faculty, wide]);
+    renderAt('/admin/tag-lists');
+
+    const mine = await screen.findByRole('region', { name: 'Health themes' });
+    expect(within(mine).getByText('Faculty of Health')).toBeInTheDocument();
+    expect(within(mine).getByRole('button', { name: 'Edit list Health themes' })).toBeInTheDocument();
+    const theirs = screen.getByRole('region', { name: 'Teaching formats' });
+    expect(within(theirs).getByText('Whole institution')).toBeInTheDocument();
+    expect(within(theirs).getByText(/You can use these tags but not change them/)).toBeInTheDocument();
+    expect(within(theirs).queryByRole('button', { name: /Edit list|Delete list|Add tag/ })).toBeNull();
+  });
+
+  it('creates a list for the only faculty a faculty manager keeps', async () => {
+    mocked.fetchTagListPlaces.mockResolvedValue({
+      institution: false,
+      faculties: [{ id: 'f1', name: 'Faculty of Health' }],
+    });
+    mocked.createTagList.mockResolvedValue(list({ id: 'threads', name: 'Threads' }));
+    renderAt('/admin/tag-lists');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'New tag list' }));
+    const form = await screen.findByRole('dialog', { name: 'New tag list' });
+    expect(
+      await within(form).findByText('This list will be kept for Faculty of Health.')
+    ).toBeInTheDocument();
+    fireEvent.change(within(form).getByRole('textbox', { name: /Name/ }), {
+      target: { value: 'Threads' },
+    });
+    fireEvent.change(within(form).getByRole('textbox', { name: /Key/ }), {
+      target: { value: 'threads' },
+    });
+    fireEvent.click(within(form).getByRole('button', { name: 'New tag list' }));
+
+    expect(await screen.findByText('Tag list Threads added.')).toBeInTheDocument();
+    expect(mocked.createTagList).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'threads', faculty_id: 'f1' })
+    );
+  });
+
+  it('lets an institution manager choose where a new list is kept', async () => {
+    mocked.fetchTagListPlaces.mockResolvedValue({
+      institution: true,
+      faculties: [{ id: 'f1', name: 'Faculty of Health' }],
+    });
+    mocked.createTagList.mockResolvedValue(list({ id: 'threads', name: 'Threads' }));
+    renderAt('/admin/tag-lists');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'New tag list' }));
+    const form = await screen.findByRole('dialog', { name: 'New tag list' });
+    const where = await within(form).findByRole('combobox', { name: 'Kept for' });
+    expect(within(where).getAllByRole('option').map((o) => o.textContent)).toEqual([
+      'Whole institution',
+      'Faculty of Health',
+    ]);
+    fireEvent.change(within(form).getByRole('textbox', { name: /Name/ }), {
+      target: { value: 'Threads' },
+    });
+    fireEvent.change(within(form).getByRole('textbox', { name: /Key/ }), {
+      target: { value: 'threads' },
+    });
+    fireEvent.click(within(form).getByRole('button', { name: 'New tag list' }));
+
+    await screen.findByText('Tag list Threads added.');
+    expect(mocked.createTagList).toHaveBeenCalledWith(
+      expect.objectContaining({ faculty_id: null })
+    );
+  });
+
   it('adds a tag list', async () => {
     mocked.createTagList.mockResolvedValue(list({ id: 'threads', name: 'Threads' }));
     renderAt('/admin/tag-lists');
@@ -168,6 +251,7 @@ describe('tag lists screen', () => {
       kind: 'thread',
       description: '',
       entity_types: ['module', 'objective'],
+      faculty_id: null,
     });
   });
 

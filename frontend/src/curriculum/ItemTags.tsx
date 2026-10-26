@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Button, Group, Text } from '@mantine/core';
-import { IconPlus, IconX } from '@tabler/icons-react';
+import { IconInfoCircle, IconPlus, IconX } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { removeTagging } from '../api/endpoints';
 import type { ItemTag, TaggableKind } from '../api/types';
 import { editErrorMessage, useRefreshCurriculum, type EditResult } from './editing';
+import { PassOnDialog } from './PassOnDialog';
 import { TagDialog } from './TagDialog';
 import { sourceLabel } from './tagSources';
 import classes from './ItemTags.module.css';
@@ -30,6 +31,9 @@ export function ItemTags({ kind, itemId, itemName, versionId, tags, canEdit, onS
   const { t } = useTranslation();
   const refresh = useRefreshCurriculum(versionId);
   const [adding, setAdding] = useState(false);
+  const [passing, setPassing] = useState<ItemTag | null>(null);
+  // Kept while the dialog closes so it does not flash empty.
+  const [lastPassing, setLastPassing] = useState<ItemTag | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const remove = useMutation({
@@ -48,6 +52,9 @@ export function ItemTags({ kind, itemId, itemName, versionId, tags, canEdit, onS
   });
   const shown = tags ?? [];
   const direct = new Set(shown.filter((tag) => tag.direct_tagging_id).map((tag) => tag.tag_value_id));
+  // Direct tags that newer items below (added or linked after tagging) have not received.
+  const unreached = shown.filter((tag) => tag.direct_tagging_id && (tag.not_reached ?? 0) > 0);
+  const passingNow = passing ?? lastPassing;
 
   return (
     <div className={classes.tags} role="group" aria-label={t('tags.groupLabel', { name: itemName })}>
@@ -109,6 +116,39 @@ export function ItemTags({ kind, itemId, itemName, versionId, tags, canEdit, onS
             </li>
           ))}
         </ul>
+      )}
+      {canEdit &&
+        unreached.map((tag) => (
+          <div key={tag.tag_value_id} className={classes.notice}>
+            <IconInfoCircle size={18} aria-hidden className={classes.noticeIcon} />
+            <Text size="sm" className={classes.noticeText}>
+              {t('tags.notReached', { tag: tag.label, count: tag.not_reached })}
+            </Text>
+            <Button
+              variant="default"
+              aria-label={t('tags.passOn.buttonLabel', { tag: tag.label, name: itemName })}
+              onClick={() => {
+                setLastPassing(tag);
+                setPassing(tag);
+              }}
+            >
+              {t('tags.passOn.button')}
+            </Button>
+          </div>
+        ))}
+      {canEdit && passingNow?.direct_tagging_id && (
+        <PassOnDialog
+          opened={passing !== null}
+          taggingId={passingNow.direct_tagging_id}
+          tagLabel={passingNow.label}
+          itemName={itemName}
+          versionId={versionId}
+          onClose={() => setPassing(null)}
+          onSaved={(result) => {
+            setPassing(null);
+            onSaved(result);
+          }}
+        />
       )}
       {canEdit && (
         <TagDialog

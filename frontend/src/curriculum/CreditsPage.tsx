@@ -62,7 +62,20 @@ function Summary({ check }: { check: VersionCreditCheck }) {
             <dd>{check.exit_level}</dd>
           </div>
         )}
+        {check.exit_level !== null && check.exit_level_minimum !== null && (
+          <div className={classes.fact}>
+            <dt>{t('curriculum.credits.page.exitMinimum', { level: check.exit_level })}</dt>
+            <dd>
+              {t('curriculum.credits.page.minimum', { value: number(check.exit_level_minimum) })}
+            </dd>
+          </div>
+        )}
       </dl>
+      {check.exit_level_minimum !== null && policy.min_exit_level_credits === null && (
+        <Text size="sm" c="dimmed">
+          {t('curriculum.credits.page.exitMinimumSource')}
+        </Text>
+      )}
       <Text size="sm" c="dimmed">
         {t('curriculum.credits.page.policy', {
           hours: policy.hours_per_credit,

@@ -72,6 +72,16 @@ year, configurable); credits per NQF level checked against the qualification typ
   shows the check in words with an icon (ochre means "needs attention", never colour alone)
   and has a **Credits and hours** page (`/curriculum/versions/{id}/credits`).
 - It is advice: nothing is refused or blocked because of it, and there is no AI.
+- **Exit-level credits of a qualification type (Slice 1.10a).** `qualification_types` has a
+  `min_exit_level_credits` column (migration 0016) filled by the data migration 0017 for the
+  Bachelor's degree (360 credits: at least 120 at NQF level 7) and the professional Bachelor's
+  degree (480 credits: at least 120 at NQF level 8), after the Stellenbosch University
+  "Guidelines on qualification types" (July 2022) as given by the product owner. The check uses
+  the institution's `min_exit_level_credits` setting when set, otherwise the type's figure, and
+  the type's figure only when the programme's exit level is the type's own. The document itself
+  could not be fetched when this was written (the server redirected to the home page), so the
+  figures are **not verified**; the Credits page and the seed notes say to verify them against the
+  current CHE and HEQSF documents.
 - The qualification rules are those seeded in `qualification_types` and must be checked against
   the current CHE and HEQSF documents; the page says so.
 

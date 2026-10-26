@@ -39,7 +39,24 @@ class TagListRead(BaseModel):
     description: str
     entity_types: list[str]
     is_active: bool
+    # Null: an institution-wide list. Otherwise the faculty it belongs to.
+    faculty_id: uuid.UUID | None
+    faculty_name: str | None
+    # The user may change this list and its tags (and see its inactive tags and usage).
+    can_manage: bool
     values: list[TagValueRead]
+
+
+class FacultyRef(BaseModel):
+    id: uuid.UUID
+    name: str
+
+
+class TagListPlaces(BaseModel):
+    """Where the user may create tag lists: the whole institution and/or these faculties."""
+
+    institution: bool
+    faculties: list[FacultyRef]
 
 
 class TagListCreate(BaseModel):
@@ -52,6 +69,8 @@ class TagListCreate(BaseModel):
     entity_types: list[TaggableKind] = Field(
         default=["module", "learning_event", "objective"], min_length=1
     )
+    # Null: an institution-wide list (needs the permission for the whole instance).
+    faculty_id: uuid.UUID | None = None
 
 
 class TagListUpdate(BaseModel):
@@ -105,6 +124,9 @@ class ItemTagRead(BaseModel):
     # The tagging to remove; null when the tag is only inherited.
     direct_tagging_id: uuid.UUID | None
     sources: list[TagSourceRead]
+    # Items this tag has not reached yet (added or linked after it was set); 0 when it
+    # passes nothing on. The details panel offers to pass it on.
+    not_reached: int = 0
 
 
 class TagRequest(BaseModel):
@@ -153,6 +175,7 @@ def item_tag_reads(tags: list[ItemTag]) -> list[ItemTagRead]:
             list_id=tag.tag_list.id,
             list_name=tag.tag_list.name,
             direct_tagging_id=tag.direct_tagging_id,
+            not_reached=tag.not_reached,
             sources=[
                 TagSourceRead(item_type=s.item_type, item_id=s.item_id, name=s.name)
                 for s in tag.sources

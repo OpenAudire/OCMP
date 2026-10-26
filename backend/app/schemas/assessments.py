@@ -145,5 +145,6 @@ class VersionCreditCheckRead(BaseModel):
     programme_total_credits: int | None
     qualification_name: str | None
     qualification_min_credits: int | None
+    exit_level_minimum: int | None
     exit_level: int | None
     findings: list[CreditFindingRead]

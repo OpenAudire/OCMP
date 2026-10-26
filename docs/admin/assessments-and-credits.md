@@ -53,6 +53,15 @@ default) fits.
 The qualification types and their credit minimums are seeded values to verify against the
 current CHE and HEQSF documents; the page reminds readers of this.
 
+**Credits at the exit level.** A qualification type can carry the credits wanted at its own NQF
+exit level. The seeded types have two: a Bachelor's degree (360 credits) wants at least 120 at
+NQF level 7, and a professional Bachelor's degree (480 credits) at least 120 at NQF level 8. They
+come from the Stellenbosch University "Guidelines on qualification types" (July 2022), as given
+by the product owner; **that document was not checked when they were entered, so verify them
+against the current CHE and HEQSF documents**. The check applies the type's figure only when the
+programme's exit level is the type's own, and the institution's `min_exit_level_credits` setting,
+when set, replaces it. The Credits page shows the figure and says where it comes from.
+
 The demo programme has only a few sessions per module, so it shows the hours as *under*.
 
 ## Changing the figures

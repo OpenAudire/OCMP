@@ -29,6 +29,8 @@ vi.mock('../api/endpoints', async (importOriginal) => ({
   fetchTaxonomyScales: vi.fn(),
   fetchTagLists: vi.fn(),
   fetchTagPreview: vi.fn(),
+  fetchPassOnPreview: vi.fn(),
+  passTagOn: vi.fn(),
   addTag: vi.fn(),
   removeTagging: vi.fn(),
 }));
@@ -62,6 +64,9 @@ const lists: TagList[] = [
     description: '',
     entity_types: ['module', 'learning_event', 'objective'],
     is_active: true,
+    faculty_id: null,
+    faculty_name: null,
+    can_manage: false,
     values: [
       { id: 'pbl', label: 'PBL', code: null, description: '', position: 0, is_active: true, usage_count: 0 },
       { id: 'tbl', label: 'TBL', code: null, description: '', position: 1, is_active: true, usage_count: 0 },
@@ -76,6 +81,9 @@ const lists: TagList[] = [
     description: '',
     entity_types: ['objective'],
     is_active: true,
+    faculty_id: null,
+    faculty_name: null,
+    can_manage: false,
     values: [
       { id: 'ethics', label: 'Ethics', code: null, description: '', position: 0, is_active: true, usage_count: 0 },
     ],
@@ -210,6 +218,60 @@ describe('tagging curriculum items', () => {
     expect(
       within(group).getByRole('button', { name: 'Remove tag PBL from HSC201 Cardiovascular system' })
     ).toBeInTheDocument();
+  });
+
+  it('offers to pass a tag on to newer items, after a preview', async () => {
+    mocked.fetchModule.mockResolvedValue(moduleDetail([{ ...direct, not_reached: 2 }], true));
+    mocked.fetchPassOnPreview.mockResolvedValue({
+      ...preview,
+      tag_value_id: 'pbl',
+      label: 'PBL',
+      item_has_tag: true,
+    });
+    mocked.passTagOn.mockResolvedValue({ tags: [direct], inherited_count: 1 });
+    renderAt('/curriculum/versions/v2027?item=module:m2');
+    await tree();
+
+    const group = await screen.findByRole('group', { name: 'Tags of HSC201 Cardiovascular system' });
+    expect(
+      within(group).getByText(/PBL has not reached 2 newer items below/)
+    ).toBeInTheDocument();
+    fireEvent.click(
+      within(group).getByRole('button', {
+        name: 'Pass it on: tag PBL of HSC201 Cardiovascular system to newer items',
+      })
+    );
+
+    const form = await screen.findByRole('dialog', {
+      name: 'Pass PBL on from HSC201 Cardiovascular system',
+    });
+    expect(await within(form).findByText('Cardiac cycle')).toBeInTheDocument();
+    expect(mocked.fetchPassOnPreview).toHaveBeenCalledWith('t1');
+    expect(within(form).getByText('Will get the tag')).toBeInTheDocument();
+    expect(mocked.passTagOn).not.toHaveBeenCalled();
+
+    fireEvent.click(within(form).getByRole('button', { name: 'Pass on to 1 item' }));
+
+    expect(
+      await screen.findByText('Tag PBL passed on from HSC201 Cardiovascular system to 1 item.')
+    ).toBeInTheDocument();
+    expect(mocked.passTagOn).toHaveBeenCalledWith('t1');
+  });
+
+  it('shows no pass-on notice when nothing is missing or the person cannot tag', async () => {
+    mocked.fetchModule.mockResolvedValue(moduleDetail([{ ...direct, not_reached: 0 }], true));
+    renderAt('/curriculum/versions/v2027?item=module:m2');
+    await tree();
+    await screen.findByText('PBL');
+    expect(screen.queryByText(/has not reached/)).not.toBeInTheDocument();
+  });
+
+  it('hides the pass-on notice from people who may not tag', async () => {
+    mocked.fetchModule.mockResolvedValue(moduleDetail([{ ...direct, not_reached: 3 }], false));
+    renderAt('/curriculum/versions/v2027?item=module:m2');
+    await tree();
+    await screen.findByText('PBL');
+    expect(screen.queryByText(/has not reached/)).not.toBeInTheDocument();
   });
 
   it('shows no tag buttons to people who may not tag', async () => {

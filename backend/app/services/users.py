@@ -15,7 +15,7 @@ from app.core.security import (
     validate_password,
     verify_password,
 )
-from app.models import User
+from app.models import RoleAssignment, User, UserIdentity
 
 
 class UserAlreadyExistsError(ValueError):
@@ -167,3 +167,25 @@ async def list_users(
         query.order_by(User.created_at.desc(), User.id).offset(offset).limit(limit)
     )
     return list(result.scalars()), int(total or 0)
+
+
+async def delete_user(db: AsyncSession, user: User) -> None:
+    """Delete an account: personal details are replaced, role assignments and linked
+    sign-in identities are removed, and the row stays (soft-deleted) so the audit log and
+    authorship keep pointing at a person-less record.
+
+    The email address is replaced by a unique placeholder, so the address can be used for a
+    new account afterwards.
+    """
+    for assignment in await db.scalars(
+        select(RoleAssignment).where(RoleAssignment.user_id == user.id)
+    ):
+        await db.delete(assignment)
+    for identity in await db.scalars(select(UserIdentity).where(UserIdentity.user_id == user.id)):
+        await db.delete(identity)
+    user.email = f"deleted-{user.id}@deleted.invalid"
+    user.display_name = "Deleted user"
+    user.password_hash = None
+    user.is_active = False
+    user.soft_delete()
+    await db.flush()

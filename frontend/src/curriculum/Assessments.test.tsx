@@ -370,6 +370,7 @@ const creditCheck: VersionCreditCheck = {
   programme_total_credits: 360,
   qualification_name: "Bachelor's degree",
   qualification_min_credits: 360,
+  exit_level_minimum: 120,
   exit_level: 7,
   findings: [
     { code: 'total_differs_from_programme', params: { total: '28', programme: 360 } },

@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.api.deps import CurrentUser, RedisDep, SettingsDep, require_permission
 from app.core.database import DbSession
@@ -14,7 +14,7 @@ from app.models import RoleAssignment, User
 from app.schemas.roles import AssignmentRead
 from app.schemas.users import UserAdminRead, UserCreate, UserList, UserUpdate
 from app.services import sessions
-from app.services.audit import record_event
+from app.services.audit import audit_operation, record_event
 from app.services.authorization import (
     ConflictError,
     InvalidRequestError,
@@ -26,6 +26,7 @@ from app.services.users import (
     InvalidEmailError,
     UserAlreadyExistsError,
     create_local_user,
+    delete_user,
     list_users,
 )
 
@@ -116,6 +117,24 @@ async def update_user(
         logger.info("user_reactivated", user_id=str(user.id), actor_id=str(actor.id))
     await db.flush()
     return user
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user_account(
+    user_id: uuid.UUID, actor: UserManager, db: DbSession, redis: RedisDep
+) -> Response:
+    """Delete an account (for example one made for a test): its details are replaced and
+    its roles removed; the row stays so the audit log keeps its references."""
+    user = await _user_or_404(db, user_id)
+    if user.id == actor.id:
+        raise ConflictError("You cannot delete your own account.")
+    if await is_last_platform_admin(db, user):
+        raise ConflictError("This is the last platform admin; assign another one first.")
+    with audit_operation("user.delete", actor_id=actor.id):
+        await delete_user(db, user)
+    await sessions.revoke_user_sessions(redis, user.id)
+    logger.info("user_deleted", user_id=str(user.id), actor_id=str(actor.id))
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/{user_id}/role-assignments", response_model=list[AssignmentRead])

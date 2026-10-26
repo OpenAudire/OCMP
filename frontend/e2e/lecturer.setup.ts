@@ -6,8 +6,9 @@ import { credentials, LECTURER_EMAIL, LECTURER_STATE, lecturerPassword, SIGNED_I
 
 // A lecturer who holds only a session role is made once through the API by the test
 // admin (the saved session of auth.setup.ts), then signs in once; journeys reuse the
-// saved session because sign-in is rate-limited. The account stays between runs (it
-// has no roles until a journey grants one, and the journeys remove what they grant).
+// saved session because sign-in is rate-limited. The account has no roles until a journey
+// grants one (and the journeys remove what they grant); cleanup.teardown.ts deletes the
+// account after the run, so the local demo keeps no test accounts.
 setup('sign in as a lecturer', async ({ page, baseURL }) => {
   if (fs.existsSync(LECTURER_STATE)) {
     const api = await request.newContext({

@@ -48,7 +48,7 @@ from app.services import assessments, credit_check
 from app.services.assessments import AssessmentWithItems
 from app.services.audit import audit_operation
 from app.services.authorization import ScopeRef
-from app.services.tagging import assessment_methods
+from app.services.tagging import assessment_methods, visible_faculty_ids
 
 router = APIRouter(tags=["assessments"])
 
@@ -288,7 +288,7 @@ async def list_assessment_methods(user: CurrentUser, db: DbSession) -> list[Asse
     """Values that can be chosen as an assessment's method (active assessment-method lists)."""
     return [
         AssessmentMethod(id=value.id, label=value.label, list_name=tag_list.name)
-        for value, tag_list in await assessment_methods(db)
+        for value, tag_list in await assessment_methods(db, await visible_faculty_ids(db, user))
     ]
 
 
@@ -325,6 +325,7 @@ def _read_check(check: credit_check.VersionCreditCheck) -> VersionCreditCheckRea
         programme_total_credits=check.programme_total_credits,
         qualification_name=check.qualification_name,
         qualification_min_credits=check.qualification_min_credits,
+        exit_level_minimum=check.exit_level_minimum,
         exit_level=check.exit_level,
         findings=[CreditFindingRead(code=f.code, params=f.params) for f in check.findings],
     )

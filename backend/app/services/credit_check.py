@@ -159,6 +159,8 @@ class VersionCreditCheck:
     qualification_name: str | None
     qualification_min_credits: int | None
     exit_level: int | None
+    # Credits wanted at the exit level (institution setting, else the qualification type).
+    exit_level_minimum: int | None
     findings: list[Finding]
 
 
@@ -210,6 +212,22 @@ def _year_status(credits: Decimal, expected: int) -> YearStatus:
     if credits == expected:
         return YearStatus.OK
     return YearStatus.UNDER if credits < expected else YearStatus.OVER
+
+
+def exit_level_minimum(
+    policy: CreditPolicy, qualification: QualificationType | None, exit_level: int | None
+) -> int | None:
+    """Credits wanted at the exit level: the institution's own figure when it sets one,
+    else the qualification type's (which applies at the type's own exit level)."""
+    if policy.min_exit_level_credits is not None:
+        return policy.min_exit_level_credits
+    if (
+        qualification is not None
+        and qualification.min_exit_level_credits is not None
+        and qualification.nqf_exit_level == exit_level
+    ):
+        return qualification.min_exit_level_credits
+    return None
 
 
 def check_credits(
@@ -281,18 +299,19 @@ def check_credits(
             findings.append(
                 Finding("above_exit_level", {"level": exit_level, "modules": ", ".join(above)})
             )
-        if policy.min_exit_level_credits is not None:
+        wanted = exit_level_minimum(policy, qualification, exit_level)
+        if wanted is not None:
             at_exit = next(
                 (row.credits for row in level_rows if row.level == exit_level), Decimal(0)
             )
-            if at_exit < policy.min_exit_level_credits:
+            if at_exit < wanted:
                 findings.append(
                     Finding(
                         "exit_level_credits_low",
                         {
                             "level": exit_level,
                             "credits": format(at_exit.normalize(), "f"),
-                            "minimum": policy.min_exit_level_credits,
+                            "minimum": wanted,
                         },
                     )
                 )
@@ -308,6 +327,7 @@ def check_credits(
         qualification_name=qualification.name if qualification else None,
         qualification_min_credits=minimum,
         exit_level=exit_level,
+        exit_level_minimum=exit_level_minimum(policy, qualification, exit_level),
         findings=findings,
     )
 

@@ -12,12 +12,14 @@ import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import ColumnElement, func, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.permissions import Permission, ScopeType
 from app.models import (
     Assessment,
+    Faculty,
     LearningEvent,
     Module,
     Objective,
@@ -26,10 +28,20 @@ from app.models import (
     Tagging,
     TagList,
     TagValue,
+    User,
 )
 from app.models.curriculum import ObjectiveLevel
 from app.models.tagging import TAGGING_COLUMNS, TaggableType, TagListKind
-from app.services.authorization import ConflictError, InvalidRequestError
+from app.services.authorization import (
+    INSTANCE,
+    ConflictError,
+    InvalidRequestError,
+    ScopeRef,
+    has_permission,
+    lineage,
+    user_assignments,
+)
+from app.services.curriculum_scopes import objective_scope
 
 Taggable = Programme | Module | LearningEvent | Objective
 
@@ -44,6 +56,91 @@ _TYPE_OF: dict[type, TaggableType] = {
 def taggable_type(item: Taggable) -> TaggableType:
     """The taggable type of a curriculum item."""
     return _TYPE_OF[type(item)]
+
+
+# --- Faculty lists: who sees and who manages which list (ADR 015, ADR 034) -------------
+
+
+async def item_scope(db: AsyncSession, item: Taggable) -> ScopeRef:
+    """The authorization scope of a curriculum item."""
+    if isinstance(item, Objective):
+        return await objective_scope(db, item)
+    kind = {
+        Programme: ScopeType.PROGRAMME,
+        Module: ScopeType.MODULE,
+        LearningEvent: ScopeType.LEARNING_EVENT,
+    }[type(item)]
+    return ScopeRef(kind, item.id)
+
+
+async def faculty_of_scope(db: AsyncSession, scope: ScopeRef) -> uuid.UUID | None:
+    """The faculty a scope sits in (None for the instance itself)."""
+    for ref in await lineage(db, scope):
+        if ref.type == ScopeType.FACULTY:
+            return ref.id
+    return None
+
+
+async def visible_faculty_ids(db: AsyncSession, user: User) -> set[uuid.UUID] | None:
+    """The faculties whose own lists the user sees: those they hold any role in, or in a
+    programme, module or session of. ``None``: every faculty (a role for the whole instance)."""
+    faculties: set[uuid.UUID] = set()
+    for assignment in await user_assignments(db, user.id):
+        held_at = ScopeRef(ScopeType(assignment.scope_type), assignment.scope_id)
+        if held_at.type == ScopeType.INSTANCE:
+            return None
+        try:
+            found = await faculty_of_scope(db, held_at)
+        except InvalidRequestError:  # the scope was deleted
+            continue
+        if found:
+            faculties.add(found)
+    return faculties
+
+
+def list_visibility(visible: set[uuid.UUID] | None) -> ColumnElement[bool]:
+    """SQL condition: institution-wide lists, and the lists of the visible faculties."""
+    if visible is None:
+        return true()
+    return or_(TagList.faculty_id.is_(None), TagList.faculty_id.in_(visible))
+
+
+@dataclass
+class ListManagement:
+    """Where a user may manage tag lists (``taglists.manage``)."""
+
+    instance: bool
+    faculties: set[uuid.UUID]
+
+    @property
+    def any(self) -> bool:
+        return self.instance or bool(self.faculties)
+
+    def covers(self, faculty_id: uuid.UUID | None) -> bool:
+        """Whether the user manages a list of this faculty (None: institution-wide)."""
+        return self.instance or (faculty_id is not None and faculty_id in self.faculties)
+
+
+async def list_management(db: AsyncSession, user: User) -> ListManagement:
+    """The places (instance, faculties) where the user holds ``taglists.manage``."""
+    if await has_permission(db, user, Permission.TAGLISTS_MANAGE, INSTANCE):
+        return ListManagement(instance=True, faculties=set())
+    faculty_ids = await db.scalars(select(Faculty.id).where(Faculty.deleted_at.is_(None)))
+    managed = {
+        faculty_id
+        for faculty_id in faculty_ids
+        if await has_permission(
+            db, user, Permission.TAGLISTS_MANAGE, ScopeRef(ScopeType.FACULTY, faculty_id)
+        )
+    }
+    return ListManagement(instance=False, faculties=managed)
+
+
+def list_scope(tag_list: TagList) -> ScopeRef:
+    """The scope that manages a list: its faculty, or the instance."""
+    if tag_list.faculty_id is None:
+        return INSTANCE
+    return ScopeRef(ScopeType.FACULTY, tag_list.faculty_id)
 
 
 async def add_tag_value(
@@ -88,13 +185,20 @@ async def add_tag_value(
     return value
 
 
-async def _usable_value(db: AsyncSession, value: TagValue) -> TagList:
-    """The value's list, if both can be used for new tags."""
+async def _usable_value(
+    db: AsyncSession, value: TagValue, where: Taggable | ScopeRef | None = None
+) -> TagList:
+    """The value's list, if both can be used for new tags (and, when ``where`` is given,
+    on that item or scope: a faculty's own list only on items of that faculty)."""
     tag_list = await db.get(TagList, value.tag_list_id)
     if tag_list is None or tag_list.is_deleted or not tag_list.is_active:
         raise InvalidRequestError("This tag list is not available.")
     if value.is_deleted or not value.is_active:
         raise InvalidRequestError("This tag is not available.")
+    if tag_list.faculty_id is not None and where is not None:
+        scope = where if isinstance(where, ScopeRef) else await item_scope(db, where)
+        if await faculty_of_scope(db, scope) != tag_list.faculty_id:
+            raise InvalidRequestError(f"'{tag_list.name}' belongs to another faculty.")
     return tag_list
 
 
@@ -113,7 +217,8 @@ async def tag_item(
             apply to this kind of item, or the item is deleted.
         ConflictError: If the item already has this tag from the same source.
     """
-    tag_list = await _usable_value(db, value)
+    # An inherited tag lands on items of the same version, so the faculty was checked at its source.
+    tag_list = await _usable_value(db, value, None if inherited_from else item)
     item_type = taggable_type(item)
     if item_type.value not in tag_list.entity_types:
         raise InvalidRequestError(f"'{tag_list.name}' cannot be used on a {item_type.value}.")
@@ -184,7 +289,7 @@ async def set_teaching_format(
         InvalidRequestError: If the value is not from a usable teaching-method list.
     """
     if value is not None:
-        tag_list = await _usable_value(db, value)
+        tag_list = await _usable_value(db, value, event)
         if tag_list.kind != TagListKind.TEACHING_METHOD:
             raise InvalidRequestError("The format must come from a teaching-method list.")
     event.format_value_id = value.id if value else None
@@ -200,24 +305,31 @@ async def set_assessment_method(
         InvalidRequestError: If the value is not from a usable assessment-method list.
     """
     if value is not None:
-        tag_list = await _usable_value(db, value)
+        tag_list = await _usable_value(db, value, ScopeRef(ScopeType.MODULE, assessment.module_id))
         if tag_list.kind != TagListKind.ASSESSMENT_METHOD:
             raise InvalidRequestError("The method must come from an assessment-method list.")
     assessment.method_value_id = value.id if value else None
     await db.flush()
 
 
-async def teaching_formats(db: AsyncSession) -> list[tuple[TagValue, TagList]]:
-    """Values that can be chosen as a session's teaching format, by list and position."""
-    return await _kind_values(db, TagListKind.TEACHING_METHOD)
+async def teaching_formats(
+    db: AsyncSession, visible: set[uuid.UUID] | None = None
+) -> list[tuple[TagValue, TagList]]:
+    """Values that can be chosen as a session's teaching format, by list and position
+    (from the institution-wide lists and those of the ``visible`` faculties)."""
+    return await _kind_values(db, TagListKind.TEACHING_METHOD, visible)
 
 
-async def assessment_methods(db: AsyncSession) -> list[tuple[TagValue, TagList]]:
+async def assessment_methods(
+    db: AsyncSession, visible: set[uuid.UUID] | None = None
+) -> list[tuple[TagValue, TagList]]:
     """Values that can be chosen as an assessment's method, by list and position."""
-    return await _kind_values(db, TagListKind.ASSESSMENT_METHOD)
+    return await _kind_values(db, TagListKind.ASSESSMENT_METHOD, visible)
 
 
-async def _kind_values(db: AsyncSession, kind: TagListKind) -> list[tuple[TagValue, TagList]]:
+async def _kind_values(
+    db: AsyncSession, kind: TagListKind, visible: set[uuid.UUID] | None
+) -> list[tuple[TagValue, TagList]]:
     result = await db.execute(
         select(TagValue, TagList)
         .join(TagList, TagList.id == TagValue.tag_list_id)
@@ -225,6 +337,7 @@ async def _kind_values(db: AsyncSession, kind: TagListKind) -> list[tuple[TagVal
             TagList.kind == kind,
             TagList.deleted_at.is_(None),
             TagList.is_active.is_(True),
+            list_visibility(visible),
             TagValue.deleted_at.is_(None),
             TagValue.is_active.is_(True),
         )
@@ -244,6 +357,7 @@ async def create_tag_list(
     kind: TagListKind,
     description: str = "",
     entity_types: Sequence[TaggableType],
+    faculty_id: uuid.UUID | None = None,
     created_by_id: uuid.UUID | None = None,
 ) -> TagList:
     """Add a tag list.
@@ -259,6 +373,7 @@ async def create_tag_list(
         kind=kind,
         description=description,
         entity_types=[t.value for t in entity_types],
+        faculty_id=faculty_id,
         created_by_id=created_by_id,
     )
     db.add(tag_list)
@@ -493,7 +608,7 @@ async def inheritance_preview(
     Raises:
         InvalidRequestError: If the tag or its list is unavailable.
     """
-    tag_list = await _usable_value(db, value)
+    tag_list = await _usable_value(db, value, item)
     preview = InheritancePreview(
         tag_list=tag_list, item_has_tag=await _has_direct_tag(db, value, item)
     )
@@ -538,6 +653,80 @@ async def apply_tag(
     return tagging, inherited
 
 
+async def _reached_ids(db: AsyncSession, tagging: Tagging) -> set[uuid.UUID]:
+    """Ids of the items that already carry a tagging passed on from this one."""
+    rows = await db.scalars(select(Tagging).where(Tagging.inherited_from_id == tagging.id))
+    return {tagging_item(row)[1] for row in rows}
+
+
+async def pass_on_preview(
+    db: AsyncSession, tagging: Tagging, item: Taggable
+) -> tuple[TagValue, InheritancePreview, set[uuid.UUID]]:
+    """Which items a direct tagging has not reached yet (items linked or added after it).
+
+    The entries use the same statuses as ``inheritance_preview``; ``new`` ones are what
+    ``pass_on`` gives the tag to. The third value holds the ids already reached from this
+    tagging (they are listed as ``has_tag`` too).
+
+    Raises:
+        InvalidRequestError: For an inherited tagging, or when the tag or list is unavailable.
+    """
+    if tagging.is_inherited:
+        raise InvalidRequestError("This tag is inherited; pass it on from where it was set.")
+    value = await db.get(TagValue, tagging.tag_value_id)
+    assert value is not None  # the foreign key guarantees it
+    preview = await inheritance_preview(db, value, item)
+    reached = await _reached_ids(db, tagging)
+    for entry in preview.entries:
+        if entry.item.id in reached:
+            entry.status = "has_tag"
+    return value, preview, reached
+
+
+async def pass_on(
+    db: AsyncSession,
+    tagging: Tagging,
+    item: Taggable,
+    *,
+    created_by_id: uuid.UUID | None = None,
+) -> list[Tagging]:
+    """Give a direct tag to the items it has not reached yet; returns the new taggings."""
+    value, preview, _ = await pass_on_preview(db, tagging, item)
+    return [
+        await tag_item(db, value, entry.item, inherited_from=tagging, created_by_id=created_by_id)
+        for entry in preview.entries
+        if entry.status == "new"
+    ]
+
+
+async def not_reached_counts(
+    db: AsyncSession, found: dict[tuple[TaggableType, uuid.UUID], list["ItemTag"]]
+) -> None:
+    """Fill in ``not_reached`` on the direct tags of modules and of programme and module
+    outcomes (the items that pass tags on); session objectives and sessions pass nothing."""
+    for (item_type, item_id), tags in found.items():
+        if item_type not in (TaggableType.MODULE, TaggableType.OBJECTIVE):
+            continue
+        direct = [tag for tag in tags if tag.direct_tagging_id is not None]
+        if not direct:
+            continue
+        item: Taggable | None = (
+            await db.get(Module, item_id)
+            if item_type == TaggableType.MODULE
+            else await db.get(Objective, item_id)
+        )
+        if item is None or item.is_deleted:
+            continue
+        if isinstance(item, Objective) and item.level == ObjectiveLevel.LEARNING_EVENT:
+            continue
+        for tag in direct:
+            tagging = await db.get(Tagging, tag.direct_tagging_id)
+            if tagging is None or not tag.tag_list.is_active or not tag.value.is_active:
+                continue
+            _, preview, _ = await pass_on_preview(db, tagging, item)
+            tag.not_reached = sum(1 for entry in preview.entries if entry.status == "new")
+
+
 # --- Reading the tags of items -------------------------------------------------------
 
 
@@ -558,6 +747,8 @@ class ItemTag:
     tag_list: TagList
     direct_tagging_id: uuid.UUID | None = None
     sources: list[TagSource] = field(default_factory=list)
+    # For a direct tag that passes on: items it has not reached yet (see ``pass_on``).
+    not_reached: int = 0
 
 
 def tagging_item(tagging: Tagging) -> tuple[TaggableType, uuid.UUID]:
@@ -600,11 +791,15 @@ async def _source_names(
 
 
 async def item_tags(
-    db: AsyncSession, items: dict[TaggableType, Sequence[uuid.UUID]]
+    db: AsyncSession,
+    items: dict[TaggableType, Sequence[uuid.UUID]],
+    *,
+    with_reach: bool = False,
 ) -> dict[tuple[TaggableType, uuid.UUID], list[ItemTag]]:
     """The tags of many items, one entry per item and tag, with the source of each
     inherited one. Deleted tags and lists, and tags whose source item was deleted, are
-    left out."""
+    left out. With ``with_reach`` the direct tags of items that pass tags on also say how
+    many items they have not reached."""
     conditions = [
         getattr(Tagging, TAGGING_COLUMNS[item_type]).in_(list(ids))
         for item_type, ids in items.items()
@@ -652,4 +847,6 @@ async def item_tags(
             entry.direct_tagging_id = tagging.id
         elif all(s.item_id != source.item_id for s in entry.sources):
             entry.sources.append(source)
+    if with_reach:
+        await not_reached_counts(db, result)
     return result

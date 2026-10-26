@@ -1,6 +1,11 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 
-import { demoDraft, expectNoAccessibilityViolations, openApp } from './support';
+import {
+  demoDraft,
+  expectNoAccessibilityViolations,
+  openApp,
+  removeTagListByKey,
+} from './support';
 
 // Runs against the demo programme (load-demo) as the test admin. Each journey makes its
 // own uniquely named tag list, module and sessions through the API, works on those only
@@ -178,6 +183,65 @@ test.describe('tagging', () => {
     ).toBeVisible();
   });
 
+  test('passes a tag on to a session added after the module was tagged', async ({
+    page,
+  }, testInfo) => {
+    test.slow();
+    fixture = await makeFixture(page, testInfo.project.name);
+    const headers = await csrfHeaders(page);
+    await openApp(page, `/curriculum/versions/${fixture.versionId}?item=module:${fixture.moduleId}`);
+
+    // Tag the module without giving the tag to its session.
+    await page.getByRole('button', { name: `Add tag to ${fixture.moduleLabel}` }).click();
+    const dialog = page.getByRole('dialog', { name: `Add a tag to ${fixture.moduleLabel}` });
+    await dialog.getByRole('combobox', { name: /Tag/ }).selectOption({ label: fixture.tagLabel });
+    await dialog.getByRole('checkbox', { name: /Also give this tag to the 1 item/ }).uncheck();
+    await dialog.getByRole('button', { name: 'Add tag' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: `Tag ${fixture.tagLabel} added to` })
+    ).toBeVisible();
+
+    // The existing session was left out on purpose; it is the item the notice counts.
+    const group = page.getByRole('group', { name: `Tags of ${fixture.moduleLabel}` });
+    await expect(group.getByText(/has not reached 1 newer item below/)).toBeVisible();
+    await expectNoAccessibilityViolations(page);
+
+    await group
+      .getByRole('button', {
+        name: `Pass it on: tag ${fixture.tagLabel} of ${fixture.moduleLabel} to newer items`,
+      })
+      .click();
+    const pass = page.getByRole('dialog', {
+      name: `Pass ${fixture.tagLabel} on from ${fixture.moduleLabel}`,
+    });
+    await expect(pass.getByText(fixture.eventTitle)).toBeVisible();
+    await expect(pass.getByText('Will get the tag')).toBeVisible();
+    await expectNoAccessibilityViolations(page);
+    await pass.getByRole('button', { name: 'Pass on to 1 item' }).click();
+
+    await expect(
+      page.getByRole('status').filter({ hasText: `passed on from ${fixture.moduleLabel} to 1 item` })
+    ).toBeVisible();
+    await expect(group.getByText(/has not reached/)).toHaveCount(0);
+
+    // The session now carries the tag, with the module as its source.
+    await openApp(page, `/curriculum/versions/${fixture.versionId}?item=event:${fixture.eventId}`);
+    const sessionTags = page.getByRole('group', { name: `Tags of ${fixture.eventTitle}` });
+    await expect(sessionTags.getByText(fixture.tagLabel)).toBeVisible();
+    await expect(sessionTags.getByText(/Inherited from .* TG-.* Tagging module/)).toBeVisible();
+
+    // A session added later has not been reached either.
+    await post(page.request, headers, `/modules/${fixture.moduleId}/learning-events`, {
+      title: `Later session ${fixture.eventTitle}`,
+    });
+    await openApp(page, `/curriculum/versions/${fixture.versionId}?item=module:${fixture.moduleId}`);
+    await expect(
+      page
+        .getByRole('group', { name: `Tags of ${fixture.moduleLabel}` })
+        .getByText(/has not reached 1 newer item below/)
+    ).toBeVisible();
+  });
+
   test('tags a session on its own', async ({ page }, testInfo) => {
     test.slow();
     fixture = await makeFixture(page, testInfo.project.name);
@@ -201,9 +265,20 @@ test.describe('tagging', () => {
 });
 
 test.describe('tag lists screen', () => {
+  let screenKey: string | null = null;
+
+  // The journey deletes its list through the screen; if it fails halfway, remove it here.
+  test.afterEach(async ({ page }) => {
+    if (screenKey === null) return;
+    await openApp(page, '/');
+    await removeTagListByKey(page, screenKey);
+    screenKey = null;
+  });
+
   test('adds, makes inactive and deletes a list and its tag', async ({ page }, testInfo) => {
     test.slow();
     const suffix = `${testInfo.project.name}-${Date.now() % 1_000_000}`;
+    screenKey = `screen-${suffix}`.toLowerCase();
     const name = `Screen list ${suffix}`;
     await openApp(page, '/admin');
     await page.getByRole('link', { name: 'Tag lists' }).click();
@@ -216,7 +291,7 @@ test.describe('tag lists screen', () => {
     await expect(dialog.getByText('Fill in this field.').first()).toBeVisible();
     await expectNoAccessibilityViolations(page);
     await dialog.getByRole('textbox', { name: /Name/ }).fill(name);
-    await dialog.getByRole('textbox', { name: /Key/ }).fill(`screen-${suffix}`.toLowerCase());
+    await dialog.getByRole('textbox', { name: /Key/ }).fill(screenKey);
     await dialog.getByRole('button', { name: 'New tag list' }).click();
     await expect(page.getByRole('status').filter({ hasText: `Tag list ${name} added` })).toBeVisible({
       timeout: 15_000,

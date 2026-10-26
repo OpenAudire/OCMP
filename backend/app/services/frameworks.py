@@ -6,7 +6,15 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Crosswalk, CrosswalkEntry, Framework, FrameworkCrossRef, FrameworkItem
+from app.models import (
+    Crosswalk,
+    CrosswalkEntry,
+    Framework,
+    FrameworkCrossRef,
+    FrameworkItem,
+    MappingLink,
+    ReviewAssignment,
+)
 from app.models.framework import CrossRefType, CrosswalkEntryType, FrameworkStatus
 from app.services.authorization import ConflictError, InvalidRequestError
 
@@ -168,3 +176,41 @@ async def activate_framework(db: AsyncSession, framework: Framework) -> list[uui
     framework.status = FrameworkStatus.ACTIVE
     await db.flush()
     return superseded
+
+
+async def delete_framework(db: AsyncSession, framework: Framework) -> None:
+    """Soft-delete a framework version that nothing depends on.
+
+    Its items stay with the hidden row. Tag lists and taxonomy scales that a pack created
+    with it are separate and are removed on their own.
+
+    Raises:
+        InvalidRequestError: If it is already deleted.
+        ConflictError: If any objective is mapped to one of its items, a review is assigned
+            on it, or a newer live version has a crosswalk from it.
+    """
+    if framework.is_deleted:
+        raise InvalidRequestError("This framework has been deleted.")
+    mapped = await db.scalar(
+        select(MappingLink.id)
+        .join(FrameworkItem, FrameworkItem.id == MappingLink.framework_item_id)
+        .where(FrameworkItem.framework_id == framework.id)
+        .limit(1)
+    )
+    assigned = await db.scalar(
+        select(ReviewAssignment.id).where(ReviewAssignment.framework_id == framework.id).limit(1)
+    )
+    if mapped or assigned:
+        raise ConflictError("Objectives are mapped to this framework, so it cannot be deleted.")
+    # A newer live version built on this one (its crosswalk starts here) must go first;
+    # this version's own crosswalk from an older one does not block deleting it.
+    newer = await db.scalar(
+        select(Crosswalk.id)
+        .join(Framework, Framework.id == Crosswalk.to_framework_id)
+        .where(Crosswalk.from_framework_id == framework.id, Framework.deleted_at.is_(None))
+        .limit(1)
+    )
+    if newer:
+        raise ConflictError("A newer version builds on this one; delete that version first.")
+    framework.soft_delete()
+    await db.flush()

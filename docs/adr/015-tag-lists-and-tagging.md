@@ -15,7 +15,8 @@ each learning event taken from a tag list.
 
 - `tag_lists`: key (`^[a-z0-9_-]+$`, unique among live lists), name, kind (teaching method,
   assessment method, theme, thread, keyword, resource, EPA, custom), description, which item
-  types the list may tag, active flag. Instance-wide, managed with `taglists.manage`.
+  types the list may tag, active flag, and an optional `faculty_id` (Slice 1.10a, below).
+  Managed with `taglists.manage`.
 - `tag_values`: label and optional code (for import upserts), both unique within a list
   among live values; description, position, active flag. Lists and values are soft-deleted.
 - `taggings`: one row per tag on one item, with **one foreign-key column per taggable type**
@@ -28,6 +29,23 @@ each learning event taken from a tag list.
 - `learning_events.format_value_id`: the teaching format, a value from a teaching-method
   list (checked by the service; `SET NULL` if the value is removed). A column rather than a
   tagging because each session has exactly one format and contact-hour reports group by it.
+
+**Faculty lists (Slice 1.10a).** The brief's roles table gives the curriculum office the
+management of tag lists at *faculty* scope, so a list is either **institution-wide**
+(`faculty_id` null) or belongs to **one faculty**:
+
+- `taglists.manage` held at a faculty manages that faculty's lists (create, change, tags,
+  delete); held at the instance it manages every list. A faculty manager **cannot create or
+  change institution-wide lists** or another faculty's lists (the brief does not give them that).
+  The faculty of a list is fixed when it is created, like its key and kind. Keys stay unique
+  across the institution.
+- Visibility: institution-wide lists are visible to every signed-in user; a faculty's list to
+  people who hold any role in that faculty (including a programme, module or session of it) and
+  to people with an instance-wide role. The same rule filters the choices of session formats and
+  assessment methods.
+- A faculty's list can tag (and be a format or method of) **only items of that faculty** (422).
+- Frameworks (`frameworks.manage`) stay instance-level, and a pack's tag lists are created
+  institution-wide, so importing needs the instance permission.
 
 Service rules (`app/services/tagging.py`): labels and codes unique per list; only active
 values from active lists can be applied; a list applies only to its item types; deleted

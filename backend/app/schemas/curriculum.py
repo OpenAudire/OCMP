@@ -51,6 +51,7 @@ class QualificationTypeRead(BaseModel):
     name: str
     nqf_exit_level: int
     min_total_credits: int
+    min_exit_level_credits: int | None = None
 
 
 class ProgrammeRead(ProgrammeSummary):

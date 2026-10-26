@@ -37,6 +37,37 @@ function itemKindText(t: TFunction, item: PreviewItem): string {
   return t('terms.objective', { count: 1 });
 }
 
+/** The items a tag would reach, each with what will happen to it; scrolls and can be focused. */
+export function PreviewItems({ items }: { items: PreviewItem[] }) {
+  const { t } = useTranslation();
+  return (
+    <div
+      className={classes.items}
+      role="group"
+      tabIndex={0}
+      aria-label={t('tags.preview.listLabel', { count: items.length })}
+    >
+      <ul className={classes.list}>
+        {items.map((item) => (
+          <li key={item.item_id} className={classes.row}>
+            <span className={classes.name}>
+              <span className={classes.kind}>
+                {itemKindText(t, item)}
+                {item.module_code ? ` · ${item.module_code}` : ''}
+                {': '}
+              </span>
+              {item.name}
+            </span>
+            <span className={classes.status} data-status={item.status}>
+              {statusText(t, item)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function TagForm({
   kind,
   itemId,
@@ -157,30 +188,7 @@ function TagForm({
                 disabled={reached.length === 0}
                 onChange={(event) => setChosen(event.currentTarget.checked)}
               />
-              <div
-                className={classes.items}
-                role="group"
-                tabIndex={0}
-                aria-label={t('tags.preview.listLabel', { count: preview.data.items.length })}
-              >
-                <ul className={classes.list}>
-                  {preview.data.items.map((item) => (
-                    <li key={item.item_id} className={classes.row}>
-                      <span className={classes.name}>
-                        <span className={classes.kind}>
-                          {itemKindText(t, item)}
-                          {item.module_code ? ` · ${item.module_code}` : ''}
-                          {': '}
-                        </span>
-                        {item.name}
-                      </span>
-                      <span className={classes.status} data-status={item.status}>
-                        {statusText(t, item)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <PreviewItems items={preview.data.items} />
             </>
           )}
         </div>
