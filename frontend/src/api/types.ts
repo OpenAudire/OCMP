@@ -644,3 +644,77 @@ export interface TagApplied {
   tags: ItemTag[];
   inherited_count: number;
 }
+
+export interface PackProblem {
+  /** Where in the file, such as `items[3].title`; empty for the whole file. */
+  path: string;
+  message: string;
+}
+
+export interface PackMetadata {
+  key: string;
+  name: string;
+  version: string;
+  publisher: string;
+  licence: string;
+  profile: 'core' | 'health' | 'other';
+  description: string;
+  url: string | null;
+  template: boolean;
+}
+
+export interface PackCounts {
+  items: number;
+  levels: number;
+  root_items: number;
+  cross_references: number;
+  external_references: number;
+  crosswalks: number;
+  crosswalk_entries: number;
+  taxonomy_scales: number;
+  tag_lists: number;
+  tag_values: number;
+}
+
+export interface PackSampleItem {
+  code: string;
+  title: string;
+  depth: number;
+}
+
+export interface PackPreview {
+  valid: boolean;
+  errors: PackProblem[];
+  warnings: string[];
+  format_version: number | null;
+  metadata: PackMetadata | null;
+  counts: PackCounts | null;
+  sample: PackSampleItem[];
+  sample_truncated: boolean;
+  token: string | null;
+  expires_in: number | null;
+}
+
+export interface PackImportResult {
+  framework_id: string;
+  key: string;
+  name: string;
+  version: string;
+  status: 'draft' | 'active' | 'superseded' | 'retired';
+  items: number;
+  cross_references: number;
+  external_references: number;
+  crosswalks: number;
+  crosswalk_entries: number;
+  scales_created: number;
+  tag_lists_created: number;
+  tag_values_added: number;
+  superseded_versions: number;
+}
+
+export interface PackTemplate {
+  name: string;
+  title: string;
+  description: string;
+  items: number;
+}

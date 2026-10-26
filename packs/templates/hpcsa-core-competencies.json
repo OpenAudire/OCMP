@@ -1,0 +1,76 @@
+{
+  "$schema": "../schema/framework-pack.schema.json",
+  "format_version": 1,
+  "metadata": {
+    "key": "hpcsa-core-competencies",
+    "name": "HPCSA core competencies (template)",
+    "version": "0.0-template",
+    "publisher": "Health Professions Council of South Africa (HPCSA)",
+    "licence": "PLACEHOLDER: state the licence or permission under which your institution may reproduce the official text. Curriculum in Context ships no official framework text.",
+    "profile": "health",
+    "description": "Structure-only template: two competency areas with two competencies each. Replace the placeholders with the titles and text of the official document for your profession (the HPCSA document was not checked or copied), add as many areas and competencies as it has, then remove template from the metadata. Other councils use the same layout.",
+    "template": true
+  },
+  "items": [
+    {
+      "code": "AREA-1",
+      "title": "Competency area 1",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 1,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "AREA-1.1",
+      "title": "Competency 1.1",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "AREA-1",
+      "order": 1,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "AREA-1.2",
+      "title": "Competency 1.2",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "AREA-1",
+      "order": 2,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "AREA-2",
+      "title": "Competency area 2",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 2,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "AREA-2.1",
+      "title": "Competency 2.1",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "AREA-2",
+      "order": 1,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "AREA-2.2",
+      "title": "Competency 2.2",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "AREA-2",
+      "order": 2,
+      "metadata": {
+        "placeholder": true
+      }
+    }
+  ]
+}

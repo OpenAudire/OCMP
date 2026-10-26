@@ -41,3 +41,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [033](033-objective-quality-checker.md) | Objective Quality Checker and Taxonomy Level Suggestion (Rule Based) |
 | [034](034-tag-lists-and-tagging-ui.md) | Managing Tag Lists, Tagging Items and Inheritance |
 | [035](035-assessments-and-credit-check.md) | Minimal Assessments and the Credits and Notional Hours Check |
+| [036](036-framework-pack-import.md) | Framework Pack Import from the Screen, Pack Format Version 2 and Templates |

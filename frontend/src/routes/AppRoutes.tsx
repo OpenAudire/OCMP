@@ -7,6 +7,7 @@ import { ForgotPasswordPage } from '../auth/ForgotPasswordPage';
 import { LoginPage } from '../auth/LoginPage';
 import { ResetPasswordPage } from '../auth/ResetPasswordPage';
 import { CurriculumSection } from '../curriculum/CurriculumPage';
+import { ImportSection } from '../importing/ImportSection';
 import { InstitutionProvider } from '../institution/InstitutionProvider';
 import { AppLayout } from '../layout/AppLayout';
 import { NAV_ITEMS, visibleNavItems, type NavItem } from '../layout/navigation';
@@ -49,6 +50,7 @@ function StartPage() {
 const SECTIONS: Partial<Record<string, () => ReactNode>> = {
   curriculum: () => <CurriculumSection />,
   admin: () => <AdminSection />,
+  import: () => <ImportSection />,
 };
 
 /** A section page, shown only to users whose permissions include it. */

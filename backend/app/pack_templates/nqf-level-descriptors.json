@@ -1,0 +1,126 @@
+{
+  "$schema": "../schema/framework-pack.schema.json",
+  "format_version": 1,
+  "metadata": {
+    "key": "nqf-level-descriptors",
+    "name": "NQF level descriptors (template)",
+    "version": "0.0-template",
+    "publisher": "South African Qualifications Authority (SAQA)",
+    "licence": "PLACEHOLDER: state the licence or permission under which your institution may reproduce the official text. Curriculum in Context ships no official framework text.",
+    "profile": "core",
+    "description": "Structure-only template: one item for each of the ten NQF levels. Add the level descriptor text from the current SAQA publication. Descriptor categories can be added as child items.",
+    "template": true
+  },
+  "items": [
+    {
+      "code": "NQF-1",
+      "title": "NQF level 1",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 1,
+      "metadata": {
+        "placeholder": true,
+        "nqf_level": 1
+      }
+    },
+    {
+      "code": "NQF-2",
+      "title": "NQF level 2",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 2,
+      "metadata": {
+        "placeholder": true,
+        "nqf_level": 2
+      }
+    },
+    {
+      "code": "NQF-3",
+      "title": "NQF level 3",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 3,
+      "metadata": {
+        "placeholder": true,
+        "nqf_level": 3
+      }
+    },
+    {
+      "code": "NQF-4",
+      "title": "NQF level 4",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 4,
+      "metadata": {
+        "placeholder": true,
+        "nqf_level": 4
+      }
+    },
+    {
+      "code": "NQF-5",
+      "title": "NQF level 5",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 5,
+      "metadata": {
+        "placeholder": true,
+        "nqf_level": 5
+      }
+    },
+    {
+      "code": "NQF-6",
+      "title": "NQF level 6",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 6,
+      "metadata": {
+        "placeholder": true,
+        "nqf_level": 6
+      }
+    },
+    {
+      "code": "NQF-7",
+      "title": "NQF level 7",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 7,
+      "metadata": {
+        "placeholder": true,
+        "nqf_level": 7
+      }
+    },
+    {
+      "code": "NQF-8",
+      "title": "NQF level 8",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 8,
+      "metadata": {
+        "placeholder": true,
+        "nqf_level": 8
+      }
+    },
+    {
+      "code": "NQF-9",
+      "title": "NQF level 9",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 9,
+      "metadata": {
+        "placeholder": true,
+        "nqf_level": 9
+      }
+    },
+    {
+      "code": "NQF-10",
+      "title": "NQF level 10",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 10,
+      "metadata": {
+        "placeholder": true,
+        "nqf_level": 10
+      }
+    }
+  ]
+}

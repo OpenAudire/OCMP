@@ -68,6 +68,8 @@ Needed for password reset and "password changed" notices.
 | Setting | Default | Meaning |
 |---|---|---|
 | `AUDIT_LOG_RETENTION_DAYS` | `0` | Audit log entries older than this are deleted by `purge-audit-log`. `0` keeps them forever. |
+| `PACK_MAX_UPLOAD_MB` | `10` | Largest framework pack file the import screen accepts, in megabytes (1 to 200). Bigger files are refused before they are read. |
+| `PACK_MAX_ITEMS` | `20000` | Most items in one framework pack. A pack with more is refused with a message; split it or raise the limit. |
 | `AI_CALL_RETENTION_DAYS` | `365` | Stored AI prompts and responses older than this are cleared by `purge-ai-content`. Run records and counts are kept. `0` keeps them. |
 
 The purge commands are run on a schedule; see [Admin basics](../admin/basics.md#retention).

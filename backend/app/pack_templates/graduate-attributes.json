@@ -1,0 +1,106 @@
+{
+  "$schema": "../schema/framework-pack.schema.json",
+  "format_version": 1,
+  "metadata": {
+    "key": "graduate-attributes",
+    "name": "Graduate attributes (template)",
+    "version": "0.0-template",
+    "publisher": "Your institution",
+    "licence": "PLACEHOLDER: your institution's own terms of use.",
+    "profile": "core",
+    "description": "Structure-only template for a university's graduate attributes: attributes with indicators beneath them. Replace the placeholders with your institution's own wording.",
+    "template": true
+  },
+  "items": [
+    {
+      "code": "GA-1",
+      "title": "Graduate attribute 1",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 1,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "GA-1.1",
+      "title": "Indicator 1.1",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "GA-1",
+      "order": 1,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "GA-1.2",
+      "title": "Indicator 1.2",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "GA-1",
+      "order": 2,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "GA-2",
+      "title": "Graduate attribute 2",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 2,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "GA-2.1",
+      "title": "Indicator 2.1",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "GA-2",
+      "order": 1,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "GA-2.2",
+      "title": "Indicator 2.2",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "GA-2",
+      "order": 2,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "GA-3",
+      "title": "Graduate attribute 3",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 3,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "GA-3.1",
+      "title": "Indicator 3.1",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "GA-3",
+      "order": 1,
+      "metadata": {
+        "placeholder": true
+      }
+    },
+    {
+      "code": "GA-3.2",
+      "title": "Indicator 3.2",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "GA-3",
+      "order": 2,
+      "metadata": {
+        "placeholder": true
+      }
+    }
+  ]
+}

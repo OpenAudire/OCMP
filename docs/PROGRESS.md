@@ -693,6 +693,16 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.9 | The credit check page (`/curriculum/versions/:id/credits`) and the version check are for people who see the whole version (404 otherwise); a narrower role sees only the module's own check in its details | Year and NQF totals would reveal modules the person cannot see | Easy |  Decided in 1.9, to review |
 | 1.9 | 'Assessment' is a fixed word, not one of the renamable terms; the demo shows its modules as 'under' on hours because it has only a few sessions each | Adding a term touches the settings enum, the translations and the terminology docs; not needed for a minimal slice. The demo is a sample, not a full curriculum | Easy |  Decided in 1.9, to review |
 | 1.9 | Reordering assessments and items and an Assessments column in the tree are not built (new ones go to the end) | Not asked for in the slice | Easy: move endpoints like ADR 029 |  Decided in 1.9, to review |
+| 1.10 | Pack format version 2 is opt-in with `"format_version": 2`; a pack without it is version 1 and unchanged. A version 2 section in a pack that does not say so is refused | Old packs keep working; a typo cannot silently drop a section | Easy |  Decided in 1.10, to review |
+| 1.10 | A crosswalk in a pack always runs from an earlier version already imported to the pack's own version | The pack is the new side; the crosswalk model already has this direction | Medium: crosswalks between two imported versions would need their own import |  Decided in 1.10, to review |
+| 1.10 | A reference to another framework or earlier version that is not imported is an error, not a skipped line | Skipping would lose links without anyone noticing; the message says to import the other framework first | Easy |  Decided in 1.10, to review |
+| 1.10 | A tag list in a pack that already exists only gets the tags it lacks (by code, else label); nothing existing is changed or removed. A pack with tag lists also needs `taglists.manage` | Importing must not rewrite lists people already use; tag lists have their own permission | Easy |  Decided in 1.10, to review |
+| 1.10 | The file is the raw request body (not a multipart form); a valid preview keeps it in Redis for 30 minutes under a random token tied to the user, and confirming sends only the token | No second upload of a big file; limits `PACK_MAX_UPLOAD_MB` 10 and `PACK_MAX_ITEMS` 20 000 are settings | Easy |  Decided in 1.10, to review |
+| 1.10 | Imported versions are drafts unless "Make this the active version" is ticked; there is no delete or edit of a framework yet | Import must not change what is active by surprise; the library and browser come in 1.11 | Easy |  Decided in 1.10, to review |
+| 1.10 | Problems are found in two stages: field-level problems first; the tree, reference, crosswalk and database checks only once those are fixed | The tree checks need a well-formed pack | Easy |  Decided in 1.10, to review |
+| 1.10 | The messages about the file (problems, notes) come from the server in English; the screen text itself is translated | Same as other server messages; translating each rule is a larger change | Medium |  Decided in 1.10, to review |
+| 1.10 | Templates carry `metadata.template: true` and cannot be imported until it is removed; they hold placeholders only (HPCSA: two generic areas; NQF: ten levels titled by number; graduate attributes; MeSH: two broader and two narrower placeholders) | Placeholders must not become a real framework; no official text could be verified or licensed | Easy |  Decided in 1.10, to review |
+| 1.10 | Only JSON is read (the brief also mentions YAML) | Smallest step; a YAML parser is a later addition | Easy |  Decided in 1.10, to review |
 
 ---
 
@@ -1037,3 +1047,26 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 
 **Commit**: `feat: add minimal assessments and the credits and notional hours check`
 
+### Slice 1.10: Framework Pack Import from the Screen, Pack Format 2 and Templates
+**Status**: Complete
+
+**Deliverables**:
+- [x] **Pack format version 2** (ADR 036, `packs/schema/framework-pack.schema.json`, `app/services/packs.py`): optional `format_version` (no value means 1, so existing packs are unchanged), `crosswalks` from an earlier imported version, `tag_lists`, cross-references to items of other imported frameworks (`to_framework`, `to_version`), type `equivalent`, and `metadata.template`. `check_pack` lists every problem with its location; `resolve_pack` checks the database (other frameworks and versions, existing scales and tag lists). `import_pack` now adds items level by level in bulk (20 000 items in about 20 s measured, with audit rows), still as ORM objects
+- [x] **API** (`app/api/v1/framework_packs.py`): `POST /framework-packs/preview` (raw JSON body, 413 over `PACK_MAX_UPLOAD_MB`, problems as 200 with `valid: false`, a Redis token for 30 minutes when valid, rate limited to 20 a minute), `POST /framework-packs/import` (token, optional `activate`; checks again; audit label `framework.import`), `GET /framework-packs/templates` and `.../{name}`. `frameworks.manage` for the instance; a pack with tag lists also needs `taglists.manage`
+- [x] **Screen** `/import` ("Import and export"): choose a file, check, read the preview (details, licence note, counts, notes, first 200 items, activate checkbox), confirm, see the result; error table; states for checking, importing, invalid, failed and done; blank-template downloads. Other users still see the placeholder page
+- [x] **Templates** (structure only, `packs/templates/` with an identical copy in `backend/app/pack_templates/`, tested): `hpcsa-core-competencies`, `nqf-level-descriptors` (ten levels), `graduate-attributes`, `mesh-subset`. No competency text, descriptor text or MeSH term is included
+- [x] New settings `PACK_MAX_UPLOAD_MB` and `PACK_MAX_ITEMS` (config, `.env.example`, configuration guide); data inventory (Redis keys); admin guide `docs/admin/framework-packs.md` (in the nav); ADR 036; CLAUDE.md; ten rows in "Decisions to review"
+
+**External checks**: NLM data terms page (credit line, no endorsement, currency statement) read on 2026-10-26; NLM XML page confirmed the `DescriptorUI` field. **Not verified**: the MeSH licence page itself; the SAQA site could not be opened (certificate error), so "ten NQF levels" rests on search results quoting the 2012 gazetted level descriptors and on the brief; the HPCSA document was not consulted at all, so that template claims nothing about its structure; NQF descriptor category names were not used. These are stated in the ADR, the admin guide and the template licence notes.
+
+**Verification**:
+- Backend: ruff, ruff format, mypy (93 files) pass; pytest 927 passed against the test database, 97% coverage (new: `test_pack_format_two.py` for format versions, new section problems, crosswalks, tag lists, references to other frameworks, bulk import, templates identical to their bundled copies, schema enumerations in step with the models; `test_framework_packs_api.py` for sign-in, permissions, preview and import, token use once and per user, size and item limits, bad files with line and column, byte order mark, templates, rate limit, tag list permission)
+- Frontend under Node 24.22.1: lint and typecheck pass; 219 tests pass (11 new in `importing/PackImport.test.tsx`)
+- `mkdocs build --strict` passes
+- Docker: images rebuilt (`up -d --build --wait`, no migration needed); Playwright (Chromium), the whole suite: 76 passed in light and dark, including the new `e2e/framework-import.spec.ts` (check, preview, import, repeat refused; a file with problems; a downloaded blank template refused; axe WCAG 2.2 AA on each state). The saved e2e sessions were still valid; no account was created
+- Not verified here: browsers other than Chromium; screen readers by hand; screenshots by eye; a very large file through the browser (the 20 000 item timing is a backend measurement, not a browser run); the pack JSON schema file validated with a JSON Schema library (not a project dependency; only its enumerations are tested); the CI run on GitHub (runs on push)
+- Left on the local stack: each e2e run imports two small frameworks (`e2e-light-...`, `e2e-dark-...`) and a tag list for each; there is no delete endpoint yet (Slice 1.11)
+
+**Not in this slice**: Excel import of frameworks (1.26), YAML, the framework library and browser (1.11), editing or deleting a framework, AI migration of mapping links across a crosswalk (phase 2).
+
+**Commit**: `feat: import framework packs from the screen with pack format 2 and blank templates`

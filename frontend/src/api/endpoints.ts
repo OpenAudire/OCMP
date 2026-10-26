@@ -31,6 +31,9 @@ import type {
   SavedPhase,
   TagApplied,
   TaggableKind,
+  PackImportResult,
+  PackPreview,
+  PackTemplate,
   TagList,
   TagListInput,
   TagValue,
@@ -451,6 +454,40 @@ export async function removeTagging(taggingId: string): Promise<void> {
 }
 
 /** TanStack Query keys, in one place so invalidation stays consistent. */
+/** Check a framework pack file (JSON). Problems in the file come back in the result. */
+export async function previewFrameworkPack(file: File): Promise<PackPreview> {
+  // The file is the request body, not a form: large files stream, and nothing is parsed here.
+  return (
+    await api.post<PackPreview>('/framework-packs/preview', file, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 300_000,
+    })
+  ).data;
+}
+
+/** Import the pack of a valid preview. */
+export async function importFrameworkPack(
+  token: string,
+  activate: boolean
+): Promise<PackImportResult> {
+  return (
+    await api.post<PackImportResult>(
+      '/framework-packs/import',
+      { token, activate },
+      { timeout: 600_000 }
+    )
+  ).data;
+}
+
+export async function fetchPackTemplates(): Promise<PackTemplate[]> {
+  return (await api.get<PackTemplate[]>('/framework-packs/templates')).data;
+}
+
+/** Address of a template download (a plain link; the session cookie authorises it). */
+export function packTemplateUrl(name: string): string {
+  return `/api/v1/framework-packs/templates/${encodeURIComponent(name)}`;
+}
+
 export const queryKeys = {
   session: ['session'] as const,
   institution: ['institution'] as const,
@@ -468,6 +505,7 @@ export const queryKeys = {
     ['modules', moduleId, 'assessable-objectives'] as const,
   creditCheck: (id: string) => ['curriculum-versions', id, 'credit-check'] as const,
   tagLists: ['tag-lists'] as const,
+  packTemplates: ['framework-pack-templates'] as const,
   tagPreview: (kind: string, itemId: string, valueId: string) =>
     ['tag-preview', kind, itemId, valueId] as const,
   taxonomyScales: ['taxonomy-scales'] as const,

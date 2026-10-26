@@ -114,6 +114,10 @@ class Settings(BaseSettings):
     # Audit log entries are deleted after this many days (0 = keep forever).
     audit_log_retention_days: int = Field(default=0, ge=0)
 
+    # Framework pack import: largest upload and most items in one pack (ADR 036).
+    pack_max_upload_mb: int = Field(default=10, ge=1, le=200)
+    pack_max_items: int = Field(default=20000, ge=1)
+
     # Embeddings
     # Off by default: the local model is an optional compose profile (ADR 007).
     embeddings_local: bool = False

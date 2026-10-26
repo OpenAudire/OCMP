@@ -1,0 +1,169 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 26px;
+}
+
+@media (max-width: 48em) {
+  .card {
+    padding: 20px;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 560px;
+}
+
+.subtitle {
+  font-size: 17px;
+  margin-top: 8px;
+}
+
+.details {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detailRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+}
+
+.detailRow dt {
+  flex: 0 0 160px;
+  color: var(--cic-muted);
+}
+
+.detailRow dd {
+  margin: 0;
+  flex: 1 1 240px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.counts {
+  margin: 0;
+  padding-inline-start: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.note {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--cic-line);
+  background: var(--cic-soft);
+}
+
+/* Ochre means "needs attention" (ADR 026); the heading says so in words as well. */
+.note[data-tone='attention'] {
+  background: var(--cic-warm-soft);
+  color: var(--cic-warm-ink);
+}
+
+.noteIcon {
+  vertical-align: -3px;
+  margin-inline-end: 6px;
+}
+
+.noteList {
+  margin: 6px 0 0;
+  padding-inline-start: 20px;
+}
+
+.sample {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.sample:focus-visible {
+  outline: 2px solid var(--cic-brand);
+  outline-offset: 2px;
+}
+
+.tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.code {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 13px;
+  color: var(--cic-muted);
+}
+
+.problems {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.problems th,
+.problems td {
+  text-align: start;
+  vertical-align: top;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--cic-line);
+}
+
+.path {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.message {
+  overflow-wrap: anywhere;
+}
+
+.focusable:focus {
+  outline: none;
+}
+
+.focusable:focus-visible > * {
+  outline: 2px solid var(--cic-brand);
+  outline-offset: 2px;
+}
+
+.templates {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.template {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+}
+
+.download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding-inline: 8px;
+}

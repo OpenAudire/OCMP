@@ -1,0 +1,82 @@
+{
+  "$schema": "../schema/framework-pack.schema.json",
+  "format_version": 1,
+  "metadata": {
+    "key": "mesh-subset",
+    "name": "MeSH subset (template)",
+    "version": "0.0-template",
+    "publisher": "U.S. National Library of Medicine (NLM)",
+    "licence": "PLACEHOLDER: confirm the current NLM terms before importing real MeSH data. NLM data terms checked on 2026-10-26 ask for the credit 'Courtesy of the U.S. National Library of Medicine', no suggestion that NLM endorses your product, and a statement that the data may not be current. The MeSH licence page itself was not verified.",
+    "profile": "health",
+    "description": "Structure-only template for a subset of MeSH descriptors: a broader descriptor with narrower ones beneath it. Put the descriptor name in the title and its unique identifier in metadata.mesh_ui (the DescriptorUI of the MeSH XML), and keep the hierarchy with parent_code. No MeSH terms are included.",
+    "template": true
+  },
+  "items": [
+    {
+      "code": "MESH-1",
+      "title": "MeSH descriptor 1",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 1,
+      "metadata": {
+        "placeholder": true,
+        "mesh_ui": "REPLACE"
+      }
+    },
+    {
+      "code": "MESH-1.1",
+      "title": "Narrower descriptor 1.1",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "MESH-1",
+      "order": 1,
+      "metadata": {
+        "placeholder": true,
+        "mesh_ui": "REPLACE"
+      }
+    },
+    {
+      "code": "MESH-1.2",
+      "title": "Narrower descriptor 1.2",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "MESH-1",
+      "order": 2,
+      "metadata": {
+        "placeholder": true,
+        "mesh_ui": "REPLACE"
+      }
+    },
+    {
+      "code": "MESH-2",
+      "title": "MeSH descriptor 2",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": null,
+      "order": 2,
+      "metadata": {
+        "placeholder": true,
+        "mesh_ui": "REPLACE"
+      }
+    },
+    {
+      "code": "MESH-2.1",
+      "title": "Narrower descriptor 2.1",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "MESH-2",
+      "order": 1,
+      "metadata": {
+        "placeholder": true,
+        "mesh_ui": "REPLACE"
+      }
+    },
+    {
+      "code": "MESH-2.2",
+      "title": "Narrower descriptor 2.2",
+      "description": "PLACEHOLDER: replace with the text from the official source you are permitted to use.",
+      "parent_code": "MESH-2",
+      "order": 2,
+      "metadata": {
+        "placeholder": true,
+        "mesh_ui": "REPLACE"
+      }
+    }
+  ]
+}

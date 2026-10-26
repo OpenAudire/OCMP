@@ -2,17 +2,33 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ocmp.example.com/schemas/framework-pack.schema.json",
   "title": "Curriculum in Context Framework Pack",
-  "description": "Schema for framework and taxonomy packs that can be imported into Curriculum in Context",
+  "description": "Schema for framework and taxonomy packs that can be imported into Curriculum in Context. Format version 2 adds crosswalks, tag lists and references to other frameworks; packs without format_version are version 1 and stay valid. Rules a schema cannot express (unique codes, parent cycles, references that must exist) are checked by the importer, which reports every problem with its location.",
   "type": "object",
-  "required": ["$schema", "metadata", "items"],
+  "required": [
+    "$schema",
+    "metadata",
+    "items"
+  ],
   "properties": {
     "$schema": {
       "type": "string",
       "description": "Reference to this schema"
     },
+    "format_version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2,
+      "default": 1,
+      "description": "Pack format version. 2 is needed for crosswalks, tag_lists and to_framework references."
+    },
     "metadata": {
       "type": "object",
-      "required": ["key", "name", "version", "publisher"],
+      "required": [
+        "key",
+        "name",
+        "version",
+        "publisher"
+      ],
       "properties": {
         "key": {
           "type": "string",
@@ -37,7 +53,11 @@
         },
         "profile": {
           "type": "string",
-          "enum": ["core", "health", "other"],
+          "enum": [
+            "core",
+            "health",
+            "other"
+          ],
           "default": "core",
           "description": "Which institution profile this framework belongs to"
         },
@@ -49,6 +69,11 @@
           "type": "string",
           "format": "uri",
           "description": "URL to the official framework documentation"
+        },
+        "template": {
+          "type": "boolean",
+          "default": false,
+          "description": "True in blank templates. A pack marked as a template cannot be imported until the flag is removed."
         }
       }
     },
@@ -57,7 +82,10 @@
       "description": "Flat list of framework items (hierarchy via parent_code)",
       "items": {
         "type": "object",
-        "required": ["code", "title"],
+        "required": [
+          "code",
+          "title"
+        ],
         "properties": {
           "code": {
             "type": "string",
@@ -72,7 +100,10 @@
             "description": "Detailed description"
           },
           "parent_code": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Code of the parent item (null for root items)"
           },
           "order": {
@@ -88,20 +119,41 @@
     },
     "cross_references": {
       "type": "array",
-      "description": "References between items within this framework",
+      "description": "References between items, within this framework or to an item of another imported framework (format 2)",
       "items": {
         "type": "object",
-        "required": ["from_code", "to_code", "type"],
+        "required": [
+          "from_code",
+          "to_code",
+          "type"
+        ],
         "properties": {
           "from_code": {
-            "type": "string"
+            "type": "string",
+            "description": "Code of an item in this pack"
           },
           "to_code": {
-            "type": "string"
+            "type": "string",
+            "description": "Code of the target item: in this pack, or in to_framework when that is set"
           },
           "type": {
             "type": "string",
-            "enum": ["related", "prerequisite", "broader", "narrower"]
+            "enum": [
+              "related",
+              "prerequisite",
+              "broader",
+              "narrower",
+              "equivalent"
+            ]
+          },
+          "to_framework": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "Format 2: key of another framework that is already imported"
+          },
+          "to_version": {
+            "type": "string",
+            "description": "Format 2: version label of that framework; without it the active version (else the newest) is used"
           }
         }
       }
@@ -111,7 +163,11 @@
       "description": "Taxonomy scales included in this pack",
       "items": {
         "type": "object",
-        "required": ["key", "name", "levels"],
+        "required": [
+          "key",
+          "name",
+          "levels"
+        ],
         "properties": {
           "key": {
             "type": "string"
@@ -126,7 +182,10 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["order", "name"],
+              "required": [
+                "order",
+                "name"
+              ],
               "properties": {
                 "order": {
                   "type": "integer"
@@ -142,6 +201,139 @@
                   "items": {
                     "type": "string"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "crosswalks": {
+      "type": "array",
+      "description": "Format 2: how the items of earlier, already imported versions of this framework move into this version",
+      "items": {
+        "type": "object",
+        "required": [
+          "from_version",
+          "entries"
+        ],
+        "properties": {
+          "from_version": {
+            "type": "string",
+            "description": "Version label of the earlier version (key from metadata)"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "equivalent",
+                    "split",
+                    "merged",
+                    "removed",
+                    "new"
+                  ]
+                },
+                "from_code": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Item of the earlier version; absent for type new"
+                },
+                "to_code": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Item of this pack; absent for type removed"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "tag_lists": {
+      "type": "array",
+      "description": "Format 2: tag lists to create (a list that exists only gets the tags it lacks)",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "name",
+          "values"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]+$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "teaching_method",
+              "assessment_method",
+              "theme",
+              "thread",
+              "keyword",
+              "resource",
+              "epa",
+              "custom"
+            ],
+            "default": "custom"
+          },
+          "description": {
+            "type": "string"
+          },
+          "entity_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "programme",
+                "module",
+                "learning_event",
+                "objective"
+              ]
+            }
+          },
+          "values": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "label"
+              ],
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "order": {
+                  "type": "integer"
                 }
               }
             }
