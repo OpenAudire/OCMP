@@ -50,7 +50,15 @@ router = APIRouter(tags=["curriculum"])
 
 async def objective_edit_scope(request: Request, db: AsyncSession, user: User) -> ScopeRef:
     """The scope of the objective in the path, if the user sees the item that owns it."""
-    objective_id = path_id(request, "objective_id", "Objective")
+    return await objective_scope_for(
+        request, db, user, path_id(request, "objective_id", "Objective")
+    )
+
+
+async def objective_scope_for(
+    request: Request, db: AsyncSession, user: User, objective_id: uuid.UUID
+) -> ScopeRef:
+    """The scope of this objective, if the user sees the item that owns it."""
     objective = await db.scalar(
         select(Objective).where(Objective.id == objective_id, Objective.deleted_at.is_(None))
     )

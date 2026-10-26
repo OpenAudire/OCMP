@@ -38,7 +38,7 @@ ai/, connectors/  Placeholders for Phase 1 (AI) and Phase 2 (LMS connectors)
 ```
 
 Frontend (`frontend/src/`): one folder per feature (`auth/`, `account/`, `setup/`,
-`layout/`, `routes/`, `session/`, `institution/`, `curriculum/`, `api/`, `pages/`), plus `theme/` (tokens,
+`layout/`, `routes/`, `session/`, `institution/`, `curriculum/`, `admin/`, `api/`, `pages/`), plus `theme/` (tokens,
 Mantine theme, fonts) and `ui/` (shared `Page` and state components); tests beside the code.
 Playwright journeys live in `frontend/e2e/`.
 
@@ -215,6 +215,7 @@ export function ModuleCount({ count }: { count: number }) {
 - `packs/demo/demo-graduate-competencies.json` and `backend/app/demo/data/` copy must stay identical (tested)
 - Data migrations are separate files and use table stubs (`sa.table`), never app models
 - Objective quality checker (ADR 033): pure rules in `app/services/objective_quality.py`, wording lists per language in `app/services/objective_rules/<code>.json`, verbs per taxonomy level stay in `taxonomy_levels.verbs`; findings are advice, never block saving, and use no AI. A finding's texts are i18n keys `curriculum.quality.<code>.*`: add all three (name, message, suggestion) with a new rule
+- Tag lists are managed with `taglists.manage` (instance) and items are tagged with `tagging.edit` at the item's scope (ADR 034); inheritance rules, the preview and tag reads live in `app/services/tagging.py`: module to sessions, objective to the objectives linked beneath it, every inherited tagging points to the direct tagging it came from, only direct tags are removed (delete inherited rows through the ORM so they are audited); a list or tag in use is made inactive, not deleted
 - Institution settings are read through `app/services/institution_settings.py` (typed sections), never raw JSON
 
 ### Background jobs

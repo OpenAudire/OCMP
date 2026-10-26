@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router';
 
 import { AccountPage } from '../account/AccountPage';
+import { AdminSection } from '../admin/AdminSection';
 import { ForgotPasswordPage } from '../auth/ForgotPasswordPage';
 import { LoginPage } from '../auth/LoginPage';
 import { ResetPasswordPage } from '../auth/ResetPasswordPage';
@@ -47,6 +48,7 @@ function StartPage() {
 /** Sections that are built; the others show a placeholder. */
 const SECTIONS: Partial<Record<string, () => ReactNode>> = {
   curriculum: () => <CurriculumSection />,
+  admin: () => <AdminSection />,
 };
 
 /** A section page, shown only to users whose permissions include it. */

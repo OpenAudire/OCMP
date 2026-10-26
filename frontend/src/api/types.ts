@@ -159,6 +159,8 @@ export interface VersionStructure {
   can_approve_outcomes: boolean;
   /** The user may return a published version to draft (with a reason). */
   can_unpublish: boolean;
+  /** The user may tag programme outcomes (drafts only). */
+  can_edit_outcome_tags?: boolean;
 }
 
 export interface Objective {
@@ -171,6 +173,7 @@ export interface Objective {
   parent_ids: string[];
   /** Accepted mapping links whose objective text changed after they were reviewed. */
   mappings_to_recheck?: number;
+  tags?: ItemTag[];
 }
 
 /** Fields of an objective that can be saved; `parent_ids` replaces the links on offer. */
@@ -227,6 +230,9 @@ export interface ModuleDetail {
   can_edit_objectives: boolean;
   /** The user may set them to approved or retired. */
   can_approve_objectives: boolean;
+  tags?: ItemTag[];
+  /** The user may tag the module and its outcomes (drafts only). */
+  can_edit_tags?: boolean;
 }
 
 export interface LearningEventDetail {
@@ -246,6 +252,9 @@ export interface LearningEventDetail {
   can_edit_objectives: boolean;
   /** The user may set them to approved or retired. */
   can_approve_objectives: boolean;
+  tags?: ItemTag[];
+  /** The user may tag the session and its objectives (drafts only). */
+  can_edit_tags?: boolean;
 }
 
 export interface PhaseInput {
@@ -421,4 +430,95 @@ export interface VersionChecks {
   rules_language: string;
   rules_version: number;
   objectives: CheckedObjective[];
+}
+
+/** Tag lists and tagging (ADR 034). */
+export type TaggableKind = 'module' | 'learning_event' | 'objective';
+
+export type TagListKind =
+  | 'teaching_method'
+  | 'assessment_method'
+  | 'theme'
+  | 'thread'
+  | 'keyword'
+  | 'resource'
+  | 'epa'
+  | 'custom';
+
+export interface TagValue {
+  id: string;
+  label: string;
+  code: string | null;
+  description: string;
+  position: number;
+  is_active: boolean;
+  /** Taggings and sessions using it; only filled in for people who manage tag lists. */
+  usage_count: number;
+}
+
+export interface TagList {
+  id: string;
+  key: string;
+  name: string;
+  kind: TagListKind;
+  description: string;
+  /** Item types the list may tag: programme, module, learning_event, objective. */
+  entity_types: string[];
+  is_active: boolean;
+  values: TagValue[];
+}
+
+export interface TagListInput {
+  key: string;
+  name: string;
+  kind: TagListKind;
+  description: string;
+  entity_types: string[];
+}
+
+export interface TagValueInput {
+  label: string;
+  code: string | null;
+  description: string;
+}
+
+/** The item an inherited tag came from. */
+export interface TagSource {
+  item_type: 'programme' | TaggableKind;
+  item_id: string;
+  name: string;
+}
+
+/** A tag on an item: set directly (removable), inherited from sources, or both. */
+export interface ItemTag {
+  tag_value_id: string;
+  label: string;
+  list_id: string;
+  list_name: string;
+  direct_tagging_id: string | null;
+  sources: TagSource[];
+}
+
+export type PreviewStatus = 'new' | 'has_tag' | 'not_applicable';
+
+export interface PreviewItem {
+  item_type: 'programme' | TaggableKind;
+  item_id: string;
+  name: string;
+  level: 'programme' | 'module' | 'learning_event' | null;
+  module_code: string | null;
+  status: PreviewStatus;
+}
+
+export interface InheritancePreview {
+  tag_value_id: string;
+  label: string;
+  list_name: string;
+  item_has_tag: boolean;
+  items: PreviewItem[];
+}
+
+export interface TagApplied {
+  tags: ItemTag[];
+  inherited_count: number;
 }

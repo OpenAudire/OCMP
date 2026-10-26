@@ -119,7 +119,13 @@ async def _phase_target(request: Request, db: AsyncSession, user: User) -> Targe
 
 
 async def _module_target(request: Request, db: AsyncSession, user: User) -> Target:
-    module_id = path_id(request, "module_id", "Module")
+    return await module_target_for(request, db, user, path_id(request, "module_id", "Module"))
+
+
+async def module_target_for(
+    request: Request, db: AsyncSession, user: User, module_id: uuid.UUID
+) -> Target:
+    """The module with this id, if the user sees it (also stored on the request)."""
     module = await db.scalar(
         select(Module).where(Module.id == module_id, Module.deleted_at.is_(None))
     )
@@ -134,7 +140,13 @@ async def _module_target(request: Request, db: AsyncSession, user: User) -> Targ
 
 
 async def _event_target(request: Request, db: AsyncSession, user: User) -> Target:
-    event_id = path_id(request, "event_id", "Learning event")
+    return await event_target_for(request, db, user, path_id(request, "event_id", "Learning event"))
+
+
+async def event_target_for(
+    request: Request, db: AsyncSession, user: User, event_id: uuid.UUID
+) -> Target:
+    """The session with this id, if the user sees it (also stored on the request)."""
     row = (
         await db.execute(
             select(LearningEvent, Module)

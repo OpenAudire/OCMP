@@ -26,6 +26,7 @@ from app.schemas.curriculum import (
     VersionRead,
     VersionStructure,
 )
+from app.schemas.tagging import item_tag_reads
 from app.services.curriculum_read import (
     CurriculumAccess,
     ModuleNode,
@@ -79,6 +80,7 @@ def _objectives(items: list[ObjectiveWithLinks]) -> list[ObjectiveRead]:
             position=item.objective.position,
             parent_ids=item.parent_ids,
             mappings_to_recheck=item.mappings_to_recheck,
+            tags=item_tag_reads(item.tags),
         )
         for item in items
     ]
@@ -182,6 +184,7 @@ async def get_version_structure(
         can_edit_outcomes=structure.can_edit_outcomes,
         can_approve_outcomes=structure.can_approve_outcomes,
         can_unpublish=structure.can_unpublish,
+        can_edit_outcome_tags=structure.can_edit_outcome_tags,
     )
 
 
@@ -219,6 +222,8 @@ async def get_module(module_id: uuid.UUID, access: Access, db: DbSession) -> Mod
         outcomes=_objectives(detail.outcomes),
         can_edit_objectives=detail.can_edit_objectives,
         can_approve_objectives=detail.can_approve_objectives,
+        tags=item_tag_reads(detail.tags),
+        can_edit_tags=detail.can_edit_tags,
     )
 
 
@@ -246,4 +251,6 @@ async def get_learning_event(
         objectives=_objectives(detail.objectives),
         can_edit_objectives=detail.can_edit_objectives,
         can_approve_objectives=detail.can_approve_objectives,
+        tags=item_tag_reads(detail.tags),
+        can_edit_tags=detail.can_edit_tags,
     )

@@ -1,0 +1,108 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 26px;
+}
+
+@media (max-width: 48em) {
+  .card {
+    padding: 20px;
+  }
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.listTitle {
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+
+.text {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.valuesHead {
+  margin-top: 8px;
+}
+
+.valuesTitle {
+  font-size: 17px;
+}
+
+.values {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+}
+
+.valueText {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  min-width: 0;
+}
+
+.valueLabel {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.code {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 13px;
+  color: var(--cic-muted);
+}
+
+.usage {
+  font-size: 13px;
+  color: var(--cic-muted);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--cic-soft);
+  color: var(--cic-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Ochre means "needs attention" (ADR 026); the word says so as well. */
+.chip[data-tone='attention'] {
+  background: var(--cic-warm-soft);
+  color: var(--cic-warm-ink);
+}
+
+/* Focused after a change removed the button that made it. */
+.notice:focus {
+  outline: none;
+}
+
+.notice:focus-visible > * {
+  outline: 2px solid var(--cic-brand);
+  outline-offset: 2px;
+}

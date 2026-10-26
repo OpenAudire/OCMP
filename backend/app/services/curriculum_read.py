@@ -38,8 +38,10 @@ from app.models import (
 )
 from app.models.curriculum import ObjectiveLevel, VersionStatus
 from app.models.mapping import MappingStatus
+from app.models.tagging import TaggableType
 from app.services.authorization import role_permissions, user_assignments
 from app.services.curriculum_edit import is_editable
+from app.services.tagging import ItemTag, item_tags
 
 Permissions = frozenset[Permission]
 _NONE: Permissions = frozenset()
@@ -326,6 +328,8 @@ class Structure:
     can_approve_outcomes: bool = False
     # Whether the user may return a published version to draft (ADR 032).
     can_unpublish: bool = False
+    # Whether the user may tag programme outcomes (ADR 034).
+    can_edit_outcome_tags: bool = False
 
 
 async def _objective_counts(
@@ -427,6 +431,9 @@ async def version_structure(db: AsyncSession, visible: VisibleVersion) -> Struct
         can_unpublish=view.full
         and Permission.CURRICULUM_PUBLISH in programme_permissions
         and Permission.CURRICULUM_UNPUBLISH in programme_permissions,
+        can_edit_outcome_tags=view.full
+        and editable
+        and Permission.TAGGING_EDIT in programme_permissions,
     )
 
 
@@ -440,6 +447,7 @@ class ObjectiveWithLinks:
     parent_ids: list[uuid.UUID]
     # Accepted mapping links to re-check because the text changed after review.
     mappings_to_recheck: int = 0
+    tags: list[ItemTag] = field(default_factory=list)
 
 
 async def _objectives(
@@ -478,7 +486,13 @@ async def _objectives(
             .group_by(MappingLink.objective_id)
         )
         recheck = {row[0]: row[1] for row in rows}
-    return [ObjectiveWithLinks(o, parents[o.id], recheck.get(o.id, 0)) for o in objectives]
+    tags = await item_tags(db, {TaggableType.OBJECTIVE: [o.id for o in objectives]})
+    return [
+        ObjectiveWithLinks(
+            o, parents[o.id], recheck.get(o.id, 0), tags.get((TaggableType.OBJECTIVE, o.id), [])
+        )
+        for o in objectives
+    ]
 
 
 async def programme_outcomes(db: AsyncSession, version_id: uuid.UUID) -> list[ObjectiveWithLinks]:
@@ -498,6 +512,8 @@ class ModuleDetail:
     outcomes: list[ObjectiveWithLinks]
     can_edit_objectives: bool = False
     can_approve_objectives: bool = False
+    tags: list[ItemTag] = field(default_factory=list)
+    can_edit_tags: bool = False
 
 
 async def module_detail(
@@ -537,6 +553,10 @@ async def module_detail(
         can_edit_objectives=is_editable(visible.version) and Permission.OBJECTIVES_EDIT in held,
         can_approve_objectives=is_editable(visible.version)
         and Permission.OBJECTIVES_APPROVE in held,
+        tags=(await item_tags(db, {TaggableType.MODULE: [module.id]})).get(
+            (TaggableType.MODULE, module.id), []
+        ),
+        can_edit_tags=is_editable(visible.version) and Permission.TAGGING_EDIT in held,
     )
 
 
@@ -549,6 +569,8 @@ class EventDetail:
     objectives: list[ObjectiveWithLinks]
     can_edit_objectives: bool = False
     can_approve_objectives: bool = False
+    tags: list[ItemTag] = field(default_factory=list)
+    can_edit_tags: bool = False
 
 
 async def event_detail(
@@ -595,4 +617,8 @@ async def event_detail(
         can_edit_objectives=is_editable(visible.version) and Permission.OBJECTIVES_EDIT in held,
         can_approve_objectives=is_editable(visible.version)
         and Permission.OBJECTIVES_APPROVE in held,
+        tags=(await item_tags(db, {TaggableType.LEARNING_EVENT: [event.id]})).get(
+            (TaggableType.LEARNING_EVENT, event.id), []
+        ),
+        can_edit_tags=is_editable(visible.version) and Permission.TAGGING_EDIT in held,
     )

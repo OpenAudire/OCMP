@@ -1,0 +1,52 @@
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* A long preview scrolls; it can be focused and scrolled from the keyboard. */
+.items {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+  padding: 4px 14px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cic-line);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.name {
+  flex: 1 1 240px;
+  overflow-wrap: anywhere;
+}
+
+.kind {
+  color: var(--cic-muted);
+}
+
+.status {
+  font-size: 13px;
+  color: var(--cic-muted);
+}
+
+.status[data-status='new'] {
+  color: var(--cic-brand-ink);
+  font-weight: 600;
+}

@@ -671,6 +671,16 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.7 | Live check needs `objectives.edit` at the owner's scope (three endpoints), is limited to 240 a minute per user (Redis counter on a hashed user id, in the data inventory); the list needs `objectives.edit` anywhere and shows only visible, non-retired objectives | Same rule as adding an objective; the list reveals nothing beyond ADR 027 | Easy |  Decided in 1.7, to review |
 | 1.7 | A suggested level is shown as a button and set only on click; a verb in several levels or scales lists each | Never auto-applied | Easy |  Decided in 1.7, to review |
 | 1.7 | Bulk list is a page `/curriculum/versions/:id/quality` opened by a Check wording button in the version bar for people holding `objectives.edit` | Same pattern as Compare versions | Easy (UI) |  Decided in 1.7, to review |
+| 1.8 | Tagging is offered on modules, sessions and objectives (programme, module and session level); programmes themselves are not taggable from the UI or API (ADR 034) | A programme is not a versioned item, so its tags would not follow copy forward; the model still allows it | Easy: one more path kind |  Decided in 1.8, to review |
+| 1.8 | Inheritance: a module's tag can go to its sessions; an objective's tag to the objectives linked beneath it, at any depth. It is chosen when tagging, shown first in a preview of every item reached, and applied once: items linked or added later are not tagged | Brief: always preview every affected item before saving; keeps the effect visible and reversible | Medium: re-applying to later links would need an action on the source |  Decided in 1.8, to review |
+| 1.8 | The "Also give this tag to the N items" box is ticked by default when any item would be reached | The preview is on screen above the button; passing tags down is the point of the feature | Easy (UI) |  Decided in 1.8, to review |
+| 1.8 | Every inherited tagging points to the direct tagging it came from, even through several levels; an item with the tag from two sources shows it once with both sources; an item that has the tag directly is skipped | Removing the source removes everything it passed on; the source named is the item that was tagged | Easy |  Decided in 1.8, to review |
+| 1.8 | Only direct tags are removed (422 for inherited); removing one deletes its inherited rows through the ORM so each is in the audit log | Brief: record the inheritance source; CLAUDE.md audit rule (database cascade alone is not audited) | Easy |  Decided in 1.8, to review |
+| 1.8 | A tag list's key and kind cannot change; a list or tag in use (tagged, or a session's format) cannot be deleted (409) and is made inactive instead; deleting an unused list deletes its tags | Imports use the key, teaching-method lists back session formats, and history must not lose tags | Easy |  Decided in 1.8, to review |
+| 1.8 | `GET /tag-lists` is open to every signed-in user (active lists and tags only); managers (`taglists.manage`, institution scope) also get inactive ones and usage counts. Faculty-scoped curriculum office roles cannot manage tag lists | People need the lists to tag; ADR 015 made lists instance-wide | Easy: scope per endpoint |  Decided in 1.8, to review |
+| 1.8 | Tagging needs `tagging.edit` at the item's scope (module coordinators and above; lecturers have none); published and archived versions are read-only | Same split as the structure and objectives (ADR 028, ADR 031) | Easy |  Decided in 1.8, to review |
+| 1.8 | The Admin section got its first screen, `/admin/tag-lists`; the Admin menu item now also shows for `taglists.manage` | The tag list screen is an admin task and the mockup nav has no other place for it | Easy |  Decided in 1.8, to review |
+| 1.8 | Reordering tags within a list is not built (new tags go to the end) | Not asked for in the slice; positions already exist | Easy: a move endpoint like ADR 029 |  Decided in 1.8, to review |
 
 ---
 
@@ -968,3 +978,27 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 **Not in this slice**: near-duplicate detection (1.15), AI rewrite and classification (1.17), other languages, storing flags on objectives.
 
 **Commit**: `feat: rule-based objective quality checker and taxonomy level suggestion`
+
+
+---
+
+### Slice 1.8: Tag Lists and Tagging with Inheritance Preview
+**Status**: Complete
+
+**Deliverables**:
+- [x] **Tag list management** (ADR 034, `app/api/v1/tagging.py`, `app/services/tagging.py`): `GET/POST /tag-lists`, `PATCH/DELETE /tag-lists/{id}`, `POST /tag-lists/{id}/values`, `PATCH/DELETE /tag-values/{id}`; changes need `taglists.manage` (institution scope), reading is open to every signed-in user (active lists only; managers also get inactive lists and usage counts). Key and kind are fixed; a list or tag in use (tagged, or a session's format) cannot be deleted (409), only made inactive. Audit labels `taglist.*`, `tagvalue.*`
+- [x] **Tagging items**: `POST /curriculum-items/{module|learning_event|objective}/{id}/tags`, `GET .../tag-preview?tag_value_id=`, `DELETE /taggings/{id}`; `tagging.edit` at the item's scope, 404 for what the user cannot see, 409 for non-draft versions, 422 for removing an inherited tag. Read responses (module, session, programme outcomes) carry `tags` (one entry per tag with direct tagging id and sources) and the flags `can_edit_tags`, `can_edit_outcome_tags`
+- [x] **Inheritance**: module to its sessions; objective to the objectives linked beneath it at any depth; chosen when tagging, after a preview of every item reached (new, already has the tag, list not used on this kind of item); every inherited tagging points to the direct tagging it came from; `remove_tagging` now deletes the inherited rows through the ORM so each is audited
+- [x] **UI**: details panel shows the tags of the module, session and each objective with the list and, for inherited ones, the source in words (no Remove button); Add tag dialog with the preview and an "also give this tag to N items" box; Remove for direct tags. New admin screen `/admin/tag-lists` (lists, tags, add, edit, make inactive or active, delete with confirmation); Admin menu item also shows for `taglists.manage`
+- [x] ADR 034, admin guide page `docs/admin/tag-lists.md` (in the nav), CLAUDE.md conventions, ten rows in "Decisions to review". No schema change, no migration; no personal data added (data inventory unchanged)
+
+**Verification**:
+- Backend: ruff, ruff format, mypy (86 files) pass; pytest 811 passed against the test database, 97% coverage (40 new in `test_tagging_api.py`: sign-in required, list and tag management with conflicts, in-use rules, usage and visibility of inactive items, roles that cannot manage, module and objective inheritance with preview and sources, two sources, deleted sources, who may tag, read-only versions, audit counts)
+- Frontend under Node 24.22.1: lint and typecheck pass; 191 tests pass (28 new in `Tagging.test.tsx` and `admin/TagLists.test.tsx`)
+- `mkdocs build --strict` passes
+- Docker: api, worker and web images rebuilt (no migration needed); Playwright (Chromium) `e2e/tagging.spec.ts` against the stack with the demo data: 8 passed, light and dark (tag a module with preview and inheritance and remove it, tag a session, manage a list and tag on the admin screen; axe WCAG 2.2 AA on each dialog and state). axe found one real problem on the way (buttons whose accessible name did not contain their visible text); fixed. A first run of the admin journey timed out on a notice while the machine was busy; its timeout is now 15 s
+- Not verified here: the rest of the Playwright suite after this change (only the new spec was run); browsers other than Chromium; screen readers by hand; screenshots by eye; the CI run on GitHub (runs on push). The saved e2e admin session had expired and the old password was not at hand, so a new platform admin `e2e.tagging@example.org` was created on the local stack for the run
+
+**Not in this slice**: programme-level tags, re-applying a tag to items linked or added later, reordering tags, tag filters in search and reports (1.20 and the reports slices), tag import (1.26).
+
+**Commit**: `feat: manage tag lists and tag items with inheritance preview and source`

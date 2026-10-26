@@ -105,7 +105,8 @@ export const NAV_ITEMS: NavItem[] = [
         Permission.UsersManage,
         Permission.RolesManage,
         Permission.SettingsManage,
-        Permission.AuditView
+        Permission.AuditView,
+        Permission.TaglistsManage
       ),
   },
 ];

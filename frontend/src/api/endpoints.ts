@@ -3,6 +3,7 @@ import type {
   AuthOptions,
   CopyForwardPreview,
   CurriculumVersion,
+  InheritancePreview,
   Institution,
   LearningEventDetail,
   LearningEventInput,
@@ -23,6 +24,12 @@ import type {
   SavedModule,
   SavedObjective,
   SavedPhase,
+  TagApplied,
+  TaggableKind,
+  TagList,
+  TagListInput,
+  TagValue,
+  TagValueInput,
   TaxonomyScale,
   TeachingFormat,
   User,
@@ -297,7 +304,6 @@ export async function fetchVersionDiff(versionId: string, base: string): Promise
   ).data;
 }
 
-/** TanStack Query keys, in one place so invalidation stays consistent. */
 /** Check wording as typed (live); `path` is the owner's checking address. */
 export async function checkObjectiveText(
   path: string,
@@ -311,6 +317,82 @@ export async function fetchVersionChecks(versionId: string): Promise<VersionChec
   return (await api.get<VersionChecks>(`/curriculum-versions/${versionId}/objective-checks`)).data;
 }
 
+/** Tag lists with their values (everyone: active ones; managers: all, with usage). */
+export async function fetchTagLists(): Promise<TagList[]> {
+  return (await api.get<TagList[]>('/tag-lists')).data;
+}
+
+export async function createTagList(input: TagListInput): Promise<TagList> {
+  return (await api.post<TagList>('/tag-lists', input)).data;
+}
+
+/** Only the fields sent are changed; the key and kind cannot change. */
+export async function updateTagList(
+  id: string,
+  input: Partial<Pick<TagListInput, 'description' | 'entity_types'>> & {
+    name?: string;
+    is_active?: boolean;
+  }
+): Promise<TagList> {
+  return (await api.patch<TagList>(`/tag-lists/${id}`, input)).data;
+}
+
+/** Only a list nothing uses can be deleted (409 otherwise). */
+export async function deleteTagList(id: string): Promise<void> {
+  await api.delete(`/tag-lists/${id}`);
+}
+
+export async function createTagValue(listId: string, input: TagValueInput): Promise<TagValue> {
+  return (await api.post<TagValue>(`/tag-lists/${listId}/values`, input)).data;
+}
+
+/** Only the fields sent are changed; `code: null` clears the code. */
+export async function updateTagValue(
+  id: string,
+  input: Partial<TagValueInput> & { is_active?: boolean }
+): Promise<TagValue> {
+  return (await api.patch<TagValue>(`/tag-values/${id}`, input)).data;
+}
+
+/** Only a tag nothing uses can be deleted (409 otherwise). */
+export async function deleteTagValue(id: string): Promise<void> {
+  await api.delete(`/tag-values/${id}`);
+}
+
+/** Every item that tagging this one would reach, before saving. */
+export async function fetchTagPreview(
+  kind: TaggableKind,
+  itemId: string,
+  tagValueId: string
+): Promise<InheritancePreview> {
+  return (
+    await api.get<InheritancePreview>(`/curriculum-items/${kind}/${itemId}/tag-preview`, {
+      params: { tag_value_id: tagValueId },
+    })
+  ).data;
+}
+
+/** Tags the item; with `inherit` the tag also goes to the items the preview lists as new. */
+export async function addTag(
+  kind: TaggableKind,
+  itemId: string,
+  tagValueId: string,
+  inherit: boolean
+): Promise<TagApplied> {
+  return (
+    await api.post<TagApplied>(`/curriculum-items/${kind}/${itemId}/tags`, {
+      tag_value_id: tagValueId,
+      inherit,
+    })
+  ).data;
+}
+
+/** Removes a tag that was set directly; what it passed on goes with it. */
+export async function removeTagging(taggingId: string): Promise<void> {
+  await api.delete(`/taggings/${taggingId}`);
+}
+
+/** TanStack Query keys, in one place so invalidation stays consistent. */
 export const queryKeys = {
   session: ['session'] as const,
   institution: ['institution'] as const,
@@ -323,6 +405,9 @@ export const queryKeys = {
   module: (id: string) => ['modules', id] as const,
   learningEvent: (id: string) => ['learning-events', id] as const,
   teachingFormats: ['teaching-formats'] as const,
+  tagLists: ['tag-lists'] as const,
+  tagPreview: (kind: string, itemId: string, valueId: string) =>
+    ['tag-preview', kind, itemId, valueId] as const,
   taxonomyScales: ['taxonomy-scales'] as const,
   linkOptions: (kind: 'module' | 'event', id: string) => ['link-options', kind, id] as const,
   copyForward: (id: string) => ['curriculum-versions', id, 'copy-forward'] as const,

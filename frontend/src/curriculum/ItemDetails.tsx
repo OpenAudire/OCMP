@@ -20,6 +20,7 @@ import type {
   VersionStructure,
 } from '../api/types';
 import { objectiveNoun, type EditResult, type ObjectiveOwner } from './editing';
+import { ItemTags } from './ItemTags';
 import { ObjectiveDeleteDialog, ObjectiveDialog } from './ObjectiveDialog';
 import type { TreeItem } from './treeModel';
 import classes from './ItemDetails.module.css';
@@ -80,6 +81,8 @@ interface ObjectivesProps {
   canEdit: boolean;
   /** Whether the user may set approved and retired. */
   canApprove: boolean;
+  /** Whether the user may tag the objectives. */
+  canTag: boolean;
   onSaved: (result: EditResult) => void;
 }
 
@@ -99,6 +102,7 @@ function Objectives({
   versionId,
   canEdit,
   canApprove,
+  canTag,
   onSaved,
 }: ObjectivesProps) {
   const { t } = useTranslation();
@@ -192,6 +196,15 @@ function Objectives({
                   </span>
                 )}
               </Group>
+              <ItemTags
+                kind="objective"
+                itemId={objective.id}
+                itemName={excerpt(objective.text)}
+                versionId={versionId}
+                tags={objective.tags}
+                canEdit={canTag}
+                onSaved={onSaved}
+              />
               {canEdit && (
                 <Group gap="sm">
                   <Button
@@ -315,6 +328,7 @@ function ProgrammeDetails({
           versionId={structure.version.id}
           canEdit={structure.can_edit_outcomes}
           canApprove={structure.can_approve_outcomes}
+          canTag={structure.can_edit_outcome_tags ?? false}
           onSaved={onSaved}
         />
       )}
@@ -424,6 +438,17 @@ function ModuleDetails({
               ]}
             />
             {data && <Description text={data.description} />}
+            {data && (
+              <ItemTags
+                kind="module"
+                itemId={module.id}
+                itemName={`${module.code} ${module.name}`}
+                versionId={versionId}
+                tags={data.tags}
+                canEdit={data.can_edit_tags ?? false}
+                onSaved={onSaved}
+              />
+            )}
           </>
         )}
       </Paper>
@@ -441,6 +466,7 @@ function ModuleDetails({
           versionId={versionId}
           canEdit={data?.can_edit_objectives ?? false}
           canApprove={data?.can_approve_objectives ?? false}
+          canTag={data?.can_edit_tags ?? false}
           onSaved={onSaved}
         />
       )}
@@ -494,6 +520,17 @@ function EventDetails({
           ]}
         />
         {detail.data && <Description text={detail.data.description} />}
+        {detail.data && (
+          <ItemTags
+            kind="learning_event"
+            itemId={event.id}
+            itemName={event.title}
+            versionId={versionId}
+            tags={detail.data.tags}
+            canEdit={detail.data.can_edit_tags ?? false}
+            onSaved={onSaved}
+          />
+        )}
       </Paper>
       <Objectives
         title={t('curriculum.details.objectives')}
@@ -506,6 +543,7 @@ function EventDetails({
         versionId={versionId}
         canEdit={detail.data?.can_edit_objectives ?? false}
         canApprove={detail.data?.can_approve_objectives ?? false}
+        canTag={detail.data?.can_edit_tags ?? false}
         onSaved={onSaved}
       />
     </>

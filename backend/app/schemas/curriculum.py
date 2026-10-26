@@ -16,6 +16,7 @@ from app.models.curriculum import (
     ProgrammeStatus,
     VersionStatus,
 )
+from app.schemas.tagging import ItemTagRead
 from app.services.curriculum_diff import Change, ItemKind
 from app.services.curriculum_versions import SkipReason
 
@@ -134,6 +135,8 @@ class VersionStructure(BaseModel):
     can_approve_outcomes: bool
     # Whether the user may return a published version to draft (needs a reason).
     can_unpublish: bool
+    # Whether the user may tag programme outcomes (drafts only; ADR 034).
+    can_edit_outcome_tags: bool = False
 
 
 class ObjectiveRead(BaseModel):
@@ -147,6 +150,7 @@ class ObjectiveRead(BaseModel):
     parent_ids: list[uuid.UUID]
     # Accepted mapping links whose objective text changed since they were reviewed.
     mappings_to_recheck: int = 0
+    tags: list[ItemTagRead] = []
 
 
 class ModuleRead(BaseModel):
@@ -168,6 +172,9 @@ class ModuleRead(BaseModel):
     can_edit_objectives: bool
     # Whether the user may set them to approved or retired (ADR 032).
     can_approve_objectives: bool
+    tags: list[ItemTagRead] = []
+    # Whether the user may tag the module and its outcomes (drafts only; ADR 034).
+    can_edit_tags: bool = False
 
 
 class LearningEventRead(BaseModel):
@@ -187,6 +194,9 @@ class LearningEventRead(BaseModel):
     can_edit_objectives: bool
     # Whether the user may set them to approved or retired (ADR 032).
     can_approve_objectives: bool
+    tags: list[ItemTagRead] = []
+    # Whether the user may tag the session and its objectives (drafts only; ADR 034).
+    can_edit_tags: bool = False
 
 
 # --- Editing (Slice 1.3) ---------------------------------------------------------------
