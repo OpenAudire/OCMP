@@ -102,6 +102,7 @@ describe('curriculum builder editing', () => {
       self_study_minutes: 210,
       outcomes: [],
       can_edit_objectives: false,
+      can_approve_objectives: false,
     });
     mocked.fetchLearningEvent.mockResolvedValue({
       id: 'e1',
@@ -117,6 +118,7 @@ describe('curriculum builder editing', () => {
       external_lms_ref: null,
       objectives: [],
       can_edit_objectives: false,
+      can_approve_objectives: false,
     });
   });
 

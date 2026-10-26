@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.core.permissions import ScopeType
 from app.models import (
+    AuditLog,
     CurriculumVersion,
     LearningEvent,
     MappingLink,
@@ -43,10 +44,13 @@ from tests.test_curriculum_edit_api import (
 from tests.test_curriculum_reorder_copy_api import operations
 
 
-async def set_status(client: AsyncClient, version_id: uuid.UUID, status: str) -> Any:
-    return await client.post(
-        f"{API}/curriculum-versions/{version_id}/status", json={"status": status}
-    )
+async def set_status(
+    client: AsyncClient, version_id: uuid.UUID, status: str, reason: str | None = None
+) -> Any:
+    body: dict[str, str] = {"status": status}
+    if reason is not None:
+        body["reason"] = reason
+    return await client.post(f"{API}/curriculum-versions/{version_id}/status", json=body)
 
 
 async def copy_forward(
@@ -126,7 +130,9 @@ class TestStatus:
         db_session: AsyncSession,
         world: World,  # noqa: F811
     ) -> None:
-        unpublished = await set_status(api_client, world.published.id, "draft")
+        unpublished = await set_status(
+            api_client, world.published.id, "draft", "  Wrong module credits.  "
+        )
         assert unpublished.status_code == 200
         assert unpublished.json()["published_at"] is None
         assert (await tree(api_client, world.published.id))["can_edit"] is True
@@ -141,6 +147,49 @@ class TestStatus:
         for name in ("unpublish", "archive", "unarchive"):
             label = f"curriculum.version_{name}"
             assert await operations(db_session, "curriculum_versions", label) == 1
+
+    async def test_unpublishing_records_the_trimmed_reason_in_the_audit_log(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        world: World,  # noqa: F811
+    ) -> None:
+        await set_status(api_client, world.published.id, "draft", "  Wrong module credits.  ")
+
+        reasons = await db_session.scalars(
+            select(AuditLog.context["reason"].astext).where(
+                AuditLog.entity_type == "curriculum_versions",
+                AuditLog.context["operation"].astext == "curriculum.version_unpublish",
+            )
+        )
+        assert set(reasons) == {"Wrong module credits."}
+
+    @pytest.mark.parametrize("reason", [None, "", "   ", "x" * 501])
+    async def test_unpublishing_needs_a_usable_reason(
+        self,
+        api_client: AsyncClient,
+        world: World,  # noqa: F811
+        reason: str | None,
+    ) -> None:
+        response = await set_status(api_client, world.published.id, "draft", reason)
+
+        assert response.status_code == 422
+        assert (await tree(api_client, world.published.id))["version"]["status"] == "published"
+
+    async def test_other_changes_need_no_reason(
+        self,
+        api_client: AsyncClient,
+        world: World,  # noqa: F811
+    ) -> None:
+        assert (await set_status(api_client, world.draft.id, "published")).status_code == 200
+        assert (await set_status(api_client, world.draft.id, "archived")).status_code == 200
+
+    async def test_flags_tell_who_may_unpublish(
+        self,
+        api_client: AsyncClient,
+        world: World,  # noqa: F811
+    ) -> None:
+        assert (await tree(api_client, world.published.id))["can_unpublish"] is True
 
     @pytest.mark.parametrize(
         ("which", "status"),
@@ -564,6 +613,31 @@ async def test_other_roles_cannot_change_versions(
     if role_key == "module_coordinator":
         structure = await tree(api_client, world.draft.id)
         assert (structure["can_change_status"], structure["can_copy_forward"]) == (False, False)
+
+
+async def test_publishing_rights_without_unpublish_cannot_return_to_draft(
+    api_client: AsyncClient,
+    db_session: AsyncSession,
+    test_settings: Settings,
+    world: World,  # noqa: F811
+) -> None:
+    db_session.add(
+        Role(
+            key="publisher",
+            name="Publisher",
+            permissions=["curriculum.view", "curriculum.publish"],
+            scope_types=["programme"],
+        )
+    )
+    await db_session.flush()
+    await sign_in(api_client, db_session, test_settings, "publisher", programme_scope(world))
+
+    refused = await set_status(api_client, world.published.id, "draft", "A good reason.")
+    archived = await set_status(api_client, world.published.id, "archived")
+
+    assert refused.status_code == 403
+    assert archived.status_code == 200
+    assert (await tree(api_client, world.draft.id))["can_unpublish"] is False
 
 
 def changes_of(body: dict[str, Any], kind: str) -> list[tuple[str, str]]:

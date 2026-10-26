@@ -25,7 +25,9 @@ class Permission(StrEnum):
     CURRICULUM_VIEW_PUBLISHED = "curriculum.view_published"
     CURRICULUM_EDIT = "curriculum.edit"  # programmes, phases, modules, learning events
     CURRICULUM_PUBLISH = "curriculum.publish"  # publish curriculum versions
+    CURRICULUM_UNPUBLISH = "curriculum.unpublish"  # return a published version to draft
     OBJECTIVES_EDIT = "objectives.edit"
+    OBJECTIVES_APPROVE = "objectives.approve"  # set an objective beyond draft / ready for review
 
     # Frameworks and tag lists
     FRAMEWORKS_MANAGE = "frameworks.manage"
@@ -85,7 +87,9 @@ _CURRICULUM_LEADERSHIP = frozenset(
         P.CURRICULUM_VIEW,
         P.CURRICULUM_EDIT,
         P.CURRICULUM_PUBLISH,
+        P.CURRICULUM_UNPUBLISH,
         P.OBJECTIVES_EDIT,
+        P.OBJECTIVES_APPROVE,
         P.TAGGING_EDIT,
         P.MAPPING_EDIT,
         P.MAPPING_REVIEW,
@@ -129,6 +133,7 @@ SYSTEM_ROLES: tuple[SystemRole, ...] = (
                 P.CURRICULUM_VIEW,
                 P.CURRICULUM_EDIT,
                 P.OBJECTIVES_EDIT,
+                P.OBJECTIVES_APPROVE,
                 P.TAGGING_EDIT,
                 P.MAPPING_EDIT,
                 P.MAPPING_REVIEW,

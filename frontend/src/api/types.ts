@@ -60,7 +60,7 @@ export interface Institution {
 export type VersionStatus = 'draft' | 'published' | 'archived';
 export type PhaseKind = 'year' | 'phase' | 'block' | 'longitudinal_thread';
 export type ObjectiveDomain = 'knowledge' | 'skill' | 'attitude';
-export type ObjectiveStatus = 'draft' | 'approved' | 'retired';
+export type ObjectiveStatus = 'draft' | 'ready_for_review' | 'approved' | 'retired';
 export type AccreditationStatus =
   'not_applicable' | 'in_progress' | 'accredited' | 'conditional' | 'withdrawn';
 
@@ -155,6 +155,10 @@ export interface VersionStructure {
   can_copy_forward: boolean;
   /** The user may add, change and delete programme outcomes (drafts only). */
   can_edit_outcomes: boolean;
+  /** The user may set programme outcomes to approved or retired. */
+  can_approve_outcomes: boolean;
+  /** The user may return a published version to draft (with a reason). */
+  can_unpublish: boolean;
 }
 
 export interface Objective {
@@ -165,6 +169,8 @@ export interface Objective {
   status: ObjectiveStatus;
   position: number;
   parent_ids: string[];
+  /** Accepted mapping links whose objective text changed after they were reviewed. */
+  mappings_to_recheck?: number;
 }
 
 /** Fields of an objective that can be saved; `parent_ids` replaces the links on offer. */
@@ -219,6 +225,8 @@ export interface ModuleDetail {
   outcomes: Objective[];
   /** The user may add, change and delete the module's outcomes (drafts only). */
   can_edit_objectives: boolean;
+  /** The user may set them to approved or retired. */
+  can_approve_objectives: boolean;
 }
 
 export interface LearningEventDetail {
@@ -236,6 +244,8 @@ export interface LearningEventDetail {
   objectives: Objective[];
   /** The user may add, change and delete the session's objectives (drafts only). */
   can_edit_objectives: boolean;
+  /** The user may set them to approved or retired. */
+  can_approve_objectives: boolean;
 }
 
 export interface PhaseInput {

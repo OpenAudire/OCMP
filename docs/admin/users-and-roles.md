@@ -91,13 +91,22 @@ builder, in the selected item's details. People with `objectives.edit` see **Add
 | A session's objectives | The session (or above): also lecturers of that session |
 
 Each objective has its wording, a **domain** (knowledge, skill, attitude), a **taxonomy
-level** (from any scale, such as Bloom or Miller), a status (draft, approved, retired) and
-**upward links** to the broader outcomes it contributes to: a module outcome to programme
+level** (from any scale, such as Bloom or Miller), a status (draft, ready for review,
+approved, retired) and **upward links** to the broader outcomes it contributes to: a module outcome to programme
 outcomes, a session objective to its module's outcomes or to programme outcomes.
 
-- Someone can only choose links to outcomes they are allowed to see. A lecturer who sees
-  only their session therefore cannot choose links, but changing their objective never
-  removes links that others set.
+- Anyone who sees part of a version can read, for choosing links only, the programme
+  outcomes and (for a session objective) the outcomes of the session's own module. So a
+  lecturer who holds only a role on one session can still link their objectives upward.
+  Nothing else above their session opens up (ADR 032).
+- **Status**: anyone who may edit an objective sets *draft* or *ready for review*. Setting
+  *approved* or *retired* (and leaving them) needs `objectives.approve` at the same scope:
+  module coordinators, programme directors, the curriculum office and platform admins have
+  it, lecturers do not. If a lecturer changes the wording of an approved objective, it goes
+  back to *ready for review*. Custom roles need `objectives.approve` added by hand.
+- **Mappings**: when the wording of an objective changes, its accepted framework mappings
+  stay accepted but are marked **needs re-check** (a chip in the builder, and a flag
+  reports will show) until someone with `mapping.review` confirms them.
 - Only **draft** versions can be changed. Deleting an objective is a soft delete; it
   disappears from the builder and reports, and the deletion is recorded in the change
   history.
@@ -113,7 +122,7 @@ published versions) or **archived** (read-only, hidden from students).
 | Action | Needs | Notes |
 |---|---|---|
 | Publish a draft | `curriculum.publish` at the programme | The draft needs at least one module. |
-| Return a published version to draft | `curriculum.publish` | To correct it; students stop seeing it until it is published again. |
+| Return a published version to draft | `curriculum.publish` and `curriculum.unpublish` (programme directors and above) | To correct it; students stop seeing it until it is published again. A written reason is required (up to 500 characters) and is recorded in the change history as `curriculum.version_unpublish`. Do not put personal data in it. |
 | Archive a published version, or publish an archived one again | `curriculum.publish` | |
 | Copy a version forward | `curriculum.edit` at the programme | Makes a new draft for a free academic year. |
 | Copy role assignments along | also `roles.assign` and every permission of each role | |

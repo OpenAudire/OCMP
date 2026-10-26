@@ -252,10 +252,14 @@ export async function deleteObjective(id: string): Promise<void> {
 /** Publish, return to draft, archive or unarchive a version. */
 export async function changeVersionStatus(
   versionId: string,
-  status: VersionStatus
+  status: VersionStatus,
+  reason?: string
 ): Promise<CurriculumVersion> {
   return (
-    await api.post<CurriculumVersion>(`/curriculum-versions/${versionId}/status`, { status })
+    await api.post<CurriculumVersion>(`/curriculum-versions/${versionId}/status`, {
+      status,
+      ...(reason === undefined ? {} : { reason }),
+    })
   ).data;
 }
 

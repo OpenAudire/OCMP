@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted (Slice 1.6)
+Accepted (Slice 1.6). Amended by [ADR 032](032-review-fixes-slices-1-3-to-1-6.md): the status
+"ready for review", the `objectives.approve` permission, and link options for narrow roles.
 
 ## Context
 

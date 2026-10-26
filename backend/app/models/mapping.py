@@ -218,6 +218,9 @@ class MappingLink(Audited, CoreModel):
     )
     # Second reviewer overturned the first decision: discuss before relying on it.
     needs_discussion: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # The objective's text changed after this link was reviewed: still accepted, but a
+    # person should confirm it still fits (ADR 032). Reports must show it.
+    needs_recheck: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     first_reviewer_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), default=None, index=True
     )

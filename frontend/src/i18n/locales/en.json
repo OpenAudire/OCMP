@@ -229,7 +229,9 @@
       "week": "Week",
       "contextOnly": "You can see only your {{sessions}} in this {{module}}.",
       "linkedUp_one": "Linked to {{count}} broader outcome",
-      "linkedUp_other": "Linked to {{count}} broader outcomes"
+      "linkedUp_other": "Linked to {{count}} broader outcomes",
+      "needsRecheck_one": "{{count}} mapping needs re-check",
+      "needsRecheck_other": "{{count}} mappings need re-check"
     },
     "domain": {
       "knowledge": "Knowledge",
@@ -239,6 +241,7 @@
     },
     "objectiveStatus": {
       "draft": "Draft",
+      "ready_for_review": "Ready for review",
       "approved": "Approved",
       "retired": "Retired"
     },
@@ -324,6 +327,8 @@
       "taxonomyLevel": "Taxonomy level",
       "scalesError": "The taxonomy levels could not be loaded. You can set the level later.",
       "status": "Status",
+      "statusLimited": "You can set draft or ready for review. A module coordinator or above approves.",
+      "statusLocked": "Only a module coordinator or above changes this status. If you change the wording, it goes back to ready for review.",
       "parents": "Contributes to",
       "parentsHint": "Tick the broader outcomes this one helps to achieve.",
       "programmeLevel": "{{programme}} outcome",
@@ -384,6 +389,9 @@
         "archive": "The version stays read-only, and students no longer see it. You can publish it again later.",
         "unarchiveTitle": "Publish the {{version}} again?",
         "unarchive": "The version becomes visible to students again. It stays read-only.",
+        "reason": "Reason",
+        "reasonHint": "Say why the published version is being changed. The reason is kept in the change history.",
+        "reasonRequired": "Give a reason.",
         "note": "The change is recorded in the change history."
       },
       "done": {

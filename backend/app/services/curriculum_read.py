@@ -27,6 +27,7 @@ from app.models import (
     CurriculumVersion,
     Faculty,
     LearningEvent,
+    MappingLink,
     Module,
     Objective,
     ObjectiveLink,
@@ -36,6 +37,7 @@ from app.models import (
     User,
 )
 from app.models.curriculum import ObjectiveLevel, VersionStatus
+from app.models.mapping import MappingStatus
 from app.services.authorization import role_permissions, user_assignments
 from app.services.curriculum_edit import is_editable
 
@@ -320,6 +322,10 @@ class Structure:
     can_copy_forward: bool = False
     # Whether the user may add, change and remove programme outcomes (drafts only).
     can_edit_outcomes: bool = False
+    # Whether the user may set programme outcomes to approved or retired (ADR 032).
+    can_approve_outcomes: bool = False
+    # Whether the user may return a published version to draft (ADR 032).
+    can_unpublish: bool = False
 
 
 async def _objective_counts(
@@ -415,6 +421,12 @@ async def version_structure(db: AsyncSession, visible: VisibleVersion) -> Struct
         can_edit_outcomes=view.full
         and editable
         and Permission.OBJECTIVES_EDIT in programme_permissions,
+        can_approve_outcomes=view.full
+        and editable
+        and Permission.OBJECTIVES_APPROVE in programme_permissions,
+        can_unpublish=view.full
+        and Permission.CURRICULUM_PUBLISH in programme_permissions
+        and Permission.CURRICULUM_UNPUBLISH in programme_permissions,
     )
 
 
@@ -426,6 +438,8 @@ class ObjectiveWithLinks:
     objective: Objective
     # Broader objectives this one contributes to (live ones only).
     parent_ids: list[uuid.UUID]
+    # Accepted mapping links to re-check because the text changed after review.
+    mappings_to_recheck: int = 0
 
 
 async def _objectives(
@@ -452,7 +466,19 @@ async def _objectives(
         )
         for child_id, parent_id in links:
             parents[child_id].append(parent_id)
-    return [ObjectiveWithLinks(o, parents[o.id]) for o in objectives]
+    recheck: dict[uuid.UUID, int] = {}
+    if objectives:
+        rows = await db.execute(
+            select(MappingLink.objective_id, func.count())
+            .where(
+                MappingLink.objective_id.in_([o.id for o in objectives]),
+                MappingLink.needs_recheck.is_(True),
+                MappingLink.status == MappingStatus.ACCEPTED,
+            )
+            .group_by(MappingLink.objective_id)
+        )
+        recheck = {row[0]: row[1] for row in rows}
+    return [ObjectiveWithLinks(o, parents[o.id], recheck.get(o.id, 0)) for o in objectives]
 
 
 async def programme_outcomes(db: AsyncSession, version_id: uuid.UUID) -> list[ObjectiveWithLinks]:
@@ -471,6 +497,7 @@ class ModuleDetail:
     event_count: int
     outcomes: list[ObjectiveWithLinks]
     can_edit_objectives: bool = False
+    can_approve_objectives: bool = False
 
 
 async def module_detail(
@@ -508,6 +535,8 @@ async def module_detail(
         int(events),
         outcomes,
         can_edit_objectives=is_editable(visible.version) and Permission.OBJECTIVES_EDIT in held,
+        can_approve_objectives=is_editable(visible.version)
+        and Permission.OBJECTIVES_APPROVE in held,
     )
 
 
@@ -519,6 +548,7 @@ class EventDetail:
     format_label: str | None
     objectives: list[ObjectiveWithLinks]
     can_edit_objectives: bool = False
+    can_approve_objectives: bool = False
 
 
 async def event_detail(
@@ -563,4 +593,6 @@ async def event_detail(
         format_label,
         objectives,
         can_edit_objectives=is_editable(visible.version) and Permission.OBJECTIVES_EDIT in held,
+        can_approve_objectives=is_editable(visible.version)
+        and Permission.OBJECTIVES_APPROVE in held,
     )

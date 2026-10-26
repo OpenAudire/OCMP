@@ -1,6 +1,6 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 
-import { expectNoAccessibilityViolations, openApp } from './support';
+import { demoDraft, expectNoAccessibilityViolations, openApp } from './support';
 
 // Runs against the demo programme (load-demo) as the test admin. Each journey makes its
 // own uniquely named phase, module, session and programme outcome through the API, works
@@ -41,9 +41,9 @@ async function makeFixture(page: Page, project: string): Promise<Fixture> {
   const headers = await csrfHeaders(page);
   const programmes = (await (await page.request.get(`${API}/programmes`)).json()) as {
     name: string;
-    versions: { id: string }[];
+    versions: { id: string; status: string; academic_year: number }[];
   }[];
-  const versionId = programmes.find((p) => p.name === PROGRAMME)!.versions[0].id;
+  const versionId = demoDraft(programmes.find((p) => p.name === PROGRAMME)!.versions);
   const suffix = `${project}-${Date.now() % 1_000_000}`;
   const phase = await post<{ id: string }>(
     page.request,

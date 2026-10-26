@@ -19,15 +19,16 @@ export default defineConfig({
   },
   projects: [
     { name: 'setup', testMatch: /auth\.setup\.ts/ },
+    { name: 'setup-lecturer', testMatch: /lecturer\.setup\.ts/, dependencies: ['setup'] },
     {
       name: 'light',
       use: { ...devices['Desktop Chrome'], colorScheme: 'light', storageState: 'e2e/.auth/signed-in.json' },
-      dependencies: ['setup'],
+      dependencies: ['setup', 'setup-lecturer'],
     },
     {
       name: 'dark',
       use: { ...devices['Desktop Chrome'], colorScheme: 'dark', storageState: 'e2e/.auth/signed-in.json' },
-      dependencies: ['setup'],
+      dependencies: ['setup', 'setup-lecturer'],
     },
   ],
 });

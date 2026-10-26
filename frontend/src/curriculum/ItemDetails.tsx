@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Button, Group, Paper, Skeleton, Stack, Text, Title } from '@mantine/core';
-import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconAlertTriangle, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
@@ -78,6 +78,8 @@ interface ObjectivesProps {
   owner: ObjectiveOwner;
   versionId: string;
   canEdit: boolean;
+  /** Whether the user may set approved and retired. */
+  canApprove: boolean;
   onSaved: (result: EditResult) => void;
 }
 
@@ -96,6 +98,7 @@ function Objectives({
   owner,
   versionId,
   canEdit,
+  canApprove,
   onSaved,
 }: ObjectivesProps) {
   const { t } = useTranslation();
@@ -173,6 +176,14 @@ function Objectives({
                 <span className={classes.chip}>
                   {t(`curriculum.objectiveStatus.${objective.status}`)}
                 </span>
+                {(objective.mappings_to_recheck ?? 0) > 0 && (
+                  <span className={classes.chip} data-tone="attention">
+                    <IconAlertTriangle size={14} aria-hidden className={classes.chipIcon} />
+                    {t('curriculum.details.needsRecheck', {
+                      count: objective.mappings_to_recheck,
+                    })}
+                  </span>
+                )}
                 {objective.parent_ids.length > 0 && (
                   <span className={classes.chip} data-tone="brand">
                     {t('curriculum.details.linkedUp', {
@@ -213,10 +224,15 @@ function Objectives({
       )}
       {canEdit && (
         <>
-          <ObjectiveDialog opened={dialog === 'add'} {...common} />
+          <ObjectiveDialog opened={dialog === 'add'} canApprove={canApprove} {...common} />
           {current && (
             <>
-              <ObjectiveDialog opened={dialog === 'edit'} objective={current} {...common} />
+              <ObjectiveDialog
+                opened={dialog === 'edit'}
+                objective={current}
+                canApprove={canApprove}
+                {...common}
+              />
               <ObjectiveDeleteDialog opened={dialog === 'delete'} objective={current} {...common} />
             </>
           )}
@@ -298,6 +314,7 @@ function ProgrammeDetails({
           owner={{ kind: 'programme' }}
           versionId={structure.version.id}
           canEdit={structure.can_edit_outcomes}
+          canApprove={structure.can_approve_outcomes}
           onSaved={onSaved}
         />
       )}
@@ -423,6 +440,7 @@ function ModuleDetails({
           owner={{ kind: 'module', module }}
           versionId={versionId}
           canEdit={data?.can_edit_objectives ?? false}
+          canApprove={data?.can_approve_objectives ?? false}
           onSaved={onSaved}
         />
       )}
@@ -487,6 +505,7 @@ function EventDetails({
         owner={{ kind: 'event', event, module }}
         versionId={versionId}
         canEdit={detail.data?.can_edit_objectives ?? false}
+        canApprove={detail.data?.can_approve_objectives ?? false}
         onSaved={onSaved}
       />
     </>

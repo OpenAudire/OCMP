@@ -92,3 +92,14 @@
   background: var(--cic-brand-soft);
   color: var(--cic-brand-ink);
 }
+
+/* Ochre means "needs attention" (ADR 026); the icon and the words say so as well. */
+.chip[data-tone='attention'] {
+  gap: 4px;
+  background: var(--cic-warm-soft);
+  color: var(--cic-warm-ink);
+}
+
+.chipIcon {
+  flex: none;
+}

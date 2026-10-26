@@ -49,7 +49,8 @@ function saved(base: Objective, level: SavedObjective['level']): SavedObjective 
 
 const moduleDetail = (
   outcomes: Objective[],
-  canEdit: boolean
+  canEdit: boolean,
+  canApprove = false
 ): ModuleDetail => ({
   id: 'm2',
   version_id: 'v2027',
@@ -65,11 +66,13 @@ const moduleDetail = (
   self_study_minutes: 210,
   outcomes,
   can_edit_objectives: canEdit,
+  can_approve_objectives: canApprove,
 });
 
 const eventDetail = (
   objectives: Objective[],
-  canEdit: boolean
+  canEdit: boolean,
+  canApprove = false
 ): LearningEventDetail => ({
   id: 'e1',
   module_id: 'm2',
@@ -84,6 +87,7 @@ const eventDetail = (
   external_lms_ref: null,
   objectives,
   can_edit_objectives: canEdit,
+  can_approve_objectives: canApprove,
 });
 
 const options = [
@@ -224,7 +228,7 @@ describe('objective editor', () => {
 
     fireEvent.change(text, { target: { value: 'Explain the cardiac cycle.' } });
     fireEvent.change(within(form).getByRole('combobox', { name: 'Status' }), {
-      target: { value: 'approved' },
+      target: { value: 'ready_for_review' },
     });
     fireEvent.click(within(form).getByRole('checkbox', { name: /Interpret cardiac tests/ }));
     fireEvent.click(within(form).getByRole('button', { name: 'Save changes' }));
@@ -237,7 +241,7 @@ describe('objective editor', () => {
       text: 'Explain the cardiac cycle.',
       domain: 'knowledge',
       taxonomy_level_id: 'l-remember',
-      status: 'approved',
+      status: 'ready_for_review',
       parent_ids: [],
     });
   });
@@ -320,6 +324,86 @@ describe('objective editor', () => {
       status: 'draft',
       parent_ids: [],
     });
+  });
+
+  it('offers draft and ready for review to people who cannot approve', async () => {
+    mocked.createEventObjective.mockResolvedValue(
+      saved(objective({ id: 'new', text: 'Draw the cycle.' }), 'learning_event')
+    );
+    renderAt('/curriculum/versions/v2027?item=event:e1');
+    await tree();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Add objective' }));
+    const form = await screen.findByRole('dialog', { name: 'Add objective' });
+    const status = within(form).getByRole('combobox', { name: 'Status' });
+    expect(within(status).getAllByRole('option').map((o) => o.textContent)).toEqual([
+      'Draft',
+      'Ready for review',
+    ]);
+    fireEvent.change(within(form).getByRole('textbox', { name: /Wording/ }), {
+      target: { value: 'Draw the cycle.' },
+    });
+    fireEvent.change(status, { target: { value: 'ready_for_review' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Add objective' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('The objective was added.');
+    expect(mocked.createEventObjective).toHaveBeenCalledWith(
+      'e1',
+      expect.objectContaining({ status: 'ready_for_review' })
+    );
+  });
+
+  it('offers every status to people who can approve', async () => {
+    mocked.fetchLearningEvent.mockResolvedValue(
+      eventDetail([objective({ id: 'o-e1', text: 'Describe the cardiac cycle.' })], true, true)
+    );
+    renderAt('/curriculum/versions/v2027?item=event:e1');
+    await tree();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Add objective' }));
+    const form = await screen.findByRole('dialog', { name: 'Add objective' });
+    const status = within(form).getByRole('combobox', { name: 'Status' });
+
+    expect(within(status).getAllByRole('option').map((o) => o.textContent)).toEqual([
+      'Draft',
+      'Ready for review',
+      'Approved',
+      'Retired',
+    ]);
+  });
+
+  it('locks the status of an approved objective for people who cannot approve', async () => {
+    mocked.fetchLearningEvent.mockResolvedValue(
+      eventDetail(
+        [objective({ id: 'o-e1', text: 'Describe the cardiac cycle.', status: 'approved' })],
+        true
+      )
+    );
+    renderAt('/curriculum/versions/v2027?item=event:e1');
+    await tree();
+
+    fireEvent.click(await screen.findByRole('button', { name: /Edit objective: Describe/ }));
+    const form = await screen.findByRole('dialog', { name: 'Edit objective' });
+    const status = within(form).getByRole('combobox', { name: 'Status' });
+
+    expect(status).toBeDisabled();
+    expect(status).toHaveValue('approved');
+    expect(form).toHaveTextContent('goes back to ready for review');
+  });
+
+  it('flags objectives whose accepted mappings need a re-check', async () => {
+    mocked.fetchLearningEvent.mockResolvedValue(
+      eventDetail(
+        [objective({ id: 'o-e1', text: 'Describe the cardiac cycle.', mappings_to_recheck: 2 })],
+        false
+      )
+    );
+    renderAt('/curriculum/versions/v2027?item=event:e1');
+    await tree();
+
+    const row = (await screen.findByText('Describe the cardiac cycle.')).closest('li')!;
+
+    expect(within(row).getByText('2 mappings need re-check')).toBeInTheDocument();
   });
 
   it('deletes an objective after confirming and moves focus to the confirmation', async () => {

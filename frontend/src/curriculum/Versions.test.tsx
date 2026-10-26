@@ -43,6 +43,7 @@ const published: VersionStructure = {
   ...director,
   version: programmes[0].versions[1],
   can_edit: false,
+  can_unpublish: true,
 };
 
 const preview: CopyForwardPreview = {
@@ -159,6 +160,38 @@ describe('curriculum versions', () => {
     expect(within(actions).queryByRole('button', { name: 'Delete draft' })).toBeNull();
     expect(screen.getByText(/it is read-only and visible to students/)).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Changes' })).toBeNull();
+  });
+
+  it('returning to draft asks for a reason and sends it trimmed', async () => {
+    setup(published, ['curriculum.view', 'curriculum.publish', 'curriculum.unpublish']);
+    mocked.changeVersionStatus.mockResolvedValue(programmes[0].versions[0]);
+
+    renderAt('/curriculum/versions/v2026');
+    fireEvent.click(within(await bar()).getByRole('button', { name: 'Return to draft' }));
+    const dialog = await screen.findByRole('dialog', { name: /Return the 2026 published/ });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Return to draft' }));
+
+    expect(await within(dialog).findByText('Give a reason.')).toBeInTheDocument();
+    expect(mocked.changeVersionStatus).not.toHaveBeenCalled();
+
+    fireEvent.change(within(dialog).getByRole('textbox', { name: /Reason/ }), {
+      target: { value: '  Wrong credits.  ' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Return to draft' }));
+
+    await waitFor(() =>
+      expect(mocked.changeVersionStatus).toHaveBeenCalledWith('v2026', 'draft', 'Wrong credits.')
+    );
+  });
+
+  it('hides return to draft from people who may publish but not unpublish', async () => {
+    setup({ ...published, can_unpublish: false }, ['curriculum.view', 'curriculum.publish']);
+
+    renderAt('/curriculum/versions/v2026');
+    const actions = await bar();
+
+    expect(within(actions).queryByRole('button', { name: 'Return to draft' })).toBeNull();
+    expect(within(actions).getByRole('button', { name: 'Archive' })).toBeInTheDocument();
   });
 
   it('shows a failed status change', async () => {

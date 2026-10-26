@@ -110,4 +110,6 @@ export const structure: VersionStructure = {
   can_change_status: false,
   can_copy_forward: false,
   can_edit_outcomes: false,
+  can_approve_outcomes: false,
+  can_unpublish: false,
 };

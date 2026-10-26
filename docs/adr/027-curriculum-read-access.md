@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted (2026-10-25, Slice 1.2)
+Accepted (2026-10-25, Slice 1.2). Amended by [ADR 032](032-review-fixes-slices-1-3-to-1-6.md):
+the programme outcomes and the own module's outcomes are readable (as link options only) by
+anyone who sees any part of the version.
 
 ## Context
 

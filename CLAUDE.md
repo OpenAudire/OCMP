@@ -230,6 +230,13 @@ export function ModuleCount({ count }: { count: number }) {
 - Label meaningful operations with `audit_operation("area.action", actor_id=..., reason=...)`
 - Identify SSO users by (issuer, subject) only; never link or match accounts by email (ADR 011)
 - Record admin views of personal data with `record_event(..., action="view")` (POPIA)
+- Direct SQL that bypasses the audit log (raw `INSERT`/`UPDATE`/`DELETE`, `psql`, bulk
+  statements) is allowed only on local test data, never in app code or on a real install;
+  tests and e2e journeys change data through ORM objects or the API
+- Statuses that need approval (objectives: approved, retired) are enforced in the service
+  with `objectives.approve`; returning a published version to draft needs
+  `curriculum.unpublish` and a trimmed reason passed to `audit_operation(..., reason=...)`
+- Mapping links whose objective wording changed carry `needs_recheck`; reports must show it
 
 ### Testing
 

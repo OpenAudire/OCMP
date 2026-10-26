@@ -4,6 +4,28 @@ import { expect, type Page } from '@playwright/test';
 /** Session cookies saved by auth.setup.ts (git-ignored). */
 export const SIGNED_IN_STATE = 'e2e/.auth/signed-in.json';
 
+/** Session of a user who holds only a session role (lecturer.setup.ts; git-ignored). */
+export const LECTURER_STATE = 'e2e/.auth/lecturer.json';
+
+export const LECTURER_EMAIL = 'e2e.lecturer@example.org';
+
+/** The lecturer's password follows the admin's, so no extra secret is needed. */
+export function lecturerPassword(): string {
+  return `${credentials().password}-lecturer`;
+}
+
+/**
+ * The demo programme's oldest draft version. Journeys that edit the curriculum work in it
+ * because the newest version can be the copy another journey is publishing meanwhile.
+ */
+export function demoDraft(versions: { id: string; status: string; academic_year: number }[]): string {
+  const drafts = versions
+    .filter((version) => version.status === 'draft')
+    .sort((a, b) => a.academic_year - b.academic_year);
+  if (drafts.length === 0) throw new Error('No draft version: load the demo data (load-demo).');
+  return drafts[0].id;
+}
+
 /** For tests of the signed-out pages. */
 export const SIGNED_OUT = { cookies: [], origins: [] };
 

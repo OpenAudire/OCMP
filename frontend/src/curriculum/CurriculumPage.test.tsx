@@ -95,6 +95,7 @@ describe('curriculum builder (read-only)', () => {
       self_study_minutes: 210,
       outcomes: [],
       can_edit_objectives: false,
+      can_approve_objectives: false,
     });
     mocked.fetchLearningEvent.mockResolvedValue({
       id: 'e1',
@@ -120,6 +121,7 @@ describe('curriculum builder (read-only)', () => {
         },
       ],
       can_edit_objectives: false,
+      can_approve_objectives: false,
     });
   });
 

@@ -240,11 +240,57 @@ async def reopen_link(
         link.status = MappingStatus.SUGGESTED
         link.accept_method = None
         link.needs_discussion = False
+        link.needs_recheck = False
         link.first_reviewer_id = link.second_reviewer_id = None
         link.first_reviewed_at = link.second_reviewed_at = None
         link.first_decision = None
         await db.flush()
     return link
+
+
+async def confirm_recheck(
+    db: AsyncSession, actor: User, link: MappingLink, *, reason: str | None = None
+) -> MappingLink:
+    """Confirm that an accepted link still fits after its objective's text changed.
+
+    The link stays accepted and its reviewers are unchanged; only the "needs re-check"
+    flag is cleared. Recorded in the audit log as ``mapping.recheck_confirm``.
+
+    Raises:
+        AuthorizationError: If the actor may not review mappings for this objective.
+        ConflictError: If the link is not accepted or does not need a re-check.
+    """
+    objective = await db.get(Objective, link.objective_id)
+    assert objective is not None
+    scope = await objective_scope(db, objective)
+    if not await has_permission(db, actor, Permission.MAPPING_REVIEW, scope):
+        raise AuthorizationError("You may not review mappings for this objective.")
+    if link.status != MappingStatus.ACCEPTED or not link.needs_recheck:
+        raise ConflictError("This link does not need a re-check.")
+    with audit_operation("mapping.recheck_confirm", actor_id=actor.id, reason=reason):
+        link.needs_recheck = False
+        await db.flush()
+    return link
+
+
+async def flag_for_recheck(db: AsyncSession, objective: Objective) -> int:
+    """Mark the accepted links of an objective whose text changed as needing a re-check.
+
+    Returns how many links were flagged. The links stay accepted.
+    """
+    links = await db.scalars(
+        select(MappingLink).where(
+            MappingLink.objective_id == objective.id,
+            MappingLink.status == MappingStatus.ACCEPTED,
+            MappingLink.needs_recheck.is_(False),
+        )
+    )
+    flagged = 0
+    for link in links:
+        link.needs_recheck = True
+        flagged += 1
+    await db.flush()
+    return flagged
 
 
 async def bulk_accept(

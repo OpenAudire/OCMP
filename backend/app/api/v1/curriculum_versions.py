@@ -3,6 +3,8 @@
 Permissions (ADR 030), all at the version's programme:
 
 - changing the status (publish, unpublish, archive, unarchive): ``curriculum.publish``;
+  returning a published version to draft also needs ``curriculum.unpublish`` and a written
+  reason, recorded in the audit log (ADR 032);
 - copying forward and deleting a draft: ``curriculum.edit``; copying role assignments
   also needs ``roles.assign`` and every permission of each role copied;
 - comparing two versions: seeing both versions whole.
@@ -20,7 +22,7 @@ from app.api.deps import ScopeFromRequest, require_permission
 from app.api.v1.curriculum import Access
 from app.api.v1.curriculum_edit import version_programme
 from app.core.database import DbSession
-from app.core.permissions import Permission
+from app.core.permissions import Permission, ScopeType
 from app.models import CurriculumVersion, User
 from app.schemas.curriculum import (
     ChangeCounts,
@@ -36,7 +38,12 @@ from app.schemas.curriculum import (
 )
 from app.services import curriculum_versions
 from app.services.audit import audit_operation
-from app.services.authorization import InvalidRequestError
+from app.services.authorization import (
+    AuthorizationError,
+    InvalidRequestError,
+    ScopeRef,
+    has_permission,
+)
 from app.services.curriculum_diff import Change, ItemKind, diff_versions
 from app.services.curriculum_read import VisibleVersion, visible_version
 
@@ -75,9 +82,18 @@ async def change_version_status(
 ) -> CurriculumVersion:
     """Publish a draft, return a published version to draft, archive a published version
     or publish an archived one again."""
-    version = _whole(request).version
+    visible = _whole(request)
+    version = visible.version
     name = curriculum_versions.transition(version, body.status)
-    with audit_operation(f"curriculum.version_{name}", actor_id=actor.id):
+    details: dict[str, str] = {}
+    if name == "unpublish":
+        scope = ScopeRef(ScopeType.PROGRAMME, visible.programme.id)
+        if not await has_permission(db, actor, Permission.CURRICULUM_UNPUBLISH, scope):
+            raise AuthorizationError("Only a programme director can return a published year.")
+        if not body.reason:
+            raise InvalidRequestError("Give a reason for returning a published version to draft.")
+        details["reason"] = body.reason
+    with audit_operation(f"curriculum.version_{name}", actor_id=actor.id, **details):
         return await curriculum_versions.change_status(db, version, body.status)
 
 

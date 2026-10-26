@@ -49,7 +49,12 @@ export function VersionBar({ structure, programme, onNotice }: VersionBarProps) 
     : '';
   const others = programme?.versions.filter((v) => v.id !== version.id) ?? [];
   const nextVersion = others.find((v) => v.id === version.based_on_id) ?? others[0] ?? null;
-  const statusActions = structure.can_change_status ? STATUS_ACTIONS[version.status] : [];
+  // Returning a published version to draft needs more than publishing (and a reason).
+  const statusActions = structure.can_change_status
+    ? STATUS_ACTIONS[version.status].filter(
+        ({ action }) => action !== 'unpublish' || structure.can_unpublish
+      )
+    : [];
 
   const buttons = [
     ...statusActions.map(({ action }) => {

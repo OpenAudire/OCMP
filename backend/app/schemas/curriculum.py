@@ -130,6 +130,10 @@ class VersionStructure(BaseModel):
     can_copy_forward: bool
     # Whether the user may add, change and remove programme outcomes (drafts only).
     can_edit_outcomes: bool
+    # Whether the user may set programme outcomes to approved or retired (ADR 032).
+    can_approve_outcomes: bool
+    # Whether the user may return a published version to draft (needs a reason).
+    can_unpublish: bool
 
 
 class ObjectiveRead(BaseModel):
@@ -141,6 +145,8 @@ class ObjectiveRead(BaseModel):
     position: int
     # Broader objectives this one contributes to.
     parent_ids: list[uuid.UUID]
+    # Accepted mapping links whose objective text changed since they were reviewed.
+    mappings_to_recheck: int = 0
 
 
 class ModuleRead(BaseModel):
@@ -160,6 +166,8 @@ class ModuleRead(BaseModel):
     outcomes: list[ObjectiveRead]
     # Whether the user may add, change and remove the module's outcomes (drafts only).
     can_edit_objectives: bool
+    # Whether the user may set them to approved or retired (ADR 032).
+    can_approve_objectives: bool
 
 
 class LearningEventRead(BaseModel):
@@ -177,6 +185,8 @@ class LearningEventRead(BaseModel):
     objectives: list[ObjectiveRead]
     # Whether the user may add, change and remove the session's objectives (drafts only).
     can_edit_objectives: bool
+    # Whether the user may set them to approved or retired (ADR 032).
+    can_approve_objectives: bool
 
 
 # --- Editing (Slice 1.3) ---------------------------------------------------------------
@@ -392,6 +402,8 @@ class VersionStatusChange(BaseModel):
     """Publish (draft to published), unpublish (back to draft), archive, or unarchive."""
 
     status: VersionStatus
+    # Required when returning a published version to draft; kept in the audit log.
+    reason: Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)] | None = None
 
 
 class RoleAssignmentCopy(BaseModel):

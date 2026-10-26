@@ -10,6 +10,11 @@ The rules enforced here:
   (``link_objectives`` in ``app.services.curriculum``). Which broader objectives a
   person may *choose* depends on what they can see (``parent_options``); links to
   objectives they cannot see are left as they are when they change the others.
+- Anyone who may edit sets draft or ready for review; approved and retired need
+  ``objectives.approve`` (``can_approve``, decided by the API from the objective's scope).
+  Changing the text of an approved objective without that permission sends it back to
+  ready for review (ADR 032).
+- Changing the text flags the objective's accepted mapping links for re-check.
 - Deleting is a soft delete; links, mappings and taggings stay and are ignored by reads.
 
 All changes go through ORM objects so the audit log records them (ADR 017).
@@ -29,11 +34,12 @@ from app.models import (
     ObjectiveLink,
     TaxonomyLevel,
 )
-from app.models.curriculum import ObjectiveLevel
-from app.services.authorization import InvalidRequestError
+from app.models.curriculum import EDITOR_OBJECTIVE_STATUSES, ObjectiveLevel, ObjectiveStatus
+from app.services.authorization import AuthorizationError, InvalidRequestError
 from app.services.curriculum import ObjectiveOwner, add_objective, link_objectives
 from app.services.curriculum_edit import ensure_editable
 from app.services.curriculum_read import VersionView
+from app.services.mapping import flag_for_recheck
 
 
 async def parent_options(
@@ -44,12 +50,20 @@ async def parent_options(
     module_id: uuid.UUID | None,
 ) -> list[Objective]:
     """The broader objectives an objective at ``level`` (owned in ``module_id``) may link
-    to and that the user sees: programme outcomes need the whole version, module outcomes
-    need the module itself. Programme outcomes first, then module outcomes, in order."""
+    to: the programme outcomes, and for a session objective its module's outcomes, for
+    anyone who sees the objective's item. Programme outcomes first, then module outcomes,
+    in order."""
     wanted = []
-    if level != ObjectiveLevel.PROGRAMME and view.full:
+    # Read-only exception to ADR 027 (ADR 032): whoever sees any part of the version, even
+    # a single session, sees the programme outcomes and their own module's outcomes, so
+    # they can choose upward links. Nothing else above their scope is shown.
+    if level != ObjectiveLevel.PROGRAMME and view.visible:
         wanted.append(Objective.level == ObjectiveLevel.PROGRAMME)
-    if level == ObjectiveLevel.LEARNING_EVENT and module_id and view.shows_module(module_id):
+    if (
+        level == ObjectiveLevel.LEARNING_EVENT
+        and module_id
+        and (view.shows_module(module_id) or module_id in view.events)
+    ):
         wanted.append(
             (Objective.level == ObjectiveLevel.MODULE) & (Objective.module_id == module_id)
         )
@@ -66,6 +80,13 @@ async def parent_options(
     )
     rank = {ObjectiveLevel.PROGRAMME: 0, ObjectiveLevel.MODULE: 1}
     return sorted(found, key=lambda o: rank[o.level])
+
+
+def _check_status(status: ObjectiveStatus, can_approve: bool) -> None:
+    if status not in EDITOR_OBJECTIVE_STATUSES and not can_approve:
+        raise AuthorizationError(
+            "Only a module coordinator or above can approve or retire an objective."
+        )
 
 
 async def _check_taxonomy_level(db: AsyncSession, level_id: uuid.UUID | None) -> None:
@@ -108,6 +129,7 @@ async def create_objective(
     fields: dict[str, Any],
     *,
     options: list[Objective],
+    can_approve: bool = False,
     created_by_id: uuid.UUID | None = None,
 ) -> Objective:
     """Add an objective at the end of its owner's list.
@@ -117,9 +139,12 @@ async def create_objective(
 
     Raises:
         ConflictError: If the version is read-only.
+        AuthorizationError: If the status needs approval rights the user lacks.
         InvalidRequestError: If the text is blank, a level or link is not valid.
     """
     ensure_editable(version)
+    if fields.get("status") is not None:
+        _check_status(fields["status"], can_approve)
     await _check_taxonomy_level(db, fields.get("taxonomy_level_id"))
     if isinstance(owner, CurriculumVersion):
         conditions = [Objective.level == ObjectiveLevel.PROGRAMME]
@@ -159,6 +184,7 @@ async def update_objective(
     changes: dict[str, Any],
     *,
     options: list[Objective],
+    can_approve: bool = False,
     created_by_id: uuid.UUID | None = None,
 ) -> Objective:
     """Change an objective. ``changes`` holds only the fields sent (``null`` clears the
@@ -167,12 +193,24 @@ async def update_objective(
 
     Raises:
         ConflictError: If the version is read-only.
+        AuthorizationError: If the status or text change needs approval rights the user lacks.
         InvalidRequestError: If text or status is cleared, or a level or link is not valid.
     """
     ensure_editable(version)
     for key in _REQUIRED:
         if key in changes and changes[key] is None:
             raise InvalidRequestError(f"The objective's {key} cannot be empty.")
+    old_status = objective.status
+    new_status = changes.get("status", old_status)
+    if new_status != old_status:
+        # Leaving approved or retired is as much an approval decision as entering them.
+        _check_status(new_status, can_approve)
+        _check_status(old_status, can_approve)
+    text_changed = "text" in changes and changes["text"] != objective.text
+    if text_changed and not can_approve and old_status not in EDITOR_OBJECTIVE_STATUSES:
+        if old_status == ObjectiveStatus.RETIRED:
+            raise AuthorizationError("Only a module coordinator or above can change a retired one.")
+        changes = {**changes, "status": ObjectiveStatus.READY_FOR_REVIEW}
     if (
         "taxonomy_level_id" in changes
         and changes["taxonomy_level_id"] != objective.taxonomy_level_id
@@ -183,6 +221,8 @@ async def update_objective(
             setattr(objective, key, changes[key])
     if "parent_ids" in changes:
         await _sync_parents(db, objective, changes["parent_ids"] or [], options, created_by_id)
+    if text_changed:
+        await flag_for_recheck(db, objective)
     await db.flush()
     return objective
 

@@ -31,6 +31,10 @@ certificate is not checked). After a frontend change, rebuild the web image firs
 - `auth.setup.ts` signs in once and saves the session in `e2e/.auth/` (git-ignored);
   later runs reuse it while it is valid. Sign-in is rate-limited, so tests must not sign
   in themselves. Tests of signed-out pages use `test.use({ storageState: SIGNED_OUT })`.
+- `lecturer.setup.ts` makes (through the admin API) and signs in a lecturer once,
+  `e2e.lecturer@example.org` with the password `<E2E_PASSWORD>-lecturer`, and saves the
+  session in `e2e/.auth/lecturer.json`. Journeys that need a user with only a session role
+  grant the role through the admin API and remove it afterwards.
 - Call `expectNoAccessibilityViolations(page)` on every new screen and state (for
   example an open menu or an error message).
 - On failure, `playwright-report/` and `test-results/` hold traces and screenshots

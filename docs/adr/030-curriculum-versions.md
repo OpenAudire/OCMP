@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted (Slice 1.5)
+Accepted (Slice 1.5). Amended by [ADR 032](032-review-fixes-slices-1-3-to-1-6.md): returning a
+published version to draft needs `curriculum.unpublish` and a written reason.
 
 ## Context
 

@@ -80,6 +80,7 @@ class ObjectiveDomain(StrEnum):
 
 class ObjectiveStatus(StrEnum):
     DRAFT = "draft"
+    READY_FOR_REVIEW = "ready_for_review"
     APPROVED = "approved"
     RETIRED = "retired"
 
@@ -381,3 +382,8 @@ class ObjectiveLink(Audited, CoreModel):
         foreign_keys=[child_id], back_populates="parent_links", lazy="raise"
     )
     parent: Mapped[Objective] = relationship(foreign_keys=[parent_id], lazy="raise")
+
+
+# Statuses anyone who may edit an objective can set; the others need `objectives.approve`
+# (ADR 032).
+EDITOR_OBJECTIVE_STATUSES = frozenset({ObjectiveStatus.DRAFT, ObjectiveStatus.READY_FOR_REVIEW})

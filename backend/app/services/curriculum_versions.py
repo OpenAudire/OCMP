@@ -328,6 +328,7 @@ async def _copy_mappings(db: AsyncSession, copies: Copies) -> int:
                 status=link.status,
                 accept_method=link.accept_method,
                 needs_discussion=link.needs_discussion,
+                needs_recheck=link.needs_recheck,
                 first_reviewer_id=link.first_reviewer_id,
                 first_reviewed_at=link.first_reviewed_at,
                 first_decision=link.first_decision,

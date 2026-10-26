@@ -4,7 +4,8 @@ Each endpoint checks ``objectives.edit`` at the scope that owns the objective (A
 the programme for programme outcomes, the module for module outcomes, the session for
 session objectives (roles held higher up count). A target the user cannot see is a 404
 (ADR 027); one they can see but not change is a 403; non-draft versions are read-only
-(409).
+(409). Setting an objective to approved or retired needs ``objectives.approve`` at the
+same scope (ADR 032); the services refuse it otherwise (403).
 """
 
 import uuid
@@ -28,7 +29,7 @@ from app.api.v1.curriculum_edit import (
     visible_or_404,
 )
 from app.core.database import DbSession
-from app.core.permissions import Permission
+from app.core.permissions import Permission, ScopeType
 from app.models import Module, Objective, ObjectiveLink, TaxonomyScale, User
 from app.models.curriculum import ObjectiveLevel
 from app.schemas.curriculum import (
@@ -41,7 +42,7 @@ from app.schemas.curriculum import (
 )
 from app.services import curriculum_objectives
 from app.services.audit import audit_operation
-from app.services.authorization import ScopeRef
+from app.services.authorization import ScopeRef, has_permission
 from app.services.curriculum_scopes import objective_scope
 
 router = APIRouter(tags=["curriculum"])
@@ -78,6 +79,10 @@ OutcomeEditor = Annotated[User, _editor(version_programme)]
 ModuleObjectiveEditor = Annotated[User, _editor(module_scope)]
 EventObjectiveEditor = Annotated[User, _editor(event_scope)]
 ObjectiveEditor = Annotated[User, _editor(objective_edit_scope)]
+
+
+async def _can_approve(db: AsyncSession, actor: User, scope: ScopeRef) -> bool:
+    return await has_permission(db, actor, Permission.OBJECTIVES_APPROVE, scope)
 
 
 async def _parent_ids(db: AsyncSession, objective: Objective) -> list[uuid.UUID]:
@@ -150,6 +155,9 @@ async def create_programme_outcome(
             target.version,
             body.model_dump(),
             options=[],
+            can_approve=await _can_approve(
+                db, actor, ScopeRef(ScopeType.PROGRAMME, target.visible.programme.id)
+            ),
             created_by_id=actor.id,
         )
     return await _saved(db, objective)
@@ -178,6 +186,7 @@ async def create_module_outcome(
             target.version,
             body.model_dump(),
             options=options,
+            can_approve=await _can_approve(db, actor, ScopeRef(ScopeType.MODULE, target.module.id)),
             created_by_id=actor.id,
         )
     return await _saved(db, objective)
@@ -207,6 +216,9 @@ async def create_event_objective(
             target.version,
             body.model_dump(),
             options=options,
+            can_approve=await _can_approve(
+                db, actor, ScopeRef(ScopeType.LEARNING_EVENT, target.event.id)
+            ),
             created_by_id=actor.id,
         )
     return await _saved(db, objective)
@@ -220,7 +232,9 @@ async def update_objective(
     actor: ObjectiveEditor,
     db: DbSession,
 ) -> ObjectiveSaved:
-    """Change an objective's text, domain, taxonomy level, status or upward links."""
+    """Change an objective's text, domain, taxonomy level, status or upward links.
+
+    Approving or retiring needs ``objectives.approve``."""
     target = target_of(request)
     objective = target.objective
     assert objective is not None
@@ -234,6 +248,7 @@ async def update_objective(
             target.version,
             body.model_dump(exclude_unset=True),
             options=options,
+            can_approve=await _can_approve(db, actor, await objective_scope(db, objective)),
             created_by_id=actor.id,
         )
     return await _saved(db, objective)

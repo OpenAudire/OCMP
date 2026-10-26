@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Checkbox, NumberInput, Skeleton, Stack, Text } from '@mantine/core';
+import { Checkbox, NumberInput, Skeleton, Stack, Text, Textarea } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -38,8 +38,19 @@ function StatusForm({ version, action, to, onClose, onDone }: Omit<StatusDialogP
   const { t } = useTranslation();
   const nouns = nounsFor(t);
   const refresh = useRefreshVersions();
+  const needsReason = action === 'unpublish';
+  const form = useForm({
+    initialValues: { reason: '' },
+    validate: {
+      reason: (value) =>
+        needsReason && !value.trim() ? t('curriculum.versions.confirm.reasonRequired') : null,
+    },
+  });
   const run = useMutation({
-    mutationFn: () => changeVersionStatus(version.id, to),
+    mutationFn: (reason: string) =>
+      needsReason
+        ? changeVersionStatus(version.id, to, reason.trim())
+        : changeVersionStatus(version.id, to),
     onSuccess: async (saved) => {
       await refresh(version.id);
       onDone(t(`curriculum.versions.done.${action}`, { year: saved.academic_year }));
@@ -53,13 +64,21 @@ function StatusForm({ version, action, to, onClose, onDone }: Omit<StatusDialogP
       submitLabel={t(`curriculum.versions.action.${action}`)}
       error={error}
       busy={run.isPending}
-      onSubmit={(event) => {
-        event.preventDefault();
-        run.mutate();
-      }}
+      onSubmit={form.onSubmit((values) => run.mutate(values.reason))}
       onClose={onClose}
     >
       <Text>{t(`curriculum.versions.confirm.${action}`)}</Text>
+      {needsReason && (
+        <Textarea
+          label={t('curriculum.versions.confirm.reason')}
+          description={t('curriculum.versions.confirm.reasonHint')}
+          required
+          rows={3}
+          maxLength={500}
+          data-autofocus
+          {...form.getInputProps('reason')}
+        />
+      )}
       <Text size="sm" c="dimmed">
         {t('curriculum.versions.confirm.note')}
       </Text>

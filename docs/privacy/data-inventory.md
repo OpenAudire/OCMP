@@ -38,7 +38,7 @@ students or patients.
 | Authorship of records | `created_by_id` on every table | Accountability for curriculum changes | System | Kept; set to empty when the user is deleted |
 | Review decisions | `mapping_links.first_reviewer_id`, `.second_reviewer_id`, review times | Four-eyes review of mappings | System | Kept with the mapping; set to empty when the user is deleted |
 | Review assignments | `review_assignments.reviewer_id` | Allocating review work | Admins | Deleted with the user |
-| Audit log | `audit_log.actor_id`, entries about users | Accountability, POPIA access log of admin views of user records | System | `AUDIT_LOG_RETENTION_DAYS` (default: kept). Email, name and password hash are never written to the log, only that they changed. When a user is deleted, `actor_id` is cleared |
+| Audit log | `audit_log.actor_id`, entries about users | Accountability, POPIA access log of admin views of user records | System | `AUDIT_LOG_RETENTION_DAYS` (default: kept). Email, name and password hash are never written to the log, only that they changed. When a user is deleted, `actor_id` is cleared. Operation labels can carry a short free-text reason typed by staff (returning a published version to draft, reopening a mapping); the screens say not to enter personal data |
 
 ## AI processing
 

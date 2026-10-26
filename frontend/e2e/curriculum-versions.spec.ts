@@ -98,10 +98,13 @@ test.describe('curriculum versions', () => {
 
     // Back to draft, then delete it.
     await page.getByRole('button', { name: 'Return to draft' }).click();
-    await page
-      .getByRole('dialog', { name: `Return the ${year} published to draft?` })
-      .getByRole('button', { name: 'Return to draft' })
-      .click();
+    const unpublish = page.getByRole('dialog', { name: `Return the ${year} published to draft?` });
+    // A written reason is required; it goes into the change history.
+    await unpublish.getByRole('button', { name: 'Return to draft' }).click();
+    await expect(unpublish.getByText('Give a reason.')).toBeVisible();
+    await expectNoAccessibilityViolations(page);
+    await unpublish.getByRole('textbox', { name: /Reason/ }).fill('Checking the unpublish journey.');
+    await unpublish.getByRole('button', { name: 'Return to draft' }).click();
     await expect(page.getByRole('status').filter({ hasText: `${year} returned to draft.` })).toBeVisible();
     await page.getByRole('button', { name: 'Delete draft' }).click();
     const remove = page.getByRole('dialog', { name: `Delete the ${year} draft?` });

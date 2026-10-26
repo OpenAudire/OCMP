@@ -37,3 +37,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [029](029-reorder-and-copy.md) | Reordering and Copying Curriculum Items |
 | [030](030-curriculum-versions.md) | Curriculum Versions: Publishing, Copy Forward and Diff |
 | [031](031-objective-editing.md) | Objective Editing: Permissions, Upward Links and Taxonomy Levels |
+| [032](032-review-fixes-slices-1-3-to-1-6.md) | Review Fixes to Slices 1.3 to 1.6: Outcome Sight, Approval, Unpublish Reason, Mapping Re-check |

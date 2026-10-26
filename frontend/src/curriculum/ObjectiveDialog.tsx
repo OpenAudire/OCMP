@@ -40,6 +40,8 @@ interface ObjectiveDialogProps {
   owner: ObjectiveOwner;
   /** The objective to change; without it the dialog adds one. */
   objective?: Objective;
+  /** Whether the user may set approved and retired (the API checks it too). */
+  canApprove: boolean;
   onClose: () => void;
   onSaved: (result: EditResult) => void;
 }
@@ -53,7 +55,8 @@ interface Values {
 }
 
 const DOMAINS: ObjectiveDomain[] = ['knowledge', 'skill', 'attitude'];
-const STATUSES: ObjectiveStatus[] = ['draft', 'approved', 'retired'];
+const STATUSES: ObjectiveStatus[] = ['draft', 'ready_for_review', 'approved', 'retired'];
+const EDITOR_STATUSES: ObjectiveStatus[] = ['draft', 'ready_for_review'];
 
 function useLinkOptions(owner: ObjectiveOwner) {
   const key =
@@ -91,6 +94,7 @@ function ObjectiveForm({
   versionId,
   owner,
   objective,
+  canApprove,
   onClose,
   onSaved,
 }: Omit<ObjectiveDialogProps, 'opened'>) {
@@ -134,6 +138,15 @@ function ObjectiveForm({
     },
   });
 
+  // Without approval rights only draft and ready for review can be set; an approved or
+  // retired objective keeps its status (changing its wording sends it back to review).
+  const locked =
+    !canApprove && objective !== undefined && !EDITOR_STATUSES.includes(objective.status);
+  const statusChoices = canApprove
+    ? STATUSES
+    : locked && objective
+      ? [objective.status]
+      : EDITOR_STATUSES;
   const offered = options.data ?? [];
   const hiddenLinks = objective
     ? objective.parent_ids.filter((id) => !offered.some((option) => option.id === id)).length
@@ -178,7 +191,15 @@ function ObjectiveForm({
       />
       <NativeSelect
         label={t('curriculum.objectives.status')}
-        data={STATUSES.map((status) => ({
+        description={
+          locked
+            ? t('curriculum.objectives.statusLocked')
+            : canApprove
+              ? undefined
+              : t('curriculum.objectives.statusLimited')
+        }
+        disabled={locked}
+        data={statusChoices.map((status) => ({
           value: status,
           label: t(`curriculum.objectiveStatus.${status}`),
         }))}
@@ -301,7 +322,7 @@ export function ObjectiveDeleteDialog({
   owner,
   objective,
   ...props
-}: Omit<ObjectiveDialogProps, 'objective'> & { objective: Objective }) {
+}: Omit<ObjectiveDialogProps, 'objective' | 'canApprove'> & { objective: Objective }) {
   const { t } = useTranslation();
   const noun = objectiveNoun(t, owner);
   return (
