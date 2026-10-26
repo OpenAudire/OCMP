@@ -9,6 +9,7 @@ from app.api.v1.curriculum_edit import router as curriculum_edit_router
 from app.api.v1.curriculum_objectives import router as curriculum_objectives_router
 from app.api.v1.curriculum_versions import router as curriculum_versions_router
 from app.api.v1.institution import router as institution_router
+from app.api.v1.objective_checks import router as objective_checks_router
 from app.api.v1.oidc import router as oidc_router
 from app.api.v1.roles import router as roles_router
 from app.api.v1.setup import router as setup_router
@@ -25,4 +26,5 @@ router.include_router(curriculum_router)
 router.include_router(curriculum_edit_router)
 router.include_router(curriculum_objectives_router)
 router.include_router(curriculum_versions_router)
+router.include_router(objective_checks_router)
 router.include_router(setup_router)

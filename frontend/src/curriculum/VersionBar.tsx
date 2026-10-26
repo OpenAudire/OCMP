@@ -4,6 +4,7 @@ import {
   IconArchive,
   IconArrowBackUp,
   IconArrowsDiff,
+  IconChecklist,
   IconCopyPlus,
   IconSend,
   IconTrash,
@@ -12,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import type { ProgrammeSummary, VersionStructure } from '../api/types';
-import { comparePath } from './paths';
+import { comparePath, qualityPath } from './paths';
 import { CopyForwardDialog, DeleteVersionDialog, StatusDialog } from './VersionDialogs';
 import { STATUS_ACTIONS, versionLabel, type StatusAction } from './versions';
 import classes from './VersionBar.module.css';
@@ -28,6 +29,8 @@ interface VersionBarProps {
   structure: VersionStructure;
   /** The programme with the versions the user may see (for compare and delete). */
   programme: ProgrammeSummary | null;
+  /** Whether the user may edit objectives somewhere (the quality check is for editors). */
+  canCheckObjectives?: boolean;
   /** Say what a status change did. */
   onNotice: (message: string) => void;
 }
@@ -36,7 +39,12 @@ interface VersionBarProps {
  * The open version's status, with publish, copy forward, compare and delete for the
  * people who may use them (the structure's flags; the API checks every change).
  */
-export function VersionBar({ structure, programme, onNotice }: VersionBarProps) {
+export function VersionBar({
+  structure,
+  programme,
+  canCheckObjectives = false,
+  onNotice,
+}: VersionBarProps) {
   const { t, i18n } = useTranslation();
   const version = structure.version;
   const [dialog, setDialog] = useState<StatusAction | 'copy' | 'delete' | null>(null);
@@ -93,6 +101,19 @@ export function VersionBar({ structure, programme, onNotice }: VersionBarProps) 
         leftSection={<IconArrowsDiff size={18} aria-hidden />}
       >
         {t('curriculum.versions.action.compare')}
+      </Button>
+    );
+  }
+  if (canCheckObjectives) {
+    buttons.push(
+      <Button
+        key="quality"
+        variant="default"
+        component={Link}
+        to={qualityPath(version.id)}
+        leftSection={<IconChecklist size={18} aria-hidden />}
+      >
+        {t('curriculum.versions.action.checkWording')}
       </Button>
     );
   }

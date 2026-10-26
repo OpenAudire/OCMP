@@ -370,3 +370,55 @@ export interface VersionDiff {
   summary: Record<ItemKind, { added: number; removed: number; changed: number }>;
   changes: ItemChange[];
 }
+
+/** Objective quality checker (rule based, advisory; ADR 033). */
+export type FindingSeverity = 'warning' | 'info';
+
+export interface QualityFinding {
+  code: string;
+  severity: FindingSeverity;
+  message_key: string;
+  suggestion_key: string | null;
+  params: Record<string, string>;
+}
+
+/** A taxonomy level the leading verb points to; offered, never applied. */
+export interface LevelSuggestion {
+  taxonomy_level_id: string;
+  level_name: string;
+  scale_key: string;
+  scale_name: string;
+}
+
+export interface QualityCheck {
+  findings: QualityFinding[];
+  detected_verb: string | null;
+  suggestions: LevelSuggestion[];
+}
+
+export interface QualityCheckInput {
+  text: string;
+  domain: ObjectiveDomain | null;
+  taxonomy_level_id: string | null;
+  has_parent_links: boolean | null;
+}
+
+export interface CheckedObjective extends QualityCheck {
+  objective_id: string;
+  level: 'programme' | 'module' | 'learning_event';
+  text: string;
+  status: ObjectiveStatus;
+  domain: ObjectiveDomain | null;
+  module_id: string | null;
+  module_code: string | null;
+  event_id: string | null;
+  event_title: string | null;
+  can_edit: boolean;
+}
+
+export interface VersionChecks {
+  version_id: string;
+  rules_language: string;
+  rules_version: number;
+  objectives: CheckedObjective[];
+}

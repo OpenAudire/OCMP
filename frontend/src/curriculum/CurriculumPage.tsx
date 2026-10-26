@@ -23,6 +23,7 @@ import { SuccessNotice } from '../pages/SuccessNotice';
 import { Page } from '../ui/Page';
 import { EmptyState, ErrorState, LoadingState } from '../ui/States';
 import { ComparePage } from './ComparePage';
+import { QualityPage } from './QualityPage';
 import {
   defaultVersionId,
   findVersion,
@@ -111,6 +112,7 @@ function Builder({ structure }: BuilderProps) {
   );
   const versionId = structure.version.id;
   useEffect(() => rememberVersion(versionId), [versionId]);
+  const { data: session } = useSession();
   const { data: programmes } = useProgrammes();
   const programme = programmes ? (findVersion(programmes, versionId)?.programme ?? null) : null;
   // What the last change did; announced, and focused when the selection moved. A copy
@@ -188,6 +190,7 @@ function Builder({ structure }: BuilderProps) {
     <VersionBar
       structure={structure}
       programme={programme}
+      canCheckObjectives={session?.permissions.has(Permission.ObjectivesEdit) ?? false}
       onNotice={(message) => setNotice({ key: Date.now(), message, focus: true })}
     />
   );
@@ -333,6 +336,7 @@ export function CurriculumSection() {
       <Route index element={<CurriculumStart />} />
       <Route path="versions/:versionId" element={<VersionPage />} />
       <Route path="versions/:versionId/compare" element={<ComparePage />} />
+      <Route path="versions/:versionId/quality" element={<QualityPage />} />
       <Route path="*" element={<Navigate to={CURRICULUM_PATH} replace />} />
     </Routes>
   );

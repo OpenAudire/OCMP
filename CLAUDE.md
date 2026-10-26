@@ -214,6 +214,7 @@ export function ModuleCount({ count }: { count: number }) {
 - Framework model fields follow the pack format in `packs/schema/` (ADR 014); import packs with `app/services/packs.py`
 - `packs/demo/demo-graduate-competencies.json` and `backend/app/demo/data/` copy must stay identical (tested)
 - Data migrations are separate files and use table stubs (`sa.table`), never app models
+- Objective quality checker (ADR 033): pure rules in `app/services/objective_quality.py`, wording lists per language in `app/services/objective_rules/<code>.json`, verbs per taxonomy level stay in `taxonomy_levels.verbs`; findings are advice, never block saving, and use no AI. A finding's texts are i18n keys `curriculum.quality.<code>.*`: add all three (name, message, suggestion) with a new rule
 - Institution settings are read through `app/services/institution_settings.py` (typed sections), never raw JSON
 
 ### Background jobs

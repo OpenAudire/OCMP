@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "language": "en",
+  "_comment": "Rules for the objective quality checker (ADR 033). Add a language by adding <code>.json with the same keys. Verbs that belong to a taxonomy level live with the level (taxonomy_levels.verbs, pack format); only wording rules and verbs that belong to no level are here.",
+  "min_words": 3,
+  "max_words": 40,
+  "lead_ins": [
+    "^(?:by the end of [^,]{3,80}, *)?(?:the |a |each |every )?(?:students?|learners?|graduates?|trainees?|participants?|you|they|we) +(?:will|should|must|shall|can|would)(?: +(?:be able to|have the ability to|be capable of))? +",
+    "^(?:be able to|being able to|have the ability to) +",
+    "^(?:upon|on) completion(?: of [^,]{3,80})?, *(?:the |a )?(?:students?|learners?|you) +(?:will|should)(?: +be able to)? +"
+  ],
+  "vague_verbs": [
+    "understand", "know", "appreciate", "learn", "realise", "realize", "grasp",
+    "comprehend", "believe", "enjoy", "like", "familiarise", "familiarize"
+  ],
+  "vague_phrases": [
+    "be aware of", "become aware of", "learn about", "become familiar with",
+    "be familiar with", "have an understanding of", "gain an understanding of",
+    "have knowledge of", "gain knowledge of", "get to know", "have a feel for",
+    "be exposed to", "have an appreciation of", "gain an appreciation of"
+  ],
+  "extra_verbs": [
+    "act", "adhere", "advocate", "auscultate", "carry out", "collaborate", "collect", "comply",
+    "conduct", "contribute", "counsel", "demonstrate", "develop", "engage", "estimate", "examine",
+    "formulate", "give", "inject", "lead", "maintain", "manage", "measure", "monitor", "negotiate",
+    "observe", "open", "operate", "palpate", "perform", "predict", "prepare", "prescribe",
+    "present", "recognise", "recommend", "record", "refer", "reflect", "relate", "report",
+    "respond", "share", "suture", "teach", "triage", "write"
+  ],
+  "noun_verbs": [
+    "act", "plan", "name", "state", "label", "list", "use", "order", "record", "report",
+    "design", "test", "practise", "practice", "support", "change", "address", "study", "work",
+    "present", "share", "open", "give", "set", "check", "match", "model", "map", "rate"
+  ],
+  "determiners": [
+    "the", "a", "an", "their", "your", "his", "her", "its", "this", "that", "these", "those",
+    "each", "every", "all", "any", "how", "why", "when", "what", "whether", "which", "own"
+  ],
+  "connectors": [" and then ", " and ", " or ", " then ", ", ", "; "],
+  "qualifiers": [
+    "appropriate", "appropriately", "adequate", "adequately", "proper", "properly", "suitable",
+    "suitably", "various", "numerous", "a range of", "a variety of", "etc", "and so on",
+    "as needed", "as necessary", "where necessary", "relevant", "good", "well", "effectively",
+    "efficiently", "sufficient", "sufficiently"
+  ]
+}

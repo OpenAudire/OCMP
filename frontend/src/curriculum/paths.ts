@@ -11,3 +11,8 @@ export function comparePath(versionId: string, base?: string): string {
   const path = `${CURRICULUM_PATH}/versions/${versionId}/compare`;
   return base ? `${path}?base=${encodeURIComponent(base)}` : path;
 }
+
+/** Findings of the objective quality checker for every objective the user sees. */
+export function qualityPath(versionId: string): string {
+  return `${CURRICULUM_PATH}/versions/${versionId}/quality`;
+}

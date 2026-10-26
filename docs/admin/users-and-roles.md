@@ -113,6 +113,30 @@ outcomes, a session objective to its module's outcomes or to programme outcomes.
 - Audit labels: `curriculum.objective_create`, `curriculum.objective_update`,
   `curriculum.objective_delete`.
 
+## Objective quality checker
+
+While someone writes an objective, a **Quality check** box under the wording flags likely
+problems and suggests a taxonomy level from the verb. It uses fixed rules only: nothing is
+sent to an AI service and nothing is saved by a check. The findings are advice and never
+stop anyone saving.
+
+- **Warnings**: vague verbs (understand, know, appreciate, "be aware of"), more than one
+  verb, very long wording (over 40 words), no domain, no upward link.
+- **Notes**: no verb the checker knows, very short wording, a "Students will be able to"
+  lead-in, hard-to-measure words (appropriate, various), and a chosen level that differs from
+  the verb's usual level.
+- **Suggested level**: the verb is looked up in the verb lists of the taxonomy levels (they
+  come with the scale, from its pack). A button such as "Use Understand (Bloom)" sets the
+  level when clicked; nothing is set on its own.
+- **Check wording** (version bar) lists the findings for every objective the person may see
+  in the open version, with filters for severity and rule and a link to each objective. It is
+  for people who hold `objectives.edit` somewhere; it shows only what they may read.
+- Who can use it: the live check needs `objectives.edit` at the objective's owner (as for
+  adding it); the list needs `objectives.edit` anywhere. It is limited to 240 checks a minute
+  per person.
+- The wording lists are versioned files per language (`app/services/objective_rules/en.json`);
+  only English exists so far. See ADR 033.
+
 ## Publishing and copying a year forward
 
 Each programme has one version per academic year. A version is a **draft** (editable, seen

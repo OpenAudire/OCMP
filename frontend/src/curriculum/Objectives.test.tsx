@@ -28,6 +28,7 @@ vi.mock('../api/endpoints', async (importOriginal) => ({
   createEventObjective: vi.fn(),
   updateObjective: vi.fn(),
   deleteObjective: vi.fn(),
+  checkObjectiveText: vi.fn(),
 }));
 
 const mocked = vi.mocked(endpoints);
@@ -197,7 +198,7 @@ describe('objective editor', () => {
     fireEvent.click(within(form).getByRole('checkbox', { name: /Practise safely/ }));
     fireEvent.click(within(form).getByRole('button', { name: 'Add objective' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('The objective was added.');
+    expect(await screen.findByText('The objective was added.')).toBeInTheDocument();
     expect(mocked.createEventObjective).toHaveBeenCalledWith('e1', {
       text: 'Draw the cycle.',
       domain: 'skill',
@@ -233,9 +234,7 @@ describe('objective editor', () => {
     fireEvent.click(within(form).getByRole('checkbox', { name: /Interpret cardiac tests/ }));
     fireEvent.click(within(form).getByRole('button', { name: 'Save changes' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'Changes to the objective saved.'
-    );
+    expect(await screen.findByText('Changes to the objective saved.')).toBeInTheDocument();
     // The link on offer was unticked; the hidden one was not sent, so it stays.
     expect(mocked.updateObjective).toHaveBeenCalledWith('o-e1', {
       text: 'Explain the cardiac cycle.',
@@ -291,7 +290,7 @@ describe('objective editor', () => {
     fireEvent.click(within(form).getByRole('checkbox', { name: /Practise safely/ }));
     fireEvent.click(within(form).getByRole('button', { name: 'Add outcome' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('The outcome was added.');
+    expect(await screen.findByText('The outcome was added.')).toBeInTheDocument();
     expect(mocked.createModuleOutcome).toHaveBeenCalledWith('m2', {
       text: 'Explain haemodynamics.',
       domain: null,
@@ -316,7 +315,7 @@ describe('objective editor', () => {
     expect(within(form).queryByRole('checkbox')).not.toBeInTheDocument();
     fireEvent.click(within(form).getByRole('button', { name: 'Add outcome' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('The outcome was added.');
+    expect(await screen.findByText('The outcome was added.')).toBeInTheDocument();
     expect(mocked.createProgrammeOutcome).toHaveBeenCalledWith('v2027', {
       text: 'Communicate.',
       domain: null,
@@ -346,7 +345,7 @@ describe('objective editor', () => {
     fireEvent.change(status, { target: { value: 'ready_for_review' } });
     fireEvent.click(within(form).getByRole('button', { name: 'Add objective' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('The objective was added.');
+    expect(await screen.findByText('The objective was added.')).toBeInTheDocument();
     expect(mocked.createEventObjective).toHaveBeenCalledWith(
       'e1',
       expect.objectContaining({ status: 'ready_for_review' })

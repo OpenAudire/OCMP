@@ -26,12 +26,14 @@ import { LoadingState } from '../ui/States';
 import { DialogForm, EditDialog } from './EditDialog';
 import {
   editErrorMessage,
+  checkPathFor,
   objectiveNoun,
   optionalText,
   useRefreshCurriculum,
   type EditResult,
   type ObjectiveOwner,
 } from './editing';
+import { QualityPanel } from './QualityPanel';
 import classes from './ObjectiveDialog.module.css';
 
 interface ObjectiveDialogProps {
@@ -174,6 +176,21 @@ function ObjectiveForm({
         maxLength={2000}
         data-autofocus
         {...form.getInputProps('text')}
+      />
+      <QualityPanel
+        path={checkPathFor(owner, versionId)}
+        text={form.values.text}
+        domain={(optionalText(form.values.domain) as ObjectiveDomain | null) ?? null}
+        taxonomyLevelId={optionalText(form.values.taxonomyLevel)}
+        // Programme outcomes do not link upward; unknown while the options load.
+        hasLinks={
+          owner.kind === 'programme' || options.isPending
+            ? null
+            : form.values.parents.length > 0 || hiddenLinks > 0
+        }
+        onUseLevel={(suggestion) =>
+          form.setFieldValue('taxonomyLevel', suggestion.taxonomy_level_id)
+        }
       />
       <NativeSelect
         label={t('curriculum.objectives.domain')}

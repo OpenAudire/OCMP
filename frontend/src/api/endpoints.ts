@@ -16,6 +16,8 @@ import type {
   PhaseInput,
   Programme,
   ProgrammeSummary,
+  QualityCheck,
+  QualityCheckInput,
   RoleAssignment,
   SavedLearningEvent,
   SavedModule,
@@ -24,6 +26,7 @@ import type {
   TaxonomyScale,
   TeachingFormat,
   User,
+  VersionChecks,
   VersionDiff,
   VersionStatus,
   VersionStructure,
@@ -295,6 +298,19 @@ export async function fetchVersionDiff(versionId: string, base: string): Promise
 }
 
 /** TanStack Query keys, in one place so invalidation stays consistent. */
+/** Check wording as typed (live); `path` is the owner's checking address. */
+export async function checkObjectiveText(
+  path: string,
+  input: QualityCheckInput
+): Promise<QualityCheck> {
+  return (await api.post<QualityCheck>(path, input)).data;
+}
+
+/** Check every objective of a version that the user sees. */
+export async function fetchVersionChecks(versionId: string): Promise<VersionChecks> {
+  return (await api.get<VersionChecks>(`/curriculum-versions/${versionId}/objective-checks`)).data;
+}
+
 export const queryKeys = {
   session: ['session'] as const,
   institution: ['institution'] as const,
@@ -310,5 +326,6 @@ export const queryKeys = {
   taxonomyScales: ['taxonomy-scales'] as const,
   linkOptions: (kind: 'module' | 'event', id: string) => ['link-options', kind, id] as const,
   copyForward: (id: string) => ['curriculum-versions', id, 'copy-forward'] as const,
+  versionChecks: (id: string) => ['curriculum-versions', id, 'objective-checks'] as const,
   versionDiff: (id: string, base: string) => ['curriculum-versions', id, 'diff', base] as const,
 };

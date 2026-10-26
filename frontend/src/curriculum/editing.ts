@@ -36,6 +36,7 @@ export function useRefreshCurriculum(versionId: string) {
       client.invalidateQueries({ queryKey: ['modules'] }),
       client.invalidateQueries({ queryKey: ['learning-events'] }),
       client.invalidateQueries({ queryKey: queryKeys.programmeOutcomes(versionId) }),
+      client.invalidateQueries({ queryKey: queryKeys.versionChecks(versionId) }),
     ]);
 }
 
@@ -79,6 +80,18 @@ export type ObjectiveOwner =
   | { kind: 'programme' }
   | { kind: 'module'; module: StructureModule }
   | { kind: 'event'; event: StructureEvent; module: StructureModule };
+
+/** Where the owner's wording is checked (the permission is the same as for adding). */
+export function checkPathFor(owner: ObjectiveOwner, versionId: string): string {
+  switch (owner.kind) {
+    case 'programme':
+      return `/curriculum-versions/${versionId}/outcome-checks`;
+    case 'module':
+      return `/modules/${owner.module.id}/outcome-checks`;
+    case 'event':
+      return `/learning-events/${owner.event.id}/objective-checks`;
+  }
+}
 
 /** The word for the thing being edited: outcomes at programme and module level. */
 export function objectiveNoun(t: TFunction, owner: ObjectiveOwner): string {

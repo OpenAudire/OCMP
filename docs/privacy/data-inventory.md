@@ -53,6 +53,7 @@ cleared after `AI_CALL_RETENTION_DAYS` (default 365).
 |---|---|---|
 | Session: hashed token, user id, creation time | Keeping people signed in | Sliding `SESSION_EXPIRE_HOURS` (default 24) after last use; removed on sign-out, password change and deactivation |
 | Rate-limit counters keyed by a hash of the client IP address or email address | Throttling sign-in and reset attempts | 15 minutes |
+| Rate-limit counter keyed by a hash of the user id (live objective quality check) | Stopping runaway requests while someone types | 1 minute |
 | Password reset token (hashed) and the user id | Reset links | `PASSWORD_RESET_TOKEN_MINUTES` (default 60), single use |
 | SSO sign-in state (nonce, PKCE verifier, return path) | Completing an SSO sign-in | 10 minutes, single use |
 | Queued job messages, e.g. "send reset email to <address>" | Sending email in the background | Until processed, usually seconds |

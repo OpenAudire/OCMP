@@ -665,6 +665,12 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.6a | `mapping_links.needs_recheck` (boolean) is set on accepted links when the objective wording changes; cleared by `confirm_recheck` (needs `mapping.review`) or by reopening; copy forward keeps it. Suggested, rejected and second-review links are not flagged. No HTTP endpoint to confirm yet | Owner decision: accepted links stay accepted but are marked; mapping endpoints and reports come later | Easy: drop one column; reports must show the flag |  Owner decision 2026-10-26 |
 | 1.6a | The migration downgrade turns `ready_for_review` objectives back into drafts with a plain `UPDATE` | The old check constraint cannot hold the new value; downgrades are for local use | Easy |  Decided in 1.6a, to review |
 | 1.6a | The e2e lecturer account `e2e.lecturer@example.org` is made through the admin API and kept between runs; its password is the admin test password plus `-lecturer` | Sign-in is rate limited, so it signs in once like the admin; no extra secret | Easy |  Decided in 1.6a, to review |
+| 1.7 | Checker is rule based and advisory: findings never block saving, nothing is stored (`detected_verb` and `quality_flags` stay unused) and nothing goes to an AI provider (ADR 033) | Brief: rule-based first; stored flags would go stale when links or verb lists change | Easy: a job could fill the columns later |  Decided in 1.7, to review |
+| 1.7 | Verb lists per level stay in `taxonomy_levels.verbs` (pack format); only wording rules and extra verbs are in a versioned per-language JSON file (`objective_rules/en.json`) | One source for level verbs; no copy in code to drift | Easy |  Decided in 1.7, to review |
+| 1.7 | Severities: warning for vague verb, several verbs, over 40 words, no domain, no upward link; note for the rest (no known verb, under 3 words, lead-in wording, hard-to-measure words, level differs from verb) | Brief lists the first group as flags; the rest are style advice | Easy: one table and the data file |  Decided in 1.7, to review |
+| 1.7 | Live check needs `objectives.edit` at the owner's scope (three endpoints), is limited to 240 a minute per user (Redis counter on a hashed user id, in the data inventory); the list needs `objectives.edit` anywhere and shows only visible, non-retired objectives | Same rule as adding an objective; the list reveals nothing beyond ADR 027 | Easy |  Decided in 1.7, to review |
+| 1.7 | A suggested level is shown as a button and set only on click; a verb in several levels or scales lists each | Never auto-applied | Easy |  Decided in 1.7, to review |
+| 1.7 | Bulk list is a page `/curriculum/versions/:id/quality` opened by a Check wording button in the version bar for people holding `objectives.edit` | Same pattern as Compare versions | Easy (UI) |  Decided in 1.7, to review |
 
 ---
 
@@ -939,3 +945,26 @@ Each slice: its screen states, tests, docs, PROGRESS.md entry and one Convention
 
 **Commit**: `fix: lecturer outcome links, objective approval, unpublish reason and mapping re-check flag`
 
+
+---
+
+### Slice 1.7: Objective Quality Checker and Level Suggestion
+**Status**: Complete
+
+**Deliverables**:
+- [x] **Rule-based checker** (ADR 033, `app/services/objective_quality.py`, pure functions): vague verbs and phrases, several verbs, over 40 words, no domain, no upward link (warnings); no known verb, under 3 words, "Students will be able to" lead-in, hard-to-measure words, chosen level differs from the verb's level (notes). Each finding has a code, severity, message and suggestion keys and params. No AI, nothing stored, never blocks saving
+- [x] **Verb lists**: per level from `taxonomy_levels.verbs` (pack format); wording rules in a versioned per-language file `app/services/objective_rules/en.json` (other languages: add a file; unknown falls back to English). Level suggestion lists every level and scale the leading verb belongs to; set only when the person clicks
+- [x] **API**: live checks `POST .../outcome-checks` (version, module) and `.../objective-checks` (session), `objectives.edit` at the owner's scope, 240 a minute per user; bulk `GET /curriculum-versions/{id}/objective-checks` (visible, non-retired objectives; `objectives.edit` held somewhere)
+- [x] **UI**: Quality check box in the objective dialog (debounced 600 ms, polite status line, written severities with icons, level buttons); **Check wording** button and page `/curriculum/versions/:id/quality` with severity, rule and "only with findings" filters, links to the item, and empty, loading, forbidden and error states
+- [x] ADR 033, admin guide section, data inventory (Redis counter), CLAUDE.md, six rows in "Decisions to review"
+
+**Verification**:
+- Backend: ruff, ruff format, mypy pass; pytest 771 passed against the test database, 97% coverage (37 pure unit tests in `test_objective_quality.py`, 18 API tests in `test_objective_checks_api.py`: sign-in, flags, level suggestion, empty text and nothing saved, length limit, rate limit 429, lecturer scope, student refused, bulk order and visibility, published version not editable)
+- Frontend under Node 24.22.1: lint and typecheck pass; 163 tests pass, run alone (9 new in `Quality.test.tsx`). Five older objective tests now read the saved notice by its text, since the dialog's status line is also a status region
+- Docker: images rebuilt; Playwright (Chromium) against the stack with demo data: 57 of 60 passed in the first full run (2 new journeys in `e2e/curriculum-quality.spec.ts`, light and dark, axe WCAG 2.2 AA on the panel states and the page); the 3 failures were `accessibility.spec.ts` pages where the app frame did not appear under load, and all 18 tests of that file passed on rerun
+- `mkdocs build --strict` passes
+- Not verified here: browsers other than Chromium; screen readers by hand (live region behaviour while typing); screenshots by eye; rule quality on real objectives beyond the demo (heuristics, no part-of-speech tagging); the CI run on GitHub (runs on push)
+
+**Not in this slice**: near-duplicate detection (1.15), AI rewrite and classification (1.17), other languages, storing flags on objectives.
+
+**Commit**: `feat: rule-based objective quality checker and taxonomy level suggestion`

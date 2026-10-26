@@ -378,7 +378,8 @@
         "unarchive": "Publish again",
         "copyForward": "Copy forward",
         "delete": "Delete draft",
-        "compare": "Compare versions"
+        "compare": "Compare versions",
+        "checkWording": "Check wording"
       },
       "confirm": {
         "publishTitle": "Publish the {{version}}?",
@@ -483,6 +484,103 @@
       "nothing": "This {{programme}} has no other version you can see.",
       "loadTitle": "Couldn't compare the versions",
       "loadBody": "Nothing was changed. Check your connection and try again."
+    },
+    "quality": {
+      "title": "Quality check",
+      "advisory": "These are suggestions from fixed rules. They never stop you saving, and nothing is sent to an AI service.",
+      "empty": "Type the wording to see suggestions.",
+      "checking": "Checking the wording...",
+      "clean": "No issues found.",
+      "summary": "Warnings: {{warnings}}. Notes: {{notes}}.",
+      "unavailable": "The quality check is not available right now. You can still save.",
+      "severity": {
+        "warning": "Warning",
+        "info": "Note"
+      },
+      "levelHint": "The verb \"{{verb}}\" usually points to:",
+      "useLevel": "Use {{level}} ({{scale}})",
+      "levelUsed": "{{level}} ({{scale}}) is set.",
+      "vague_verb": {
+        "name": "Vague verb",
+        "message": "Vague verb: {{verbs}}. It is hard to observe or assess.",
+        "suggestion": "Use a verb you can observe, such as explain, describe, demonstrate or calculate."
+      },
+      "multiple_verbs": {
+        "name": "More than one verb",
+        "message": "More than one verb: {{verbs}}. Each verb is a separate thing to teach and assess.",
+        "suggestion": "Keep one verb here and write the others as separate objectives."
+      },
+      "too_long": {
+        "name": "Too long",
+        "message": "Long wording: {{count}} words (usual limit {{max}}).",
+        "suggestion": "Shorten it, or split it into separate objectives."
+      },
+      "too_short": {
+        "name": "Very short",
+        "message": "Very short wording (fewer than {{min}} words).",
+        "suggestion": "Say what the learner does, and with what."
+      },
+      "missing_domain": {
+        "name": "No domain",
+        "message": "No domain is set.",
+        "suggestion": "Choose knowledge, skill or attitude."
+      },
+      "missing_upward_link": {
+        "name": "No upward link",
+        "message": "It does not contribute to any broader outcome.",
+        "suggestion": "Tick the outcomes it helps to achieve."
+      },
+      "no_action_verb": {
+        "name": "No known verb",
+        "message": "It does not start with a verb the checker knows (\"{{word}}\").",
+        "suggestion": "Start with a measurable action verb, for example \"Explain\" or \"Perform\"."
+      },
+      "learner_framing": {
+        "name": "Lead-in wording",
+        "message": "It starts with a lead-in such as \"Students will be able to\".",
+        "suggestion": "Start with the verb. The lead-in can be shown once above the list."
+      },
+      "ambiguous_qualifier": {
+        "name": "Hard-to-measure words",
+        "message": "Words that are hard to measure: {{words}}.",
+        "suggestion": "Say what counts as appropriate or well, for example how many or to what standard."
+      },
+      "level_differs": {
+        "name": "Level differs from the verb",
+        "message": "The level chosen ({{chosen}}) differs from the level the verb \"{{verb}}\" usually points to ({{suggested}}).",
+        "suggestion": "Check the level, or keep it if the objective needs it."
+      },
+      "page": {
+        "title": "Objective quality",
+        "description": "Rule-based checks of the wording of the objectives you can see in {{programme}}. Suggestions only; nothing is changed or sent to an AI service.",
+        "back": "Back to the curriculum",
+        "severity": "Severity",
+        "rule": "Rule",
+        "all": "All",
+        "allRules": "All rules",
+        "onlyWarnings": "Warnings",
+        "onlyInfo": "Notes",
+        "withFindings": "Only objectives with findings",
+        "showing": "Showing {{shown}} of {{total}} objectives checked.",
+        "rulesLine": "Rules: {{language}}, version {{version}}.",
+        "programmeOutcome": "{{programme}} outcome",
+        "moduleOutcome": "{{module}} outcome",
+        "sessionObjective": "{{module}}, {{session}}",
+        "open_item": "Open in the curriculum",
+        "noFindings": "No findings",
+        "noObjectivesTitle": "Nothing to check yet",
+        "noObjectives": "There are no objectives in this version that you can see.",
+        "nothingMatchesTitle": "Nothing matches",
+        "nothingMatches": "No objective has a finding that matches these filters.",
+        "loadTitle": "The checks could not be loaded",
+        "loadBody": "Try again in a moment.",
+        "forbiddenTitle": "No access to the checker",
+        "forbiddenBody": "Checking objectives needs the right to edit objectives.",
+        "list": "Objectives and their findings",
+        "levelSuggested": "Suggested level: {{levels}}",
+        "openItem": "Open in the curriculum: {{text}}",
+        "findingsOnly": "Show"
+      }
     }
   }
 }

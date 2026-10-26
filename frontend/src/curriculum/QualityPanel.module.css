@@ -1,0 +1,74 @@
+/* The quality check under the wording: a quiet box; severity is words plus an icon. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--cic-line);
+  border-radius: 10px;
+  background: var(--cic-soft);
+}
+
+.status {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.finding {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.severity {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--cic-bg);
+  color: var(--cic-muted);
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 84px;
+}
+
+/* Ochre means "needs attention" (ADR 026); the icon and the word say so as well. */
+.severity[data-severity='warning'] {
+  background: var(--cic-warm-soft);
+  color: var(--cic-warm-ink);
+}
+
+.icon {
+  flex: none;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+
+.levels {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.levelButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
