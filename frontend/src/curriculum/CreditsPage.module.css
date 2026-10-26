@@ -1,0 +1,104 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 26px;
+}
+
+@media (max-width: 48em) {
+  .card {
+    padding: 20px;
+  }
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 19px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px 20px;
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fact dt {
+  font-size: 13px;
+  color: var(--cic-muted);
+}
+
+.fact dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* A wide table scrolls inside its own region, which can be reached with the keyboard. */
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid var(--cic-line);
+}
+
+.table thead th {
+  border-top: 0;
+  font-size: 13px;
+  color: var(--cic-muted);
+  font-weight: 600;
+}
+
+.table tbody th {
+  font-weight: 500;
+}
+
+.num {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: var(--mantine-font-family-monospace);
+}
+
+.note {
+  color: var(--cic-muted);
+  font-weight: 400;
+}
+
+/* A link is at least a 44px target. */
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: inherit;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}

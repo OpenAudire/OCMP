@@ -11,7 +11,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import CurrentUser
+from app.api.v1.assessments import read_assessment
 from app.core.database import DbSession
+from app.schemas.assessments import ModuleHoursRead
 from app.schemas.curriculum import (
     LearningEventRead,
     ModuleRead,
@@ -27,6 +29,8 @@ from app.schemas.curriculum import (
     VersionStructure,
 )
 from app.schemas.tagging import item_tag_reads
+from app.services import assessments as assessment_service
+from app.services import credit_check
 from app.services.curriculum_read import (
     CurriculumAccess,
     ModuleNode,
@@ -206,6 +210,7 @@ async def get_module(module_id: uuid.UUID, access: Access, db: DbSession) -> Mod
     if detail is None:
         raise _not_found("Module")
     module = detail.module
+    [hours] = await credit_check.modules_hours(db, [module], await credit_check.credit_policy(db))
     return ModuleRead(
         id=module.id,
         version_id=module.version_id,
@@ -224,6 +229,12 @@ async def get_module(module_id: uuid.UUID, access: Access, db: DbSession) -> Mod
         can_approve_objectives=detail.can_approve_objectives,
         tags=item_tag_reads(detail.tags),
         can_edit_tags=detail.can_edit_tags,
+        assessments=[
+            read_assessment(found)
+            for found in await assessment_service.module_assessments(db, module.id)
+        ],
+        can_edit_assessments=detail.can_edit_assessments,
+        hours=ModuleHoursRead(**vars(hours)),
     )
 
 

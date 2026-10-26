@@ -40,3 +40,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [032](032-review-fixes-slices-1-3-to-1-6.md) | Review Fixes to Slices 1.3 to 1.6: Outcome Sight, Approval, Unpublish Reason, Mapping Re-check |
 | [033](033-objective-quality-checker.md) | Objective Quality Checker and Taxonomy Level Suggestion (Rule Based) |
 | [034](034-tag-lists-and-tagging-ui.md) | Managing Tag Lists, Tagging Items and Inheritance |
+| [035](035-assessments-and-credit-check.md) | Minimal Assessments and the Credits and Notional Hours Check |

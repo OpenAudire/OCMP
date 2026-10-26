@@ -1,0 +1,91 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 26px;
+}
+
+@media (max-width: 48em) {
+  .card {
+    padding: 20px;
+  }
+}
+
+.sectionTitle {
+  font-size: 19px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.assessment {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+}
+
+.name {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--cic-soft);
+  color: var(--cic-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--cic-line);
+}
+
+.item:first-child {
+  border-top: 0;
+}
+
+.itemLabel {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.marks {
+  margin-left: 10px;
+  color: var(--cic-muted);
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.links {
+  margin: 4px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}

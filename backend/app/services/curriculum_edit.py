@@ -11,7 +11,7 @@ functions enforce the structural rules:
   its siblings only (phases in the version, modules in their phase or among the
   modules across phases, sessions in their module).
 - Deleting is a soft delete. A phase that still holds modules cannot be deleted;
-  deleting a module also removes its sessions and all their objectives, and
+  deleting a module also removes its sessions, their objectives and its assessments, and
   deleting a session removes its objectives, with one timestamp so they can be
   restored together.
 
@@ -19,7 +19,7 @@ All changes go through ORM objects so the audit log records them (ADR 017).
 """
 
 import uuid
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -28,7 +28,16 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import CurriculumVersion, LearningEvent, Module, Objective, Phase, TagValue
+from app.models import (
+    Assessment,
+    AssessmentItem,
+    CurriculumVersion,
+    LearningEvent,
+    Module,
+    Objective,
+    Phase,
+    TagValue,
+)
 from app.models.curriculum import PhaseKind, VersionStatus
 from app.services.authorization import ConflictError, InvalidRequestError
 from app.services.tagging import set_teaching_format
@@ -319,6 +328,36 @@ async def _soft_delete_objectives(db: AsyncSession, *conditions: Any, at: dateti
     return len(objectives)
 
 
+async def soft_delete_assessments(
+    db: AsyncSession, module_ids: Collection[uuid.UUID], *, at: datetime
+) -> None:
+    """Soft-delete the live assessments and items of these modules with one timestamp."""
+    if not module_ids:
+        return
+    assessments = list(
+        await db.scalars(
+            select(Assessment).where(
+                Assessment.module_id.in_(module_ids), Assessment.deleted_at.is_(None)
+            )
+        )
+    )
+    if not assessments:
+        return
+    items = list(
+        await db.scalars(
+            select(AssessmentItem).where(
+                AssessmentItem.assessment_id.in_([a.id for a in assessments]),
+                AssessmentItem.deleted_at.is_(None),
+            )
+        )
+    )
+    for item in items:
+        item.deleted_at = at
+    for assessment in assessments:
+        assessment.deleted_at = at
+    await db.flush()
+
+
 async def delete_module(db: AsyncSession, module: Module, version: CurriculumVersion) -> None:
     """Soft-delete a module with its sessions and their objectives."""
     ensure_editable(version)
@@ -335,6 +374,7 @@ async def delete_module(db: AsyncSession, module: Module, version: CurriculumVer
             db, Objective.learning_event_id.in_([e.id for e in events]), at=now
         )
     await _soft_delete_objectives(db, Objective.module_id == module.id, at=now)
+    await soft_delete_assessments(db, [module.id], at=now)
     for event in events:
         event.deleted_at = now
     module.deleted_at = now

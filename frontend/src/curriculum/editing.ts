@@ -37,6 +37,7 @@ export function useRefreshCurriculum(versionId: string) {
       client.invalidateQueries({ queryKey: ['learning-events'] }),
       client.invalidateQueries({ queryKey: queryKeys.programmeOutcomes(versionId) }),
       client.invalidateQueries({ queryKey: queryKeys.versionChecks(versionId) }),
+      client.invalidateQueries({ queryKey: queryKeys.creditCheck(versionId) }),
     ]);
 }
 

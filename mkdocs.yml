@@ -66,6 +66,7 @@ nav:
       - Admin basics: admin/basics.md
       - Users and roles: admin/users-and-roles.md
       - Tag lists and tagging: admin/tag-lists.md
+      - Assessments and credits: admin/assessments-and-credits.md
       - Single sign-on (OIDC): admin/sso.md
   - Privacy (POPIA):
       - Personal data inventory: privacy/data-inventory.md

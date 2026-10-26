@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models import (
+    Assessment,
     LearningEvent,
     Module,
     Objective,
@@ -190,13 +191,38 @@ async def set_teaching_format(
     await db.flush()
 
 
+async def set_assessment_method(
+    db: AsyncSession, assessment: Assessment, value: TagValue | None
+) -> None:
+    """Set (or clear) an assessment's method.
+
+    Raises:
+        InvalidRequestError: If the value is not from a usable assessment-method list.
+    """
+    if value is not None:
+        tag_list = await _usable_value(db, value)
+        if tag_list.kind != TagListKind.ASSESSMENT_METHOD:
+            raise InvalidRequestError("The method must come from an assessment-method list.")
+    assessment.method_value_id = value.id if value else None
+    await db.flush()
+
+
 async def teaching_formats(db: AsyncSession) -> list[tuple[TagValue, TagList]]:
     """Values that can be chosen as a session's teaching format, by list and position."""
+    return await _kind_values(db, TagListKind.TEACHING_METHOD)
+
+
+async def assessment_methods(db: AsyncSession) -> list[tuple[TagValue, TagList]]:
+    """Values that can be chosen as an assessment's method, by list and position."""
+    return await _kind_values(db, TagListKind.ASSESSMENT_METHOD)
+
+
+async def _kind_values(db: AsyncSession, kind: TagListKind) -> list[tuple[TagValue, TagList]]:
     result = await db.execute(
         select(TagValue, TagList)
         .join(TagList, TagList.id == TagValue.tag_list_id)
         .where(
-            TagList.kind == TagListKind.TEACHING_METHOD,
+            TagList.kind == kind,
             TagList.deleted_at.is_(None),
             TagList.is_active.is_(True),
             TagValue.deleted_at.is_(None),
@@ -268,7 +294,8 @@ async def update_tag_list(
 
 
 async def value_usage(db: AsyncSession, value_ids: Sequence[uuid.UUID]) -> dict[uuid.UUID, int]:
-    """How many taggings and sessions (as teaching format) use each value."""
+    """How many taggings, sessions (as teaching format) and assessments (as method) use
+    each value."""
     if not value_ids:
         return {}
     usage: dict[uuid.UUID, int] = {}
@@ -276,9 +303,13 @@ async def value_usage(db: AsyncSession, value_ids: Sequence[uuid.UUID]) -> dict[
     formats = select(LearningEvent.format_value_id, func.count()).where(
         LearningEvent.format_value_id.in_(value_ids), LearningEvent.deleted_at.is_(None)
     )
+    methods = select(Assessment.method_value_id, func.count()).where(
+        Assessment.method_value_id.in_(value_ids), Assessment.deleted_at.is_(None)
+    )
     for query in (
         tagged.group_by(Tagging.tag_value_id),
         formats.group_by(LearningEvent.format_value_id),
+        methods.group_by(Assessment.method_value_id),
     ):
         for value_id, count in await db.execute(query):
             if value_id is not None:

@@ -16,6 +16,7 @@ from app.models.curriculum import (
     ProgrammeStatus,
     VersionStatus,
 )
+from app.schemas.assessments import AssessmentRead, ModuleHoursRead
 from app.schemas.tagging import ItemTagRead
 from app.services.curriculum_diff import Change, ItemKind
 from app.services.curriculum_versions import SkipReason
@@ -175,6 +176,11 @@ class ModuleRead(BaseModel):
     tags: list[ItemTagRead] = []
     # Whether the user may tag the module and its outcomes (drafts only; ADR 034).
     can_edit_tags: bool = False
+    assessments: list[AssessmentRead] = []
+    # Whether the user may add, change and remove assessments (drafts only; ADR 035).
+    can_edit_assessments: bool = False
+    # Planned hours against credits (advice; ADR 035).
+    hours: ModuleHoursRead | None = None
 
 
 class LearningEventRead(BaseModel):

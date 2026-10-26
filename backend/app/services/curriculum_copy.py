@@ -10,6 +10,8 @@ another phase goes to the end of that phase). What a copy takes along (ADR 029):
 - objectives with their text, domain, taxonomy level, quality data and status, and
   their upward links: a link to an objective that is copied too points to the copy,
   other links keep their parent;
+- a module's assessments with their items and the objectives the items assess (links
+  point to the copied objectives);
 - taggings of every copied item, direct and inherited; an inherited tagging whose
   source is copied too comes from the copy.
 
@@ -33,6 +35,9 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
+    Assessment,
+    AssessmentItem,
+    AssessmentItemObjective,
     CurriculumVersion,
     LearningEvent,
     Module,
@@ -62,6 +67,7 @@ class Copies:
     modules: dict[uuid.UUID, Module] = field(default_factory=dict)
     events: dict[uuid.UUID, LearningEvent] = field(default_factory=dict)
     objectives: dict[uuid.UUID, Objective] = field(default_factory=dict)
+    assessment_items: dict[uuid.UUID, AssessmentItem] = field(default_factory=dict)
 
     @property
     def forward(self) -> bool:
@@ -154,7 +160,78 @@ async def copy_module_rows(
     copies.modules[module.id] = copy
     for event in await event_siblings(db, module.id):
         db.add(_copy_event(event, copy.id, event.position, copies, event.title))
+    await _copy_assessments(db, module, copy, copies)
     return copy
+
+
+async def _copy_assessments(db: AsyncSession, module: Module, copy: Module, copies: Copies) -> None:
+    """Copy the module's live assessments and items (their objective links come later,
+    with the objectives)."""
+    assessments = list(
+        await db.scalars(
+            select(Assessment)
+            .where(Assessment.module_id == module.id, Assessment.deleted_at.is_(None))
+            .order_by(Assessment.position, Assessment.created_at)
+        )
+    )
+    if not assessments:
+        return
+    new_assessments: dict[uuid.UUID, Assessment] = {}
+    for assessment in assessments:
+        new_assessments[assessment.id] = Assessment(
+            module_id=copy.id,
+            name=assessment.name,
+            method_value_id=assessment.method_value_id,
+            weight=assessment.weight,
+            timing=assessment.timing,
+            time_minutes=assessment.time_minutes,
+            position=assessment.position,
+            based_on_id=copies.based_on(assessment.id),
+            created_by_id=copies.actor_id,
+        )
+        db.add(new_assessments[assessment.id])
+    await db.flush()
+    items = await db.scalars(
+        select(AssessmentItem)
+        .where(
+            AssessmentItem.assessment_id.in_(list(new_assessments)),
+            AssessmentItem.deleted_at.is_(None),
+        )
+        .order_by(AssessmentItem.position, AssessmentItem.created_at)
+    )
+    for item in items:
+        new_item = AssessmentItem(
+            assessment_id=new_assessments[item.assessment_id].id,
+            label=item.label,
+            marks=item.marks,
+            position=item.position,
+            based_on_id=copies.based_on(item.id),
+            created_by_id=copies.actor_id,
+        )
+        db.add(new_item)
+        copies.assessment_items[item.id] = new_item
+    await db.flush()
+
+
+async def _copy_item_links(db: AsyncSession, copies: Copies) -> None:
+    """Link the copied items to the copies of the objectives they assess."""
+    if not copies.assessment_items or not copies.objectives:
+        return
+    links = await db.scalars(
+        select(AssessmentItemObjective).where(
+            AssessmentItemObjective.item_id.in_(list(copies.assessment_items)),
+            AssessmentItemObjective.objective_id.in_(list(copies.objectives)),
+        )
+    )
+    for link in links:
+        db.add(
+            AssessmentItemObjective(
+                item_id=copies.assessment_items[link.item_id].id,
+                objective_id=copies.objectives[link.objective_id].id,
+                created_by_id=copies.actor_id,
+            )
+        )
+    await db.flush()
 
 
 async def _copy_objectives(db: AsyncSession, copies: Copies) -> None:
@@ -274,6 +351,7 @@ async def _copy_taggings(db: AsyncSession, copies: Copies) -> None:
 
 async def copy_children(db: AsyncSession, copies: Copies) -> None:
     await _copy_objectives(db, copies)
+    await _copy_item_links(db, copies)
     await _copy_taggings(db, copies)
 
 

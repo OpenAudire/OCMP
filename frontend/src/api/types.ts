@@ -55,6 +55,15 @@ export interface Institution {
   features: Feature[];
   default_taxonomy_scale: string | null;
   mapping: { four_eyes: boolean; second_review_for_rejects: boolean };
+  credits?: CreditPolicy;
+}
+
+/** Credits and notional hours settings (advice only; ADR 035). */
+export interface CreditPolicy {
+  hours_per_credit: number;
+  tolerance_percent: number;
+  credits_per_year: number;
+  min_exit_level_credits: number | null;
 }
 
 export type VersionStatus = 'draft' | 'published' | 'archived';
@@ -233,6 +242,119 @@ export interface ModuleDetail {
   tags?: ItemTag[];
   /** The user may tag the module and its outcomes (drafts only). */
   can_edit_tags?: boolean;
+  assessments?: Assessment[];
+  /** The user may add, change and delete assessments (drafts only). */
+  can_edit_assessments?: boolean;
+  /** Planned hours against credits (advice). */
+  hours?: ModuleHours | null;
+}
+
+export interface AssessmentItem {
+  id: string;
+  label: string;
+  marks: string | null;
+  position: number;
+  /** Objectives of the module or its sessions that this item assesses. */
+  objective_ids: string[];
+}
+
+export interface Assessment {
+  id: string;
+  module_id: string;
+  name: string;
+  method_value_id: string | null;
+  method: string | null;
+  weight: string | null;
+  timing: string;
+  time_minutes: number;
+  position: number;
+  items: AssessmentItem[];
+}
+
+export interface AssessmentInput {
+  name: string;
+  method_value_id: string | null;
+  weight: number | null;
+  timing: string;
+  time_minutes: number;
+}
+
+export interface AssessmentItemInput {
+  label: string;
+  marks: number | null;
+  objective_ids: string[];
+}
+
+export interface AssessmentMethod {
+  id: string;
+  label: string;
+  list_name: string;
+}
+
+export interface AssessableObjective {
+  id: string;
+  level: 'module' | 'learning_event';
+  text: string;
+  /** The session that owns it; null for module outcomes. */
+  event_title: string | null;
+}
+
+export type HoursStatus = 'ok' | 'under' | 'over' | 'no_credits';
+
+export interface ModuleHours {
+  module_id: string;
+  code: string;
+  name: string;
+  phase_id: string | null;
+  credits: string | null;
+  nqf_level: number | null;
+  contact_hours: string;
+  self_study_hours: string;
+  assessment_hours: string;
+  planned_hours: string;
+  expected_hours: string | null;
+  difference_percent: string | null;
+  status: HoursStatus;
+}
+
+export type YearStatus = 'ok' | 'under' | 'over' | 'not_checked';
+
+export interface YearCredits {
+  phase_id: string;
+  name: string;
+  kind: PhaseKind;
+  credits: string;
+  modules: number;
+  modules_without_credits: number;
+  expected_credits: number | null;
+  status: YearStatus;
+}
+
+export interface LevelCredits {
+  level: number | null;
+  credits: string;
+  modules: number;
+}
+
+export interface CreditFinding {
+  code: string;
+  params: Record<string, string | number>;
+}
+
+/** Credits and notional hours for a whole version (advice, never blocks saving). */
+export interface VersionCreditCheck {
+  policy: CreditPolicy;
+  modules: ModuleHours[];
+  years: YearCredits[];
+  unphased_credits: string;
+  unphased_modules: number;
+  levels: LevelCredits[];
+  total_credits: string;
+  programme_total_credits: number | null;
+  qualification_name: string | null;
+  qualification_min_credits: number | null;
+  exit_level: number | null;
+  findings: CreditFinding[];
 }
 
 export interface LearningEventDetail {
@@ -350,7 +472,7 @@ export interface CopyForwardPreview {
   role_assignments: RoleAssignmentCopy[];
 }
 
-export type ItemKind = 'phase' | 'module' | 'learning_event' | 'objective';
+export type ItemKind = 'phase' | 'module' | 'learning_event' | 'assessment' | 'objective';
 export type ChangeType = 'added' | 'removed' | 'changed';
 
 export interface FieldChange {

@@ -16,3 +16,8 @@ export function comparePath(versionId: string, base?: string): string {
 export function qualityPath(versionId: string): string {
   return `${CURRICULUM_PATH}/versions/${versionId}/quality`;
 }
+
+/** Credits and notional hours per module, year and NQF level (advice). */
+export function creditsPath(versionId: string): string {
+  return `${CURRICULUM_PATH}/versions/${versionId}/credits`;
+}

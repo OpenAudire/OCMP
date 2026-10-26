@@ -30,6 +30,11 @@ available.
 accepted mapping counts; `second_review_for_rejects` does the same for rejections. Both
 are off by default.
 
+**Credits and notional hours.** The `credits` section sets the figures behind the credit check
+(see [Assessments and credits](assessments-and-credits.md)): `hours_per_credit` (default 10),
+`tolerance_percent` (10), `credits_per_year` (120) and `min_exit_level_credits` (off; a whole
+number to check the credits at the programme's NQF exit level).
+
 Settings screens arrive in Phase 1. Until then, change them through the API (needs the
 platform admin role). Each section sent replaces the stored one; sections left out stay
 as they are:
@@ -38,7 +43,8 @@ as they are:
 api -X PATCH "$SITE/api/v1/institution/settings" -d '{
   "terminology": {"module": {"singular": "Course", "plural": "Courses"}},
   "profiles": ["core", "health"],
-  "mapping": {"four_eyes": false, "second_review_for_rejects": false}
+  "mapping": {"four_eyes": false, "second_review_for_rejects": false},
+  "credits": {"hours_per_credit": 10, "tolerance_percent": 10, "credits_per_year": 120}
 }'
 api "$SITE/api/v1/institution"     # the current settings
 ```

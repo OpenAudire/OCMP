@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter
 
+from app.api.v1.assessments import router as assessments_router
 from app.api.v1.audit import router as audit_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.curriculum import router as curriculum_router
@@ -26,6 +27,7 @@ router.include_router(institution_router)
 router.include_router(curriculum_router)
 router.include_router(curriculum_edit_router)
 router.include_router(curriculum_objectives_router)
+router.include_router(assessments_router)
 router.include_router(curriculum_versions_router)
 router.include_router(objective_checks_router)
 router.include_router(tagging_router)

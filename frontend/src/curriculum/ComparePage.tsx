@@ -17,11 +17,13 @@ import { defaultBase, versionLabel, versionName } from './versions';
 import { VersionSwitcher } from './VersionSwitcher';
 import classes from './ComparePage.module.css';
 
-const KINDS: ItemKind[] = ['phase', 'module', 'learning_event', 'objective'];
-const TERMS: Record<ItemKind, string> = {
+const KINDS: ItemKind[] = ['phase', 'module', 'learning_event', 'assessment', 'objective'];
+/** Curriculum nouns come from the terms; assessments have a fixed word (ADR 035). */
+const TERMS: Record<ItemKind, string | null> = {
   phase: 'phase',
   module: 'module',
   learning_event: 'learning_event',
+  assessment: null,
   objective: 'objective',
 };
 /** Fields whose values are keys with their own translations. */
@@ -30,6 +32,11 @@ const TRANSLATED: Record<string, string> = {
   domain: 'curriculum.domain',
   status: 'curriculum.objectiveStatus',
 };
+
+function kindTitle(t: TFunction, kind: ItemKind): string {
+  const term = TERMS[kind];
+  return term ? t(`terms.${term}`, { count: 2 }) : t('curriculum.assessments.title');
+}
 
 function fieldLabel(t: TFunction, field: string): string {
   if (field === 'phase') return t('terms.phase', { count: 1 });
@@ -115,7 +122,7 @@ function DiffView({ diff }: { diff: VersionDiff }) {
         <dl className={classes.summary}>
           {KINDS.map((kind) => (
             <div key={kind} className={classes.summaryItem}>
-              <dt>{t(`terms.${TERMS[kind]}`, { count: 2 })}</dt>
+              <dt>{kindTitle(t, kind)}</dt>
               <dd>{t('curriculum.compare.summaryLine', diff.summary[kind])}</dd>
             </div>
           ))}
@@ -137,7 +144,7 @@ function DiffView({ diff }: { diff: VersionDiff }) {
             className={classes.card}
           >
             <Title order={2} id={id} className={classes.sectionTitle}>
-              {t(`terms.${TERMS[kind]}`, { count: 2 })}
+              {kindTitle(t, kind)}
             </Title>
             <ul className={classes.list}>
               {items.map((item) => (

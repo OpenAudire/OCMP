@@ -8,6 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.demo.loader import load_data, load_demo
 from app.models import (
+    Assessment,
+    AssessmentItem,
+    AssessmentItemObjective,
     AuditLog,
     CurriculumVersion,
     Framework,
@@ -125,6 +128,13 @@ class TestLoad:
         framework = (await db_session.execute(select(Framework))).scalar_one()
         assert framework.status == FrameworkStatus.ACTIVE
 
+        # Assessments with items linked to the modules' outcomes; the draft got copies.
+        assert summary.assessments == 6
+        assert await count(db_session, Assessment, Assessment.module_id.in_(modules)) == 6
+        assert await count(db_session, Assessment, Assessment.method_value_id.is_(None)) == 0
+        assert await count(db_session, AssessmentItem) == 22
+        assert await count(db_session, AssessmentItemObjective) == 24
+
         # The next year's draft, copied forward and changed.
         draft = (
             await db_session.execute(
@@ -144,6 +154,8 @@ class TestLoad:
         assert "The nervous system" in titles
         assert "Portfolio reflection" not in titles
         assert await count(db_session, MappingLink, accepted) == 26
+        copied = Assessment.module_id.in_(draft_modules)
+        assert await count(db_session, Assessment, copied, Assessment.based_on_id.is_not(None)) == 6
         diff = await diff_versions(db_session, version, draft)
         assert {(c.kind, c.change) for c in diff.changes} == {
             (ItemKind.LEARNING_EVENT, Change.CHANGED),

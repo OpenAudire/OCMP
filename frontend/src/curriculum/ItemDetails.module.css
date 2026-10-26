@@ -103,3 +103,7 @@
 .chipIcon {
   flex: none;
 }
+
+.advice {
+  align-items: flex-start;
+}

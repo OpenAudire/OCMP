@@ -20,6 +20,8 @@ import type {
   VersionStructure,
 } from '../api/types';
 import { objectiveNoun, type EditResult, type ObjectiveOwner } from './editing';
+import { Assessments } from './Assessments';
+import { HoursStatusLine } from './CreditAdvice';
 import { ItemTags } from './ItemTags';
 import { ObjectiveDeleteDialog, ObjectiveDialog } from './ObjectiveDialog';
 import type { TreeItem } from './treeModel';
@@ -435,8 +437,30 @@ function ModuleDetails({
                       })
                     : null,
                 ],
+                [
+                  t('curriculum.details.assessmentTime'),
+                  data?.hours
+                    ? t('curriculum.details.hours', { value: number(data.hours.assessment_hours) })
+                    : null,
+                ],
+                [
+                  t('curriculum.details.plannedHours'),
+                  data?.hours
+                    ? t('curriculum.details.hours', { value: number(data.hours.planned_hours) })
+                    : null,
+                ],
               ]}
             />
+            {data?.hours && (
+              <Stack gap={6} className={classes.advice}>
+                <div>
+                  <HoursStatusLine hours={data.hours} />
+                </div>
+                <Text size="sm" c="dimmed">
+                  {t('curriculum.credits.adviceNote')}
+                </Text>
+              </Stack>
+            )}
             {data && <Description text={data.description} />}
             {data && (
               <ItemTags
@@ -467,6 +491,18 @@ function ModuleDetails({
           canEdit={data?.can_edit_objectives ?? false}
           canApprove={data?.can_approve_objectives ?? false}
           canTag={data?.can_edit_tags ?? false}
+          onSaved={onSaved}
+        />
+      )}
+      {!module.context_only && (
+        <Assessments
+          moduleId={module.id}
+          versionId={versionId}
+          assessments={data?.assessments}
+          isPending={detail.isPending}
+          isError={detail.isError}
+          onRetry={() => void detail.refetch()}
+          canEdit={data?.can_edit_assessments ?? false}
           onSaved={onSaved}
         />
       )}

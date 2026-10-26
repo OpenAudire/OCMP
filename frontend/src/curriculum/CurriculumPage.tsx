@@ -23,6 +23,7 @@ import { SuccessNotice } from '../pages/SuccessNotice';
 import { Page } from '../ui/Page';
 import { EmptyState, ErrorState, LoadingState } from '../ui/States';
 import { ComparePage } from './ComparePage';
+import { CreditsPage } from './CreditsPage';
 import { QualityPage } from './QualityPage';
 import {
   defaultVersionId,
@@ -337,6 +338,7 @@ export function CurriculumSection() {
       <Route path="versions/:versionId" element={<VersionPage />} />
       <Route path="versions/:versionId/compare" element={<ComparePage />} />
       <Route path="versions/:versionId/quality" element={<QualityPage />} />
+      <Route path="versions/:versionId/credits" element={<CreditsPage />} />
       <Route path="*" element={<Navigate to={CURRICULUM_PATH} replace />} />
     </Routes>
   );

@@ -6,9 +6,11 @@ across intermediate versions and when it has been renamed. Items without lineage
 are matched by their natural key: phases by name, modules by code (ignoring case),
 sessions by title within matched modules, objectives by text within matched owners.
 
-The diff lists added, removed and changed phases, modules, sessions and objectives
-(programme, module and session level) with the fields that differ. Order, upward
-links, tags and framework mappings are not compared.
+Assessments are matched the same way (by name within matched modules). The diff lists
+added, removed and changed phases, modules, sessions, assessments and objectives
+(programme, module and session level) with the fields that differ; an assessment also
+shows its number of items. Order, upward links, tags, assessment items themselves, the
+objectives they assess and framework mappings are not compared.
 """
 
 import uuid
@@ -18,10 +20,12 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
+    Assessment,
+    AssessmentItem,
     CurriculumVersion,
     LearningEvent,
     Module,
@@ -40,6 +44,7 @@ class ItemKind(StrEnum):
     PHASE = "phase"
     MODULE = "module"
     LEARNING_EVENT = "learning_event"
+    ASSESSMENT = "assessment"
     OBJECTIVE = "objective"
 
 
@@ -93,6 +98,9 @@ class _Snapshot:
     modules: dict[uuid.UUID, Module]
     events: dict[uuid.UUID, LearningEvent]
     objectives: dict[uuid.UUID, Objective]
+    assessments: dict[uuid.UUID, Assessment]
+    item_counts: dict[uuid.UUID, int]
+    methods: dict[uuid.UUID, str]
     formats: dict[uuid.UUID, str]
     levels: dict[uuid.UUID, str]
 
@@ -125,6 +133,34 @@ async def _snapshot(db: AsyncSession, version: CurriculumVersion) -> _Snapshot:
         if (o.module_id is None or o.module_id in modules)
         and (o.learning_event_id is None or o.learning_event_id in events)
     }
+    assessments = {
+        a.id: a
+        for a in await db.scalars(
+            select(Assessment).where(
+                Assessment.module_id.in_(list(modules)), Assessment.deleted_at.is_(None)
+            )
+        )
+    }
+    item_counts: dict[uuid.UUID, int] = {}
+    if assessments:
+        item_counts = dict(
+            (
+                await db.execute(
+                    select(AssessmentItem.assessment_id, func.count())
+                    .where(
+                        AssessmentItem.assessment_id.in_(list(assessments)),
+                        AssessmentItem.deleted_at.is_(None),
+                    )
+                    .group_by(AssessmentItem.assessment_id)
+                )
+            ).all()
+        )
+    method_ids = {a.method_value_id for a in assessments.values() if a.method_value_id}
+    methods = dict(
+        (
+            await db.execute(select(TagValue.id, TagValue.label).where(TagValue.id.in_(method_ids)))
+        ).all()
+    )
     format_ids = {e.format_value_id for e in events.values() if e.format_value_id}
     level_ids = {o.taxonomy_level_id for o in objectives.values() if o.taxonomy_level_id}
     formats = dict(
@@ -139,13 +175,23 @@ async def _snapshot(db: AsyncSession, version: CurriculumVersion) -> _Snapshot:
             )
         ).all()
     )
-    return _Snapshot({p.id: p for p in phases}, modules, events, objectives, formats, levels)
+    return _Snapshot(
+        {p.id: p for p in phases},
+        modules,
+        events,
+        objectives,
+        assessments,
+        item_counts,
+        methods,
+        formats,
+        levels,
+    )
 
 
-Row = Phase | Module | LearningEvent | Objective
+Row = Phase | Module | LearningEvent | Assessment | Objective
 
 
-async def _follow[R: (Phase, Module, LearningEvent, Objective)](
+async def _follow[R: (Phase, Module, LearningEvent, Assessment, Objective)](
     db: AsyncSession, model: type[Row], rows: dict[uuid.UUID, R], targets: set[uuid.UUID]
 ) -> dict[uuid.UUID, uuid.UUID]:
     """Each row whose ``based_on_id`` chain reaches one of ``targets``, with that target."""
@@ -190,7 +236,7 @@ class _Matches:
             self.to_base[new_id] = base_id
 
 
-async def _match[R: (Phase, Module, LearningEvent, Objective)](
+async def _match[R: (Phase, Module, LearningEvent, Assessment, Objective)](
     db: AsyncSession,
     model: type[Row],
     base: dict[uuid.UUID, R],
@@ -275,6 +321,12 @@ async def diff_versions(
 
     events = await _match(db, LearningEvent, old.events, new.events, event_key)
 
+    def assessment_key(assessment: Assessment, is_base: bool) -> Hashable | None:
+        module_id = modules.to_new.get(assessment.module_id) if is_base else assessment.module_id
+        return None if module_id is None else (module_id, _fold(assessment.name))
+
+    assessments = await _match(db, Assessment, old.assessments, new.assessments, assessment_key)
+
     def owner(objective: Objective, is_base: bool) -> uuid.UUID | None:
         """The objective's owner, as an id in the compared version."""
         if objective.level == ObjectiveLevel.PROGRAMME:
@@ -352,6 +404,29 @@ async def diff_versions(
             },
         )
 
+    def describe_assessment(
+        assessment: Assessment, is_base: bool
+    ) -> tuple[str, str, tuple[int, ...], dict[str, Value]]:
+        s = snap(is_base)
+        module = s.modules[assessment.module_id]
+        return (
+            assessment.name,
+            module_label(module),
+            (*module_order(module, s), assessment.position),
+            {
+                "name": assessment.name,
+                "method": (
+                    s.methods.get(assessment.method_value_id)
+                    if assessment.method_value_id
+                    else None
+                ),
+                "weight": _credits(assessment.weight),
+                "timing": assessment.timing,
+                "time_minutes": assessment.time_minutes,
+                "items": s.item_counts.get(assessment.id, 0),
+            },
+        )
+
     def describe_objective(
         objective: Objective, is_base: bool
     ) -> tuple[str, str | None, tuple[int, ...], dict[str, Value]]:
@@ -387,6 +462,13 @@ async def diff_versions(
         *_changes(ItemKind.PHASE, phases, old.phases, new.phases, describe_phase),
         *_changes(ItemKind.MODULE, modules, old.modules, new.modules, describe_module),
         *_changes(ItemKind.LEARNING_EVENT, events, old.events, new.events, describe_event),
+        *_changes(
+            ItemKind.ASSESSMENT,
+            assessments,
+            old.assessments,
+            new.assessments,
+            describe_assessment,
+        ),
         *_changes(
             ItemKind.OBJECTIVE,
             objectives,

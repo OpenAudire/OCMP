@@ -84,6 +84,16 @@
       "nqf_level": 5,
       "description": "Cells, tissues and the main organ systems, with an introduction to laboratory work.",
       "assessment_methods": ["mcq", "practical_exam"],
+      "assessments": [
+        {"name": "Theory test", "method": "mcq", "weight": 40, "timing": "Week 8", "time_minutes": 90, "items": [
+          {"label": "Section A: cells and tissues", "marks": 20, "objectives": ["HBIO-O1"]},
+          {"label": "Section B: cardiovascular and respiratory systems", "marks": 30, "objectives": ["HBIO-O2"]}
+        ]},
+        {"name": "Practical examination", "method": "practical_exam", "weight": 60, "timing": "Week 12", "time_minutes": 120, "items": [
+          {"label": "Station 1: measure blood pressure", "marks": 25, "objectives": ["HBIO-O3"]},
+          {"label": "Station 2: laboratory safety", "marks": 25, "objectives": ["HBIO-O4"]}
+        ]}
+      ],
       "outcomes": [
         {"ref": "HBIO-O1", "text": "Describe the organisation of cells, tissues and organ systems.", "domain": "knowledge", "level": "Understand", "links": ["PO1"], "maps": [{"item": "DGC-1.1", "coverage": 3, "depth": "matches"}]},
         {"ref": "HBIO-O2", "text": "Explain how the cardiovascular and respiratory systems maintain homeostasis.", "domain": "knowledge", "level": "Understand", "links": ["PO1"], "maps": [{"item": "DGC-1.1", "coverage": 4, "depth": "matches"}]},
@@ -130,6 +140,16 @@
       "nqf_level": 6,
       "description": "Determinants of health, reading research, and planning health promotion with a community partner.",
       "assessment_methods": ["written", "portfolio"],
+      "assessments": [
+        {"name": "Research critique", "method": "written", "weight": 50, "timing": "Week 6", "time_minutes": 0, "items": [
+          {"label": "Appraise the study design", "marks": 25, "objectives": ["HIC-O2"]},
+          {"label": "Discuss determinants of health", "marks": 25, "objectives": ["HIC-O1"]}
+        ]},
+        {"name": "Community portfolio", "method": "portfolio", "weight": 50, "timing": "End of semester", "time_minutes": 0, "items": [
+          {"label": "Health promotion plan", "marks": 30, "objectives": ["HIC-O3"]},
+          {"label": "Ethics reflection", "marks": 20, "objectives": ["HIC-O4"]}
+        ]}
+      ],
       "outcomes": [
         {"ref": "HIC-O1", "text": "Explain common determinants of health in South African communities.", "domain": "knowledge", "level": "Understand", "links": ["PO1", "PO2"], "maps": [{"item": "DGC-1.1", "coverage": 3, "depth": "matches"}]},
         {"ref": "HIC-O2", "text": "Appraise a published study on a community health intervention.", "domain": "knowledge", "level": "Evaluate", "links": ["PO2"], "maps": [{"item": "DGC-1.2", "coverage": 5, "depth": "matches"}]},
@@ -176,6 +196,15 @@
       "nqf_level": 5,
       "description": "A longitudinal module running through the first two years.",
       "assessment_methods": ["osce", "portfolio"],
+      "assessments": [
+        {"name": "Communication OSCE", "method": "osce", "weight": 60, "timing": "Week 10", "time_minutes": 60, "items": [
+          {"label": "Station 1: patient interview", "marks": 20, "objectives": ["CPP-O1", "CPP-O2"]},
+          {"label": "Station 2: team task", "marks": 20, "objectives": ["CPP-O3"]}
+        ]},
+        {"name": "Clinical notes portfolio", "method": "portfolio", "weight": 40, "timing": "End of semester", "time_minutes": 0, "items": [
+          {"label": "Five annotated clinical notes", "marks": 40, "objectives": ["CPP-O4"]}
+        ]}
+      ],
       "outcomes": [
         {"ref": "CPP-O1", "text": "Use clear, respectful language when speaking with patients.", "domain": "skill", "level": "Apply", "links": ["PO4"], "maps": [{"item": "DGC-2.1", "coverage": 4, "depth": "matches"}]},
         {"ref": "CPP-O2", "text": "Maintain the confidentiality of personal health information.", "domain": "attitude", "level": "Apply", "links": ["PO5"], "maps": [{"item": "DGC-2.2", "coverage": 5, "depth": "matches"}]},

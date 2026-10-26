@@ -4,7 +4,9 @@ Settings are JSON so administrators can change them without migrations; this
 module gives each group of settings a typed, validated shape with defaults.
 """
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +23,21 @@ class MappingPolicy(BaseModel):
     four_eyes: bool = False
     # Rejections also need a second reviewer (by default a first reject is final).
     second_review_for_rejects: bool = False
+
+
+class CreditPolicy(BaseModel):
+    """Credits and notional hours checks (``settings["credits"]``); advice only (brief, 9)."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore", strict=True)
+
+    # One credit stands for this many notional hours.
+    hours_per_credit: Annotated[int, Field(ge=1, le=100)] = 10
+    # A module's planned hours may differ from credits x hours per credit by this much.
+    tolerance_percent: Annotated[int, Field(ge=0, le=100)] = 10
+    # Typical credits of an academic year (phases of kind "year").
+    credits_per_year: Annotated[int, Field(ge=1, le=10_000)] = 120
+    # Credits wanted at the programme's NQF exit level; null = not checked.
+    min_exit_level_credits: Annotated[int, Field(ge=0, le=10_000)] | None = None
 
 
 def parse_mapping_policy(settings: dict[str, object]) -> MappingPolicy:

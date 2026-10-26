@@ -52,7 +52,7 @@ from app.services.authorization import (
     role_permissions,
 )
 from app.services.curriculum_copy import Copies, copy_children, copy_module_rows
-from app.services.curriculum_edit import phase_siblings
+from app.services.curriculum_edit import phase_siblings, soft_delete_assessments
 
 S = VersionStatus
 
@@ -137,6 +137,9 @@ async def delete_draft(db: AsyncSession, version: CurriculumVersion) -> None:
     )
     for row in rows:
         row.deleted_at = now
+    await soft_delete_assessments(
+        db, list(await db.scalars(select(Module.id).where(Module.version_id == version.id))), at=now
+    )
     version.deleted_at = now
     await db.flush()
 

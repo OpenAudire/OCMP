@@ -1,4 +1,4 @@
-"""The institution's settings: terminology, profiles, default taxonomy, mapping policy."""
+"""The institution's settings: terminology, profiles, taxonomy, mapping and credit policies."""
 
 import uuid
 from typing import Annotated, Any
@@ -18,7 +18,7 @@ from app.services.institution_settings import (
     parse_settings,
     update_settings,
 )
-from app.services.policies import MappingPolicy
+from app.services.policies import CreditPolicy, MappingPolicy
 
 router = APIRouter(prefix="/institution", tags=["institution"])
 
@@ -38,6 +38,7 @@ class InstitutionRead(BaseModel):
     features: list[Feature]
     default_taxonomy_scale: str | None
     mapping: MappingPolicy
+    credits: CreditPolicy
 
 
 class SettingsUpdate(BaseModel):
@@ -49,6 +50,7 @@ class SettingsUpdate(BaseModel):
     profiles: list[Profile] | None = None
     default_taxonomy_scale: str | None = None
     mapping: MappingPolicy | None = None
+    credits: CreditPolicy | None = None
 
 
 def _read(institution: Institution, settings: InstitutionSettings) -> InstitutionRead:
@@ -62,6 +64,7 @@ def _read(institution: Institution, settings: InstitutionSettings) -> Institutio
         features=sorted(settings.features),
         default_taxonomy_scale=settings.default_taxonomy_scale,
         mapping=settings.mapping,
+        credits=settings.credits,
     )
 
 

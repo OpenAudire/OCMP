@@ -27,6 +27,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.profiles import Profile
 from app.models import (
+    Assessment,
+    AssessmentItem,
+    AssessmentItemObjective,
     CurriculumVersion,
     Department,
     Faculty,
@@ -63,7 +66,12 @@ from app.services.frameworks import activate_framework
 from app.services.institution_settings import get_institution
 from app.services.mapping import create_link
 from app.services.packs import import_pack, load_pack_file
-from app.services.tagging import add_tag_value, set_teaching_format, tag_item
+from app.services.tagging import (
+    add_tag_value,
+    set_assessment_method,
+    set_teaching_format,
+    tag_item,
+)
 
 DATA_DIR = Path(__file__).parent / "data"
 CURRICULUM_FILE = DATA_DIR / "bsc-health-sciences-demo.json"
@@ -103,6 +111,22 @@ class DemoEvent(_Model):
     objectives: list[DemoObjective]
 
 
+class DemoAssessmentItem(_Model):
+    label: str
+    marks: Decimal
+    # Refs of the module's outcomes the item assesses.
+    objectives: list[str] = []
+
+
+class DemoAssessment(_Model):
+    name: str
+    method: str
+    weight: Decimal
+    timing: str
+    time_minutes: int
+    items: list[DemoAssessmentItem]
+
+
 class DemoModule(_Model):
     code: str
     name: str
@@ -111,6 +135,7 @@ class DemoModule(_Model):
     nqf_level: int
     description: str
     assessment_methods: list[str] = []
+    assessments: list[DemoAssessment] = []
     outcomes: list[DemoOutcome]
     events: list[DemoEvent]
 
@@ -246,6 +271,7 @@ class DemoSummary:
     draft_year: int | None = None
     # True when only the draft was added to a demo loaded earlier.
     draft_only: bool = False
+    assessments: int = 0
 
 
 class _Loader:
@@ -258,6 +284,7 @@ class _Loader:
         self.objectives = 0
         self.links = 0
         self.mappings = 0
+        self.assessments = 0
 
     async def institution(self) -> Institution:
         existing = await get_institution(self.db)
@@ -461,6 +488,9 @@ class _Loader:
                 )
                 self.mappings += 1
 
+        for index, raw_assessment in enumerate(raw.assessments):
+            await self.assessment(module, raw_assessment, index, outcomes)
+
         for index, raw_event in enumerate(raw.events):
             event = LearningEvent(
                 module_id=module.id,
@@ -481,6 +511,42 @@ class _Loader:
                 objective = await self.objective(event, raw_objective, objective_position)
                 await self.link(objective, [outcomes[ref] for ref in raw_objective.links])
         return len(raw.events)
+
+    async def assessment(
+        self,
+        module: Module,
+        raw: DemoAssessment,
+        position: int,
+        outcomes: dict[str, Objective],
+    ) -> None:
+        # Added directly: the demo version is already published, so the editing service
+        # (draft versions only) would refuse.
+        assessment = Assessment(
+            module_id=module.id,
+            name=raw.name,
+            weight=raw.weight,
+            timing=raw.timing,
+            time_minutes=raw.time_minutes,
+            position=position,
+        )
+        self.db.add(assessment)
+        await self.db.flush()
+        await set_assessment_method(
+            self.db, assessment, self.tags["assessment-methods"][raw.method]
+        )
+        for index, raw_item in enumerate(raw.items):
+            item = AssessmentItem(
+                assessment_id=assessment.id,
+                label=raw_item.label,
+                marks=raw_item.marks,
+                position=index,
+            )
+            self.db.add(item)
+            await self.db.flush()
+            for ref in raw_item.objectives:
+                self.db.add(AssessmentItemObjective(item_id=item.id, objective_id=outcomes[ref].id))
+        await self.db.flush()
+        self.assessments += 1
 
     async def _event(self, module: Module, title: str) -> LearningEvent:
         event = await self.db.scalar(
@@ -635,4 +701,5 @@ async def load_demo(db: AsyncSession, data: DemoData | None = None) -> DemoSumma
         mappings=loader.mappings,
         tag_lists=len(loader.tags),
         draft_year=draft.academic_year,
+        assessments=loader.assessments,
     )

@@ -1,5 +1,10 @@
 import { api } from './client';
 import type {
+  AssessableObjective,
+  Assessment,
+  AssessmentInput,
+  AssessmentItemInput,
+  AssessmentMethod,
   AuthOptions,
   CopyForwardPreview,
   CurriculumVersion,
@@ -34,6 +39,7 @@ import type {
   TeachingFormat,
   User,
   VersionChecks,
+  VersionCreditCheck,
   VersionDiff,
   VersionStatus,
   VersionStructure,
@@ -207,6 +213,58 @@ export async function copyLearningEvent(id: string, title: string): Promise<Save
 /** Values that can be chosen as a session's teaching format. */
 export async function fetchTeachingFormats(): Promise<TeachingFormat[]> {
   return (await api.get<TeachingFormat[]>('/teaching-formats')).data;
+}
+
+/** Values that can be chosen as an assessment's method. */
+export async function fetchAssessmentMethods(): Promise<AssessmentMethod[]> {
+  return (await api.get<AssessmentMethod[]>('/assessment-methods')).data;
+}
+
+/** The objectives of a module and its sessions that its assessment items may assess. */
+export async function fetchAssessableObjectives(moduleId: string): Promise<AssessableObjective[]> {
+  return (await api.get<AssessableObjective[]>(`/modules/${moduleId}/assessable-objectives`)).data;
+}
+
+export async function createAssessment(
+  moduleId: string,
+  input: AssessmentInput
+): Promise<Assessment> {
+  return (await api.post<Assessment>(`/modules/${moduleId}/assessments`, input)).data;
+}
+
+export async function updateAssessment(
+  id: string,
+  input: Partial<AssessmentInput>
+): Promise<Assessment> {
+  return (await api.patch<Assessment>(`/assessments/${id}`, input)).data;
+}
+
+export async function deleteAssessment(id: string): Promise<void> {
+  await api.delete(`/assessments/${id}`);
+}
+
+/** Adds an item; the whole assessment comes back. */
+export async function createAssessmentItem(
+  assessmentId: string,
+  input: AssessmentItemInput
+): Promise<Assessment> {
+  return (await api.post<Assessment>(`/assessments/${assessmentId}/items`, input)).data;
+}
+
+export async function updateAssessmentItem(
+  id: string,
+  input: Partial<AssessmentItemInput>
+): Promise<Assessment> {
+  return (await api.patch<Assessment>(`/assessment-items/${id}`, input)).data;
+}
+
+export async function deleteAssessmentItem(id: string): Promise<void> {
+  await api.delete(`/assessment-items/${id}`);
+}
+
+/** Planned hours against credits for every module, per year and per NQF level. */
+export async function fetchCreditCheck(versionId: string): Promise<VersionCreditCheck> {
+  return (await api.get<VersionCreditCheck>(`/curriculum-versions/${versionId}/credit-check`)).data;
 }
 
 /** Taxonomy scales (Bloom, Miller...) with their levels. */
@@ -405,6 +463,10 @@ export const queryKeys = {
   module: (id: string) => ['modules', id] as const,
   learningEvent: (id: string) => ['learning-events', id] as const,
   teachingFormats: ['teaching-formats'] as const,
+  assessmentMethods: ['assessment-methods'] as const,
+  assessableObjectives: (moduleId: string) =>
+    ['modules', moduleId, 'assessable-objectives'] as const,
+  creditCheck: (id: string) => ['curriculum-versions', id, 'credit-check'] as const,
   tagLists: ['tag-lists'] as const,
   tagPreview: (kind: string, itemId: string, valueId: string) =>
     ['tag-preview', kind, itemId, valueId] as const,

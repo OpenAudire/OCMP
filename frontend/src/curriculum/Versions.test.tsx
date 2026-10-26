@@ -85,6 +85,7 @@ const diff: VersionDiff = {
     phase: { added: 0, removed: 0, changed: 0 },
     module: { added: 0, removed: 0, changed: 1 },
     learning_event: { added: 1, removed: 0, changed: 0 },
+    assessment: { added: 0, removed: 0, changed: 0 },
     objective: { added: 0, removed: 0, changed: 0 },
   },
   changes: [

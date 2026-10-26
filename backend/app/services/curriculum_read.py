@@ -514,6 +514,8 @@ class ModuleDetail:
     can_approve_objectives: bool = False
     tags: list[ItemTag] = field(default_factory=list)
     can_edit_tags: bool = False
+    # Whether the user may add, change and remove the module's assessments (drafts only).
+    can_edit_assessments: bool = False
 
 
 async def module_detail(
@@ -557,6 +559,7 @@ async def module_detail(
             (TaggableType.MODULE, module.id), []
         ),
         can_edit_tags=is_editable(visible.version) and Permission.TAGGING_EDIT in held,
+        can_edit_assessments=is_editable(visible.version) and Permission.CURRICULUM_EDIT in held,
     )
 
 

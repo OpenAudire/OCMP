@@ -217,6 +217,8 @@ export function ModuleCount({ count }: { count: number }) {
 - Objective quality checker (ADR 033): pure rules in `app/services/objective_quality.py`, wording lists per language in `app/services/objective_rules/<code>.json`, verbs per taxonomy level stay in `taxonomy_levels.verbs`; findings are advice, never block saving, and use no AI. A finding's texts are i18n keys `curriculum.quality.<code>.*`: add all three (name, message, suggestion) with a new rule
 - Tag lists are managed with `taglists.manage` (instance) and items are tagged with `tagging.edit` at the item's scope (ADR 034); inheritance rules, the preview and tag reads live in `app/services/tagging.py`: module to sessions, objective to the objectives linked beneath it, every inherited tagging points to the direct tagging it came from, only direct tags are removed (delete inherited rows through the ORM so they are audited); a list or tag in use is made inactive, not deleted
 - Institution settings are read through `app/services/institution_settings.py` (typed sections), never raw JSON
+- Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
+- Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 
 ### Background jobs
 

@@ -6,6 +6,7 @@ import {
   IconArrowsDiff,
   IconChecklist,
   IconCopyPlus,
+  IconSum,
   IconSend,
   IconTrash,
 } from '@tabler/icons-react';
@@ -13,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import type { ProgrammeSummary, VersionStructure } from '../api/types';
-import { comparePath, qualityPath } from './paths';
+import { comparePath, creditsPath, qualityPath } from './paths';
 import { CopyForwardDialog, DeleteVersionDialog, StatusDialog } from './VersionDialogs';
 import { STATUS_ACTIONS, versionLabel, type StatusAction } from './versions';
 import classes from './VersionBar.module.css';
@@ -114,6 +115,19 @@ export function VersionBar({
         leftSection={<IconChecklist size={18} aria-hidden />}
       >
         {t('curriculum.versions.action.checkWording')}
+      </Button>
+    );
+  }
+  if (!structure.partial) {
+    buttons.push(
+      <Button
+        key="credits"
+        variant="default"
+        component={Link}
+        to={creditsPath(version.id)}
+        leftSection={<IconSum size={18} aria-hidden />}
+      >
+        {t('curriculum.versions.action.checkCredits')}
       </Button>
     );
   }
