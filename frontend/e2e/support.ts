@@ -52,6 +52,22 @@ export async function openApp(page: Page, path: string): Promise<void> {
 export async function expectNoAccessibilityViolations(page: Page): Promise<void> {
   // Fonts must be loaded before colour contrast is measured.
   await page.evaluate(() => document.fonts.ready);
+  // A dialog or menu that is still fading in has partly transparent text, which axe
+  // reports as low contrast (seen on a slow CI runner): wait for finite animations.
+  await page
+    .waitForFunction(
+      () =>
+        document
+          .getAnimations()
+          .every(
+            (animation) =>
+              animation.playState !== 'running' ||
+              animation.effect?.getComputedTiming().iterations === Infinity
+          ),
+      undefined,
+      { timeout: 3000 }
+    )
+    .catch(() => undefined);
   const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
   const summary = results.violations.map(
     (v) => `${v.id} (${v.impact}): ${v.help}\n  ${v.nodes.map((n) => n.target.join(' ')).join('\n  ')}`
