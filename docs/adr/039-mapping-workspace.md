@@ -123,8 +123,9 @@ objective (middle pane) and per framework item (the "where mapped" list under th
 
 - The review queue (1.13) works on links in the states described here; the AI pipeline (1.16) creates
   suggestions with all four depth values.
-- A suggestion by someone who may not review has no named reviewer until the queue exists; it is
-  visible in the workspace as "Suggested, not reviewed".
+- A suggestion by someone who may not review has no named reviewer until a reviewer decides on it in
+  the review queue (Slice 1.13, [ADR 040](040-review-queue.md)); it is visible in the workspace as
+  "Suggested, not reviewed".
 - The coverage wording and depth definitions are one translation block each, so a different
   institution scale would be a translation and report change, not a schema change; the stored value
   stays an integer 0 to 5.

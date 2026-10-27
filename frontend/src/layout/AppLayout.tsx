@@ -11,11 +11,11 @@ import {
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { IconLogout, IconMoon, IconSun, IconUser } from '@tabler/icons-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useMatch, useNavigate } from 'react-router';
 
-import { logout } from '../api/endpoints';
+import { fetchReviewCount, logout, queryKeys } from '../api/endpoints';
 import { VersionSwitcher } from '../curriculum/VersionSwitcher';
 import { useInstitution } from '../institution/useInstitution';
 import { useSession } from '../session/useSession';
@@ -96,6 +96,14 @@ export function AppLayout() {
   const navHidden = isPhone === true && !opened;
   const versionMatch = useMatch('/curriculum/versions/:versionId/*');
   const versionId = versionMatch?.params.versionId;
+  // The review queue count in the menu: what waits for this person (ADR 040).
+  const showsReview = items.some((item) => item.key === 'review');
+  const reviewCount = useQuery({
+    queryKey: queryKeys.reviewCount,
+    queryFn: fetchReviewCount,
+    enabled: showsReview,
+    staleTime: 30_000,
+  });
 
   return (
     <AppShell
@@ -151,6 +159,7 @@ export function AppLayout() {
           <Sidebar
             items={items}
             pathname={location.pathname}
+            counts={{ review: reviewCount.data?.total }}
             institutionName={institution?.name}
             onNavigate={close}
           />

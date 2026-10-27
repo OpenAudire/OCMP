@@ -65,7 +65,7 @@ Below. The **?** on the page and in the dialog explains both words.
 |---|---|
 | May review mappings for this objective (`mapping.review`) | **Accepted** at once |
 | The same, and the institution uses a second review (four-eyes mode) | **Waiting for a second review**; it counts only when a different reviewer accepts it |
-| May map but not review (`mapping.edit` only) | **Suggested**; a reviewer decides on it in the review queue |
+| May map but not review (`mapping.edit` only) | **Suggested**; a reviewer decides on it in the [review queue](review-queue.md) |
 
 Changing coverage, depth or the reason makes the link a new claim, so it is decided again by the same
 rules: a reviewer's edit of an accepted link in four-eyes mode goes to a second review, and an edit

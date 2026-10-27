@@ -232,6 +232,8 @@ function Workspace({ workspace, versionId }: { workspace: MappingWorkspace; vers
     Promise.all([
       client.invalidateQueries({ queryKey: queryKeys.mappingWorkspace(versionId) }),
       client.invalidateQueries({ queryKey: queryKeys.frameworks }),
+      // A new suggestion, or a re-check that is now confirmed, changes the review queue.
+      client.invalidateQueries({ queryKey: ['review-queue'] }),
     ]);
 
   const recheck = useMutation({

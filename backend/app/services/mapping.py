@@ -191,7 +191,11 @@ async def review_link(
         else:
             link.status = status
     elif link.status == MappingStatus.NEEDS_SECOND_REVIEW:
-        if reviewer.id == link.first_reviewer_id:
+        # The author of a hand-made link counts as its first reviewer (ADR 016), also when
+        # the suggestion was first reviewed by someone else.
+        if reviewer.id == link.first_reviewer_id or (
+            link.source == MappingSource.HUMAN and reviewer.id == link.created_by_id
+        ):
             raise ConflictError("The second review must be done by someone else.")
         if decision == ReviewDecision.SECOND_REVIEW:
             raise InvalidRequestError("This is already the second review.")

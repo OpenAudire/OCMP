@@ -6,6 +6,8 @@ import type {
   AssessmentItemInput,
   AssessmentMethod,
   AuthOptions,
+  BulkAcceptRequest,
+  BulkAcceptResult,
   CopyForwardPreview,
   CurriculumVersion,
   FrameworkItemDetail,
@@ -30,6 +32,11 @@ import type {
   ProgrammeSummary,
   QualityCheck,
   QualityCheckInput,
+  ReviewCounts,
+  ReviewQueue,
+  ReviewQueueParams,
+  ReviewRequest,
+  ReviewResult,
   RoleAssignment,
   SavedLearningEvent,
   SavedModule,
@@ -588,6 +595,40 @@ export async function confirmMappingRecheck(linkId: string): Promise<WorkspaceLi
   return (await api.post<WorkspaceLink>(`/mapping-links/${linkId}/recheck`)).data;
 }
 
+/** One page of the links waiting for this user (ADR 040). */
+export async function fetchReviewQueue(params: ReviewQueueParams): Promise<ReviewQueue> {
+  return (
+    await api.get<ReviewQueue>('/mapping/review-queue', {
+      params: {
+        stage: params.stage,
+        sort: params.sort,
+        offset: params.offset,
+        version_id: params.versionId,
+        framework_id: params.frameworkId,
+        module_id: params.moduleId,
+        min_confidence: params.minConfidence,
+        max_confidence: params.maxConfidence,
+      },
+    })
+  ).data;
+}
+
+/** How many links wait for this user, for the sidebar. */
+export async function fetchReviewCount(): Promise<ReviewCounts> {
+  return (await api.get<ReviewCounts>('/mapping/review-queue/count')).data;
+}
+
+export async function reviewMappingLink(
+  linkId: string,
+  request: ReviewRequest
+): Promise<ReviewResult> {
+  return (await api.post<ReviewResult>(`/mapping-links/${linkId}/review`, request)).data;
+}
+
+export async function bulkAcceptReview(request: BulkAcceptRequest): Promise<BulkAcceptResult> {
+  return (await api.post<BulkAcceptResult>('/mapping/review-queue/bulk-accept', request)).data;
+}
+
 export async function deleteFramework(frameworkId: string): Promise<void> {
   await api.delete(`/frameworks/${frameworkId}`);
 }
@@ -624,6 +665,8 @@ export const queryKeys = {
   taxonomyScales: ['taxonomy-scales'] as const,
   linkOptions: (kind: 'module' | 'event', id: string) => ['link-options', kind, id] as const,
   copyForward: (id: string) => ['curriculum-versions', id, 'copy-forward'] as const,
+  reviewQueue: (params: ReviewQueueParams) => ['review-queue', params] as const,
+  reviewCount: ['review-queue', 'count'] as const,
   mappingWorkspace: (versionId: string) => ['curriculum-versions', versionId, 'mapping'] as const,
   versionChecks: (id: string) => ['curriculum-versions', id, 'objective-checks'] as const,
   versionDiff: (id: string, base: string) => ['curriculum-versions', id, 'diff', base] as const,

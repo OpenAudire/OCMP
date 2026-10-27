@@ -931,6 +931,150 @@
       "conflict": "This link cannot be changed now: the version is no longer a draft, or the objective is already linked to this item. Reload and try again."
     }
   },
+  "review": {
+    "intro": "Every suggestion needs a person to accept, edit or reject it. Decide on each one, or accept the confident ones together.",
+    "confidence": {
+      "word": "confidence",
+      "none": "Suggested by a person, no confidence score"
+    },
+    "stage": {
+      "option": "{{label}} ({{count}})",
+      "names": {
+        "first": "Waiting for a first review",
+        "second": "Waiting for a second review",
+        "recheck": "Wording changed, to re-check"
+      },
+      "chip": {
+        "first": "Waiting",
+        "second": "Second review",
+        "recheck": "Re-check"
+      },
+      "empty": {
+        "first": "Nothing is waiting for a first review",
+        "second": "Nothing is waiting for your second review",
+        "recheck": "No accepted link needs a re-check"
+      },
+      "emptyBody": "When a suggestion arrives that you may decide on, it appears here."
+    },
+    "progress": {
+      "label": "Progress",
+      "reviewed": "{{reviewed}} of {{total}} suggestions reviewed",
+      "accepted": "accepted",
+      "rejected": "rejected",
+      "second": "second review",
+      "waiting": "waiting here"
+    },
+    "filters": {
+      "stage": "Show",
+      "confidence": "Confidence",
+      "confidenceAll": "All confidence levels",
+      "confidenceHigh": "90% and above",
+      "confidenceLow": "Below 65% (check carefully)",
+      "allModules": "All {{modules}}",
+      "version": "Version",
+      "allVersions": "All versions",
+      "framework": "Framework",
+      "allFrameworks": "All frameworks",
+      "sort": "Order",
+      "sortHigh": "Most confident first",
+      "sortLow": "Least confident first",
+      "sortModule": "By {{module}}"
+    },
+    "shortcuts": {
+      "switch": "Use keyboard shortcuts",
+      "list": "Available shortcuts",
+      "off": "Keyboard shortcuts are off. Every action is also a button.",
+      "where": "They work while focus is in the list or the details.",
+      "actions": {
+        "accept": "accept",
+        "reject": "reject",
+        "edit": "edit",
+        "skip": "skip",
+        "second": "second review"
+      }
+    },
+    "list": {
+      "label": "Suggestions",
+      "showing": "Showing {{from}} to {{to}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "detail": {
+      "label": "Selected suggestion",
+      "objective": "Objective",
+      "item": "Suggested framework item",
+      "why": {
+        "ai": "Why the AI suggested it",
+        "human": "Why this link was suggested",
+        "import": "Why this link was made",
+        "migrated": "Why this link was moved"
+      },
+      "noReason": "No reason was given.",
+      "evidence": "The highlighted words are the evidence.",
+      "evidenceQuote": "Evidence: \"{{quote}}\"",
+      "firstDecision": {
+        "accept": "The first reviewer accepted this link. You give the second review; you may agree or disagree.",
+        "reject": "The first reviewer rejected this link. You give the second review; you may agree or disagree.",
+        "second_review": "The first reviewer was unsure and asked for a second review."
+      },
+      "recheck": "The objective's wording changed after this link was accepted. Check that it still fits.",
+      "discussion": "The second reviewer disagreed with the first. Talk it over before relying on this link.",
+      "coverageLegend": "How much of the item does this objective cover?",
+      "coverageHint": "Choose one level from 0 to 5.",
+      "depthLegend": "Depth compared with the item (Bloom or Miller level)",
+      "acceptNote": "Accepting uses the coverage and depth chosen above, so you can correct them first.",
+      "fourEyesNote": "This institution uses a second review: accepting sends the link to a second reviewer, and it counts once they agree.",
+      "secondNote": "You are the second reviewer. Your decision settles this link."
+    },
+    "actions": {
+      "accept": "Accept",
+      "second": "Second review",
+      "reject": "Reject",
+      "skip": "Skip",
+      "stillFits": "Still fits",
+      "openWorkspace": "Open in the mapping workspace"
+    },
+    "notice": {
+      "accepted": "Accepted the link to {{item}}.",
+      "acceptedSecond": "Accepted the link to {{item}}. It now waits for a second reviewer.",
+      "sent": "Sent the link to {{item}} to a second review.",
+      "rejected": "Rejected the link to {{item}}.",
+      "rechecked": "Confirmed that the link to {{item}} still fits.",
+      "bulk_one": "Accepted {{count}} suggestion at {{percent}}% confidence and above.",
+      "bulk_other": "Accepted {{count}} suggestions at {{percent}}% confidence and above.",
+      "bulkSecond_one": "Accepted {{count}} suggestion at {{percent}}% confidence and above. It now waits for a second reviewer.",
+      "bulkSecond_other": "Accepted {{count}} suggestions at {{percent}}% confidence and above. They now wait for a second reviewer."
+    },
+    "errors": {
+      "moved": "This link changed while you were looking at it, so nothing was saved. The list has been refreshed.",
+      "choose": "Choose a coverage and a depth before accepting.",
+      "loadTitle": "The review queue could not be loaded",
+      "loadBody": "Nothing was changed. Check your connection and try again."
+    },
+    "empty": {
+      "title": "Nothing to review",
+      "body": "Suggestions appear here when colleagues who may map but not review propose a link, or when links are moved to a new framework version. You will see a count next to Review queue in the menu."
+    },
+    "bulk": {
+      "button": "Accept all {{percent}}% and above",
+      "title": "Accept the confident suggestions",
+      "body": "This accepts waiting suggestions at or above the confidence you choose, for the filters now set. At most {{max}} are handled at a time.",
+      "threshold": "Confidence",
+      "option": "{{percent}}% and above",
+      "counting": "Counting...",
+      "countFailed": "The suggestions could not be counted. Nothing was changed.",
+      "none": "No waiting suggestion is at {{percent}}% or above.",
+      "count_one": "{{count}} suggestion at {{percent}}% and above will be accepted.",
+      "count_other": "{{count}} suggestions at {{percent}}% and above will be accepted.",
+      "more_one": "{{count}} more will remain; run it again for the next batch.",
+      "more_other": "{{count}} more will remain; run it again for the next batch.",
+      "effect": "Each one is recorded as accepted by you in a bulk action.",
+      "fourEyes": "This institution uses a second review, so each one is sent to a second reviewer and counts only once they agree.",
+      "rules": "Only suggestions that have a confidence score and that you may review are included. Second reviews and links to re-check are never accepted in bulk.",
+      "submit_one": "Accept {{count}} suggestion",
+      "submit_other": "Accept {{count}} suggestions"
+    }
+  },
   "frameworks": {
     "intro": "Competency frameworks, level descriptors and keyword lists that objectives can be mapped to. Each one is imported as data, so any discipline can add its own.",
     "import": "Import framework pack",

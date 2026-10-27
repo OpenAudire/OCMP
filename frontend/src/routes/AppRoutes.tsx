@@ -9,6 +9,7 @@ import { ResetPasswordPage } from '../auth/ResetPasswordPage';
 import { CurriculumSection } from '../curriculum/CurriculumPage';
 import { FrameworksSection } from '../frameworks/FrameworksSection';
 import { MappingSection } from '../mapping/MappingPage';
+import { ReviewSection } from '../review/ReviewPage';
 import { ImportSection } from '../importing/ImportSection';
 import { InstitutionProvider } from '../institution/InstitutionProvider';
 import { AppLayout } from '../layout/AppLayout';
@@ -53,6 +54,7 @@ const SECTIONS: Partial<Record<string, () => ReactNode>> = {
   curriculum: () => <CurriculumSection />,
   frameworks: () => <FrameworksSection />,
   mapping: () => <MappingSection />,
+  review: () => <ReviewSection />,
   admin: () => <AdminSection />,
   import: () => <ImportSection />,
 };

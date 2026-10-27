@@ -901,3 +901,119 @@ export interface LinkInput {
   depth_match: DepthMatch;
   rationale: string;
 }
+
+/** Which pile of review work a link is in for the person (ADR 040). */
+export type ReviewStage = 'first' | 'second' | 'recheck';
+
+export type ReviewSort = 'confidence_desc' | 'confidence_asc' | 'module';
+
+export type ReviewDecision = 'accept' | 'reject' | 'second_review';
+
+/** A link in the review queue. No reviewer or author names are returned. */
+export interface ReviewLink {
+  id: string;
+  stage: ReviewStage;
+  status: LinkStatus;
+  source: 'ai' | 'human' | 'import' | 'migrated';
+  confidence: number | null;
+  coverage: number | null;
+  depth_match: DepthMatch | null;
+  rationale: string;
+  evidence_quote: string;
+  needs_recheck: boolean;
+  needs_discussion: boolean;
+  /** What the first reviewer decided (second stage only), never who. */
+  first_decision: ReviewDecision | null;
+  version_id: string;
+  academic_year: number;
+  objective: {
+    id: string;
+    text: string;
+    level: 'programme' | 'module' | 'learning_event';
+    module_code: string | null;
+    module_name: string | null;
+    learning_event_title: string | null;
+  };
+  item: {
+    id: string;
+    code: string;
+    title: string;
+    group: string | null;
+    framework_id: string;
+    framework_name: string;
+    framework_version_label: string;
+  };
+}
+
+export interface ReviewProgress {
+  total: number;
+  accepted: number;
+  rejected: number;
+  second_review: number;
+  waiting: number;
+}
+
+export interface ReviewCounts {
+  first: number;
+  second: number;
+  recheck: number;
+  total: number;
+}
+
+export interface ReviewQueue {
+  stage: ReviewStage;
+  total: number;
+  offset: number;
+  limit: number;
+  items: ReviewLink[];
+  progress: ReviewProgress;
+  counts: ReviewCounts;
+  facets: {
+    versions: { id: string; programme_name: string; academic_year: number }[];
+    frameworks: { id: string; name: string; version_label: string }[];
+    modules: { id: string; code: string; name: string }[];
+  };
+  four_eyes: boolean;
+  bulk_min_confidence: number;
+  bulk_max_links: number;
+}
+
+export interface ReviewQueueParams {
+  stage: ReviewStage;
+  versionId?: string;
+  frameworkId?: string;
+  moduleId?: string;
+  minConfidence?: number;
+  maxConfidence?: number;
+  sort: ReviewSort;
+  offset: number;
+}
+
+export interface ReviewRequest {
+  decision: ReviewDecision;
+  expected_status: LinkStatus;
+  coverage?: number;
+  depth_match?: DepthMatch;
+}
+
+export interface ReviewResult {
+  id: string;
+  status: LinkStatus;
+  needs_discussion: boolean;
+}
+
+export interface BulkAcceptRequest {
+  min_confidence: number;
+  version_id?: string;
+  framework_id?: string;
+  module_id?: string;
+  dry_run: boolean;
+}
+
+export interface BulkAcceptResult {
+  eligible: number;
+  processed: number;
+  remaining: number;
+  status_after: LinkStatus;
+  dry_run: boolean;
+}
