@@ -737,3 +737,111 @@ export interface PackTemplate {
   description: string;
   items: number;
 }
+
+// --- Frameworks (library, tree, where mapped) ---
+
+export type FrameworkStatus = 'draft' | 'active' | 'superseded' | 'retired';
+export type FrameworkProfile = 'core' | 'health' | 'other';
+
+export interface FrameworkSummary {
+  id: string;
+  key: string;
+  name: string;
+  version_label: string;
+  publisher: string;
+  licence_note: string;
+  description: string;
+  url: string | null;
+  profile: FrameworkProfile;
+  status: FrameworkStatus;
+  item_count: number;
+  top_level_count: number;
+  level_count: number;
+}
+
+export interface FrameworkLibrary {
+  frameworks: FrameworkSummary[];
+  can_manage: boolean;
+}
+
+export interface FrameworkTreeItem {
+  id: string;
+  code: string;
+  title: string;
+  depth: number;
+  child_count: number;
+  /** Mapping links (not rejected) the user may see. */
+  mapped_count: number;
+}
+
+/** A window of the children of one parent: `offset` is the place of its first item. */
+export interface FrameworkItemPage {
+  parent_id: string | null;
+  offset: number;
+  total: number;
+  items: FrameworkTreeItem[];
+}
+
+export interface FrameworkAncestor {
+  id: string;
+  code: string;
+  title: string;
+}
+
+export interface FrameworkDetailAncestor extends FrameworkAncestor {
+  sibling_index: number;
+}
+
+export interface FrameworkSearchHit extends FrameworkTreeItem {
+  path: FrameworkAncestor[];
+}
+
+export interface FrameworkSearchPage {
+  query: string;
+  offset: number;
+  total: number;
+  hits: FrameworkSearchHit[];
+}
+
+export interface FrameworkItemDetail {
+  id: string;
+  framework_id: string;
+  code: string;
+  title: string;
+  description: string;
+  depth: number;
+  child_count: number;
+  mapped_count: number;
+  path: FrameworkDetailAncestor[];
+  sibling_index: number;
+}
+
+export interface MappedObjective {
+  link_id: string;
+  status: 'suggested' | 'accepted' | 'rejected' | 'needs_second_review';
+  source: 'ai' | 'human' | 'import' | 'migrated';
+  coverage: number | null;
+  depth_match: 'below' | 'matches' | 'above' | null;
+  needs_recheck: boolean;
+  needs_discussion: boolean;
+  objective_id: string;
+  objective_text: string;
+  level: 'programme' | 'module' | 'learning_event';
+  programme_id: string;
+  programme_name: string;
+  version_id: string;
+  academic_year: number;
+  version_status: VersionStatus;
+  module_id: string | null;
+  module_code: string | null;
+  module_name: string | null;
+  learning_event_id: string | null;
+  learning_event_title: string | null;
+}
+
+export interface WhereMapped {
+  item_id: string;
+  total: number;
+  limit: number;
+  mappings: MappedObjective[];
+}

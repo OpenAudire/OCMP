@@ -38,7 +38,7 @@ ai/, connectors/  Placeholders for Phase 1 (AI) and Phase 2 (LMS connectors)
 ```
 
 Frontend (`frontend/src/`): one folder per feature (`auth/`, `account/`, `setup/`,
-`layout/`, `routes/`, `session/`, `institution/`, `curriculum/`, `admin/`, `api/`, `pages/`), plus `theme/` (tokens,
+`layout/`, `routes/`, `session/`, `institution/`, `curriculum/`, `admin/`, `importing/`, `frameworks/`, `api/`, `pages/`), plus `theme/` (tokens,
 Mantine theme, fonts) and `ui/` (shared `Page` and state components); tests beside the code.
 Playwright journeys live in `frontend/e2e/`.
 
@@ -212,6 +212,7 @@ export function ModuleCount({ count }: { count: number }) {
 - Enumerations: `StrEnum` stored as VARCHAR + CHECK (`str_enum()` in `app/models/base.py`), not native Postgres enums
 - Uniqueness on soft-deletable tables: partial unique index via `live_unique()` (`WHERE deleted_at IS NULL`)
 - Framework model fields follow the pack format in `packs/schema/` (ADR 014); import packs with `app/services/packs.py`
+- Framework library reads live in `app/services/framework_browse.py` (ADR 038): the tree is read one parent at a time in windows (max 200), never whole; reading needs `curriculum.view` or `frameworks.manage` at any scope; "where mapped" reuses `visible_version` so links to curriculum the user cannot see are left out of lists and counts
 - `packs/demo/demo-graduate-competencies.json` and `backend/app/demo/data/` copy must stay identical (tested)
 - Data migrations are separate files and use table stubs (`sa.table`), never app models
 - Objective quality checker (ADR 033): pure rules in `app/services/objective_quality.py`, wording lists per language in `app/services/objective_rules/<code>.json`, verbs per taxonomy level stay in `taxonomy_levels.verbs`; findings are advice, never block saving, and use no AI. A finding's texts are i18n keys `curriculum.quality.<code>.*`: add all three (name, message, suggestion) with a new rule

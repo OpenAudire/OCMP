@@ -7,6 +7,7 @@ import { ForgotPasswordPage } from '../auth/ForgotPasswordPage';
 import { LoginPage } from '../auth/LoginPage';
 import { ResetPasswordPage } from '../auth/ResetPasswordPage';
 import { CurriculumSection } from '../curriculum/CurriculumPage';
+import { FrameworksSection } from '../frameworks/FrameworksSection';
 import { ImportSection } from '../importing/ImportSection';
 import { InstitutionProvider } from '../institution/InstitutionProvider';
 import { AppLayout } from '../layout/AppLayout';
@@ -49,6 +50,7 @@ function StartPage() {
 /** Sections that are built; the others show a placeholder. */
 const SECTIONS: Partial<Record<string, () => ReactNode>> = {
   curriculum: () => <CurriculumSection />,
+  frameworks: () => <FrameworksSection />,
   admin: () => <AdminSection />,
   import: () => <ImportSection />,
 };

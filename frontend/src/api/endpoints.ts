@@ -8,6 +8,10 @@ import type {
   AuthOptions,
   CopyForwardPreview,
   CurriculumVersion,
+  FrameworkItemDetail,
+  FrameworkItemPage,
+  FrameworkLibrary,
+  FrameworkSearchPage,
   InheritancePreview,
   Institution,
   LearningEventDetail,
@@ -47,6 +51,7 @@ import type {
   VersionDiff,
   VersionStatus,
   VersionStructure,
+  WhereMapped,
 } from './types';
 
 export async function fetchMe(): Promise<User> {
@@ -504,7 +509,63 @@ export function packTemplateUrl(name: string): string {
   return `/api/v1/framework-packs/templates/${encodeURIComponent(name)}`;
 }
 
+export async function fetchFrameworkLibrary(): Promise<FrameworkLibrary> {
+  return (await api.get<FrameworkLibrary>('/frameworks')).data;
+}
+
+/** A window of the children of `parentId` (the top level without it). */
+export async function fetchFrameworkItems(
+  frameworkId: string,
+  params: { parentId?: string | null; offset?: number; limit?: number } = {}
+): Promise<FrameworkItemPage> {
+  return (
+    await api.get<FrameworkItemPage>(`/frameworks/${frameworkId}/items`, {
+      params: {
+        parent_id: params.parentId ?? undefined,
+        offset: params.offset ?? 0,
+        limit: params.limit ?? 100,
+      },
+    })
+  ).data;
+}
+
+export async function searchFramework(
+  frameworkId: string,
+  query: string,
+  offset = 0
+): Promise<FrameworkSearchPage> {
+  return (
+    await api.get<FrameworkSearchPage>(`/frameworks/${frameworkId}/search`, {
+      params: { q: query, offset, limit: 50 },
+    })
+  ).data;
+}
+
+export async function fetchFrameworkItem(
+  frameworkId: string,
+  itemId: string
+): Promise<FrameworkItemDetail> {
+  return (await api.get<FrameworkItemDetail>(`/frameworks/${frameworkId}/items/${itemId}`)).data;
+}
+
+export async function fetchWhereMapped(frameworkId: string, itemId: string): Promise<WhereMapped> {
+  return (
+    await api.get<WhereMapped>(`/frameworks/${frameworkId}/items/${itemId}/mappings`)
+  ).data;
+}
+
+export async function deleteFramework(frameworkId: string): Promise<void> {
+  await api.delete(`/frameworks/${frameworkId}`);
+}
+
 export const queryKeys = {
+  frameworks: ['frameworks'] as const,
+  frameworkItem: (frameworkId: string, itemId: string) =>
+    ['frameworks', frameworkId, 'items', itemId] as const,
+  frameworkMappings: (frameworkId: string, itemId: string) =>
+    ['frameworks', frameworkId, 'items', itemId, 'mappings'] as const,
+  frameworkSearch: (frameworkId: string, query: string) =>
+    ['frameworks', frameworkId, 'search', query] as const,
   session: ['session'] as const,
   institution: ['institution'] as const,
   authOptions: ['auth-options'] as const,

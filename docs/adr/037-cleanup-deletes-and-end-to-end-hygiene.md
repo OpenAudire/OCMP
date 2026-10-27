@@ -36,7 +36,7 @@ keep in step.
 
 ## Consequences
 
-- A framework that has mappings cannot be deleted; retiring it is the way (status), and there is
-  still no screen for deleting (the framework library is Slice 1.11).
+- A framework that has mappings cannot be deleted; retiring it is the way (status), and
+  a delete button on the framework library (Slice 1.11, ADR 038) calls the same endpoint.
 - A deleted user's old email address no longer appears anywhere; audit entries keep the user id.
 - The data inventory notes the anonymisation on deletion.

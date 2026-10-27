@@ -1,0 +1,82 @@
+.tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding-block: 4px;
+  padding-inline-end: 10px;
+  border-radius: 8px;
+  color: var(--cic-ink);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--cic-soft);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--cic-brand);
+  outline-offset: -2px;
+}
+
+.item[aria-selected='true'] {
+  background: var(--cic-brand-soft);
+  color: var(--cic-brand-ink);
+  font-weight: 600;
+}
+
+/* "Show more" rows read as actions, not as framework items. */
+.item[data-kind='more'] {
+  color: var(--cic-brand-ink);
+  font-weight: 600;
+}
+
+.toggle {
+  flex: 0 0 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cic-muted);
+}
+
+.item[aria-selected='true'] .toggle,
+.item[data-kind='more'] .toggle {
+  color: inherit;
+}
+
+.label {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+}
+
+.name {
+  overflow-wrap: anywhere;
+}
+
+.code {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.92em;
+}
+
+.meta {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--cic-muted);
+}
+
+.item[aria-selected='true'] .meta {
+  color: var(--cic-brand-ink);
+}

@@ -43,3 +43,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [035](035-assessments-and-credit-check.md) | Minimal Assessments and the Credits and Notional Hours Check |
 | [036](036-framework-pack-import.md) | Framework Pack Import from the Screen, Pack Format Version 2 and Templates |
 | [037](037-cleanup-deletes-and-end-to-end-hygiene.md) | Deleting Unused Frameworks and Accounts, and End-to-End Hygiene |
+| [038](038-framework-library-and-browser.md) | Framework Library, Tree Browser and "Where Mapped" |
