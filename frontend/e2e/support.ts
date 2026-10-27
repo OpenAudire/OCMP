@@ -79,17 +79,30 @@ export async function expectNoAccessibilityViolations(page: Page): Promise<void>
   // Fonts must be loaded before colour contrast is measured.
   await page.evaluate(() => document.fonts.ready);
   // A dialog or menu that is still fading in has partly transparent text, which axe
-  // reports as low contrast (seen on a slow CI runner): wait for finite animations.
+  // reports as low contrast (seen on a slow CI runner, and again on a fast one): wait until
+  // every dialog and menu is fully opaque, and for finite animations to finish. Checking
+  // animations alone is not enough: a transition that has not started yet (the check runs
+  // in the frame after the click) shows no animation but is still at opacity 0.
   await page
     .waitForFunction(
-      () =>
-        document
+      () => {
+        const opaque = Array.from(
+          document.querySelectorAll('[role="dialog"], [role="menu"], [role="listbox"]')
+        ).every((element) => {
+          for (let node: Element | null = element; node; node = node.parentElement) {
+            if (getComputedStyle(node).opacity !== '1') return false;
+          }
+          return true;
+        });
+        const settled = document
           .getAnimations()
           .every(
             (animation) =>
               animation.playState !== 'running' ||
               animation.effect?.getComputedTiming().iterations === Infinity
-          ),
+          );
+        return opaque && settled;
+      },
       undefined,
       { timeout: 3000 }
     )
