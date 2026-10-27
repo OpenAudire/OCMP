@@ -59,13 +59,19 @@ function saveErrorMessage(t: TFunction, error: unknown): string {
   return t('curriculum.edit.errors.generic');
 }
 
-function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString(undefined, {
+/**
+ * A date as day, month name, year, in the UTC calendar day the server stored. The locale is
+ * explicit (English is written day first) so the text does not depend on the machine's own
+ * locale or time zone.
+ */
+function formatDate(value: string, language: string): string {
+  const locale = language.startsWith('en') ? 'en-GB' : language;
+  return new Intl.DateTimeFormat(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
     timeZone: 'UTC',
-  });
+  }).format(new Date(value));
 }
 
 function providerName(t: TFunction, kind: AiProviderKind): string {
@@ -75,7 +81,7 @@ function providerName(t: TFunction, kind: AiProviderKind): string {
 // --- Status and the test button ----------------------------------------------------
 
 function StatusCard({ settings, dirty }: { settings: AiSettings; dirty: boolean }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [result, setResult] = useState<AiConnectionTest | null>(null);
   const test = useMutation({ mutationFn: testAiConnection, onSuccess: setResult });
   const { state, reasons, budget_message: budgetMessage } = settings.status;
@@ -121,7 +127,7 @@ function StatusCard({ settings, dirty }: { settings: AiSettings; dirty: boolean 
           calls: settings.usage.calls,
           tokens: settings.usage.tokens,
           cost: settings.usage.cost,
-          date: formatDate(settings.usage.period_end),
+          date: formatDate(settings.usage.period_end, i18n.language),
         })}
       </Text>
       <div>
@@ -322,7 +328,7 @@ function AiSettingsForm({
   saved: boolean;
   onSaved: (saved: boolean) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const client = useQueryClient();
   const [failure, setFailure] = useState<string | null>(null);
   const savedRef = useRef<HTMLDivElement>(null);
@@ -412,7 +418,7 @@ function AiSettingsForm({
               {settings.acknowledgement.acknowledged_at && !mustAcknowledge ? (
                 <Text size="sm">
                   {t('admin.ai.outside.acknowledgedOn', {
-                    date: formatDate(settings.acknowledgement.acknowledged_at),
+                    date: formatDate(settings.acknowledgement.acknowledged_at, i18n.language),
                   })}
                 </Text>
               ) : (

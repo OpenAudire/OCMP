@@ -139,6 +139,7 @@ test.describe('tagging', () => {
     const add = page.getByRole('button', { name: `Add tag to ${fixture.moduleLabel}` });
     await add.click();
     const dialog = page.getByRole('dialog', { name: `Add a tag to ${fixture.moduleLabel}` });
+    await expect(dialog).toBeVisible();
     await expectNoAccessibilityViolations(page);
 
     // Nothing chosen: the dialog says so and saves nothing.

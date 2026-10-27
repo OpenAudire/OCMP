@@ -88,6 +88,7 @@ test.describe('curriculum versions', () => {
     // Publish after confirming; the version becomes read-only.
     await page.getByRole('button', { name: 'Publish version' }).click();
     const publish = page.getByRole('dialog', { name: `Publish the ${year} draft?` });
+    await expect(publish).toBeVisible();
     await expectNoAccessibilityViolations(page);
     await publish.getByRole('button', { name: 'Publish version' }).click();
     await expect(page.getByRole('status').filter({ hasText: `${year} published.` })).toBeVisible();
@@ -108,6 +109,7 @@ test.describe('curriculum versions', () => {
     await expect(page.getByRole('status').filter({ hasText: `${year} returned to draft.` })).toBeVisible();
     await page.getByRole('button', { name: 'Delete draft' }).click();
     const remove = page.getByRole('dialog', { name: `Delete the ${year} draft?` });
+    await expect(remove).toBeVisible();
     await expectNoAccessibilityViolations(page);
     await remove.getByRole('button', { name: 'Delete draft' }).click();
     created = null;

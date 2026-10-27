@@ -156,6 +156,7 @@ test.describe('assessments and credits', () => {
 
     await section.getByRole('button', { name: 'Delete assessment Class test' }).click();
     const confirm = page.getByRole('dialog', { name: 'Delete Class test?' });
+    await expect(confirm).toBeVisible();
     await expectNoAccessibilityViolations(page);
     await confirm.getByRole('button', { name: 'Delete assessment' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Class test deleted' })).toBeVisible();

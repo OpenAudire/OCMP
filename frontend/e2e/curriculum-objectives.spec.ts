@@ -157,6 +157,7 @@ test.describe('objective editor', () => {
     // Delete it; the confirmation takes focus because the button is gone.
     await changed.getByRole('button', { name: /^Delete objective/ }).click();
     const remove = page.getByRole('dialog', { name: 'Delete this objective?' });
+    await expect(remove).toBeVisible();
     await expectNoAccessibilityViolations(page);
     await remove.getByRole('button', { name: 'Delete objective' }).click();
     await expect(notice).toHaveText('The objective was deleted.');

@@ -78,14 +78,40 @@ export async function openApp(page: Page, path: string): Promise<void> {
 export async function expectNoAccessibilityViolations(page: Page): Promise<void> {
   // Fonts must be loaded before colour contrast is measured.
   await page.evaluate(() => document.fonts.ready);
-  // A dialog or menu that is still fading in has partly transparent text, which axe
-  // reports as low contrast (seen on a slow CI runner, and again on a fast one): wait until
-  // every dialog and menu is fully opaque, and for finite animations to finish. Checking
-  // animations alone is not enough: a transition that has not started yet (the check runs
-  // in the frame after the click) shows no animation but is still at opacity 0.
+  // Colour contrast is only meaningful in the settled state. Two things made it flaky:
+  // 1. A dialog or menu that is still fading in has partly transparent text. CSS transitions
+  //    and animations are switched off for the check (the final colours are what matter), and
+  //    the check waits until every dialog, menu and list box is fully opaque.
+  // 2. A dialog that has not been rendered yet when this runs (the click returned, React and
+  //    Mantine mount it a little later on a slow runner) is not in the page, so "all dialogs
+  //    are opaque" is vacuously true and axe then measured it mid-fade (found in the CI trace
+  //    of run 40505442931: no dialog in the frame when axe started, half faded in during it).
+  //    So the page must also have been quiet, with no DOM change, for 300 ms.
+  await page.evaluate(() => {
+    if (document.getElementById('e2e-no-motion')) return;
+    const style = document.createElement('style');
+    style.id = 'e2e-no-motion';
+    style.textContent =
+      '*, *::before, *::after { transition: none !important; animation: none !important; }';
+    document.head.appendChild(style);
+  });
   await page
     .waitForFunction(
       () => {
+        const w = window as unknown as { __lastChange?: number };
+        if (w.__lastChange === undefined) {
+          w.__lastChange = performance.now();
+          new MutationObserver(() => {
+            w.__lastChange = performance.now();
+          }).observe(document.documentElement, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            characterData: true,
+          });
+          return false;
+        }
+        const quiet = performance.now() - w.__lastChange >= 300;
         const opaque = Array.from(
           document.querySelectorAll('[role="dialog"], [role="menu"], [role="listbox"]')
         ).every((element) => {
@@ -101,10 +127,10 @@ export async function expectNoAccessibilityViolations(page: Page): Promise<void>
               animation.playState !== 'running' ||
               animation.effect?.getComputedTiming().iterations === Infinity
           );
-        return opaque && settled;
+        return quiet && opaque && settled;
       },
       undefined,
-      { timeout: 3000 }
+      { timeout: 5000, polling: 50 }
     )
     .catch(() => undefined);
   const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
