@@ -114,7 +114,7 @@ def test_load_demo(
 
     calls = []
 
-    async def fake_load_demo(_db: object) -> SimpleNamespace:
+    async def fake_load_demo(_db: object, **_kw: object) -> SimpleNamespace:
         if len(calls) == 2:
             raise ConflictError("The demo programme BHS-DEMO is already loaded.")
         calls.append(1)
@@ -129,6 +129,7 @@ def test_load_demo(
             framework_items=8,
             mappings=12,
             tag_lists=3,
+            office_user_added=False,
         )
 
     monkeypatch.setattr(cli, "load_demo", fake_load_demo)

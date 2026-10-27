@@ -6,6 +6,8 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import Settings
+from app.core.permissions import Permission, ScopeType
 from app.demo.loader import load_data, load_demo
 from app.models import (
     Assessment,
@@ -26,8 +28,10 @@ from app.models import (
 from app.models.curriculum import ObjectiveLevel, VersionStatus
 from app.models.framework import FrameworkStatus
 from app.models.mapping import MappingStatus
-from app.services.authorization import ConflictError
+from app.services.authorization import ConflictError, ScopeRef, has_permission
 from app.services.curriculum_diff import Change, ItemKind, diff_versions
+from app.services.tagging import list_management
+from app.services.users import get_user_by_email
 from tests.factories import InstitutionFactory
 
 
@@ -74,7 +78,7 @@ class TestLoad:
 
         # Counts from the brief, in the published version.
         assert (summary.modules, summary.learning_events, summary.objectives) == (3, 20, 60)
-        assert (summary.framework_items, summary.mappings, summary.tag_lists) == (8, 13, 3)
+        assert (summary.framework_items, summary.mappings, summary.tag_lists) == (8, 13, 4)
         version = (
             await db_session.execute(
                 select(CurriculumVersion).where(CurriculumVersion.status == VersionStatus.PUBLISHED)
@@ -229,4 +233,53 @@ class TestLoad:
         await load_demo(db_session)
 
         assert await count(db_session, Framework) == 1
-        assert await count(db_session, TagList) == 3
+        assert await count(db_session, TagList) == 4
+
+    async def test_no_office_account_without_a_password(self, db_session: AsyncSession) -> None:
+        summary = await load_demo(db_session)
+
+        assert summary.office_user_added is False
+        assert await get_user_by_email(db_session, "curriculum.office@example.org") is None
+
+    async def test_faculty_office_account_manages_only_the_faculty_list(
+        self, db_session: AsyncSession, test_settings: Settings
+    ) -> None:
+        summary = await load_demo(
+            db_session, settings=test_settings, office_password="Demo-office-pass-1234"
+        )
+
+        assert summary.office_user_added is True
+        user = await get_user_by_email(db_session, "curriculum.office@example.org")
+        assert user is not None and user.password_hash is not None
+        assert "Demo-office-pass-1234" not in user.password_hash
+        faculty_id = summary.programme.faculty_id
+        faculty = ScopeRef(ScopeType.FACULTY, faculty_id)
+        # The role is at the faculty, not the instance.
+        assert await has_permission(db_session, user, Permission.TAGLISTS_MANAGE, faculty)
+        assert not await has_permission(db_session, user, Permission.TAGLISTS_MANAGE)
+        assert not await has_permission(db_session, user, Permission.FRAMEWORKS_MANAGE)
+        management = await list_management(db_session, user)
+        lists = {t.key: t for t in await db_session.scalars(select(TagList))}
+        assert lists["fhs-clinical-skills"].faculty_id == faculty_id
+        assert management.covers(faculty_id)
+        for key in ("teaching-methods", "assessment-methods", "themes"):
+            assert lists[key].faculty_id is None
+        assert not management.covers(None)
+
+    async def test_adds_the_account_to_an_earlier_full_load(
+        self, db_session: AsyncSession, test_settings: Settings
+    ) -> None:
+        await load_demo(db_session)
+
+        summary = await load_demo(
+            db_session, settings=test_settings, office_password="Demo-office-pass-1234"
+        )
+
+        assert summary.office_user_added is True
+        assert await get_user_by_email(db_session, "curriculum.office@example.org") is not None
+        # Nothing else is added, and a third load is refused again.
+        assert await count(db_session, Module) == 6
+        with pytest.raises(ConflictError, match="already loaded"):
+            await load_demo(
+                db_session, settings=test_settings, office_password="Demo-office-pass-1234"
+            )

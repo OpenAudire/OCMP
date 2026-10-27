@@ -746,6 +746,7 @@ Product name: **Curriculum in Context** (repository, Python package, CLI, images
 | 1.9 | Minimal assessments (items linked to objectives); credits and notional hours check per module, year and NQF level |
 | 1.10 | Framework pack import from the UI (schema extended for crosswalks, tag lists, cross-references); structure-only templates (HPCSA, NQF, graduate attributes, MeSH subset) |
 | 1.10a | Review changes to 1.7-1.10: pass a tag on to newer items, faculty-scoped tag lists, exit-level minimum credits in the qualification types, end-to-end cleanup (framework and account delete) |
+| 1.10b | Demo: faculty-scoped curriculum-office account and a faculty tag list |
 | 1.11 | Framework library screen and tree browser with search and "where mapped" |
 | 1.12 | Mapping workspace: manual linking, coverage 0-5 and depth with help text |
 | 1.13 | Review queue: API and screen, keyboard shortcuts, bulk accept, four-eyes, sidebar count |
@@ -1108,3 +1109,19 @@ Requested by the product owner after reviewing Slices 1.7 to 1.10.
 **Not in this slice**: faculty-scoped framework management (`frameworks.manage` stays instance-level), a screen to delete frameworks (1.11), the full POPIA export/deletion flow, a UI for editing qualification types.
 
 **Commit**: `feat: pass tags on to newer items, faculty tag lists, exit-level credits and e2e cleanup`
+
+### Slice 1.10b: Demo Faculty Curriculum-Office Account and Faculty Tag List
+**Status**: Complete
+
+So faculty-scoped tag lists (1.10a) can be checked in a browser, which the demo could not do before.
+
+**Deliverables**:
+- [x] Demo data: a faculty-scoped list `fhs-clinical-skills` (kind custom, tags modules and sessions, three values) kept for the demo faculty, and an `office_user` entry (`curriculum.office@example.org`, an example.org address) in `bsc-health-sciences-demo.json`
+- [x] `load_demo` creates the account through `create_local_user` and `assign_role` (curriculum office at the demo faculty only, audited as `demo.load`). **Password handling**: no demo account existed before, so no password is in the data or the code; the account is made only when `OCMP_DEMO_OFFICE_PASSWORD` is set (the same pattern as `OCMP_ADMIN_PASSWORD`, checked against the password policy). Without it nothing is made. Running `load-demo` again with it set adds the faculty list and the account to an install loaded earlier; with nothing to add a second load is still refused
+- [x] Tests (`test_demo.py`, `test_cli.py`): no account without a password; the account holds `taglists.manage` at the faculty only (not at the instance, no `frameworks.manage`), covers the faculty list and not institution-wide lists; added to an earlier full load; counts now four tag lists. The API rules for faculty managers are already covered by `test_tagging_faculty_and_pass_on.py`
+- [x] Docs: install guide (demo section), `docs/admin/basics.md`, `docs/admin/tag-lists.md`, `docs/privacy/data-inventory.md`
+- Not done: a Playwright journey for the faculty user. It would need a second saved session and a known password for a persistent account, which the e2e hygiene rules (ADR 037: journeys leave nothing behind, no sign-in inside tests) would have to extend; skipped
+
+**Verification**: ruff check, ruff format --check and mypy (94 files) pass; the related tests pass against the test database (100 passed: `test_demo`, `test_cli`, tagging, faculty tag lists, cleanup). `mkdocs build --strict` passes. **Not verified**: the whole backend suite (a full run on this loaded machine did not finish; 269 tests had passed with none failing when it was stopped); the frontend was not touched, so its checks and the Playwright suite were not run; the account was not tried in a browser or in the Docker stack (the running api image was not rebuilt)
+
+**Commit**: `feat: add a faculty-scoped curriculum-office demo account and faculty tag list`

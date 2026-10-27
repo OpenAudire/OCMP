@@ -234,6 +234,20 @@ framework and Bloom and Miller scales. Running it again on an install loaded bef
 draft existed adds the draft. There is no command to remove it yet, so load it on a trial installation
 rather than the production server.
 
+The demo also has one faculty-scoped tag list ("Clinical skills (Faculty of Health Sciences)").
+To check faculty-scoped tag lists in the browser, set a password for the demo
+curriculum-office account when you load (or load again) the demo; without it no account is made
+and no password is stored anywhere in the data:
+
+```bash
+docker compose exec -e OCMP_DEMO_OFFICE_PASSWORD='<choose a password>' api   python -m app.cli load-demo
+```
+
+Then sign in as `curriculum.office@example.org`. That account holds the Curriculum office role for
+the demo faculty only: it can change the faculty's list on **Admin, Tag lists**, while the
+institution-wide lists are shown without change buttons. Delete the account when you are done
+trying it (Users, or `DELETE /api/v1/users/{id}`).
+
 ## Troubleshooting
 
 `docker compose up` stops with "POSTGRES_PASSWORD is required" or "SECRET_KEY is required"

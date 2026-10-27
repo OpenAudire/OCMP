@@ -17,6 +17,10 @@ by hand. Where you hold it decides which lists you keep:
 | The whole institution (curriculum office or platform admin assigned to the institution) | Every list: institution-wide ones and every faculty's |
 | One faculty (curriculum office assigned to that faculty) | That faculty's lists only. You can also create lists for it, but not institution-wide lists, and you cannot change another faculty's lists or the institution-wide ones |
 
+The [demo data](../operations/install.md#try-curriculum-in-context-with-the-demo-data) includes
+a faculty list and, if you set `OCMP_DEMO_OFFICE_PASSWORD` when loading it, a curriculum-office
+account for the demo faculty (`curriculum.office@example.org`) to try this with.
+
 Each list shows who keeps it: **Whole institution** or a faculty name. Lists you cannot change
 are shown without edit buttons. When you create a list, **Kept for** says where it belongs; it
 cannot be changed afterwards (neither can the key or kind).

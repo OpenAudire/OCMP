@@ -25,6 +25,8 @@ from pydantic import BaseModel, ConfigDict, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import Settings
+from app.core.permissions import ScopeType
 from app.core.profiles import Profile
 from app.models import (
     Assessment,
@@ -58,7 +60,13 @@ from app.models.framework import FrameworkStatus
 from app.models.mapping import DepthMatch, MappingSource
 from app.models.tagging import TagListKind
 from app.services.audit import audit_operation
-from app.services.authorization import ConflictError, InvalidRequestError
+from app.services.authorization import (
+    ConflictError,
+    InvalidRequestError,
+    ScopeRef,
+    assign_role,
+    get_role,
+)
 from app.services.curriculum import add_objective, link_objectives
 from app.services.curriculum_edit import EventFields, create_event, delete_event, update_event
 from app.services.curriculum_versions import copy_forward
@@ -72,6 +80,7 @@ from app.services.tagging import (
     set_teaching_format,
     tag_item,
 )
+from app.services.users import create_local_user, get_user_by_email
 
 DATA_DIR = Path(__file__).parent / "data"
 CURRICULUM_FILE = DATA_DIR / "bsc-health-sciences-demo.json"
@@ -151,6 +160,13 @@ class DemoTagList(_Model):
     kind: TagListKind
     entity_types: list[str]
     values: list[DemoTagValue]
+    # True: kept for the demo faculty only (a faculty-scoped list, ADR 015).
+    faculty: bool = False
+
+
+class DemoOfficeUser(_Model):
+    email: str
+    display_name: str
 
 
 class DemoProgramme(_Model):
@@ -230,6 +246,8 @@ class DemoData(BaseModel):
     framework_pack: str
     taxonomy_scale: str
     tag_lists: list[DemoTagList]
+    # Curriculum office account for the demo faculty (made only when a password is given).
+    office_user: DemoOfficeUser | None = None
     programme: DemoProgramme
     phases: list[DemoPhase]
     modules: list[DemoModule]
@@ -272,6 +290,8 @@ class DemoSummary:
     # True when only the draft was added to a demo loaded earlier.
     draft_only: bool = False
     assessments: int = 0
+    # True when this load made the faculty curriculum-office account.
+    office_user_added: bool = False
 
 
 class _Loader:
@@ -285,6 +305,7 @@ class _Loader:
         self.links = 0
         self.mappings = 0
         self.assessments = 0
+        self.new_lists = 0
 
     async def institution(self) -> Institution:
         existing = await get_institution(self.db)
@@ -355,7 +376,7 @@ class _Loader:
         )
         self.levels = {level.name: level for level in levels.scalars()}
 
-    async def tag_lists(self) -> None:
+    async def tag_lists(self, faculty: Faculty) -> None:
         for raw in self.data.tag_lists:
             tag_list = (
                 await self.db.execute(
@@ -364,10 +385,15 @@ class _Loader:
             ).scalar_one_or_none()
             if tag_list is None:
                 tag_list = TagList(
-                    key=raw.key, name=raw.name, kind=raw.kind, entity_types=raw.entity_types
+                    key=raw.key,
+                    name=raw.name,
+                    kind=raw.kind,
+                    entity_types=raw.entity_types,
+                    faculty_id=faculty.id if raw.faculty else None,
                 )
                 self.db.add(tag_list)
                 await self.db.flush()
+                self.new_lists += 1
             existing = await self.db.execute(
                 select(TagValue).where(
                     TagValue.tag_list_id == tag_list.id, TagValue.deleted_at.is_(None)
@@ -380,6 +406,25 @@ class _Loader:
                         self.db, tag_list, value.label, code=value.code, position=position
                     )
             self.tags[raw.key] = values
+
+    async def office_user(self, settings: Settings, faculty: Faculty, password: str) -> bool:
+        """Make the demo curriculum-office account (role at the demo faculty only).
+
+        Returns False if the data names no account or it already exists.
+        """
+        raw = self.data.office_user
+        if raw is None or await get_user_by_email(self.db, raw.email) is not None:
+            return False
+        user = await create_local_user(
+            self.db, settings, email=raw.email, display_name=raw.display_name, password=password
+        )
+        role = await get_role(self.db, key="curriculum_office")
+        if role is None:
+            raise InvalidRequestError("The system roles are missing; run sync-roles first.")
+        await assign_role(
+            self.db, None, user=user, role=role, scope=ScopeRef(ScopeType.FACULTY, faculty.id)
+        )
+        return True
 
     async def objective(
         self,
@@ -642,8 +687,18 @@ class _Loader:
         return draft
 
 
-async def load_demo(db: AsyncSession, data: DemoData | None = None) -> DemoSummary:
+async def load_demo(
+    db: AsyncSession,
+    data: DemoData | None = None,
+    *,
+    settings: Settings | None = None,
+    office_password: str | None = None,
+) -> DemoSummary:
     """Load the demo dataset in one transaction (or add the draft to an earlier load).
+
+    The faculty curriculum-office account is made only when ``office_password`` and
+    ``settings`` (for the password policy) are given; the data holds no secret. An install
+    loaded earlier gets the faculty tag list and the account added the same way.
 
     Raises:
         ConflictError: If the demo programme is already loaded with its draft.
@@ -664,13 +719,16 @@ async def load_demo(db: AsyncSession, data: DemoData | None = None) -> DemoSumma
                 )
             )
         )
-        if len(versions) != 1 or versions[0].status != VersionStatus.PUBLISHED:
-            raise ConflictError(f"The demo programme {data.programme.code} is already loaded.")
-        # Loaded before the demo had a draft: add it.
+        needs_draft = len(versions) == 1 and versions[0].status == VersionStatus.PUBLISHED
+        faculty = await db.get(Faculty, existing.faculty_id)
+        assert faculty is not None
         with audit_operation("demo.load"):
             await loader.framework()
-            await loader.tag_lists()
-            draft = await loader.next_year(versions[0])
+            await loader.tag_lists(faculty)
+            draft = await loader.next_year(versions[0]) if needs_draft else None
+            added = await _add_office(loader, settings, faculty, office_password)
+        if not needs_draft and not added and not loader.new_lists:
+            raise ConflictError(f"The demo programme {data.programme.code} is already loaded.")
         return DemoSummary(
             programme=existing,
             modules=0,
@@ -680,17 +738,19 @@ async def load_demo(db: AsyncSession, data: DemoData | None = None) -> DemoSumma
             framework_items=len(loader.items),
             mappings=0,
             tag_lists=len(loader.tags),
-            draft_year=draft.academic_year,
+            draft_year=draft.academic_year if draft else None,
             draft_only=True,
+            office_user_added=added,
         )
 
     with audit_operation("demo.load"):
         institution = await loader.institution()
         faculty = await loader.faculty(institution)
         await loader.framework()
-        await loader.tag_lists()
+        await loader.tag_lists(faculty)
         programme, published, modules, events = await loader.curriculum(faculty)
         draft = await loader.next_year(published)
+        added = await _add_office(loader, settings, faculty, office_password)
     return DemoSummary(
         programme=programme,
         modules=modules,
@@ -702,4 +762,13 @@ async def load_demo(db: AsyncSession, data: DemoData | None = None) -> DemoSumma
         tag_lists=len(loader.tags),
         draft_year=draft.academic_year,
         assessments=loader.assessments,
+        office_user_added=added,
     )
+
+
+async def _add_office(
+    loader: _Loader, settings: Settings | None, faculty: Faculty, password: str | None
+) -> bool:
+    if not password or settings is None:
+        return False
+    return await loader.office_user(settings, faculty, password)

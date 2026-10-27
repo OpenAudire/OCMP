@@ -11,6 +11,9 @@
 If the account already exists (e.g. created by SSO), it is made a platform
 admin without changing its password. This is the bootstrap and recovery path
 until the first-run setup wizard exists.
+
+``load-demo`` also makes the demo faculty's curriculum-office account when
+OCMP_DEMO_OFFICE_PASSWORD is set (no account, and no password anywhere, otherwise).
 """
 
 import argparse
@@ -35,6 +38,11 @@ from app.services.authorization import (
 )
 from app.services.setup import setup_needed, setup_token
 from app.services.users import InvalidEmailError, create_local_user, get_user_by_email
+
+OFFICE_NOTE = (
+    "Demo curriculum-office account ready: curriculum.office@example.org "
+    "(password from OCMP_DEMO_OFFICE_PASSWORD, role at the demo faculty only)."
+)
 
 
 async def _sync_roles() -> int:
@@ -87,15 +95,25 @@ async def _purge_audit_log(days: int) -> int:
 
 
 async def _load_demo() -> int:
+    settings = get_settings()
+    password = os.environ.get("OCMP_DEMO_OFFICE_PASSWORD") or None
     try:
         async with database.session_scope() as db:
-            summary = await load_demo(db)
+            summary = await load_demo(db, settings=settings, office_password=password)
             name = summary.programme.name
     except ConflictError as exc:
         print(str(exc))  # noqa: T201
         return 0
+    except PasswordPolicyError as exc:
+        print(f"Error: {exc}", file=sys.stderr)  # noqa: T201
+        return 1
     if summary.draft_only:
-        print(f"Added the {summary.draft_year} draft to {name}.")  # noqa: T201
+        if summary.draft_year:
+            print(f"Added the {summary.draft_year} draft to {name}.")  # noqa: T201
+        else:
+            print(f"Added the missing faculty tag list or account to {name}.")  # noqa: T201
+        if summary.office_user_added:
+            print(OFFICE_NOTE)  # noqa: T201
         return 0
     print(  # noqa: T201
         f"Loaded {name}: {summary.modules} modules, {summary.learning_events} sessions, "
@@ -103,6 +121,10 @@ async def _load_demo() -> int:
         f"{summary.framework_items} framework items, {summary.mappings} mappings, "
         f"{summary.tag_lists} tag lists; draft for {summary.draft_year} copied forward."
     )
+    if summary.office_user_added:
+        print(OFFICE_NOTE)  # noqa: T201
+    else:
+        print("No curriculum-office demo account made (set OCMP_DEMO_OFFICE_PASSWORD to add one).")  # noqa: T201
     return 0
 
 

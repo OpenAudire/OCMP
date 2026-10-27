@@ -10,6 +10,7 @@
     "name": "Faculty of Health Sciences (Demo)",
     "department": {"code": "DHSE-DEMO", "name": "Department of Health Sciences Education (Demo)"}
   },
+  "office_user": {"email": "curriculum.office@example.org", "display_name": "Naledi Curriculum Office (Demo)"},
   "framework_pack": "demo-graduate-competencies.json",
   "taxonomy_scale": "bloom-revised",
   "tag_lists": [
@@ -51,6 +52,18 @@
         {"code": "patient_safety", "label": "Patient safety"},
         {"code": "ipe", "label": "Interprofessional practice"},
         {"code": "community", "label": "Community health"}
+      ]
+    },
+    {
+      "key": "fhs-clinical-skills",
+      "name": "Clinical skills (Faculty of Health Sciences)",
+      "kind": "custom",
+      "entity_types": ["module", "learning_event"],
+      "faculty": true,
+      "values": [
+        {"code": "history_taking", "label": "History taking"},
+        {"code": "physical_examination", "label": "Physical examination"},
+        {"code": "basic_life_support", "label": "Basic life support"}
       ]
     }
   ],
