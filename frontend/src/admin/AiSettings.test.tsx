@@ -88,6 +88,7 @@ function settings(overrides: Partial<AiSettings> = {}): AiSettings {
     },
     status: { state: 'off', reasons: [], budget_message: null },
     providers: [anthropic, openai, ollama],
+    encryption: { keys_stored_ok: true, rotation_needed: false },
     ...overrides,
   };
 }
@@ -202,6 +203,34 @@ describe('AI settings screen', () => {
       'href',
       '/admin/ai'
     );
+  });
+
+  it('warns with an alert when production has no encryption key of its own', async () => {
+    mocked.fetchAiSettings.mockResolvedValue(
+      settings({ encryption: { keys_stored_ok: false, rotation_needed: false } })
+    );
+    renderAt('/admin/ai');
+
+    const alert = await screen.findByRole('alert');
+    expect(within(alert).getByText('API keys cannot be saved yet')).toBeInTheDocument();
+    expect(alert).toHaveTextContent('SECRETS_ENCRYPTION_KEYS');
+  });
+
+  it('shows no encryption warning when the key is set', async () => {
+    renderAt('/admin/ai');
+
+    await screen.findByText('AI is off');
+    expect(screen.queryByText('API keys cannot be saved yet')).not.toBeInTheDocument();
+    expect(screen.queryByText('Saved keys use the older encryption key')).not.toBeInTheDocument();
+  });
+
+  it('says when saved keys still use the older key', async () => {
+    mocked.fetchAiSettings.mockResolvedValue(
+      settings({ encryption: { keys_stored_ok: true, rotation_needed: true } })
+    );
+    renderAt('/admin/ai');
+
+    expect(await screen.findByText('Saved keys use the older encryption key')).toBeInTheDocument();
   });
 
   it('refuses people who may not manage settings', async () => {

@@ -10,7 +10,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.core.permissions import ScopeType
-from app.models import AIRun, AuditLog, FrameworkItem, MappingLink, Objective, User
+from app.models import (
+    AIRun,
+    AuditLog,
+    FrameworkItem,
+    Institution,
+    MappingLink,
+    Objective,
+    Role,
+    User,
+)
 from app.models.mapping import (
     AcceptMethod,
     AIRunType,
@@ -20,7 +29,6 @@ from app.models.mapping import (
     ReviewDecision,
 )
 from app.services import mapping as mapping_service
-from app.services import mapping_review
 from app.services.authorization import INSTANCE, ConflictError, ScopeRef
 from app.services.frameworks import add_item
 from app.services.policies import MappingPolicy
@@ -117,6 +125,19 @@ async def review(
     )
 
 
+async def set_bulk_policy(
+    db: AsyncSession,
+    world: World,  # noqa: F811
+    **settings: int,
+) -> None:
+    institution = await db.get(Institution, world.faculty.institution_id)
+    assert institution is not None
+    institution.settings = {
+        "mapping": {f"bulk_accept_{name}": value for name, value in settings.items()}
+    }
+    await db.flush()
+
+
 @pytest.fixture
 async def queue_world(db_session: AsyncSession, world: World) -> dict[str, MappingLink]:  # noqa: F811
     """AI suggestions in several places, one per scenario."""
@@ -170,7 +191,7 @@ class TestQueueReading:
         assert first["item"]["code"] == "A" and first["item"]["group"] is None
         assert data["items"][2]["item"]["group"] == "G Group"
         assert data["items"][1]["objective"]["learning_event_title"] == "Heart lecture"
-        assert data["counts"] == {"first": 3, "second": 0, "recheck": 0, "total": 3}
+        assert data["counts"] == {"first": 3, "second": 0, "recheck": 0, "waiting": 3, "total": 3}
         assert data["progress"]["waiting"] == 3 and data["four_eyes"] is False
         assert [m["code"] for m in data["facets"]["modules"]] == ["HSC101"]
         assert data["bulk_min_confidence"] == 0.8 and data["bulk_max_links"] == 200
@@ -272,7 +293,7 @@ class TestQueueReading:
             "waiting": 2,
         }
         # Their own first review is not theirs to second.
-        assert data["counts"] == {"first": 2, "second": 0, "recheck": 0, "total": 2}
+        assert data["counts"] == {"first": 2, "second": 0, "recheck": 0, "waiting": 2, "total": 2}
 
     async def test_accepted_links_with_a_changed_objective_are_in_the_recheck_pile(
         self,
@@ -623,7 +644,48 @@ class TestFourEyes:
         )
         await review(api_client, link)
 
-        # A module coordinator reviews first, but holds no second-review permission.
+        # A custom role that reviews first but holds no second-review permission.
+        db_session.add(
+            Role(
+                key="first_only",
+                name="First review only",
+                permissions=["curriculum.view", "mapping.review"],
+                scope_types=["module"],
+            )
+        )
+        await db_session.flush()
+        await login(
+            api_client,
+            db_session,
+            test_settings,
+            "c1@example.org",
+            "first_only",
+            module_scope(world.module),
+        )
+        assert (await api_client.get(QUEUE, params={"stage": "second"})).json()["items"] == []
+        forbidden = await review(api_client, link, expected="needs_second_review")
+        assert forbidden.status_code == 403
+
+    async def test_a_module_coordinator_gives_second_reviews_in_their_own_module(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        world: World,  # noqa: F811
+        queue_world: dict[str, MappingLink],
+    ) -> None:
+        await set_four_eyes(db_session, world)
+        await login(
+            api_client,
+            db_session,
+            test_settings,
+            "m1@example.org",
+            "mapper",
+            programme_scope(world),
+        )
+        await review(api_client, queue_world["heart"])
+        await review(api_client, queue_world["lungs"])
+
         await login(
             api_client,
             db_session,
@@ -632,9 +694,55 @@ class TestFourEyes:
             "module_coordinator",
             module_scope(world.module),
         )
-        assert (await api_client.get(QUEUE, params={"stage": "second"})).json()["items"] == []
-        forbidden = await review(api_client, link, expected="needs_second_review")
-        assert forbidden.status_code == 403
+        waiting = (await api_client.get(QUEUE, params={"stage": "second"})).json()
+        # Only the link of their own module; the other module's link is out of scope.
+        assert [item["id"] for item in waiting["items"]] == [str(queue_world["heart"].id)]
+        assert (await api_client.get(f"{QUEUE}/count")).json()["second"] == 1
+        done = await review(api_client, queue_world["heart"], expected="needs_second_review")
+        assert done.status_code == 200 and done.json()["status"] == "accepted"
+        other = await review(api_client, queue_world["lungs"], expected="needs_second_review")
+        assert other.status_code in (403, 404)
+
+    async def test_nobody_gives_the_second_review_of_a_link_they_reviewed_first(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        world: World,  # noqa: F811
+        queue_world: dict[str, MappingLink],
+    ) -> None:
+        await set_four_eyes(db_session, world)
+        link = queue_world["heart"]
+        # A module coordinator gives the first review...
+        await login(
+            api_client,
+            db_session,
+            test_settings,
+            "c1@example.org",
+            "module_coordinator",
+            module_scope(world.module),
+        )
+        assert (await review(api_client, link)).json()["status"] == "needs_second_review"
+
+        # ...and may neither see it as waiting nor give the second review themselves.
+        queue = (await api_client.get(QUEUE, params={"stage": "second"})).json()
+        assert queue["items"] == [] and queue["counts"]["second"] == 0
+        again = await review(api_client, link, expected="needs_second_review")
+        assert again.status_code == 409
+        assert (await stored(db_session, str(link.id))).status == MappingStatus.NEEDS_SECOND_REVIEW
+
+        # A different coordinator of the same module can.
+        await login(
+            api_client,
+            db_session,
+            test_settings,
+            "c2@example.org",
+            "module_coordinator",
+            module_scope(world.module),
+        )
+        assert (await api_client.get(f"{QUEUE}/count")).json()["second"] == 1
+        done = await review(api_client, link, expected="needs_second_review")
+        assert done.status_code == 200 and done.json()["status"] == "accepted"
 
     async def test_the_author_of_a_link_counts_as_its_first_reviewer(
         self,
@@ -837,13 +945,13 @@ class TestBulkAccept:
 
     async def test_one_batch_is_capped(
         self,
-        monkeypatch: pytest.MonkeyPatch,
         api_client: AsyncClient,
         db_session: AsyncSession,
         test_settings: Settings,
+        world: World,  # noqa: F811
         queue_world: dict[str, MappingLink],
     ) -> None:
-        monkeypatch.setattr(mapping_review, "BULK_MAX_LINKS", 2)
+        await set_bulk_policy(db_session, world, max_links=2)
         await sign_in(api_client, db_session, test_settings, "curriculum_office")
 
         done = (await self.bulk(api_client)).json()
@@ -937,3 +1045,143 @@ class TestBulkAccept:
     ) -> None:
         await sign_in(api_client, db_session, test_settings, "lecturer", module_scope(world.module))
         assert (await self.bulk(api_client)).json()["processed"] == 0
+
+
+class TestBulkPolicyAndMarker:
+    async def bulk(self, client: AsyncClient, **payload: Any) -> Any:
+        return await client.post(f"{QUEUE}/bulk-accept", json={"min_confidence": "0.9"} | payload)
+
+    async def test_the_floor_and_cap_come_from_the_institution_settings(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        world: World,  # noqa: F811
+        queue_world: dict[str, MappingLink],
+    ) -> None:
+        await set_bulk_policy(db_session, world, min_percent=90, max_links=1)
+        await sign_in(api_client, db_session, test_settings, "curriculum_office")
+
+        data = (await api_client.get(QUEUE)).json()
+        assert data["bulk_min_confidence"] == 0.9 and data["bulk_max_links"] == 1
+        # 85% is now below the floor.
+        low = await self.bulk(api_client, min_confidence="0.85", dry_run=True)
+        assert low.status_code == 422 and "90%" in low.json()["detail"]
+        done = (await self.bulk(api_client)).json()
+        assert (done["processed"], done["remaining"]) == (1, done["eligible"] - 1)
+
+    async def test_the_defaults_are_80_and_200_and_the_limits_are_checked(
+        self,
+        db_session: AsyncSession,
+        world: World,  # noqa: F811
+    ) -> None:
+        policy = MappingPolicy()
+        assert (policy.bulk_accept_min_percent, policy.bulk_accept_max_links) == (80, 200)
+        for bad in ({"bulk_accept_min_percent": 49}, {"bulk_accept_min_percent": 101}):
+            with pytest.raises(ValueError):
+                MappingPolicy.model_validate(bad)
+        for bad in ({"bulk_accept_max_links": 0}, {"bulk_accept_max_links": 1001}):
+            with pytest.raises(ValueError):
+                MappingPolicy.model_validate(bad)
+        MappingPolicy.model_validate({"bulk_accept_min_percent": 50, "bulk_accept_max_links": 1000})
+        MappingPolicy.model_validate({"bulk_accept_min_percent": 100, "bulk_accept_max_links": 1})
+
+    async def test_the_marker_is_set_audited_shown_and_cleared_by_a_person(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        queue_world: dict[str, MappingLink],
+    ) -> None:
+        await sign_in(api_client, db_session, test_settings, "curriculum_office")
+        await self.bulk(api_client)
+        heart = queue_world["heart"]
+        assert (await stored(db_session, str(heart.id))).accept_method == AcceptMethod.BULK
+        entries = await db_session.scalars(
+            select(AuditLog).where(AuditLog.entity_id == heart.id, AuditLog.action == "update")
+        )
+        assert any(
+            (entry.after or {}).get("accept_method") == "bulk"
+            and entry.context.get("operation") == "mapping.review_bulk_accept"
+            for entry in entries
+        )
+
+        # It reaches the screens as text data, in the queue's re-check pile and the workspace.
+        heart.needs_recheck = True
+        await db_session.flush()
+        card = (await api_client.get(QUEUE, params={"stage": "recheck"})).json()["items"][0]
+        assert card["accept_method"] == "bulk"
+
+        # A person confirming it still fits has looked at it alone: the marker is superseded.
+        confirmed = await api_client.post(f"{API}/mapping-links/{heart.id}/recheck")
+        assert confirmed.status_code == 200
+        assert (await stored(db_session, str(heart.id))).accept_method == AcceptMethod.INDIVIDUAL
+
+    async def test_editing_a_bulk_accepted_link_by_hand_supersedes_the_marker(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        queue_world: dict[str, MappingLink],
+    ) -> None:
+        await sign_in(api_client, db_session, test_settings, "curriculum_office")
+        await self.bulk(api_client)
+        lungs = queue_world["lungs"]
+        assert (await stored(db_session, str(lungs.id))).accept_method == AcceptMethod.BULK
+
+        edited = await api_client.patch(
+            f"{API}/mapping-links/{lungs.id}",
+            json={"coverage": 2, "depth_match": "matches", "rationale": "Checked by a person."},
+        )
+
+        assert edited.status_code == 200
+        assert (await stored(db_session, str(lungs.id))).accept_method == AcceptMethod.INDIVIDUAL
+
+    async def test_in_four_eyes_mode_a_second_person_supersedes_the_marker(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        world: World,  # noqa: F811
+        queue_world: dict[str, MappingLink],
+    ) -> None:
+        await set_four_eyes(db_session, world)
+        await login(
+            api_client,
+            db_session,
+            test_settings,
+            "m1@example.org",
+            "mapper",
+            programme_scope(world),
+        )
+        await self.bulk(api_client)
+        heart = queue_world["heart"]
+        assert (await stored(db_session, str(heart.id))).accept_method is None
+        await login(
+            api_client,
+            db_session,
+            test_settings,
+            "m2@example.org",
+            "mapper",
+            programme_scope(world),
+        )
+        await review(api_client, heart, expected="needs_second_review")
+        assert (await stored(db_session, str(heart.id))).accept_method == AcceptMethod.INDIVIDUAL
+
+    async def test_the_sidebar_count_is_suggestions_the_user_can_act_on_not_rechecks(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        queue_world: dict[str, MappingLink],
+    ) -> None:
+        await sign_in(api_client, db_session, test_settings, "curriculum_office")
+        heart = queue_world["heart"]
+        heart.status = MappingStatus.ACCEPTED
+        heart.accept_method = AcceptMethod.INDIVIDUAL
+        heart.needs_recheck = True
+        await db_session.flush()
+
+        counts = (await api_client.get(f"{QUEUE}/count")).json()
+
+        assert counts == {"first": 4, "second": 0, "recheck": 1, "waiting": 4, "total": 5}

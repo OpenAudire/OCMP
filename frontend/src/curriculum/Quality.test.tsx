@@ -1,5 +1,5 @@
 import { fireEvent, screen, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '../api/client';
 import * as endpoints from '../api/endpoints';
@@ -67,7 +67,29 @@ const event: LearningEventDetail = {
 
 const eventTimeout = { timeout: 4000 };
 
-describe('live quality check in the objective dialog', () => {
+// Each test renders the whole structure page cold and then waits for a debounce, with waits of
+// up to 3 to 4 seconds inside it. Under a parallel run the sum of those waits is more than the
+// 5 second default for one test, so the test itself failed before the waits could say why.
+// The debounce is skipped with fake timers instead of waited for, and the test gets a budget
+// that fits the waits it contains.
+const COLD_RENDER_BUDGET_MS = 20_000;
+const DEBOUNCE_MS = 700; // QualityPanel's CHECK_DELAY_MS (600) plus a margin
+
+describe('live quality check in the objective dialog', { timeout: COLD_RENDER_BUDGET_MS }, () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Types the wording and lets the debounce pass without waiting for it in real time. */
+  async function typeWording(form: HTMLElement, value: string) {
+    // Real time still passes (shouldAdvanceTime), so Testing Library's polling keeps working.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fireEvent.change(within(form).getByRole('textbox', { name: /Wording/ }), {
+      target: { value },
+    });
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
+  }
+
   beforeEach(() => {
     vi.resetAllMocks();
     window.localStorage.clear();
@@ -112,9 +134,7 @@ describe('live quality check in the objective dialog', () => {
     const form = await openDialog();
 
     expect(within(form).getByText('Type the wording to see suggestions.')).toBeInTheDocument();
-    fireEvent.change(within(form).getByRole('textbox', { name: /Wording/ }), {
-      target: { value: 'Understand the heart well.' },
-    });
+    await typeWording(form, 'Understand the heart well.');
 
     expect(await within(form).findByText('Warnings: 1. Notes: 1.', {}, eventTimeout)).toBeInTheDocument();
     expect(mocked.checkObjectiveText).toHaveBeenCalledTimes(1);
@@ -159,9 +179,7 @@ describe('live quality check in the objective dialog', () => {
       parent_ids: [],
     });
     const form = await openDialog();
-    fireEvent.change(within(form).getByRole('textbox', { name: /Wording/ }), {
-      target: { value: 'Explain the heart.' },
-    });
+    await typeWording(form, 'Explain the heart.');
 
     const use = await within(form).findByRole(
       'button',
@@ -196,9 +214,7 @@ describe('live quality check in the objective dialog', () => {
       parent_ids: [],
     });
     const form = await openDialog();
-    fireEvent.change(within(form).getByRole('textbox', { name: /Wording/ }), {
-      target: { value: 'Explain the heart.' },
-    });
+    await typeWording(form, 'Explain the heart.');
 
     expect(
       await within(form).findByText(

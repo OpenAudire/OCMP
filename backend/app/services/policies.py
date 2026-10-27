@@ -24,6 +24,10 @@ class MappingPolicy(BaseModel):
     four_eyes: bool = False
     # Rejections also need a second reviewer (by default a first reject is final).
     second_review_for_rejects: bool = False
+    # "Accept all" never goes below this confidence (percent) and handles at most this many
+    # links in one action (ADR 040). The limits are the allowed range for admins to choose from.
+    bulk_accept_min_percent: Annotated[int, Field(ge=50, le=100)] = 80
+    bulk_accept_max_links: Annotated[int, Field(ge=1, le=1000)] = 200
 
 
 class CreditPolicy(BaseModel):

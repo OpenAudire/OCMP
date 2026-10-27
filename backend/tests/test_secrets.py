@@ -6,6 +6,7 @@ from app.core.config import Settings
 from app.core.secrets import (
     PREFIX,
     SecretBox,
+    SecretsNotConfiguredError,
     SecretUnreadableError,
     derive_key,
     key_id,
@@ -17,7 +18,8 @@ DB = "postgresql+asyncpg://user:pass@localhost:5432/db"
 
 
 def settings(**kwargs: object) -> Settings:
-    return Settings(secret_key=SECRET_KEY, database_url=DB, **kwargs)  # type: ignore[arg-type]
+    options: dict[str, object] = {"environment": "development", **kwargs}
+    return Settings(secret_key=SECRET_KEY, database_url=DB, **options)  # type: ignore[arg-type]
 
 
 class TestSecretBox:
@@ -123,3 +125,34 @@ class TestConfiguredKeyValidation:
             settings(secrets_encryption_keys=["not-a-key"])
 
         assert "not-a-key" not in str(error.value)
+
+
+class TestProductionWithoutAnOwnKey:
+    def test_nothing_new_is_sealed_but_old_values_stay_readable(self) -> None:
+        stored = SecretBox.from_settings(settings()).encrypt("value")
+
+        box = SecretBox.from_settings(settings(environment="production"))
+
+        assert box.may_encrypt is False
+        with pytest.raises(SecretsNotConfiguredError, match="SECRETS_ENCRYPTION_KEYS"):
+            box.encrypt("another")
+        assert box.decrypt(stored) == "value"
+
+    def test_with_a_configured_key_production_seals_and_old_values_need_rotation(self) -> None:
+        stored = SecretBox.from_settings(settings()).encrypt("value")
+        configured = new_key()
+
+        box = SecretBox.from_settings(
+            settings(environment="production", secrets_encryption_keys=[configured])
+        )
+
+        assert box.may_encrypt is True
+        assert box.primary_id == key_id(configured)
+        assert box.decrypt(stored) == "value"
+        assert box.needs_rotation(stored) is True
+
+    def test_development_keeps_the_derived_key_fallback(self) -> None:
+        box = SecretBox.from_settings(settings(environment="development"))
+
+        assert box.may_encrypt is True
+        assert box.decrypt(box.encrypt("value")) == "value"

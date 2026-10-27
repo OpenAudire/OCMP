@@ -59,6 +59,7 @@ def _link(link: MappingLink, item: FrameworkItem, framework: Framework) -> Works
         rationale=link.rationale,
         source=link.source,
         status=link.status,
+        accept_method=link.accept_method,
         needs_recheck=link.needs_recheck,
         needs_discussion=link.needs_discussion,
     )

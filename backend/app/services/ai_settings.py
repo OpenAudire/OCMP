@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.ai.locality import normalise_base_url
 from app.ai.providers.anthropic import BASE_URL as ANTHROPIC_BASE_URL
 from app.ai.providers.anthropic import SUGGESTED_MODELS as ANTHROPIC_MODELS
-from app.core.secrets import SecretBox, SecretUnreadableError
+from app.core.secrets import SecretBox, SecretsNotConfiguredError, SecretUnreadableError
 from app.models import Institution
 from app.models.ai_settings import AIProviderConfig, AIProviderKind, AISettings, DataLocation
 from app.schemas.ai import (
@@ -26,6 +26,7 @@ from app.schemas.ai import (
     AISettingsRead,
     AIUpdate,
     BudgetRead,
+    EncryptionRead,
     KeyStatus,
     ProviderRead,
     ProviderUpdate,
@@ -187,7 +188,10 @@ def _apply_provider(
         value = change.api_key.get_secret_value().strip()
         if not value:
             raise InvalidRequestError("The API key is empty.")
-        config.api_key_encrypted = box.encrypt(value)
+        try:
+            config.api_key_encrypted = box.encrypt(value)
+        except SecretsNotConfiguredError as exc:
+            raise InvalidRequestError(str(exc)) from exc
         config.api_key_set_at = now
 
 
@@ -370,4 +374,11 @@ async def overview(db: AsyncSession, institution: Institution, box: SecretBox) -
             budget_message=budget_message,
         ),
         providers=[_provider_read(kind, configs.get(kind), box) for kind in PROVIDERS],
+        encryption=EncryptionRead(
+            keys_stored_ok=box.may_encrypt,
+            rotation_needed=any(
+                c.api_key_encrypted and box.needs_rotation(c.api_key_encrypted)
+                for c in configs.values()
+            ),
+        ),
     )

@@ -7,8 +7,9 @@ Rules, enforced here in code:
    supply exactly those fields. Anything else is refused.
 2. Every field value is scanned for personal information: email addresses, phone numbers,
    South African ID numbers, student and staff numbers, long ID-like digit runs, IP
-   addresses, titles followed by a name ("Dr Smith"), and the names of the users of this
-   installation.
+   addresses, labelled hospital, folder and file numbers, dates of birth that are labelled
+   as such (English, Afrikaans, isiZulu), titles followed by a name ("Dr Smith", "Mnr Botha",
+   "Mnu Dlamini", "Nkk Zulu"), and the names of the users of this installation.
 3. By default a finding **refuses** the call. If the institution chose redaction, the text
    is replaced with placeholders and scanned again; anything left refuses.
 4. The assembled messages are scanned once more before the request is sealed.
@@ -28,6 +29,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.confirmation import ConfirmationReceipt
 from app.ai.errors import PersonalDataRefusedError, PrivacyViolationError
 from app.models import User
 from app.models.ai_settings import PersonalDataAction
@@ -39,6 +41,8 @@ class Category(StrEnum):
     ID_NUMBER = "id_number"
     STUDENT_NUMBER = "student_number"
     IP_ADDRESS = "ip_address"
+    HOSPITAL_NUMBER = "hospital_number"
+    DATE_OF_BIRTH = "date_of_birth"
     NAME = "name"
 
 
@@ -48,6 +52,8 @@ _PLACEHOLDER_TEXT = {
     Category.ID_NUMBER: "[id number removed]",
     Category.STUDENT_NUMBER: "[number removed]",
     Category.IP_ADDRESS: "[address removed]",
+    Category.HOSPITAL_NUMBER: "[number removed]",
+    Category.DATE_OF_BIRTH: "[date removed]",
     Category.NAME: "[name removed]",
 }
 
@@ -70,6 +76,64 @@ ALLOWED_FIELDS: dict[str, int] = {
     "study_guide_text": 60_000,
 }
 
+
+# --- Hospital numbers and dates of birth (ADR 042) ---------------------------------------
+# Both are deliberately conservative: a bare number or an unlabelled date is ordinary
+# curriculum text (credits, years, week numbers, historical dates) and is never flagged.
+# Hospital number formats differ per hospital, so only a number that follows a label such as
+# "hospital number", "folder no", "MRN" or "hospitaalnommer" and holds at least five digits counts.
+
+_HOSPITAL_LABEL = (
+    r"(?:(?:hospital|hosp|patient|pt|folder|file|case|record|chart|medical\s+record)"
+    r"\s*(?:number|no|nr|num|#)"
+    r"|mrn|urn"
+    r"|hospitaal\s*(?:nommer|nr|no)|pasi[e\u00eb]nt\s*(?:nommer|nr|no)|l[e\u00ea]er\s*(?:nommer|nr|no)"
+    r"|geval\s*(?:nommer|nr|no)"
+    r"|inombolo\s+ye(?:sibhedlela|fayela|fayili|siguli|folda))"
+)
+_HOSPITAL_VALUE = r"(?=(?:[A-Za-z0-9/\-]*\d){5})[A-Za-z0-9][A-Za-z0-9/\-]{4,}"
+_HOSPITAL_NUMBER = re.compile(
+    r"(?<![\w])" + _HOSPITAL_LABEL + r"\b[\s.:#=\-]*" + _HOSPITAL_VALUE, re.IGNORECASE
+)
+
+_MONTHS = (
+    # English, Afrikaans, isiZulu (modern and traditional names); longest forms first.
+    r"(?:january|february|march|april|may|june|july|august|september|october|november|december"
+    r"|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec"
+    r"|januarie|februarie|maart|mei|junie|julie|augustus|oktober|desember|mrt|okt|des"
+    r"|januwari|februwari|mashi|apreli|meyi|juni|julayi|agasti|septhemba|oktoba|novemba|disemba"
+    r"|u?masingana|u?nhlolanja|u?ndasa|u?mbasa|u?nhlaba|u?nhlangulana|u?ntulikazi|u?ncwaba"
+    r"|u?mandulo|u?mfumfu|u?lwezi|u?zibandlela)"
+)
+_YEAR = r"(?:19|20)\d{2}"
+_DATE = (
+    r"(?:\d{1,2}[/\-.]\d{1,2}[/\-.](?:" + _YEAR + r"|\d{2})(?!\d)"
+    r"|" + _YEAR + r"[/\-.]\d{1,2}[/\-.]\d{1,2}(?!\d)"
+    r"|\d{1,2}(?:st|nd|rd|th|ste|de|e)?\s+(?:of\s+|van\s+)?" + _MONTHS + r"\.?,?\s+" + _YEAR + r"\b"
+    r"|" + _MONTHS + r"\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+" + _YEAR + r"\b"
+    r"|" + _MONTHS + r"\.?,?\s+" + _YEAR + r"\b)"
+)
+_BIRTH_LABEL = (
+    r"(?:d\.?\s?o\.?\s?b\.?|date\s+of\s+birth|birth\s*date|birthday|born"
+    r"|geboortedatum|gebore|geb\.|geboorte-datum"
+    r"|usuku\s+lokuzalwa|usuku\s+lokuzalwa|wazalwa|kwazalwa|ukuzalwa)"
+)
+_DATE_OF_BIRTH = re.compile(
+    r"(?<![\w])"
+    + _BIRTH_LABEL
+    + r"(?![\w])[\s:=\-\u2013]*(?:(?:is|was|on|op|die|the|yi|ngo)\s+)*"
+    + _DATE,
+    re.IGNORECASE,
+)
+
+_TITLE = (
+    r"(?:Dr|DR|Prof|PROF|Professor|Mr|MR|Mrs|MRS|Ms|MS|Miss|Mx|Adv"
+    # Afrikaans and isiZulu titles, any letter case, with or without a full stop.
+    r"|(?i:mnr|mev|mnu|nkk)"
+    # "Me" alone is also the English word, so it counts only with its full stop.
+    r"|Me(?=\.))"
+)
+
 # Ordered by priority: earlier patterns win where matches overlap.
 _PATTERNS: tuple[tuple[Category, re.Pattern[str]], ...] = (
     (Category.EMAIL, re.compile(r"[\w.%+\-]+@[\w\-]+(?:\.[\w\-]+)+")),
@@ -91,11 +155,13 @@ _PATTERNS: tuple[tuple[Category, re.Pattern[str]], ...] = (
         ),
     ),
     (Category.IP_ADDRESS, re.compile(r"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])")),
+    (Category.HOSPITAL_NUMBER, _HOSPITAL_NUMBER),
+    (Category.DATE_OF_BIRTH, _DATE_OF_BIRTH),
     (Category.STUDENT_NUMBER, re.compile(r"(?<![\w.])\d{7,12}(?![\w])|\b[A-Za-z]{1,2}\d{7,9}\b")),
     (
         Category.NAME,
         re.compile(
-            r"\b(?:Dr|Prof|Professor|Mr|Mrs|Ms|Miss|Mx|Mnr|Mev|Adv)\b\.?\s+"
+            r"\b" + _TITLE + r"\b\.?\s+"
             r"[A-Z][\w'\N{RIGHT SINGLE QUOTATION MARK}\-]+"
             r"(?:\s+[A-Z][\w'\N{RIGHT SINGLE QUOTATION MARK}\-]+)?"
         ),
@@ -243,17 +309,25 @@ def prepare(
     action: PersonalDataAction,
     max_output_tokens: int,
     temperature: float | None = None,
+    study_guide_confirmation: ConfirmationReceipt | None = None,
 ) -> GuardedRequest:
     """Check, if needed redact, and seal a request.
 
     Raises:
-        PrivacyViolationError: If the fields are not exactly the template's allowed fields.
+        PrivacyViolationError: If the fields are not exactly the template's allowed fields,
+            or ``study_guide_text`` is used without the uploader's confirmation receipt.
         PersonalDataRefusedError: If personal information is found and not removable.
     """
     expected = set(template.field_names)
     if set(fields) != expected:
         raise PrivacyViolationError(
             f"Fields for {template.name} must be exactly {sorted(expected)}; got {sorted(fields)}."
+        )
+
+    if "study_guide_text" in expected and study_guide_confirmation is None:
+        raise PrivacyViolationError(
+            "Study guide text needs the uploader's confirmation that it holds no real "
+            "patient information (confirm_no_patient_information)."
         )
 
     refused: dict[str, dict[str, int]] = {}

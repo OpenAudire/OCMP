@@ -70,6 +70,12 @@ function LinkCard({
             ? t(`mapping.depth.chip.${link.depth_match}`)
             : t('mapping.depth.unknown')}
         </span>
+        {link.accept_method === 'bulk' && (
+          <span className={classes.chip} data-tone="attention">
+            <IconAlertTriangle size={14} aria-hidden="true" />
+            {t('review.acceptedInBulk')}
+          </span>
+        )}
         {link.needs_recheck && (
           <span className={classes.chip} data-tone="attention">
             <IconAlertTriangle size={14} aria-hidden="true" />

@@ -111,6 +111,8 @@ def test_settings() -> Settings:
         database_url="postgresql+asyncpg://test:test@localhost:5432/test",
         redis_url="redis://localhost:6379/0",
         login_rate_limit_per_ip=20,
+        # Production needs its own encryption key before API keys can be stored (ADR 041).
+        environment="development",
         # The test client connects directly (no proxy).
         trusted_proxies=[],
     )

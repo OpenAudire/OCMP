@@ -78,6 +78,34 @@ function providerName(t: TFunction, kind: AiProviderKind): string {
   return t(`admin.ai.provider.${kind}.name`);
 }
 
+// --- The encryption key (ADR 041) --------------------------------------------------
+
+/** Production without its own SECRETS_ENCRYPTION_KEYS cannot store a provider key. */
+function EncryptionNotice({ settings }: { settings: AiSettings }) {
+  const { t } = useTranslation();
+  const { keys_stored_ok: ok, rotation_needed: rotation } = settings.encryption;
+  return (
+    <>
+      {!ok && (
+        <Alert
+          color="red"
+          variant="light"
+          role="alert"
+          icon={<IconAlertTriangle aria-hidden />}
+          title={t('admin.ai.encryption.missingTitle')}
+        >
+          {t('admin.ai.encryption.missingBody')}
+        </Alert>
+      )}
+      {ok && rotation && (
+        <Alert color="yellow" variant="light" role="status" title={t('admin.ai.encryption.rotateTitle')}>
+          {t('admin.ai.encryption.rotateBody')}
+        </Alert>
+      )}
+    </>
+  );
+}
+
 // --- Status and the test button ----------------------------------------------------
 
 function StatusCard({ settings, dirty }: { settings: AiSettings; dirty: boolean }) {
@@ -540,6 +568,7 @@ export function AiSettingsPage() {
   }
   return (
     <Page title={title} description={t('admin.ai.description')}>
+      <EncryptionNotice settings={settings.data} />
       <AiSettingsForm
         key={settings.dataUpdatedAt}
         settings={settings.data}

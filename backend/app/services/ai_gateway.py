@@ -19,6 +19,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai import prompts
+from app.ai.confirmation import ConfirmationReceipt
 from app.ai.errors import (
     AIAcknowledgementMissingError,
     AIBudgetExceededError,
@@ -156,6 +157,7 @@ async def complete(
     max_output_tokens: int | None = None,
     run: AIRun | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
+    study_guide_confirmation: ConfirmationReceipt | None = None,
 ) -> GatewayResult:
     """Make one guarded provider call and record it.
 
@@ -176,6 +178,7 @@ async def complete(
             action=plan.row.on_personal_data,
             max_output_tokens=max_output_tokens or plan.row.max_output_tokens,
             temperature=plan.provider_config.temperature,
+            study_guide_confirmation=study_guide_confirmation,
         )
     except PersonalDataRefusedError as exc:
         await _record_refusal(db, plan, template, run_type, actor_id, AIRunStatus.FAILED, str(exc))

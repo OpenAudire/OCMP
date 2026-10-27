@@ -145,6 +145,7 @@ python -m venv .venv-docs
 
 - **CI runs exactly the local commands** (`ruff check .`, `ruff format --check .`, `mypy app`, `pytest`) after `pip install -e ".[dev]"`; all tool settings live in `pyproject.toml`. Never add flags in CI that local runs do not use
 - **Always use the virtual environment** for backend work
+- `ENVIRONMENT` defaults to `production`: for local backend work set `ENVIRONMENT=development` (otherwise a new AI key is refused without `SECRETS_ENCRYPTION_KEYS`, ADR 041); tests set it in `test_settings`
 - **Never install packages globally** - add them to `pyproject.toml`
 - Line endings are normalized to LF via `.gitattributes`
 
@@ -227,14 +228,28 @@ export function ModuleCount({ count }: { count: number }) {
   review needs `mapping.review`, a second `mapping.second_review`; a decision carries the
   `expected_status` the person saw (409 if the link moved on); bulk accept has a confidence floor and
   a batch cap and never touches second reviews; single-key shortcuts work only while focus is inside
-  the queue and can be switched off (WCAG 2.1.4)
+  the queue and can be switched off (WCAG 2.1.4). The bulk floor and cap are `settings["mapping"]`
+  (`bulk_accept_min_percent`, `bulk_accept_max_links`); module coordinators hold `mapping.second_review`
+  at module scope (nobody seconds a link they reviewed first). Mapping links accepted by bulk accept carry
+  `accept_method = bulk` until a person reviews or edits them individually; reports must show it (Slice
+  1.21). The sidebar count is `counts.waiting` (first plus second review, never re-checks), "99+" above 99
 - Institution settings are read through `app/services/institution_settings.py` (typed sections), never raw JSON
 - AI (ADR 041, 042): every provider call goes through `app/services/ai_gateway.py` `complete()`; prompts are
   `PromptTemplate`s in `app/ai/prompts.py` whose fields must be on `ALLOWED_FIELDS` in `app/ai/privacy.py`
   (a reviewed change); adapters in `app/ai/providers/` accept only a sealed `GuardedRequest`. Read the current
   official documentation before touching an adapter and record the date in its docstring. Secrets are encrypted
   with `app/core/secrets.py` (`SecretBox`), kept in `__audit_exclude__` columns and never returned; logs hold ids
-  and counts only, never prompts, answers, names or keys. Tests use `httpx.MockTransport`, never a real provider
+  and counts only, never prompts, answers, names or keys. Tests use `httpx.MockTransport`, never a real provider.
+  `ENVIRONMENT` (`production` by default) decides whether `SECRETS_ENCRYPTION_KEYS` is required: in production
+  a new secret is refused without it; development may fall back to the key derived from `SECRET_KEY`
+- **Study-guide upload (Slice 1.18) must** call `app/services/study_guide_confirmation.confirm_no_patient_information`
+  first, refuse the upload without a ticked confirmation (the required `StudyGuideConfirmation` field of the
+  request, text version checked), show `frontend/src/ui/StudyGuideConfirmation.tsx`, send its payload, never
+  store or log the file name in that audit event, and pass the returned receipt to `ai_gateway.complete(...,
+  study_guide_confirmation=receipt)`: the privacy guard refuses `study_guide_text` without one. Add an API
+  test that an upload without the confirmation is 422 and writes no file
+- Privacy guard rules (`app/ai/privacy.py`): every new pattern needs tests for what it finds and what it must
+  leave alone (ordinary curriculum dates, years, week numbers); findings are categories and counts, never text
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 

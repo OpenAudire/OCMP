@@ -159,7 +159,7 @@ export function AppLayout() {
           <Sidebar
             items={items}
             pathname={location.pathname}
-            counts={{ review: reviewCount.data?.total }}
+            counts={{ review: reviewCount.data?.waiting }}
             institutionName={institution?.name}
             onNavigate={close}
           />

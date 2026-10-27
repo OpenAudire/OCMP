@@ -179,6 +179,9 @@ jobs:
           cp .env.example .env
           sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$(openssl rand -hex 32)/" .env
           sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 16)/" .env
+          # Production needs its own key before an AI key can be saved (a Fernet key is
+          # 32 random bytes as URL-safe base64).
+          echo "SECRETS_ENCRYPTION_KEYS=$(openssl rand -base64 32 | tr '+/' '-_')" >> .env
           docker compose up -d --build --wait
 
       # The demo loader creates the institution when none exists; the admin password is

@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     app_name: str = "Curriculum in Context"
     app_version: str = "0.1.0"
     debug: bool = False
+    # "production" (the default, so a forgotten setting is the strict one) or "development".
+    # Production requires SECRETS_ENCRYPTION_KEYS before AI provider keys can be stored;
+    # development falls back to a key derived from SECRET_KEY (ADR 041).
+    environment: Literal["production", "development"] = "production"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     # Security
@@ -121,9 +125,15 @@ class Settings(BaseSettings):
     # settings screen (ADR 042). Keys are stored encrypted (ADR 041).
 
     # Keys that encrypt stored secrets (AI provider keys), newest first. Each is a
-    # Fernet key (`python -m app.cli new-encryption-key`). Empty: a key is derived from
-    # SECRET_KEY. Older keys stay readable until `rotate-secrets` re-encrypts.
+    # Fernet key (`python -m app.cli new-encryption-key`). Empty: only in development a
+    # key is derived from SECRET_KEY (in production nothing new is stored). Older keys stay
+    # readable until `rotate-secrets` re-encrypts.
     secrets_encryption_keys: CommaSeparatedList = Field(default_factory=list)
+
+    @property
+    def secrets_key_missing_in_production(self) -> bool:
+        """Production without its own encryption key: new secrets cannot be stored (ADR 041)."""
+        return self.environment == "production" and not self.secrets_encryption_keys
 
     # Stored AI prompts and responses are cleared after this many days
     # (0 = keep). Run records, token counts and links are always kept.

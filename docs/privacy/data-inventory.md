@@ -48,7 +48,8 @@ only thing sent is curriculum text built from fixed templates and allow-listed f
 text, framework items, module and session titles and descriptions, study-guide text). Personal
 information must never be sent to an AI provider, and a privacy guard enforces this in code before any
 provider is called (`app/ai/privacy.py`): email addresses, phone numbers, ID, student and staff
-numbers, IP addresses, titles followed by a name and the names of this installation's users are found
+numbers, IP addresses, labelled hospital, folder and file numbers, labelled dates of birth, titles
+(English, Afrikaans, isiZulu) followed by a name and the names of this installation's users are found
 and the call is refused (or, if the administrator chose it, the found text is replaced by a
 placeholder and checked again). A refusal is recorded with counts and kinds only, never the text.
 
@@ -58,7 +59,10 @@ placeholder and checked again). A refusal is recorded with counts and kinds only
 | Who made a call or run, and when | `ai_runs.created_by_id`, `ai_run_calls.created_by_id`, timestamps | Accountability, budgets | Kept; set to empty when the user is deleted |
 | Who acknowledged the warning about text leaving South Africa, and when | `ai_settings.ack_by_id`, `.ack_at` | POPIA transparency about the transfer | Kept; set to empty when the user is deleted |
 | AI provider API key | `ai_provider_configs.api_key_encrypted` (encrypted, ADR 041) | Calling the provider | Until removed or replaced. Not personal data; a secret. It is never returned by the API, never in the audit log (the column is recorded as "changed" only) and never in a log. Backups hold only the ciphertext |
+| That an uploader confirmed a study guide holds no real patient information: the user (audit actor), the time, the version of the confirmation text, a SHA-256 of the file content and its size. **Not the file name** (it could carry a person's name) and not the content | `audit_log` entries `study_guide_confirmation` (Slice 1.14a; written by the study-guide upload, Slice 1.18) | Accountability for what may be sent to an AI provider | As the audit log (`AUDIT_LOG_RETENTION_DAYS`); the actor column is emptied when the user is deleted |
 | Provider choice, addresses, budgets, local-only mode | `ai_settings`, `ai_provider_configs` | Configuration | Kept; changes are in the audit log with the acting admin |
+
+How a bulk-accepted mapping link was accepted (`mapping_links.accept_method`) records no person beyond the existing reviewer and audit columns. The server also logs, at start, a warning when `SECRETS_ENCRYPTION_KEYS` is missing in production (no personal data).
 
 Logs of AI calls hold run ids, user ids, the provider name, token counts, timings and the number of
 findings of a refusal. Never a prompt, an answer, a name, an address or a key.

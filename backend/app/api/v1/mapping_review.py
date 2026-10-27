@@ -31,7 +31,7 @@ from app.schemas.mapping_review import (
 )
 from app.services import mapping_review
 from app.services.authorization import has_permission
-from app.services.mapping_review import BULK_MAX_LINKS, BULK_MIN_CONFIDENCE, QueueFilter
+from app.services.mapping_review import QueueFilter, institution_policy
 
 router = APIRouter(tags=["mapping"])
 
@@ -51,6 +51,7 @@ async def get_review_queue(
     limit: Annotated[int, Query(ge=1, le=mapping_review.MAX_PAGE)] = mapping_review.DEFAULT_PAGE,
 ) -> ReviewQueue:
     """One page of the links waiting for this user, with progress and the filter choices."""
+    policy = await institution_policy(db)
     page = await mapping_review.review_queue(
         db,
         user,
@@ -70,14 +71,14 @@ async def get_review_queue(
         counts=page.counts,
         facets=page.facets,
         four_eyes=page.four_eyes,
-        bulk_min_confidence=float(BULK_MIN_CONFIDENCE),
-        bulk_max_links=BULK_MAX_LINKS,
+        bulk_min_confidence=policy.bulk_accept_min_percent / 100,
+        bulk_max_links=policy.bulk_accept_max_links,
     )
 
 
 @router.get("/mapping/review-queue/count", response_model=QueueCounts)
 async def get_review_count(user: CurrentUser, db: DbSession) -> QueueCounts:
-    """How many links wait for this user, for the sidebar."""
+    """How many suggestions wait for this user; ``waiting`` is the sidebar's number."""
     return await mapping_review.waiting_counts(db, user)
 
 

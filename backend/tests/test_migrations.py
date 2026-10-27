@@ -17,3 +17,46 @@ def test_downgrade_and_upgrade_round_trip(migrated_database: str) -> None:
     config = alembic_config(migrated_database)
     run_alembic(lambda: command.downgrade(config, "base"))
     run_alembic(lambda: command.upgrade(config, "head"))
+
+
+def test_module_coordinators_gain_second_review_on_existing_installs(
+    migrated_database: str,
+) -> None:
+    """Migration 0020 adds the permission to the system role only, once, and can be undone."""
+    import asyncio
+    import uuid
+
+    from sqlalchemy import text
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    config = alembic_config(migrated_database)
+    run_alembic(lambda: command.downgrade(config, "0019"))
+
+    async def query(sql: str, **params: object) -> list[tuple[object, ...]]:
+        engine = create_async_engine(migrated_database)
+        try:
+            async with engine.begin() as connection:
+                result = await connection.execute(text(sql), params)
+                return list(result.all()) if result.returns_rows else []
+        finally:
+            await engine.dispose()
+
+    insert = (
+        "INSERT INTO roles (id, key, name, description, is_system, permissions, scope_types,"
+        " requires_expiry, created_at, updated_at) VALUES (:id, :key, :key, '', :system,"
+        " ARRAY['mapping.review'], ARRAY['module'], false, now(), now())"
+    )
+    asyncio.run(query(insert, id=uuid.uuid4(), key="module_coordinator", system=True))
+    asyncio.run(query(insert, id=uuid.uuid4(), key="custom_coordinator", system=False))
+    try:
+        run_alembic(lambda: command.upgrade(config, "0020"))
+        rows = dict(asyncio.run(query("SELECT key, permissions FROM roles")))
+        assert rows["module_coordinator"] == ["mapping.review", "mapping.second_review"]
+        assert rows["custom_coordinator"] == ["mapping.review"]
+
+        run_alembic(lambda: command.downgrade(config, "0019"))
+        rows = dict(asyncio.run(query("SELECT key, permissions FROM roles")))
+        assert rows["module_coordinator"] == ["mapping.review"]
+    finally:
+        asyncio.run(query("DELETE FROM roles WHERE key LIKE '%_coordinator'"))
+        run_alembic(lambda: command.upgrade(config, "head"))

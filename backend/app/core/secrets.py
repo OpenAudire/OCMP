@@ -6,8 +6,10 @@ key, not the key) says which configured key sealed it, so rotation can find old 
 missing key gives a clear message.
 
 Keys come from ``SECRETS_ENCRYPTION_KEYS`` (newest first). A key derived from ``SECRET_KEY``
-is always appended as a read-only fallback, so an install that never sets the variable
-works, and values made before the variable was set stay readable until rotated.
+is always appended as a read-only fallback, so values made before the variable was set stay
+readable until rotated. In development the derived key also seals new values; in production
+(``ENVIRONMENT=production``, the default) nothing new is sealed until a configured key
+exists, because a key derived from ``SECRET_KEY`` would tie every stored secret to it.
 """
 
 import base64
@@ -21,6 +23,10 @@ from app.core.config import Settings
 
 PREFIX = "ocmp1"
 _HKDF_INFO = b"ocmp secret store v1"
+
+
+class SecretsNotConfiguredError(Exception):
+    """Production has no ``SECRETS_ENCRYPTION_KEYS``, so new secrets cannot be stored."""
 
 
 class SecretUnreadableError(Exception):
@@ -48,24 +54,36 @@ def key_id(key: str) -> str:
 class SecretBox:
     """Encrypts with the newest key, decrypts with any configured key."""
 
-    def __init__(self, keys: list[str]) -> None:
+    def __init__(self, keys: list[str], *, may_encrypt: bool = True) -> None:
         if not keys:
             raise ValueError("At least one key is needed.")
+        self.may_encrypt = may_encrypt
         self._keys = {key_id(k): Fernet(k.encode()) for k in keys}
         self._primary = key_id(keys[0])
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "SecretBox":
-        """Configured keys first, then the key derived from ``SECRET_KEY``."""
+        """Configured keys first, then the key derived from ``SECRET_KEY`` (read fallback)."""
         keys = [*settings.secrets_encryption_keys, derive_key(settings.secret_key)]
-        return cls(list(dict.fromkeys(keys)))
+        return cls(
+            list(dict.fromkeys(keys)), may_encrypt=not settings.secrets_key_missing_in_production
+        )
 
     @property
     def primary_id(self) -> str:
         return self._primary
 
     def encrypt(self, plaintext: str) -> str:
-        """Seal a value with the newest key."""
+        """Seal a value with the newest key.
+
+        Raises:
+            SecretsNotConfiguredError: In production without ``SECRETS_ENCRYPTION_KEYS``.
+        """
+        if not self.may_encrypt:
+            raise SecretsNotConfiguredError(
+                "Set SECRETS_ENCRYPTION_KEYS on the server before saving an API key "
+                "(make one with: python -m app.cli new-encryption-key)."
+            )
         token = self._keys[self._primary].encrypt(plaintext.encode()).decode()
         return f"{PREFIX}:{self._primary}:{token}"
 

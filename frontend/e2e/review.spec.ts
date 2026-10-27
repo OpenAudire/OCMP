@@ -245,12 +245,20 @@ test.describe('review queue', () => {
     await expect(card(one.text)).toBeVisible();
 
     // The menu shows how many links wait for this person, in words as well.
+    // The number is the suggestions this person can act on (not re-checks); "99+" above 99.
     const count = (await (await page.request.get(`${API}/mapping/review-queue/count`)).json()) as {
-      total: number;
+      waiting: number;
     };
-    expect(count.total).toBeGreaterThanOrEqual(3);
+    expect(count.waiting).toBeGreaterThanOrEqual(3);
+    const spoken =
+      count.waiting > 99
+        ? 'more than 99 suggestions waiting'
+        : `${count.waiting} suggestions waiting`;
     await expect(
-      page.getByRole('link', { name: new RegExp(`Review queue\\s+${count.total} waiting`) })
+      page.getByRole('link', { name: new RegExp(`Review queue\\s+${spoken}`) })
+    ).toBeVisible();
+    await expect(
+      page.locator('nav').getByText(count.waiting > 99 ? '99+' : String(count.waiting), { exact: true })
     ).toBeVisible();
     await expectNoAccessibilityViolations(page);
 
@@ -260,6 +268,14 @@ test.describe('review queue', () => {
     const dialog = page.getByRole('dialog');
     await expect(dialog.getByText(/No waiting suggestion is at 90% or above\./)).toBeVisible();
     await expect(dialog.getByText(/never accepted in bulk/)).toBeVisible();
+    // The choices start at the institution's floor (80% unless the administrator changed it).
+    await expect(dialog.getByRole('option')).toHaveText([
+      '80% and above',
+      '85% and above',
+      '90% and above',
+      '95% and above',
+    ]);
+    await expect(dialog).toBeVisible();
     await expectNoAccessibilityViolations(page);
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();

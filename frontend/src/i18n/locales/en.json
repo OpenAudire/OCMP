@@ -87,8 +87,9 @@
     "explorer": "Explorer",
     "review": "Review queue",
     "import": "Import and export",
-    "waiting_one": "{{count}} waiting",
-    "waiting_other": "{{count}} waiting"
+    "waiting_one": "{{count}} suggestion waiting",
+    "waiting_other": "{{count}} suggestions waiting",
+    "waitingMany": "more than {{count}} suggestions waiting"
   },
   "setup": {
     "title": "Set up Curriculum in Context",
@@ -931,7 +932,14 @@
       "conflict": "This link cannot be changed now: the version is no longer a draft, or the objective is already linked to this item. Reload and try again."
     }
   },
+  "studyGuideConfirmation": {
+    "help": "Study guides are sent to the AI provider as text. Your confirmation is recorded in the audit log with the time and a fingerprint of the file, never its name.",
+    "v1": {
+      "text": "I confirm that this study guide contains no real patient information (no names, ID or hospital numbers, dates of birth or case details of real people)."
+    }
+  },
   "review": {
+    "acceptedInBulk": "Accepted in bulk",
     "intro": "Every suggestion needs a person to accept, edit or reject it. Decide on each one, or accept the confident ones together.",
     "confidence": {
       "word": "confidence",
@@ -1001,6 +1009,7 @@
     },
     "detail": {
       "label": "Selected suggestion",
+      "acceptedInBulk": "This link was accepted in a bulk action and no person has looked at it on its own yet. Reviewing or editing it individually replaces this note.",
       "objective": "Objective",
       "item": "Suggested framework item",
       "why": {
@@ -1214,6 +1223,12 @@
       "description": "Choose whether AI may help draft mappings, which provider it uses and what it may cost. AI is off until you choose a provider. Only curriculum text is ever sent to a provider, never personal information.",
       "loadErrorTitle": "Couldn't load the AI settings",
       "loadErrorBody": "Nothing was changed. Check your connection and try again.",
+      "encryption": {
+        "missingTitle": "API keys cannot be saved yet",
+        "missingBody": "This installation has no encryption key of its own. Ask the person who runs the server to set SECRETS_ENCRYPTION_KEYS (see the AI settings guide), then restart. Until then a new API key is refused; settings that need no key can still be changed, and keys saved earlier keep working.",
+        "rotateTitle": "Saved keys use the older encryption key",
+        "rotateBody": "Ask the person who runs the server to run the rotate-secrets command, or save each key again here."
+      },
       "providerTitle": "Provider",
       "providerHelp": "Everything in Curriculum in Context works without AI. Pick a provider only if you want AI suggestions.",
       "providerSettings": "{{provider}} settings",

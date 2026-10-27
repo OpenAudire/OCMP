@@ -142,6 +142,13 @@ def _new_encryption_key() -> int:
 async def _rotate_secrets() -> int:
     """Re-encrypt every stored secret with the newest key in SECRETS_ENCRYPTION_KEYS."""
     box = SecretBox.from_settings(get_settings())
+    if not box.may_encrypt:
+        print(  # noqa: T201
+            "SECRETS_ENCRYPTION_KEYS is not set (production). Set it first: make a key with "
+            "'python -m app.cli new-encryption-key', then run this command again.",
+            file=sys.stderr,
+        )
+        return 1
     rotated = unchanged = unreadable = 0
     with audit_operation("secrets.rotate"):
         async with database.session_scope() as db:

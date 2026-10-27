@@ -58,6 +58,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         debug=settings.debug,
     )
 
+    if settings.secrets_key_missing_in_production:
+        logger.warning(
+            "SECRETS_ENCRYPTION_KEYS is not set in production: AI provider keys cannot be "
+            "saved until it is. Make one with 'python -m app.cli new-encryption-key' and add "
+            "it to .env (ADR 041)."
+        )
+
     # Initialize database
     init_database(settings)
     logger.info("Database initialized")

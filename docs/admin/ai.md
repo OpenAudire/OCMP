@@ -17,8 +17,9 @@ fixed template, and only those fields can be filled in. A **privacy guard** chec
 before it leaves the server:
 
 - It looks for email addresses, phone numbers, South African ID numbers, student and staff numbers
-  (and long ID-like numbers), IP addresses, titles followed by a name ("Dr Smith") and the names of
-  everyone who has an account here.
+  (and long ID-like numbers), IP addresses, titles followed by a name ("Dr Smith", "Mnr Botha",
+  "Mnu Dlamini"), hospital, folder and file numbers, dates of birth, and the names of everyone who
+  has an account here. The exact rules are listed under [The privacy guard's rules](#the-privacy-guards-rules).
 - By default it **refuses**: nothing is sent, and the person is told what kind of information was
   found and where (for example "objective text: 1 email"), never the text itself. The refusal is
   recorded.
@@ -33,6 +34,41 @@ before it leaves the server:
 
 What is sent is stored exactly as sent with the call (see [retention](basics.md#retention)). Logs
 hold only counts and identifiers, never text, answers or keys.
+
+## The privacy guard's rules
+
+The rules are in code (`app/ai/privacy.py`) and tested in both directions: text that must be found and
+ordinary curriculum text that must not. They are written to avoid refusing normal teaching material, so
+they find personal information that is *written as such* and do not guess.
+
+| What is found | Examples that are found | Examples that are left alone |
+|---|---|---|
+| Titles with a name, English, Afrikaans, isiZulu | `Dr Smith`, `Prof. Jane Doe`, `Mnr Botha`, `MNU Dlamini`, `Nkk. Zulu`, `Mev. Van der Merwe`, `Me. Botha` | `Give Me Feedback`, `Mnr` alone, `Me Botha` (without the full stop `Me` is the English word), a name that starts with a lowercase letter |
+| Hospital, folder and file numbers | `Hospital number: 12345678`, `Folder no 2019/04532`, `MRN 8834221`, `hospitaalnommer 556677`, `inombolo yesibhedlela 556677` | `Case number 12`, `file 20245`, `Hospital 2024 annual report` (a number counts only after a label and with at least five digits) |
+| Dates of birth | `DOB: 12/03/1987`, `born 1987-03-12`, `Date of birth: 12 March 1987`, `geboortedatum 12 Maart 1987`, `usuku lokuzalwa 12 Mashi 1987` | `Academic year 2024/2025`, `Week 12`, `due 12 March 2025`, `Sharpeville, 21 March 1960`, `Freud was born in 1856` (a date counts only right after a birth label) |
+
+What the guard reports is the kind and the count, never the text: "objective text: 1 date of birth".
+
+**Be honest about the limits.** Hospital number formats differ from hospital to hospital, so the rule is
+deliberately conservative and will miss a short number, or one with no label. A date of birth written
+without a label, or with a two-digit year in words, is not found. Names of people who are not users are
+found only with a title. These rules cannot replace the instruction not to type personal information
+into curriculum fields. Letting an administrator add institution-specific patterns (for example the
+exact format of your hospital's folder numbers) is **not built**: it needs a screen, a way to test an
+expression safely and a limit on how costly one may be. It is listed as future work.
+
+## Study guides: the patient-information confirmation
+
+A study guide can contain case studies. Whoever uploads one must tick **"This study guide contains no
+real patient information"** before it is accepted. The upload screen arrives with the study-guide
+extraction (a later release); the confirmation is built now so that it cannot be left out:
+
+- the server refuses an upload without the confirmation for the current version of its text;
+- each confirmation is recorded in the [audit log](basics.md#audit-log) as `ai.study_guide_confirmation`
+  with who confirmed, when, which version of the text, and a fingerprint (SHA-256) of the file. **The
+  file name is not recorded**, because it can contain a person's name;
+- the privacy guard refuses to send any study-guide text to a provider unless that confirmation was
+  recorded for it.
 
 ## Choosing a provider
 
@@ -106,9 +142,20 @@ recorded as a run of type "connection test" and in the audit log.
 ## Encryption keys and rotation
 
 Stored API keys are encrypted with a key from the environment (see
-[Configuration](../operations/configuration.md#secrets)). With nothing set, a key is derived from
-`SECRET_KEY`, so **keep `SECRET_KEY` with your backups**: a restore with a different `SECRET_KEY` leaves
-the stored keys unreadable and you type them again.
+[Configuration](../operations/configuration.md#secrets)).
+
+!!! warning "A production server needs its own `SECRETS_ENCRYPTION_KEYS`"
+    With `ENVIRONMENT=production` (the default for a Docker install) a new API key is **refused** until
+    `SECRETS_ENCRYPTION_KEYS` is set, and this screen shows a red warning saying so. Settings that need
+    no key can still be saved. The server logs a warning each time it starts. Only a development setup
+    (`ENVIRONMENT=development`) falls back to a key derived from `SECRET_KEY`.
+
+A key saved earlier with the derived key (before this was required) stays readable. After you set
+`SECRETS_ENCRYPTION_KEYS` the screen says "Saved keys use the older encryption key": run
+`rotate-secrets` (below) or save each key again.
+
+Keep `SECRET_KEY` **and** `SECRETS_ENCRYPTION_KEYS` with your backups: a restore without the key that
+encrypted the stored keys leaves them unreadable and you type them again.
 
 To use a dedicated key, or to change it:
 

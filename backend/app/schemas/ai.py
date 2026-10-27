@@ -101,6 +101,15 @@ class StatusRead(BaseModel):
     budget_message: str | None = None
 
 
+class EncryptionRead(BaseModel):
+    """Whether API keys can be stored (ADR 041); never anything about the keys themselves."""
+
+    # False in production while SECRETS_ENCRYPTION_KEYS is not set: saving a key is refused.
+    keys_stored_ok: bool
+    # Some stored key was sealed with another key than the newest: run rotate-secrets.
+    rotation_needed: bool
+
+
 class AISettingsRead(BaseModel):
     active_provider: AIProviderKind
     local_only: bool
@@ -110,6 +119,7 @@ class AISettingsRead(BaseModel):
     usage: UsageRead
     status: StatusRead
     providers: list[ProviderRead]
+    encryption: EncryptionRead
 
 
 class ConnectionTestRead(BaseModel):

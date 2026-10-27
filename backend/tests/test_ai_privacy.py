@@ -92,6 +92,124 @@ class TestDetection:
         assert categories("write to s21456789@example.org") == ["email"]
 
 
+class TestHospitalNumbersDatesOfBirthAndTitles:
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Hospital number: 12345678",
+            "hosp no 4455667",
+            "Folder no 2019/04532",
+            "File number A1234567",
+            "Patient nr. 556677",
+            "MRN 8834221",
+            "MRN: 88-34-221",
+            "hëer hospitaalnommer 556677",
+            "lêernommer 556677",
+            "lêer nr 2019/04532",
+            "pasiëntnommer 556677",
+            "inombolo yesibhedlela 556677",
+            "inombolo yefayela 556677",
+        ],
+    )
+    def test_finds_labelled_hospital_numbers(self, text: str) -> None:
+        assert categories(text) == ["hospital_number"]
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "DOB: 12/03/1987",
+            "DOB 1987-03-12",
+            "D.O.B. 12.03.1987",
+            "Date of birth: 12 March 1987",
+            "date of birth is 3rd of May 1990",
+            "born 1987-03-12",
+            "born on the 12th of March 1987",
+            "born March 12, 1987",
+            "geboortedatum: 12/03/1987",
+            "Geboortedatum 12 Maart 1987",
+            "gebore 5 Junie 1990",
+            "usuku lokuzalwa: 12 Mashi 1987",
+            "usuku lokuzalwa 1987-03-12",
+            "wazalwa ngo 12 Meyi 1990",
+        ],
+    )
+    def test_finds_labelled_dates_of_birth(self, text: str) -> None:
+        assert categories(text) == ["date_of_birth"]
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Academic year 2024/2025, semester 1.",
+            "Week 12 of 14; lecture 3 of week 4.",
+            "Assignment due 12 March 2025 and 12/03/2025.",
+            "The exam is on 2025-11-20.",
+            "Sharpeville, 21 March 1960, is taught in Year 2.",
+            "Freud was born in 1856 and Piaget was born 1896.",
+            "The hospital number system and the case number format are explained.",
+            "Case number 12 and file 20245 in the appendix.",
+            "File number 1234 is too short to be a folder number here.",
+            "Module code ABC 1234, 12 credits, NQF 7.",
+            "Hospital 2024 annual report; patient 4 in the vignette.",
+            "Register of births: keep the date of birth field private.",
+        ],
+    )
+    def test_ordinary_curriculum_text_is_not_flagged(self, text: str) -> None:
+        assert categories(text) == []
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Seen by Mnr Botha",
+            "Seen by Mnr. Botha",
+            "Seen by MNR Botha",
+            "Seen by mnr Botha",
+            "Mev Van der Merwe called",
+            "Mev. Van der Merwe called",
+            "Me. Botha called",
+            "Mnu Dlamini called",
+            "Mnu. Dlamini called",
+            "MNU Dlamini called",
+            "Nkk Zulu called",
+            "nkk. Zulu called",
+        ],
+    )
+    def test_finds_afrikaans_and_isizulu_titles_with_a_name(self, text: str) -> None:
+        assert categories(text) == ["name"]
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Give Me Feedback on the draft.",
+            "Tell me. The dean knows.",
+            "Me Botha",  # "Me" without its full stop is the English word
+            "mnr. botha",  # a name must start with a capital
+            "Mnr alone is a title; Mev as well.",
+            "Nkk is a short word",
+        ],
+    )
+    def test_titles_without_a_name_are_not_flagged(self, text: str) -> None:
+        assert categories(text) == []
+
+    def test_findings_hold_positions_only_and_refusals_hold_counts_only(self) -> None:
+        text = "DOB 12/03/1987, MRN 8834221, Mnr Botha"
+        with pytest.raises(PersonalDataRefusedError) as error:
+            make(text)
+
+        assert error.value.findings == {
+            "objective_text": {"date_of_birth": 1, "hospital_number": 1, "name": 1}
+        }
+        for fragment in ("1987", "8834221", "Botha"):
+            assert fragment not in str(error.value)
+            assert fragment not in repr(error.value.findings)
+
+    def test_redaction_removes_the_new_categories(self) -> None:
+        text = "DOB 12/03/1987 and MRN 8834221 seen by Mnr Botha."
+        redacted = redact(text, detect(text))
+
+        assert redacted == "[date removed] and [number removed] seen by [name removed]."
+        assert detect(redacted) == []
+
+
 class TestRedaction:
     def test_replaces_with_neutral_placeholders(self) -> None:
         text = "Mail jane@example.org or call 082 123 4567."

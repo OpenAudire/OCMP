@@ -237,3 +237,18 @@ def test_rotate_secrets(
         asyncio.run(
             _query(cli_settings, delete(Institution).where(Institution.id == institution_id))
         )
+
+
+def test_rotate_secrets_refuses_in_production_without_its_own_key(
+    test_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    production = test_settings.model_copy(
+        update={"environment": "production", "secrets_encryption_keys": []}
+    )
+    monkeypatch.setattr(cli, "get_settings", lambda: production)
+
+    assert cli.main(["rotate-secrets"]) == 1
+
+    assert "SECRETS_ENCRYPTION_KEYS is not set" in capsys.readouterr().err

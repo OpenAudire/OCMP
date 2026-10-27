@@ -42,13 +42,35 @@ describe('sidebar', () => {
   it('shows a waiting count with a text label, not a bare number', () => {
     renderSidebar('/dashboard', { review: 79 });
 
-    expect(screen.getByRole('link', { name: /Review queue.*79 waiting/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Review queue.*79 suggestions waiting/ })).toBeInTheDocument();
+    expect(screen.getByText('79')).toBeInTheDocument();
+  });
+
+  it('says "1 suggestion waiting" for one', () => {
+    renderSidebar('/dashboard', { review: 1 });
+
+    expect(screen.getByRole('link', { name: /Review queue.*1 suggestion waiting/ })).toBeInTheDocument();
+  });
+
+  it('shows 99 as it is and 100 or more as 99+ with a matching accessible name', () => {
+    const { unmount } = renderSidebar('/dashboard', { review: 99 });
+    expect(screen.getByText('99')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /99 suggestions waiting/ })).toBeInTheDocument();
+    unmount();
+
+    renderSidebar('/dashboard', { review: 100 });
+    expect(screen.getByText('99+')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Review queue.*more than 99 suggestions waiting/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('100')).not.toBeInTheDocument();
   });
 
   it('shows no count when nothing is waiting', () => {
     renderSidebar('/dashboard', { review: 0 });
 
     expect(screen.getByRole('link', { name: 'Review queue' })).toBeInTheDocument();
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
   });
 });
 

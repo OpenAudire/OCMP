@@ -26,6 +26,7 @@ review policy) are not in `.env`; see [Admin basics](../admin/basics.md).
 |---|---|---|
 | `DOMAIN` | `localhost` | DNS name Caddy serves and gets a certificate for. |
 | `PUBLIC_URL` | `https://<DOMAIN>` | Address users type, used in email links and the single sign-on redirect address. |
+| `ENVIRONMENT` | `production` | `production` or `development`. In production, saving an AI provider key needs `SECRETS_ENCRYPTION_KEYS` (below). Leave it at `production` on a server; a developer's `.env` sets `development`. |
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING` or `ERROR`. |
 | `TRUSTED_PROXIES` | `caddy` | Proxies whose `X-Forwarded-For` header is believed (IPs, CIDR networks or hostnames, comma-separated). Only change it if another proxy or load balancer sits in front of Caddy. |
 
@@ -78,7 +79,7 @@ The purge commands are run on a schedule; see [Admin basics](../admin/basics.md#
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `SECRETS_ENCRYPTION_KEYS` | empty | Keys that encrypt stored secrets (AI provider keys), comma-separated, **newest first**. Make one with `docker compose exec api python -m app.cli new-encryption-key`. Empty: a key is derived from `SECRET_KEY`. A key derived from `SECRET_KEY` is always kept as a read-only fallback, so values stored before this was set stay readable until `rotate-secrets` re-encrypts them. See [AI settings](../admin/ai.md#encryption-keys-and-rotation). |
+| `SECRETS_ENCRYPTION_KEYS` | empty | Keys that encrypt stored secrets (AI provider keys), comma-separated, **newest first**. Make one with `docker compose exec api python -m app.cli new-encryption-key`. **Required in production** (`ENVIRONMENT=production`, the default): while it is empty a new AI provider key cannot be saved, the AI settings screen shows a warning and the server logs one at every start (it still starts). Only with `ENVIRONMENT=development` does an empty value fall back to a key derived from `SECRET_KEY`. A key derived from `SECRET_KEY` is always kept as a read-only fallback, so values stored before this was set stay readable until `rotate-secrets` re-encrypts them. See [AI settings](../admin/ai.md#encryption-keys-and-rotation). |
 
 AI providers, their keys, budgets and local-only mode are set on the admin AI settings screen, not
 in `.env`. The `AI_ENABLED`, `AI_ANTHROPIC_API_KEY`, `AI_OPENAI_*`, `AI_OLLAMA_BASE_URL` and

@@ -74,6 +74,7 @@ function link(overrides: Partial<WorkspaceLink> = {}): WorkspaceLink {
     rationale: 'Direct match.',
     source: 'human',
     status: 'accepted',
+    accept_method: 'individual',
     needs_recheck: false,
     needs_discussion: false,
     ...overrides,
@@ -166,7 +167,7 @@ describe('mapping workspace', () => {
     signIn();
     mocked.fetchProgrammes.mockResolvedValue(programmes);
     mocked.fetchMappingWorkspace.mockResolvedValue(workspace());
-    mocked.fetchReviewCount.mockResolvedValue({ first: 0, second: 0, recheck: 0, total: 0 });
+    mocked.fetchReviewCount.mockResolvedValue({ first: 0, second: 0, recheck: 0, waiting: 0, total: 0 });
     mocked.fetchFrameworkLibrary.mockResolvedValue(library);
     mocked.fetchFrameworkItems.mockResolvedValue({
       parent_id: null,

@@ -111,6 +111,11 @@ export function ReviewDetail({
           {t(`review.detail.firstDecision.${link.first_decision}`)}
         </div>
       )}
+      {link.accept_method === 'bulk' && (
+        <div className={classes.notice} role="note">
+          <IconAlertTriangle size={16} aria-hidden="true" /> {t('review.detail.acceptedInBulk')}
+        </div>
+      )}
       {link.needs_recheck && (
         <div className={classes.notice} role="note">
           <IconAlertTriangle size={16} aria-hidden="true" /> {t('review.detail.recheck')}

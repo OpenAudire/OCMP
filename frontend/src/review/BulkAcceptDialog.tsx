@@ -31,7 +31,8 @@ function BulkForm({
   onDone,
 }: BulkAcceptDialogProps) {
   const { t } = useTranslation();
-  const choices = THRESHOLDS.filter((value) => value >= minConfidence);
+  // The institution's floor is always offered; the usual steps above it follow (ADR 040).
+  const choices = [minConfidence, ...THRESHOLDS.filter((value) => value > minConfidence)];
   const [threshold, setThreshold] = useState(String(choices.includes(initial) ? initial : choices[0]));
   const percent = Math.round(Number(threshold) * 100);
 

@@ -49,8 +49,10 @@ Every outbound call is built the same way:
    phone numbers (international, South African local and separated forms); South African ID numbers
    (13 digits, with or without spaces); "student/staff/employee/passport/ID number" followed by a
    value; any run of 7 to 12 digits and letter-plus-7-to-9-digit codes; IPv4 addresses; a title
-   (Dr, Prof, Professor, Mr, Mrs, Ms, Miss, Mx, Mnr, Mev, Adv) followed by a capitalised name; and
-   the **display names of every user of the installation** (whole name in either order, any case; a
+   (Dr, Prof, Professor, Mr, Mrs, Ms, Miss, Mx, Adv, and from Slice 1.14a the Afrikaans and isiZulu
+   Mnr, Mev, Mnu and Nkk in any letter case, with or without a full stop, and `Me.`) followed by a
+   capitalised name; **hospital, folder and file numbers** and **dates of birth** (below); and the
+   **display names of every user of the installation** (whole name in either order, any case; a
    single-word name of four or more letters as an exact capitalised word).
 3. **Refusal by default** (`on_personal_data = refuse`): the call is not made, a
    `PersonalDataRefusedError` names fields and kinds with counts ("objective_text: 1 email"), never the
@@ -62,11 +64,52 @@ Every outbound call is built the same way:
    the gateway builds a provider, and that adapter signatures take only `GuardedRequest`.
 5. What is stored with the call (`ai_run_calls.request`) is exactly what was sent.
 
+**Rules added in Slice 1.14a (product owner review, 2026-10-27).** All of them are deliberately
+conservative: the aim is to catch what is written as personal information without refusing ordinary
+curriculum text (academic years, week numbers, credits, historical dates).
+
+- *Titles*: `Mnr`, `Mev`, `Mnu`, `Nkk` match in any case, with or without a full stop, when a
+  capitalised name follows (`mnr. Botha`, `MNU Dlamini`). `Me` is also the English word, so it counts
+  only as `Me.` with its full stop and a capital M. A name that starts with a lowercase letter is not
+  found.
+- *Hospital, folder and file numbers* (category `hospital_number`): a number counts only after a label
+  - "hospital / patient / folder / file / case / record / chart number, no, nr, #", `MRN`, `URN`, the
+  Afrikaans `hospitaalnommer`, `pasientnommer`, `leernommer` (with or without the ligatures), `gevalnommer`,
+  and the isiZulu `inombolo yesibhedlela`, `yefayela`, `yefayili`, `yesiguli` - and only when it has at
+  least five digits (letters, `/` and `-` are allowed in it). A bare number is never flagged by this rule
+  (the existing 7 to 12 digit rule still applies). **Hospital number formats differ per hospital, so
+  this rule will miss a short or unlabelled number**; an admin-defined pattern per institution is not
+  built (future work: it needs a screen, a safe way to test an expression and a limit on its cost).
+- *Dates of birth* (category `date_of_birth`): a full date counts only right after a birth label - `DOB`,
+  `D.O.B.`, `date of birth`, `birth date`, `birthday`, `born`, `geboortedatum`, `gebore`, `geb.`,
+  `usuku lokuzalwa`, `wazalwa`, `kwazalwa`, `ukuzalwa` - with up to a few filler words ("born on the").
+  Formats: `DD/MM/YYYY`, `DD-MM-YY`, `DD.MM.YYYY`, `YYYY-MM-DD`, `12 March 1987`, `March 12, 1987`,
+  `March 1987`, with English, Afrikaans and isiZulu month names. **An unlabelled date is never flagged**
+  (exam dates, "Sharpeville, 21 March 1960", `2024/2025`), nor is a label with a bare year ("born in
+  1856"). A date written in words with a two-digit year after the label is not found.
+- Findings still report categories and counts only, and redaction replaces them with `[number removed]`,
+  `[date removed]` and `[name removed]`.
+
+**Study-guide confirmation.** A study guide may hold real patient information (case studies). The
+uploader must therefore confirm that it holds none, and the confirmation is recorded. The reusable
+piece is built now and the study-guide upload (Slice 1.18) **must use it**:
+`app/services/study_guide_confirmation.confirm_no_patient_information(db, user_id, confirmation,
+content=...)` refuses (422) unless the request carried `confirmed = true` for the current text version,
+writes an audit event (operation `ai.study_guide_confirmation`, entity `study_guide`, action
+`study_guide_confirmation`) holding the acting user, the time, the text version, a SHA-256 of the file
+content and its size, and returns a sealed `ConfirmationReceipt`. **The file name is not recorded**: it
+can carry a person's name or a patient reference. The privacy guard refuses to build any prompt that
+uses the `study_guide_text` field unless it is given that receipt (`study_guide_confirmation=` on
+`prepare` and `ai_gateway.complete`), so a feature cannot send study-guide text without the
+confirmation having been asked for and recorded. The text lives under the i18n key
+`studyGuideConfirmation.v<N>.text` (a test checks the current version exists), and
+`frontend/src/ui/StudyGuideConfirmation.tsx` is the checkbox with that text.
+
 Limits, stated plainly: pattern detection cannot find every personal fact (a free-text sentence about
 a named patient with no title and no matching user), so the screens that will feed this layer must
 still say not to type personal information, and the allow-list keeps free text to curriculum fields.
 Names of people who are not users are found only with a title. False alarms refuse the call; that is
-the safe direction. The patterns are English and South African; other languages need other rules.
+the safe direction. The patterns cover English, Afrikaans and isiZulu in the ways listed above; other languages need other rules.
 
 ### The gateway (`backend/app/services/ai_gateway.py`)
 

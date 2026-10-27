@@ -13,7 +13,7 @@ person cannot use.
 | Platform admin | `platform_admin` | institution | Install settings, SSO, AI provider, integrations, users and roles. |
 | Curriculum office | `curriculum_office` | institution, faculty | Frameworks, tag lists, curriculum versions and all reports. |
 | Programme director | `programme_director` | programme | Programme outcomes and structure, coverage review, publishing versions. |
-| Module coordinator | `module_coordinator` | module | Modules, learning events, objectives, mapping and AI suggestion review. |
+| Module coordinator | `module_coordinator` | module | Modules, learning events, objectives, mapping, AI suggestion review and second review within their own module (never of a link they reviewed first). |
 | Lecturer / facilitator | `lecturer` | module, learning event | Edit the objectives of their own sessions and view their schedule. |
 | Mapper / reviewer | `mapper` | programme, module | Create and review mappings (first and second review). |
 | Student | `student` | institution, programme | Read-only explorer and search over published content. |

@@ -129,3 +129,35 @@ class TestListSettingsFromEnvironment:
         monkeypatch.delenv("TRUSTED_PROXIES", raising=False)
 
         assert Settings(_env_file=None).trusted_proxies == ["caddy"]  # type: ignore[call-arg]
+
+
+class TestEnvironment:
+    DB = "postgresql+asyncpg://user:pass@localhost:5432/db"
+
+    def test_production_is_the_default(self) -> None:
+        settings = Settings(secret_key="a" * 32, database_url=self.DB)
+        assert settings.environment == "production"
+        assert settings.secrets_key_missing_in_production is True
+
+    def test_a_configured_key_satisfies_production(self) -> None:
+        from app.core.secrets import new_key
+
+        settings = Settings(
+            secret_key="a" * 32, database_url=self.DB, secrets_encryption_keys=[new_key()]
+        )
+        assert settings.secrets_key_missing_in_production is False
+
+    def test_development_needs_no_key(self) -> None:
+        settings = Settings(secret_key="a" * 32, database_url=self.DB, environment="development")
+        assert settings.secrets_key_missing_in_production is False
+
+    def test_the_environment_is_read_from_the_variable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("ENVIRONMENT", "development")
+        settings = Settings(_env_file=None, secret_key="a" * 32, database_url=self.DB)  # type: ignore[call-arg]
+        assert settings.environment == "development"
+
+    def test_other_values_are_refused(self) -> None:
+        with pytest.raises(ValidationError):
+            Settings(secret_key="a" * 32, database_url=self.DB, environment="staging")  # type: ignore[arg-type]

@@ -24,6 +24,8 @@ cd OCMP/deploy
 cp .env.example .env
 sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$(openssl rand -hex 32)/" .env
 sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 24)/" .env
+# Needed before an AI provider key can be saved; keep it with your backups
+echo "SECRETS_ENCRYPTION_KEYS=$(openssl rand -base64 32 | tr '+/' '-_')" >> .env
 # set DOMAIN (and SMTP_*) in .env, then:
 docker compose up -d --build --wait
 

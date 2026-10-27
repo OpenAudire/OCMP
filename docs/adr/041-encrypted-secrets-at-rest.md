@@ -29,10 +29,9 @@ a changed value is detected and refused. No encryption is written by hand.
 - A key **derived from `SECRET_KEY`** (HKDF-SHA256, fixed context string `ocmp secret store v1`)
   is always added **last, for reading only**.
 
-So an install that never sets the variable works with only `SECRET_KEY` (which an operator must
-already protect), and an install that sets it later keeps reading what it stored before. The
-choice between "derive from `SECRET_KEY`" and "a dedicated setting" is therefore "both": the
-dedicated setting is the recommended way, the derived key is the safe default.
+The derived key is a **development convenience**. In production it only reads (see "Production
+needs its own key" below); a dedicated key is required before anything new is stored. An install that
+set the variable later keeps reading what it stored before.
 
 Trade-off, recorded for review: with only the derived key, changing `SECRET_KEY` makes stored keys
 unreadable (the screen says so and the admin types them again). Operators who rotate `SECRET_KEY`
@@ -43,6 +42,27 @@ should set `SECRETS_ENCRYPTION_KEYS` first.
 `ocmp1:<key id>:<Fernet token>`. The key id is the first 8 hex characters of a hash of the key,
 which does not reveal the key. It tells `rotate-secrets` which values are old, and lets an error say
 "the key that encrypted this secret is not configured" rather than a bare failure.
+
+### Production needs its own key (Slice 1.14a, product owner decision, 2026-10-27)
+
+The environment is the setting `ENVIRONMENT` (`production`, the default, or `development`); until now
+there was no such signal (only `DEBUG`, which switches log format). The default is `production` so a
+forgotten setting is the strict one; the local development `.env` sets `ENVIRONMENT=development`.
+
+- **Development**: unchanged. With no `SECRETS_ENCRYPTION_KEYS`, the derived key seals new values.
+- **Production without `SECRETS_ENCRYPTION_KEYS`**: nothing new is sealed. `SecretBox.encrypt` raises
+  `SecretsNotConfiguredError`, which the settings service turns into a 422 naming the setting; the
+  admin AI settings screen shows a red alert (role `alert`, with text) and the API reports
+  `encryption.keys_stored_ok = false`; the API logs a **loud warning at every start**; `rotate-secrets`
+  refuses with an explanation.
+- **The app still starts.** Refusing to start was considered and rejected: the secret is only needed
+  for AI, which is off by default and which nothing else depends on, and a stack that will not start
+  after an upgrade is a worse failure than a warning plus a blocked save. `SECRET_KEY` and
+  `DATABASE_URL`, which the whole app needs, do refuse to start.
+- **Existing values stay readable.** The derived key is still appended for reading, so a key stored
+  earlier works until the operator sets `SECRETS_ENCRYPTION_KEYS`; the screen then says "Saved keys
+  use the older encryption key" (`encryption.rotation_needed`) and `rotate-secrets`, or saving the key
+  again, moves it to the new key.
 
 ### Rotation
 

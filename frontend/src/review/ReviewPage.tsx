@@ -253,6 +253,8 @@ function Queue() {
   const nouns = nounsFor(t);
   const { progress, counts, facets } = data;
   const reviewed = progress.accepted + progress.rejected + progress.second_review;
+  // Accept all starts at 90%, or at the institution's floor when that is higher.
+  const startPercent = Math.max(90, Math.round(data.bulk_min_confidence * 100));
   const percentDone = progress.total === 0 ? 0 : Math.round((reviewed / progress.total) * 100);
   const reviewedText = t('review.progress.reviewed', { reviewed, total: progress.total });
   const from = data.total === 0 ? 0 : data.offset + 1;
@@ -263,7 +265,7 @@ function Queue() {
       {counts.first > 0 && stage === 'first' && (
         <div>
           <Button variant="default" onClick={() => setBulkOpen(true)}>
-            {t('review.bulk.button', { percent: 90 })}
+            {t('review.bulk.button', { percent: startPercent })}
           </Button>
         </div>
       )}
@@ -496,7 +498,7 @@ function Queue() {
           fourEyes={data.four_eyes}
           minConfidence={data.bulk_min_confidence}
           maxLinks={data.bulk_max_links}
-          initial={0.9}
+          initial={startPercent / 100}
           onClose={() => setBulkOpen(false)}
           onDone={(result, percent) => void onBulkDone(result, percent)}
         />

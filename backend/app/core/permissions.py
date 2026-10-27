@@ -137,6 +137,9 @@ SYSTEM_ROLES: tuple[SystemRole, ...] = (
                 P.TAGGING_EDIT,
                 P.MAPPING_EDIT,
                 P.MAPPING_REVIEW,
+                # Second review within their own module; never of a link they reviewed first
+                # (the four-eyes rule in the service, ADR 040).
+                P.MAPPING_SECOND_REVIEW,
                 P.AI_RUN,
                 P.REPORTS_VIEW,
             }

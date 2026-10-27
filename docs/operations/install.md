@@ -85,11 +85,13 @@ cp .env.example .env
 chmod 600 .env
 ```
 
-Generate the two secrets (this replaces the placeholders in `.env`):
+Generate the secrets (this replaces the placeholders in `.env`; the third line adds the key that encrypts stored AI provider keys, which a production server needs only if you will use AI, and can be added later):
 
 ```bash
 sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$(openssl rand -hex 32)/" .env
 sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 24)/" .env
+# Needed before an AI provider key can be saved; keep it with your backups
+echo "SECRETS_ENCRYPTION_KEYS=$(openssl rand -base64 32 | tr '+/' '-_')" >> .env
 ```
 
 !!! warning "Keep `.env` safe"

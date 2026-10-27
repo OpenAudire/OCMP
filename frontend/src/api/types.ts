@@ -865,6 +865,7 @@ export interface WorkspaceLink {
   rationale: string;
   source: 'ai' | 'human' | 'import' | 'migrated';
   status: LinkStatus;
+  accept_method: AcceptMethod | null;
   needs_recheck: boolean;
   needs_discussion: boolean;
 }
@@ -910,11 +911,15 @@ export type ReviewSort = 'confidence_desc' | 'confidence_asc' | 'module';
 export type ReviewDecision = 'accept' | 'reject' | 'second_review';
 
 /** A link in the review queue. No reviewer or author names are returned. */
+export type AcceptMethod = 'individual' | 'bulk' | 'automatic' | 'imported';
+
 export interface ReviewLink {
   id: string;
   stage: ReviewStage;
   status: LinkStatus;
   source: 'ai' | 'human' | 'import' | 'migrated';
+  /** How an accepted link was accepted; "bulk" means Accept all, not looked at one by one. */
+  accept_method: AcceptMethod | null;
   confidence: number | null;
   coverage: number | null;
   depth_match: DepthMatch | null;
@@ -957,6 +962,8 @@ export interface ReviewCounts {
   first: number;
   second: number;
   recheck: number;
+  /** Suggestions this person can act on now (first and second review): the sidebar number. */
+  waiting: number;
   total: number;
 }
 
@@ -1069,6 +1076,8 @@ export interface AiSettings {
   usage: { period_start: string; period_end: string; calls: number; tokens: number; cost: string };
   status: { state: 'off' | 'ready' | 'blocked'; reasons: AiStatusReason[]; budget_message: string | null };
   providers: AiProvider[];
+  /** Whether an API key can be stored: false in production without SECRETS_ENCRYPTION_KEYS. */
+  encryption: { keys_stored_ok: boolean; rotation_needed: boolean };
 }
 
 export interface AiProviderUpdate {

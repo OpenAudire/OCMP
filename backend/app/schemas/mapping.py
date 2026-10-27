@@ -5,7 +5,7 @@ import uuid
 from pydantic import BaseModel, Field
 
 from app.models.curriculum import ObjectiveLevel, VersionStatus
-from app.models.mapping import DepthMatch, MappingSource, MappingStatus
+from app.models.mapping import AcceptMethod, DepthMatch, MappingSource, MappingStatus
 from app.services.mapping_links import COVERAGE_MAX, COVERAGE_MIN, RATIONALE_MAX
 
 
@@ -24,6 +24,8 @@ class WorkspaceLink(BaseModel):
     rationale: str
     source: MappingSource
     status: MappingStatus
+    # How an accepted link was accepted; "bulk" = Accept all, no person looked at it alone.
+    accept_method: AcceptMethod | None
     needs_recheck: bool
     needs_discussion: bool
 

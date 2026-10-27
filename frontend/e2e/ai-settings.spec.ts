@@ -67,6 +67,10 @@ test.describe('AI settings', () => {
     await expect(page.getByRole('radio', { name: 'AI off' })).toBeChecked();
     await expect(page.getByRole('switch', { name: /Local-only mode/ })).toBeChecked();
     await expect(page.getByRole('button', { name: 'Test connection' })).toBeDisabled();
+    // The stack has its own SECRETS_ENCRYPTION_KEYS, so no encryption warning is shown. (The
+    // warning for a production server without one is covered by the API and unit tests: it
+    // cannot be produced here without restarting the stack with a different environment.)
+    await expect(page.getByText('API keys cannot be saved yet')).toHaveCount(0);
     await expectNoAccessibilityViolations(page);
 
     // 2. A cloud provider: the warning, and the refusals.

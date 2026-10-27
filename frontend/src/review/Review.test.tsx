@@ -29,6 +29,7 @@ function card(overrides: Partial<ReviewLink> = {}): ReviewLink {
     stage: 'first',
     status: 'suggested',
     source: 'ai',
+    accept_method: null,
     confidence: 0.93,
     coverage: 4,
     depth_match: 'matches',
@@ -86,7 +87,7 @@ function queue(items: ReviewLink[], overrides: Partial<ReviewQueue> = {}): Revie
     limit: 50,
     items,
     progress: { total: 12, accepted: 6, rejected: 2, second_review: 1, waiting: 3 },
-    counts: { first: items.length, second: 1, recheck: 0, total: items.length + 1 },
+    counts: { first: items.length, second: 1, recheck: 0, waiting: items.length + 1, total: items.length + 1 },
     facets: {
       versions: [{ id: 'v2027', programme_name: 'BSc Health Sciences (Demo)', academic_year: 2027 }],
       frameworks: [{ id: 'f1', name: 'Demo Graduate Competencies', version_label: '1.0' }],
@@ -120,7 +121,7 @@ describe('review queue', () => {
     window.localStorage.clear();
     applyTerminology(i18n, {});
     signIn();
-    mocked.fetchReviewCount.mockResolvedValue({ first: 2, second: 1, recheck: 0, total: 3 });
+    mocked.fetchReviewCount.mockResolvedValue({ first: 2, second: 1, recheck: 0, waiting: 3, total: 3 });
     serve({ first: queue([card(), second]) });
   });
 
@@ -140,7 +141,7 @@ describe('review queue', () => {
     expect(detail.getByLabelText('4: 61 to 80%')).toBeChecked();
     expect(detail.getByLabelText('Matches')).toBeChecked();
     // The menu shows what waits, and says so in words too.
-    await waitFor(() => expect(screen.getByText('3 waiting')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('3 suggestions waiting')).toBeInTheDocument());
   });
 
   it('accepts with A, sends the chosen values and moves to the next suggestion', async () => {
@@ -356,6 +357,31 @@ describe('review queue', () => {
     );
   });
 
+  it('labels a bulk-accepted link in words, in the list and in the details', async () => {
+    serve({
+      first: queue([card()]),
+      recheck: queue(
+        [
+          card({
+            id: 'l5',
+            stage: 'recheck',
+            status: 'accepted',
+            needs_recheck: true,
+            accept_method: 'bulk',
+          }),
+        ],
+        { stage: 'recheck' }
+      ),
+    });
+    renderAt('/mapping/review');
+    await screen.findByRole('region', { name: 'Selected suggestion' });
+
+    fireEvent.change(screen.getByLabelText('Show'), { target: { value: 'recheck' } });
+
+    expect(await screen.findByText('Accepted in bulk')).toBeInTheDocument();
+    expect(screen.getByText(/accepted in a bulk action and no person has looked at it/)).toBeInTheDocument();
+  });
+
   it('says so when a link moved on and refreshes the list', async () => {
     mocked.reviewMappingLink.mockRejectedValue(new ApiError(409, 'changed'));
     renderAt('/mapping/review');
@@ -386,6 +412,43 @@ describe('review queue', () => {
       expect(mocked.bulkAcceptReview).toHaveBeenCalledWith({ min_confidence: 0.9, dry_run: false })
     );
     expect(await screen.findByText('Accepted 7 suggestions at 90% confidence and above.')).toBeInTheDocument();
+  });
+
+  it('offers the institution floor first, then the usual steps above it', async () => {
+    mocked.bulkAcceptReview.mockResolvedValue({
+      eligible: 3,
+      processed: 0,
+      remaining: 3,
+      status_after: 'accepted',
+      dry_run: true,
+    });
+    serve({ first: queue([card()], { bulk_min_confidence: 0.82, bulk_max_links: 50 }) });
+    renderAt('/mapping/review');
+    fireEvent.click(await screen.findByRole('button', { name: 'Accept all 90% and above' }));
+
+    const dialog = await screen.findByRole('dialog');
+    const options = within(dialog)
+      .getAllByRole('option')
+      .map((option) => option.textContent);
+    expect(options).toEqual(['82% and above', '85% and above', '90% and above', '95% and above']);
+    expect(within(dialog).getByText(/At most 50 are handled at a time/)).toBeInTheDocument();
+  });
+
+  it('starts at the floor when the floor is above 90%', async () => {
+    mocked.bulkAcceptReview.mockResolvedValue({
+      eligible: 0,
+      processed: 0,
+      remaining: 0,
+      status_after: 'accepted',
+      dry_run: true,
+    });
+    serve({ first: queue([card()], { bulk_min_confidence: 0.95 }) });
+    renderAt('/mapping/review');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Accept all 95% and above' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getAllByRole('option').map((o) => o.textContent)).toEqual(['95% and above']);
   });
 
   it('offers nothing to accept when no suggestion is confident enough', async () => {
@@ -446,10 +509,10 @@ describe('review queue', () => {
     serve({
       first: queue([], {
         progress: { total: 0, accepted: 0, rejected: 0, second_review: 0, waiting: 0 },
-        counts: { first: 0, second: 0, recheck: 0, total: 0 },
+        counts: { first: 0, second: 0, recheck: 0, waiting: 0, total: 0 },
       }),
     });
-    mocked.fetchReviewCount.mockResolvedValue({ first: 0, second: 0, recheck: 0, total: 0 });
+    mocked.fetchReviewCount.mockResolvedValue({ first: 0, second: 0, recheck: 0, waiting: 0, total: 0 });
     renderAt('/mapping/review');
 
     expect(await screen.findByRole('heading', { name: 'Nothing to review' })).toBeInTheDocument();

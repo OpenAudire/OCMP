@@ -33,8 +33,8 @@ frameworks drop out. The queue reveals nothing the curriculum screens do not: wh
 see is not listed, and an action on it answers 404.
 
 `mapping.second_review` is the permission the catalogue already had for this: the mapper, programme
-director, curriculum office and platform admin roles hold it; the module coordinator does not (the
-brief gives coordinators "review AI suggestions", and the mapper "first and second review").
+director, curriculum office and platform admin roles hold it. **The module coordinator holds it too,
+at module scope** (product owner decision, Slice 1.14a; see the amendment at the end).
 
 ### Endpoints (`app/api/v1/mapping_review.py`, `app/services/mapping_review.py`)
 
@@ -129,3 +129,38 @@ why the buttons and the switch matter.
 - The queue loads the small candidate rows of a user's drafts and filters them in memory by scope
   permissions, like the mapping workspace; with tens of thousands of waiting suggestions this should
   move into SQL.
+
+## Amendment: product owner review (Slice 1.14a, 2026-10-27)
+
+The product owner approved the Slice 1.13 decisions with these changes.
+
+1. **Module coordinators give second reviews in their own module.** `module_coordinator` gains
+   `mapping.second_review` (system role in `app/core/permissions.py`, which `sync_system_roles` applies
+   on a new install, plus the data migration `0020`, which adds it to the stored system role on an
+   existing install and leaves custom roles alone). The four-eyes rules are unchanged and still
+   enforced in the service: nobody gives the second review of a link they reviewed first, or of a
+   hand-made link they wrote. A coordinator who gave the first review therefore does not see that link
+   in the second pile and gets 409 if they try; a different coordinator or mapper must.
+2. **The floor and the cap of "Accept all" are institution settings.** `settings["mapping"]` gains
+   `bulk_accept_min_percent` (50 to 100, default 80) and `bulk_accept_max_links` (1 to 1000, default
+   200), validated by `MappingPolicy` and read through `institution_settings`. The API reports them in
+   `bulk_min_confidence` and `bulk_max_links`; the dialog offers the floor first, then 85, 90 and 95
+   above it, and the button starts at 90% or the floor if that is higher. There is no settings screen
+   for the mapping section yet (it is changed through the settings API, as for the review policy and the
+   credits section), so there is none for these two either.
+3. **Bulk-accepted links carry a durable marker.** `MappingLink.accept_method` (it already held
+   `individual`, `bulk`, `automatic` and `imported`) is `bulk` for a link accepted by "Accept all". It is
+   audited (the update entry carries the operation `mapping.review_bulk_accept`) and returned as
+   `accept_method` by the queue and the mapping workspace. Screens show it as the text "Accepted in
+   bulk" (with an icon, never colour alone). **Reports (Slice 1.21) must show it**; none exists yet.
+   A person supersedes it: reviewing or editing the link individually (a second reviewer's accept, a
+   hand edit in the workspace, "Still fits") sets `individual`. In four-eyes mode a bulk accept is only
+   a first review, so the link ends as `individual` once a second person accepts it; the bulk step
+   stays in the audit log. This is the least risky reading: the marker means "no person has looked at
+   this link on its own", so it goes away only when a person did.
+4. **The sidebar count is what the user can act on now.** `counts.waiting` is the first-review pile
+   plus the second-review pile, with the same rules as the piles: first review needs `mapping.review`,
+   second review needs `mapping.second_review` and excludes links the user reviewed first or wrote.
+   **Re-checks are not counted**: they are accepted links, not suggestions waiting for review (`total`
+   still includes them for the page). The badge is hidden at 0 and reads "99+" above 99; its accessible
+   name is "N suggestions waiting" (plural-aware) or "more than 99 suggestions waiting".

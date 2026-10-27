@@ -7,7 +7,7 @@ container, so nothing extra needs installing on the server.
 | What | Where | Backed up by |
 |---|---|---|
 | Curriculum, frameworks, mappings, accounts, roles, audit log | `db` volume | `backup.sh` |
-| Secrets and settings | `deploy/.env` | you: keep a copy in a secrets store. `SECRET_KEY` and `SECRETS_ENCRYPTION_KEYS` must go with the database backup: stored AI provider keys are encrypted with them and are unreadable (typed in again) without them |
+| Secrets and settings | `deploy/.env` | you: keep a copy in a secrets store. `SECRET_KEY` and `SECRETS_ENCRYPTION_KEYS` (required on a production server before AI keys can be saved) must go with the database backup: stored AI provider keys are encrypted with them and are unreadable (typed in again) without them |
 | Own certificate, local overrides | `deploy/caddy/`, `deploy/docker-compose.override.yml` | you, if you use them |
 | Sessions, rate limits, job queue | `redis` volume | not needed: losing it only signs people out |
 | Let's Encrypt certificates | `caddy_data` volume | not needed: Caddy requests new ones |

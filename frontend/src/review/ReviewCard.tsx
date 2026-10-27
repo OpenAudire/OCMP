@@ -59,8 +59,14 @@ export function ReviewCard({ link, selected, onSelect, buttonRef }: ReviewCardPr
           <span className={classes.code}>{link.item.code}</span> {link.item.title}
         </span>
         <Confidence value={link.confidence} />
-        {(link.needs_recheck || link.needs_discussion) && (
+        {(link.needs_recheck || link.needs_discussion || link.accept_method === 'bulk') && (
           <span className={classes.cardHead}>
+            {link.accept_method === 'bulk' && (
+              <span className={classes.chip} data-tone="attention">
+                <IconAlertTriangle size={14} aria-hidden="true" />
+                {t('review.acceptedInBulk')}
+              </span>
+            )}
             {link.needs_recheck && (
               <span className={classes.chip} data-tone="attention">
                 <IconAlertTriangle size={14} aria-hidden="true" />

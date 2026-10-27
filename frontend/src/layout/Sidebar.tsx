@@ -6,6 +6,9 @@ import { activeNavKey, type NavItem } from './navigation';
 import { Wordmark } from './Wordmark';
 import classes from './Sidebar.module.css';
 
+/** Above this many the badge reads "99+" (the exact number is on the queue itself). */
+const MAX_SHOWN = 99;
+
 interface SidebarProps {
   items: readonly NavItem[];
   pathname: string;
@@ -43,9 +46,13 @@ export function Sidebar({ items, pathname, counts = {}, institutionName, onNavig
                   {count !== undefined && count > 0 && (
                     <>
                       <span className={classes.count} aria-hidden="true">
-                        {count}
+                        {count > MAX_SHOWN ? `${MAX_SHOWN}+` : count}
                       </span>
-                      <VisuallyHidden>{t('nav.waiting', { count })}</VisuallyHidden>
+                      <VisuallyHidden>
+                        {count > MAX_SHOWN
+                          ? t('nav.waitingMany', { count: MAX_SHOWN })
+                          : t('nav.waiting', { count })}
+                      </VisuallyHidden>
                     </>
                   )}
                 </Link>

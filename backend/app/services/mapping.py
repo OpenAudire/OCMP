@@ -273,6 +273,9 @@ async def confirm_recheck(
         raise ConflictError("This link does not need a re-check.")
     with audit_operation("mapping.recheck_confirm", actor_id=actor.id, reason=reason):
         link.needs_recheck = False
+        # A person has now looked at this link alone: it no longer counts as bulk accepted.
+        if link.accept_method == AcceptMethod.BULK:
+            link.accept_method = AcceptMethod.INDIVIDUAL
         await db.flush()
     return link
 

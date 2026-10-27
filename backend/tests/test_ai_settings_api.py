@@ -600,3 +600,67 @@ class TestTurningAiOff:
         )
         assert again.status_code == 422
         assert "Acknowledge" in again.json()["detail"]
+
+
+@pytest.mark.usefixtures("admin")
+class TestKeyNeedsItsOwnEncryptionKeyInProduction:
+    @pytest.fixture
+    def production(self, test_settings: Settings) -> Settings:
+        test_settings.environment = "production"
+        test_settings.secrets_encryption_keys = []
+        return test_settings
+
+    async def test_the_screen_is_told_about_the_missing_key(
+        self, api_client: AsyncClient, production: Settings
+    ) -> None:
+        body = (await api_client.get(f"{API}/settings")).json()
+
+        assert body["encryption"] == {"keys_stored_ok": False, "rotation_needed": False}
+
+    async def test_a_new_key_is_refused_and_nothing_is_stored(
+        self, api_client: AsyncClient, db_session: AsyncSession, production: Settings
+    ) -> None:
+        response = await use_anthropic(api_client)
+
+        assert response.status_code == 422
+        assert "SECRETS_ENCRYPTION_KEYS" in response.json()["detail"]
+        assert KEY not in response.text
+        assert await db_session.scalar(select(AIProviderConfig.api_key_encrypted)) is None
+
+    async def test_settings_without_a_key_can_still_be_changed(
+        self, api_client: AsyncClient, production: Settings
+    ) -> None:
+        response = await patch(api_client, {"providers": {"ollama": OLLAMA}})
+
+        assert response.status_code == 200
+        assert provider(response.json(), "ollama")["model"] == "llama-test"
+
+    async def test_a_key_stored_with_the_derived_key_stays_readable_then_can_be_resaved(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+    ) -> None:
+        # Stored while the derived key was allowed (development, or before this change).
+        await use_anthropic(api_client)
+        test_settings.environment = "production"
+        test_settings.secrets_encryption_keys = []
+
+        before = (await api_client.get(f"{API}/settings")).json()
+        assert provider(before, "anthropic")["key_status"] == "set"
+        assert before["encryption"]["keys_stored_ok"] is False
+
+        # With its own key set the admin can save again; the old value is flagged for rotation.
+        test_settings.secrets_encryption_keys = [new_key()]
+        flagged = (await api_client.get(f"{API}/settings")).json()
+        assert flagged["encryption"] == {"keys_stored_ok": True, "rotation_needed": True}
+        resaved = await patch(api_client, {"providers": {"anthropic": {"api_key": KEY + "2"}}})
+        assert resaved.status_code == 200
+        stored = await db_session.scalar(select(AIProviderConfig.api_key_encrypted))
+        assert stored is not None
+        box = SecretBox.from_settings(test_settings)
+        assert box.decrypt(stored) == KEY + "2" and not box.needs_rotation(stored)
+        assert (await api_client.get(f"{API}/settings")).json()["encryption"] == {
+            "keys_stored_ok": True,
+            "rotation_needed": False,
+        }

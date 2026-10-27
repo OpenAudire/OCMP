@@ -77,10 +77,9 @@ from app.services.curriculum_scopes import objective_scope
 from app.services.mapping_links import ensure_objective_open
 from app.services.policies import MappingPolicy, mapping_policy_for_version, parse_mapping_policy
 
-# "Accept all" may not go below this confidence (the mockup calls under 65% "check carefully"),
-# and handles at most this many links in one action, so each batch can be looked at (ADR 040).
-BULK_MIN_CONFIDENCE = Decimal("0.800")
-BULK_MAX_LINKS = 200
+# "Accept all" may not go below the institution's floor (default 80%; the mockup calls under
+# 65% "check carefully") and handles at most its cap per action (default 200), so each batch
+# can be looked at. Both are institution settings, see MappingPolicy (ADR 040).
 DEFAULT_PAGE = 50
 MAX_PAGE = 100
 
@@ -296,7 +295,13 @@ def counts_of(rows: list[QueueRow]) -> QueueCounts:
         tally[QueueStage.SECOND],
         tally[QueueStage.RECHECK],
     )
-    return QueueCounts(first=first, second=second, recheck=recheck, total=first + second + recheck)
+    return QueueCounts(
+        first=first,
+        second=second,
+        recheck=recheck,
+        waiting=first + second,
+        total=first + second + recheck,
+    )
 
 
 async def waiting_counts(db: AsyncSession, user: User) -> QueueCounts:
@@ -416,6 +421,7 @@ async def _details(db: AsyncSession, data: QueueData, page: list[QueueRow]) -> l
                 stage=row.stage,
                 status=link.status,
                 source=link.source,
+                accept_method=link.accept_method,
                 confidence=float(link.confidence) if link.confidence is not None else None,
                 coverage=link.coverage,
                 depth_match=link.depth_match,
@@ -582,20 +588,23 @@ async def bulk_accept(
 ) -> BulkOutcome:
     """Accept the high-confidence suggestions the actor may review, in one action.
 
-    Safety rules (ADR 040): the confidence must be at least ``BULK_MIN_CONFIDENCE``; only
-    first-stage suggestions with a confidence, a coverage and a depth are touched, never a
-    second review and never a re-check; the actor's own links are skipped; at most
-    ``BULK_MAX_LINKS`` are handled at once, the most confident first; and in four-eyes mode
-    the accept is a first review, so each link still waits for a different second reviewer.
+    Safety rules (ADR 040): the confidence must be at least the institution's floor
+    (``bulk_accept_min_percent``); only first-stage suggestions with a confidence, a coverage
+    and a depth are touched, never a second review and never a re-check; the actor's own
+    links are skipped; at most ``bulk_accept_max_links`` are handled at once, the most
+    confident first; in four-eyes mode the accept is a first review, so each link still
+    waits for a different second reviewer. Links accepted here carry ``accept_method =
+    bulk`` until a person reviews or edits them individually.
 
     Raises:
-        InvalidRequestError: If the threshold is below the allowed minimum.
+        InvalidRequestError: If the threshold is below the institution's floor.
     """
-    if min_confidence < BULK_MIN_CONFIDENCE:
-        raise InvalidRequestError(
-            f"Accept all works from {int(BULK_MIN_CONFIDENCE * 100)}% confidence upwards."
-        )
     data = await load_queue(db, actor, with_decided=False)
+    floor = Decimal(data.policy.bulk_accept_min_percent) / 100
+    if min_confidence < floor:
+        raise InvalidRequestError(
+            f"Accept all works from {data.policy.bulk_accept_min_percent}% confidence upwards."
+        )
     eligible = _sorted(
         [
             row
@@ -611,7 +620,7 @@ async def bulk_accept(
     status_after = (
         MappingStatus.NEEDS_SECOND_REVIEW if data.policy.four_eyes else MappingStatus.ACCEPTED
     )
-    batch = eligible[:BULK_MAX_LINKS]
+    batch = eligible[: data.policy.bulk_accept_max_links]
     if dry_run or not batch:
         return BulkOutcome(len(eligible), 0 if dry_run else len(batch), status_after)
 

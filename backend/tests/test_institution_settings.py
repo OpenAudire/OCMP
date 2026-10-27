@@ -201,7 +201,12 @@ class TestAPI:
         assert body["terminology"] == {"module": {"singular": "Course", "plural": "Courses"}}
         assert body["profiles"] == ["core", "health"]
         assert "role_balance_report" in body["features"]
-        assert body["mapping"] == {"four_eyes": False, "second_review_for_rejects": False}
+        assert body["mapping"] == {
+            "four_eyes": False,
+            "second_review_for_rejects": False,
+            "bulk_accept_min_percent": 80,
+            "bulk_accept_max_links": 200,
+        }
 
     async def test_requires_sign_in(self, api_client: AsyncClient) -> None:
         assert (await api_client.get("/api/v1/institution")).status_code == 401

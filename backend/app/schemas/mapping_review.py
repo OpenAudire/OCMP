@@ -7,7 +7,13 @@ from enum import StrEnum
 from pydantic import BaseModel, Field
 
 from app.models.curriculum import ObjectiveLevel
-from app.models.mapping import DepthMatch, MappingSource, MappingStatus, ReviewDecision
+from app.models.mapping import (
+    AcceptMethod,
+    DepthMatch,
+    MappingSource,
+    MappingStatus,
+    ReviewDecision,
+)
 
 
 class QueueStage(StrEnum):
@@ -49,6 +55,9 @@ class QueueLink(BaseModel):
     stage: QueueStage
     status: MappingStatus
     source: MappingSource
+    # How an accepted link was accepted. "bulk" means a person pressed Accept all and has not
+    # looked at this link individually; reports must show it (ADR 040).
+    accept_method: AcceptMethod | None
     confidence: float | None
     coverage: int | None
     depth_match: DepthMatch | None
@@ -75,11 +84,17 @@ class QueueProgress(BaseModel):
 
 
 class QueueCounts(BaseModel):
-    """What waits for this user, per stage (the sidebar shows the total)."""
+    """What waits for this user, per stage.
+
+    ``waiting`` (first plus second review) is the sidebar's number: suggestions the user can
+    act on now. Re-checks are accepted links, not suggestions, so they are not in it;
+    ``total`` adds them.
+    """
 
     first: int
     second: int
     recheck: int
+    waiting: int
     total: int
 
 

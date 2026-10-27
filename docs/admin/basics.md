@@ -28,7 +28,9 @@ available.
 
 **Mapping review policy.** `four_eyes` requires a second, different reviewer before an
 accepted mapping counts; `second_review_for_rejects` does the same for rejections. Both
-are off by default.
+are off by default. `bulk_accept_min_percent` (default 80, from 50 to 100) is the lowest confidence
+"Accept all" may use and `bulk_accept_max_links` (default 200, from 1 to 1000) is how many links one
+"Accept all" handles (see [Review queue](review-queue.md)).
 
 **Credits and notional hours.** The `credits` section sets the figures behind the credit check
 (see [Assessments and credits](assessments-and-credits.md)): `hours_per_credit` (default 10),
@@ -43,7 +45,8 @@ as they are:
 api -X PATCH "$SITE/api/v1/institution/settings" -d '{
   "terminology": {"module": {"singular": "Course", "plural": "Courses"}},
   "profiles": ["core", "health"],
-  "mapping": {"four_eyes": false, "second_review_for_rejects": false},
+  "mapping": {"four_eyes": false, "second_review_for_rejects": false,
+              "bulk_accept_min_percent": 80, "bulk_accept_max_links": 200},
   "credits": {"hours_per_credit": 10, "tolerance_percent": 10, "credits_per_year": 120}
 }'
 api "$SITE/api/v1/institution"     # the current settings
