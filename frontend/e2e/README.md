@@ -15,11 +15,19 @@ stack behind Caddy (ADR 006, ADR 026).
      python -m app.cli create-admin --email e2e.admin@example.org --name "Thandi Nkosi"
    ```
 
-3. Install the browser once, then run the tests from `frontend/`:
+3. Put the credentials in `frontend/e2e/.env.local` (git-ignored; loaded by `playwright.config.ts`,
+   values already in the environment win):
+
+   ```
+   E2E_EMAIL=e2e.admin@example.org
+   E2E_PASSWORD=<password>
+   ```
+
+4. Install the browser once, then run the tests from `frontend/`:
 
    ```bash
    npx playwright install chromium
-   E2E_EMAIL=e2e.admin@example.org E2E_PASSWORD=<password> npm run e2e
+   npm run e2e
    ```
 
 `E2E_BASE_URL` points the tests at another address (default `https://localhost`; the

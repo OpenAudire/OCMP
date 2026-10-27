@@ -1,5 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Local credentials for the test stack live in e2e/.env.local (git-ignored); values already set win.
+try {
+  process.loadEnvFile('e2e/.env.local');
+} catch {
+  // No local file: E2E_EMAIL and E2E_PASSWORD come from the environment.
+}
+
 /**
  * End-to-end tests against a running stack (Docker Compose behind Caddy), by default
  * https://localhost. Each journey runs in the light and the dark theme. See e2e/README.md.
