@@ -75,6 +75,7 @@ from app.services.curriculum_read import (
 )
 from app.services.curriculum_scopes import objective_scope
 from app.services.mapping_links import ensure_objective_open
+from app.services.mapping_live import live_link
 from app.services.policies import MappingPolicy, mapping_policy_for_version, parse_mapping_policy
 
 # "Accept all" may not go below the institution's floor (default 80%; the mockup calls under
@@ -209,6 +210,7 @@ async def load_queue(
             ),
         )
         .where(
+            live_link(),
             Objective.deleted_at.is_(None),
             CurriculumVersion.deleted_at.is_(None),
             CurriculumVersion.status == VersionStatus.DRAFT,
@@ -407,7 +409,7 @@ async def _details(db: AsyncSession, data: QueueData, page: list[QueueRow]) -> l
         .outerjoin(parent, parent.id == FrameworkItem.parent_id)
         .outerjoin(event, event.id == Objective.learning_event_id)
         .outerjoin(module, module.id == func.coalesce(Objective.module_id, event.module_id))
-        .where(MappingLink.id.in_([row.link_id for row in page]))
+        .where(MappingLink.id.in_([row.link_id for row in page]), live_link())
     )
     found = {row[0].id: row for row in result}
     cards: list[QueueLink] = []
@@ -627,7 +629,9 @@ async def bulk_accept(
     links = {
         link.id: link
         for link in await db.scalars(
-            select(MappingLink).where(MappingLink.id.in_([row.link_id for row in batch]))
+            select(MappingLink).where(
+                MappingLink.id.in_([row.link_id for row in batch]), live_link()
+            )
         )
     }
     processed = 0

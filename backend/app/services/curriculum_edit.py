@@ -40,6 +40,7 @@ from app.models import (
 )
 from app.models.curriculum import PhaseKind, VersionStatus
 from app.services.authorization import ConflictError, InvalidRequestError
+from app.services.mapping_live import soft_delete_links
 from app.services.tagging import set_teaching_format
 
 # Statuses whose structure can be edited (ADR 030).
@@ -325,6 +326,8 @@ async def _soft_delete_objectives(db: AsyncSession, *conditions: Any, at: dateti
     )
     for objective in objectives:
         objective.deleted_at = at
+    # Their mapping links go with them, with the same time (ADR 043).
+    await soft_delete_links(db, [o.id for o in objectives], at=at)
     return len(objectives)
 
 

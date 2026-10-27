@@ -109,7 +109,9 @@ async def add_link(
 
     link = await db.scalar(
         select(MappingLink).where(
-            MappingLink.objective_id == objective.id, MappingLink.framework_item_id == item.id
+            MappingLink.objective_id == objective.id,
+            MappingLink.framework_item_id == item.id,
+            MappingLink.deleted_at.is_(None),
         )
     )
     if link is not None and link.status != MappingStatus.REJECTED:

@@ -45,6 +45,7 @@ from app.services.authorization import (
     has_permission,
 )
 from app.services.curriculum_scopes import objective_scope
+from app.services.mapping_live import live_link
 from app.services.policies import MappingPolicy
 
 DEFAULT_POLICY = MappingPolicy()
@@ -103,7 +104,9 @@ async def create_link(
 
     exists = await db.scalar(
         select(MappingLink.id).where(
-            MappingLink.objective_id == objective.id, MappingLink.framework_item_id == item.id
+            MappingLink.objective_id == objective.id,
+            MappingLink.framework_item_id == item.id,
+            MappingLink.deleted_at.is_(None),
         )
     )
     if exists:
@@ -290,6 +293,7 @@ async def flag_for_recheck(db: AsyncSession, objective: Objective) -> int:
             MappingLink.objective_id == objective.id,
             MappingLink.status == MappingStatus.ACCEPTED,
             MappingLink.needs_recheck.is_(False),
+            live_link(),
         )
     )
     flagged = 0
@@ -337,7 +341,7 @@ async def links_for_objective(db: AsyncSession, objective_id: uuid.UUID) -> list
     """All mapping links of an objective."""
     result = await db.execute(
         select(MappingLink)
-        .where(MappingLink.objective_id == objective_id)
+        .where(MappingLink.objective_id == objective_id, live_link())
         .order_by(MappingLink.created_at)
     )
     return list(result.scalars())

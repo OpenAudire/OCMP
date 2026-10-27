@@ -48,7 +48,7 @@ async def objective_link_scope(request: Request, db: AsyncSession, user: User) -
 async def _live_link(db: AsyncSession, link_id: uuid.UUID) -> MappingLink:
     link = await db.get(MappingLink, link_id)
     # A rejected link is not a mapping: it is hidden like a missing one.
-    if link is None or link.status == MappingStatus.REJECTED:
+    if link is None or link.is_deleted or link.status == MappingStatus.REJECTED:
         raise not_found("Link")
     return link
 

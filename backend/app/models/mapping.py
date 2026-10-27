@@ -23,7 +23,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Audited, CoreModel, str_enum
+from app.models.base import Audited, CoreModel, SoftDeleteMixin, live_unique, str_enum
 
 
 class AIRunType(StrEnum):
@@ -175,16 +175,19 @@ class AIRunCall(CoreModel):
     run: Mapped[AIRun] = relationship(back_populates="calls", lazy="raise")
 
 
-class MappingLink(Audited, CoreModel):
+class MappingLink(Audited, SoftDeleteMixin, CoreModel):
     """A claim that an objective addresses a framework item, and how well.
 
-    One row per (objective, framework item): its status changes as people review
+    One row per live (objective, framework item): its status changes as people review
     it, and rejected rows are kept as examples for later AI runs.
+
+    A link is soft-deleted with its objective, with the same ``deleted_at`` (ADR 043); a link
+    a person removes is deleted for good. Reads go through ``app.services.mapping_live``.
     """
 
     __tablename__ = "mapping_links"
     __table_args__ = (
-        UniqueConstraint("objective_id", "framework_item_id"),
+        live_unique("uq_mapping_links_objective_item_live", "objective_id", "framework_item_id"),
         CheckConstraint("coverage IS NULL OR coverage BETWEEN 0 AND 5", name="coverage_range"),
         CheckConstraint(
             "confidence IS NULL OR (confidence >= 0 AND confidence <= 1)", name="confidence_range"

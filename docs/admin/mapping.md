@@ -33,8 +33,8 @@ stays as an example, and only a reviewer may do that.
 ### Coverage
 
 Coverage says how much of the framework item the objective teaches. The scale is the product owner's
-choice, based on the Charité scale (Theurich et al. 2025, GMS Journal for Medical Education 42(4):
-Doc46; the citation has not been checked by the project):
+choice, based on the Charité scale (Theurich T, Holzhausen Y, Ahlers O, Peters H. GMS J Med Educ. 2025;42(4):Doc46. DOI 10.3205/zma001770; citation verified by the product
+owner, 2026-10-27):
 
 | Level | Meaning |
 |---|---|
@@ -77,6 +77,32 @@ nothing. Adding a link for an item whose earlier link was rejected reopens that 
 When an objective's wording is edited, its accepted links are flagged. Editing a link does **not**
 clear the flag. A reviewer reads the new wording and presses **Still fits** to confirm; that is
 recorded in the change history. Reports show the flag.
+
+## Deleting objectives and their links
+
+When an objective is deleted, its mapping links are deleted with it, in the same step and under the
+same label in the change history. This holds for every way an objective can go: deleting it
+directly, deleting a session, a module or a draft version that holds it. Deleted links are not
+counted anywhere: not in "where mapped" on the framework browser, not in the workspace, the review
+queue or its sidebar number, not when copying a version forward, and they no longer stop you from
+deleting a framework. A link you remove yourself is removed for good (as before); only links that
+went with an objective can come back with it.
+
+If an objective is ever restored, the links that were deleted with it are restored too (links
+removed at another time stay removed). If a newer link for the same objective and item already
+exists, it wins and the older one stays deleted.
+
+### Tidying an install from before this rule
+
+Installs that deleted objectives before this rule hold links of deleted objectives that still
+count in places. Clean them up with the command below, run on the server. It only lists them unless
+you add `--apply`; each link is soft-deleted through the application and recorded in the change
+history as `mapping.orphan_cleanup`. It is safe to run again.
+
+```
+docker compose exec api python -m app.cli clean-orphan-links
+docker compose exec api python -m app.cli clean-orphan-links --apply
+```
 
 ## Who may do what
 

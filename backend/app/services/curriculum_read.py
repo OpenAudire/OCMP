@@ -41,6 +41,7 @@ from app.models.mapping import MappingStatus
 from app.models.tagging import TaggableType
 from app.services.authorization import role_permissions, user_assignments
 from app.services.curriculum_edit import is_editable
+from app.services.mapping_live import live_link
 from app.services.tagging import ItemTag, item_tags
 
 Permissions = frozenset[Permission]
@@ -482,6 +483,7 @@ async def _objectives(
                 MappingLink.objective_id.in_([o.id for o in objectives]),
                 MappingLink.needs_recheck.is_(True),
                 MappingLink.status == MappingStatus.ACCEPTED,
+                live_link(),
             )
             .group_by(MappingLink.objective_id)
         )

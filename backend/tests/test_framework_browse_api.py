@@ -523,6 +523,38 @@ class TestWhereMapped:
             "Reason clinically.",
         }
 
+    async def test_deleted_links_are_not_listed_or_counted(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        world: World,
+    ) -> None:
+        stale = await db_session.scalar(
+            select(MappingLink).where(
+                MappingLink.objective_id == world.outcome_b.id,
+                MappingLink.framework_item_id == world.first.id,
+            )
+        )
+        assert stale is not None
+        stale.soft_delete()
+        # An old orphan: the link is live but its objective was deleted.
+        world.programme_outcome.soft_delete()
+        await db_session.flush()
+        await sign_in(api_client, db_session, test_settings, "curriculum_office")
+
+        body = await get_json(api_client, self.path(world, world.first))
+        detail = await get_json(
+            api_client, f"/frameworks/{world.framework.id}/items/{world.first.id}"
+        )
+
+        assert {m["objective_text"] for m in body["mappings"]} == {
+            "Describe the heart.",
+            "Name the heart valves.",
+            "Draft: describe the heart.",
+        }
+        assert detail["mapped_count"] == 3
+
     async def test_flags_that_reports_must_show_are_returned(
         self,
         api_client: AsyncClient,

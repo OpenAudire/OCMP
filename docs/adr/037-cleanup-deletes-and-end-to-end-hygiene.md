@@ -17,7 +17,8 @@ keep in step.
 
 - **`DELETE /api/v1/frameworks/{id}`** (`frameworks.manage`, instance): soft-deletes a framework
   version (audit label `framework.delete`). It answers 409 when an objective is mapped to one of
-  its items, a review is assigned on it, or a newer live version has a crosswalk from it; 404 for
+  its items (deleted links and links of deleted objectives do not count, ADR 043), a review is assigned
+  on it, or a newer live version has a crosswalk from it; 404 for
   a missing or deleted one. The items stay with the hidden row. It frees the key and version for
   a new import. Tag lists and scales that a pack created are separate and are deleted on their
   own (tag lists already can be).

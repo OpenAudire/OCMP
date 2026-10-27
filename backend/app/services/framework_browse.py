@@ -32,6 +32,7 @@ from app.models import (
 from app.models.curriculum import ObjectiveLevel
 from app.models.mapping import MappingStatus
 from app.services.curriculum_read import CurriculumAccess, VisibleVersion, visible_version
+from app.services.mapping_live import live_link
 
 MAX_PAGE = 200
 MAX_MAPPINGS = 200
@@ -284,6 +285,7 @@ async def visible_mappings(
             .where(
                 MappingLink.framework_item_id.in_(item_ids),
                 MappingLink.status != MappingStatus.REJECTED,
+                live_link(),
                 Objective.deleted_at.is_(None),
                 CurriculumVersion.deleted_at.is_(None),
                 Programme.deleted_at.is_(None),

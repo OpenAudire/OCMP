@@ -27,6 +27,7 @@ from app.models.mapping import MappingStatus
 from app.schemas.mapping import MappingWorkspace, WorkspaceLink, WorkspaceObjective
 from app.services.curriculum_edit import is_editable
 from app.services.curriculum_read import Permissions, VisibleVersion
+from app.services.mapping_live import live_link
 from app.services.policies import mapping_policy_for_version
 
 _LEVEL_ORDER = {
@@ -128,6 +129,7 @@ async def mapping_workspace(db: AsyncSession, visible: VisibleVersion) -> Mappin
             .where(
                 MappingLink.objective_id.in_([o.id for o, _, _ in shown]),
                 MappingLink.status != MappingStatus.REJECTED,
+                live_link(),
                 Framework.deleted_at.is_(None),
             )
             .order_by(Framework.name, FrameworkItem.code)

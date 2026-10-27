@@ -77,6 +77,38 @@ class TestDeleteFramework:
         await db_session.refresh(framework)
         assert not framework.is_deleted
 
+    async def test_deleted_links_do_not_block_it(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        system_roles: None,
+    ) -> None:
+        framework = FrameworkFactory()
+        module = ModuleFactory()
+        db_session.add_all([framework, module])
+        await db_session.flush()
+        item = await add_item(db_session, framework, code="A", title="Area")
+        by_hand = await add_objective(db_session, module, "Removed link.")
+        orphan = await add_objective(db_session, module, "Old orphan.")
+        deleted_link = MappingLink(
+            objective_id=by_hand.id, framework_item_id=item.id, source=MappingSource.IMPORT
+        )
+        # Live link of a deleted objective, as installs from before ADR 043 have them.
+        orphan_link = MappingLink(
+            objective_id=orphan.id, framework_item_id=item.id, source=MappingSource.IMPORT
+        )
+        db_session.add_all([deleted_link, orphan_link])
+        await db_session.flush()
+        deleted_link.soft_delete()
+        orphan.soft_delete()
+        await db_session.flush()
+        await sign_in(api_client, db_session, test_settings, "curriculum_office")
+
+        response = await api_client.delete(f"{API}/frameworks/{framework.id}")
+
+        assert response.status_code == 204
+
     async def test_an_older_version_with_a_newer_one_built_on_it_stays(
         self,
         api_client: AsyncClient,

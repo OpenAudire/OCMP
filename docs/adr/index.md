@@ -48,3 +48,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [040](040-review-queue.md) | The Review Queue, Second Review and Bulk Accept |
 | [041](041-encrypted-secrets-at-rest.md) | Encrypted Secrets at Rest and Key Rotation |
 | [042](042-ai-provider-layer-and-privacy-guard.md) | AI Provider Layer, Privacy Guard, Budgets and Local-only Mode |
+| [043](043-mapping-links-go-with-their-objective.md) | Mapping Links Go With Their Objective |

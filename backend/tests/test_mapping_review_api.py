@@ -163,6 +163,29 @@ class TestQueueReading:
         assert (await api_client.get(QUEUE)).status_code == 401
         assert (await api_client.get(f"{QUEUE}/count")).status_code == 401
 
+    async def test_deleted_links_and_links_of_deleted_objectives_are_not_queued(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        world: World,  # noqa: F811
+        queue_world: dict[str, MappingLink],
+    ) -> None:
+        queue_world["heart"].soft_delete()
+        world.event_objective.soft_delete()  # an old orphan: its link is still live
+        await db_session.flush()
+        await sign_in(api_client, db_session, test_settings, "curriculum_office")
+
+        data = (await api_client.get(QUEUE)).json()
+
+        assert {item["id"] for item in data["items"]} == {
+            str(queue_world[name].id) for name in ("heart_b", "lungs", "outcome")
+        }
+        assert data["counts"]["total"] == 3
+        assert (await api_client.get(f"{QUEUE}/count")).json()["total"] == 3
+        gone = queue_world["heart"]
+        assert (await review(api_client, gone)).status_code == 404
+
     async def test_a_module_reviewer_sees_only_their_module(
         self,
         api_client: AsyncClient,

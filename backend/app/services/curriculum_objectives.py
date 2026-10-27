@@ -40,6 +40,7 @@ from app.services.curriculum import ObjectiveOwner, add_objective, link_objectiv
 from app.services.curriculum_edit import ensure_editable
 from app.services.curriculum_read import VersionView
 from app.services.mapping import flag_for_recheck
+from app.services.mapping_live import restore_links, soft_delete_links
 
 
 async def parent_options(
@@ -230,9 +231,25 @@ async def update_objective(
 async def delete_objective(
     db: AsyncSession, objective: Objective, version: CurriculumVersion
 ) -> None:
-    """Soft-delete an objective."""
+    """Soft-delete an objective together with its mapping links (ADR 043)."""
     ensure_editable(version)
     objective.soft_delete()
+    assert objective.deleted_at is not None
+    await soft_delete_links(db, [objective.id], at=objective.deleted_at)
+    await db.flush()
+
+
+async def restore_objective(
+    db: AsyncSession, objective: Objective, version: CurriculumVersion
+) -> None:
+    """Undelete an objective and the mapping links that were deleted with it (ADR 043).
+
+    Links a person removed earlier are gone for good, and links deleted at another time stay
+    deleted. No endpoint calls this yet.
+    """
+    ensure_editable(version)
+    await restore_links(db, objective)
+    objective.restore()
     await db.flush()
 
 

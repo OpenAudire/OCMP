@@ -42,6 +42,7 @@ from app.services.authorization import (
     get_role,
     sync_system_roles,
 )
+from app.services.mapping_live import clean_orphan_links
 from app.services.setup import setup_needed, setup_token
 from app.services.users import InvalidEmailError, create_local_user, get_user_by_email
 
@@ -97,6 +98,20 @@ async def _purge_audit_log(days: int) -> int:
     async with database.session_scope() as db:
         deleted = await purge_audit_log(db, older_than_days=days)
     print(f"Deleted {deleted} audit log entries older than {days} days.")  # noqa: T201
+    return 0
+
+
+async def _clean_orphan_links(apply: bool) -> int:
+    async with database.session_scope() as db:
+        with audit_operation("mapping.orphan_cleanup", reason="links of deleted objectives"):
+            found = await clean_orphan_links(db, apply=apply)
+    if apply:
+        print(f"Soft-deleted {found} mapping links whose objective was already deleted.")  # noqa: T201
+    else:
+        print(  # noqa: T201
+            f"{found} mapping links belong to deleted objectives. Dry run: nothing changed; "
+            "add --apply to soft-delete them."
+        )
     return 0
 
 
@@ -208,6 +223,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     commands.add_parser("setup-token", help="Show the first-run setup token.")
     commands.add_parser("load-demo", help="Load the fictional BSc Health Sciences (Demo) data.")
+    orphans = commands.add_parser(
+        "clean-orphan-links",
+        help="Soft-delete mapping links whose objective was deleted (dry run unless --apply).",
+    )
+    orphans.add_argument("--apply", action="store_true", help="Make the change.")
     audit_purge = commands.add_parser(
         "purge-audit-log", help="Delete audit log entries past retention."
     )
@@ -223,6 +243,8 @@ def main(argv: list[str] | None = None) -> int:
         try:
             if args.command == "sync-roles":
                 return await _sync_roles()
+            if args.command == "clean-orphan-links":
+                return await _clean_orphan_links(args.apply)
             if args.command == "load-demo":
                 return await _load_demo()
             if args.command == "new-encryption-key":

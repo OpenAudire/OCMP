@@ -20,8 +20,7 @@ for the scale or the depth. The product owner supplied it on 2026-10-27 (below).
 
 ### The coverage scale (the product owner's choice)
 
-The scale is the Charité scale, as given by the product owner, who cited Theurich et al. 2025, GMS
-Journal for Medical Education 42(4): Doc46:
+The scale is the Charité scale, as given by the product owner, who cited Theurich T, Holzhausen Y, Ahlers O, Peters H. GMS J Med Educ. 2025;42(4):Doc46. DOI 10.3205/zma001770:
 
 | Level | Meaning |
 |---|---|
@@ -32,8 +31,8 @@ Journal for Medical Education 42(4): Doc46:
 | 4 | 61 to 80% |
 | 5 | 81 to 100% |
 
-The citation was supplied with the decision and has **not been fetched or verified** by the
-project. It replaces the looser anchors in the review-queue mockup ("0 none, 1 up to 20%, 3 about
+The citation was **verified by the product owner on 2026-10-27**; the project itself has not
+fetched it. The scale replaces the looser anchors in the review-queue mockup ("0 none, 1 up to 20%, 3 about
 half, 5 more than 80%"). The words are in `frontend/src/i18n/locales/en.json` under
 `mapping.coverage.levels`.
 

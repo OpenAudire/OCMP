@@ -117,7 +117,7 @@ async def review_actor(
     see (or a rejected or missing one) is 404.
     """
     link = await db.get(MappingLink, link_id)
-    if link is None or link.status == MappingStatus.REJECTED:
+    if link is None or link.is_deleted or link.status == MappingStatus.REJECTED:
         raise not_found("Link")
     scope = await objective_scope_for(request, db, user, link.objective_id)
     needed = (

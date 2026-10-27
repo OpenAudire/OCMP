@@ -17,6 +17,7 @@ from app.models import (
 )
 from app.models.framework import CrossRefType, CrosswalkEntryType, FrameworkStatus
 from app.services.authorization import ConflictError, InvalidRequestError
+from app.services.mapping_live import live_link
 
 
 async def add_item(
@@ -194,7 +195,7 @@ async def delete_framework(db: AsyncSession, framework: Framework) -> None:
     mapped = await db.scalar(
         select(MappingLink.id)
         .join(FrameworkItem, FrameworkItem.id == MappingLink.framework_item_id)
-        .where(FrameworkItem.framework_id == framework.id)
+        .where(FrameworkItem.framework_id == framework.id, live_link())
         .limit(1)
     )
     assigned = await db.scalar(

@@ -53,6 +53,7 @@ from app.services.authorization import (
 )
 from app.services.curriculum_copy import Copies, copy_children, copy_module_rows
 from app.services.curriculum_edit import phase_siblings, soft_delete_assessments
+from app.services.mapping_live import live_link, soft_delete_links
 
 S = VersionStatus
 
@@ -137,6 +138,7 @@ async def delete_draft(db: AsyncSession, version: CurriculumVersion) -> None:
     )
     for row in rows:
         row.deleted_at = now
+    await soft_delete_links(db, [row.id for row in rows if isinstance(row, Objective)], at=now)
     await soft_delete_assessments(
         db, list(await db.scalars(select(Module.id).where(Module.version_id == version.id))), at=now
     )
@@ -290,7 +292,9 @@ async def forward_preview(
     )
     objectives = await db.scalar(select(func.count()).select_from(objective_ids.subquery()))
     mappings = await db.scalar(
-        select(func.count(MappingLink.id)).where(MappingLink.objective_id.in_(objective_ids))
+        select(func.count(MappingLink.id)).where(
+            MappingLink.objective_id.in_(objective_ids), live_link()
+        )
     )
     can_copy_roles = await _may_assign_roles(db, actor, version.programme_id)
     return ForwardPreview(
@@ -313,7 +317,7 @@ async def _copy_mappings(db: AsyncSession, copies: Copies) -> int:
     links = list(
         await db.scalars(
             select(MappingLink)
-            .where(MappingLink.objective_id.in_(list(copies.objectives)))
+            .where(MappingLink.objective_id.in_(list(copies.objectives)), live_link())
             .order_by(MappingLink.created_at)
         )
     )

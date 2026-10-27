@@ -145,6 +145,25 @@ def test_load_demo(
     assert "already loaded" in capsys.readouterr().out
 
 
+def test_clean_orphan_links_is_a_dry_run_unless_applied(
+    cli_settings: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Command wiring only; the cleanup itself is tested in test_mapping_live.py."""
+    modes = []
+
+    async def fake_clean(_db: object, *, apply: bool) -> int:
+        modes.append(apply)
+        return 7
+
+    monkeypatch.setattr(cli, "clean_orphan_links", fake_clean)
+
+    assert cli.main(["clean-orphan-links"]) == 0
+    assert "7 mapping links belong to deleted objectives. Dry run" in capsys.readouterr().out
+    assert cli.main(["clean-orphan-links", "--apply"]) == 0
+    assert "Soft-deleted 7 mapping links" in capsys.readouterr().out
+    assert modes == [False, True]
+
+
 def test_new_encryption_key_prints_a_usable_key(capsys: pytest.CaptureFixture[str]) -> None:
     from app.core.secrets import SecretBox
 

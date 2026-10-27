@@ -207,6 +207,31 @@ class TestReading:
         assert all(o["links"] == [] for o in data["objectives"])
         assert {o["level"] for o in data["objectives"]} == {"programme", "module", "learning_event"}
 
+    async def test_deleted_links_are_hidden(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        world: World,
+    ) -> None:
+        gone = MappingLink(
+            objective_id=world.module_objective.id,
+            framework_item_id=world.item_a.id,
+            source=MappingSource.IMPORT,
+            status=MappingStatus.SUGGESTED,
+        )
+        await save(db_session, gone)
+        gone.soft_delete()
+        await db_session.flush()
+        await sign_in(api_client, db_session, test_settings, "curriculum_office")
+
+        data = (await api_client.get(f"{API}/curriculum-versions/{world.draft.id}/mapping")).json()
+
+        assert all(o["links"] == [] for o in data["objectives"])
+        # The pair can be linked again: a deleted link does not block it.
+        made = await add(api_client, world.module_objective, **body(world.item_a, 4, "above"))
+        assert made.status_code == 201
+
     async def test_hidden_version_is_not_found(
         self,
         api_client: AsyncClient,

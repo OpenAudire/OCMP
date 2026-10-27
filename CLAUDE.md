@@ -274,6 +274,10 @@ export function ModuleCount({ count }: { count: number }) {
   with `objectives.approve`; returning a published version to draft needs
   `curriculum.unpublish` and a trimmed reason passed to `audit_operation(..., reason=...)`
 - Mapping links whose objective wording changed carry `needs_recheck`; reports must show it
+- Mapping links are soft-deleted with their objective and restored with it (ADR 043). Every read, count,
+  report, export and import of `MappingLink` must exclude deleted links and links of deleted objectives:
+  put `live_link()` from `app/services/mapping_live.py` in the `where`; never copy deleted links forward
+  and never rewrite the rule inline
 
 ### Testing
 
