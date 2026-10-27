@@ -70,6 +70,7 @@ nav:
       - Framework library: admin/frameworks.md
       - Mapping workspace: admin/mapping.md
       - Review queue: admin/review-queue.md
+      - AI settings: admin/ai.md
       - Importing frameworks: admin/framework-packs.md
       - Single sign-on (OIDC): admin/sso.md
   - Privacy (POPIA):

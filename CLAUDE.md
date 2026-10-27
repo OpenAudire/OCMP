@@ -229,6 +229,12 @@ export function ModuleCount({ count }: { count: number }) {
   a batch cap and never touches second reviews; single-key shortcuts work only while focus is inside
   the queue and can be switched off (WCAG 2.1.4)
 - Institution settings are read through `app/services/institution_settings.py` (typed sections), never raw JSON
+- AI (ADR 041, 042): every provider call goes through `app/services/ai_gateway.py` `complete()`; prompts are
+  `PromptTemplate`s in `app/ai/prompts.py` whose fields must be on `ALLOWED_FIELDS` in `app/ai/privacy.py`
+  (a reviewed change); adapters in `app/ai/providers/` accept only a sealed `GuardedRequest`. Read the current
+  official documentation before touching an adapter and record the date in its docstring. Secrets are encrypted
+  with `app/core/secrets.py` (`SecretBox`), kept in `__audit_exclude__` columns and never returned; logs hold ids
+  and counts only, never prompts, answers, names or keys. Tests use `httpx.MockTransport`, never a real provider
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 

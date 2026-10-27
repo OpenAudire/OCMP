@@ -110,3 +110,5 @@ All on the server, as `docker compose exec api python -m app.cli <command>`:
 | `load-demo` | Loads the fictional demo programme (once; see [Install](../operations/install.md#try-curriculum-in-context-with-the-demo-data)). With `OCMP_DEMO_OFFICE_PASSWORD` set it also makes the faculty-scoped demo account `curriculum.office@example.org`; run again with it set to add the account to an earlier load. |
 | `purge-audit-log [--days N]` | Deletes audit log entries older than N days (default from `.env`). |
 | `purge-ai-content [--days N]` | Clears stored AI prompts and responses older than N days. |
+| `new-encryption-key` | Prints a new key for `SECRETS_ENCRYPTION_KEYS` ([AI settings](ai.md#encryption-keys-and-rotation)). |
+| `rotate-secrets` | Re-encrypts stored secrets (AI provider keys) with the newest encryption key; lists any it cannot read. |

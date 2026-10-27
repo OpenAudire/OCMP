@@ -1,5 +1,6 @@
 """Application configuration using pydantic-settings."""
 
+import base64
 from functools import lru_cache
 from typing import Annotated, Literal
 
@@ -18,6 +19,8 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        # Errors must never echo a value (keys, passwords) back into logs.
+        hide_input_in_errors=True,
     )
 
     # Application
@@ -45,12 +48,27 @@ class Settings(BaseSettings):
     # service name). Requests from anywhere else use the connecting address.
     trusted_proxies: CommaSeparatedList = Field(default_factory=lambda: ["caddy"])
 
-    @field_validator("cors_origins", "trusted_proxies", mode="before")
+    @field_validator("cors_origins", "trusted_proxies", "secrets_encryption_keys", mode="before")
     @classmethod
     def parse_comma_separated(cls, v: str | list[str]) -> list[str]:
         """Parse a list from a comma-separated string or a list."""
         if isinstance(v, str):
             return [item.strip() for item in v.split(",") if item.strip()]
+        return v
+
+    @field_validator("secrets_encryption_keys", mode="after")
+    @classmethod
+    def encryption_keys_are_fernet_keys(cls, v: list[str]) -> list[str]:
+        """Each key must be a 32 byte URL-safe base64 value; the message never shows the key."""
+        for position, key in enumerate(v, start=1):
+            try:
+                if len(base64.urlsafe_b64decode(key.encode())) != 32:
+                    raise ValueError
+            except ValueError:
+                raise ValueError(
+                    f"SECRETS_ENCRYPTION_KEYS entry {position} is not a valid key; "
+                    "make one with: python -m app.cli new-encryption-key"
+                ) from None
         return v
 
     # Email (optional, for password reset)
@@ -99,13 +117,13 @@ class Settings(BaseSettings):
             ]
         )
 
-    # AI providers (optional)
-    ai_enabled: bool = False
-    ai_anthropic_api_key: str | None = None
-    ai_openai_api_key: str | None = None
-    ai_openai_base_url: str = "https://api.openai.com/v1"
-    ai_ollama_base_url: str | None = None
-    ai_monthly_budget_cap: float = 0.0  # 0 = unlimited
+    # AI providers, keys, budgets and local-only mode are set on the admin AI
+    # settings screen (ADR 042). Keys are stored encrypted (ADR 041).
+
+    # Keys that encrypt stored secrets (AI provider keys), newest first. Each is a
+    # Fernet key (`python -m app.cli new-encryption-key`). Empty: a key is derived from
+    # SECRET_KEY. Older keys stay readable until `rotate-secrets` re-encrypts.
+    secrets_encryption_keys: CommaSeparatedList = Field(default_factory=list)
 
     # Stored AI prompts and responses are cleared after this many days
     # (0 = keep). Run records, token counts and links are always kept.

@@ -3,6 +3,7 @@
 Every model must be imported here so Alembic autogenerate sees its table.
 """
 
+from app.models.ai_settings import AIProviderConfig, AISettings
 from app.models.assessment import Assessment, AssessmentItem, AssessmentItemObjective
 from app.models.audit import AuditLog
 from app.models.base import Base, CoreModel
@@ -33,8 +34,10 @@ from app.models.tagging import Tagging, TagList, TagValue
 from app.models.user import User
 
 __all__ = [
+    "AIProviderConfig",
     "AIRun",
     "AIRunCall",
+    "AISettings",
     "Assessment",
     "AssessmentItem",
     "AssessmentItemObjective",

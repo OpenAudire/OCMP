@@ -4,6 +4,8 @@
     python -m app.cli create-admin --email admin@example.org --name "Admin"
     python -m app.cli purge-ai-content [--days N]
     python -m app.cli purge-audit-log [--days N]
+    python -m app.cli new-encryption-key
+    python -m app.cli rotate-secrets
     python -m app.cli setup-token
     python -m app.cli load-demo
 
@@ -22,13 +24,17 @@ import getpass
 import os
 import sys
 
+from sqlalchemy import select
+
 from app.core import database
 from app.core.config import get_settings
 from app.core.permissions import ScopeType
+from app.core.secrets import SecretBox, SecretUnreadableError, new_key
 from app.core.security import PasswordPolicyError
 from app.demo.loader import load_demo
+from app.models import AIProviderConfig
 from app.services.ai_runs import purge_ai_call_content
-from app.services.audit import purge_audit_log
+from app.services.audit import audit_operation, purge_audit_log
 from app.services.authorization import (
     ConflictError,
     ScopeRef,
@@ -128,6 +134,44 @@ async def _load_demo() -> int:
     return 0
 
 
+def _new_encryption_key() -> int:
+    print(new_key())  # noqa: T201
+    return 0
+
+
+async def _rotate_secrets() -> int:
+    """Re-encrypt every stored secret with the newest key in SECRETS_ENCRYPTION_KEYS."""
+    box = SecretBox.from_settings(get_settings())
+    rotated = unchanged = unreadable = 0
+    with audit_operation("secrets.rotate"):
+        async with database.session_scope() as db:
+            configs = await db.scalars(
+                select(AIProviderConfig).where(AIProviderConfig.api_key_encrypted.is_not(None))
+            )
+            for config in configs:
+                stored = config.api_key_encrypted
+                assert stored is not None
+                if not box.needs_rotation(stored):
+                    unchanged += 1
+                    continue
+                try:
+                    config.api_key_encrypted = box.encrypt(box.decrypt(stored))
+                except SecretUnreadableError:
+                    unreadable += 1
+                    continue
+                rotated += 1
+    print(f"Re-encrypted {rotated} secrets; {unchanged} already used the newest key.")  # noqa: T201
+    if unreadable:
+        print(  # noqa: T201
+            f"{unreadable} secrets could not be read with the configured keys and were left "
+            "as they are. Add the key that encrypted them to SECRETS_ENCRYPTION_KEYS, or "
+            "enter them again in Admin > AI settings.",
+            file=sys.stderr,
+        )
+        return 1
+    return 0
+
+
 async def _setup_token() -> int:
     async with database.session_scope() as db:
         pending = await setup_needed(db)
@@ -149,6 +193,12 @@ def main(argv: list[str] | None = None) -> int:
         "purge-ai-content", help="Clear stored AI prompts and responses past retention."
     )
     purge.add_argument("--days", type=int, default=None, help="Default: AI_CALL_RETENTION_DAYS.")
+    commands.add_parser(
+        "new-encryption-key", help="Make a key for SECRETS_ENCRYPTION_KEYS (printed once)."
+    )
+    commands.add_parser(
+        "rotate-secrets", help="Re-encrypt stored secrets with the newest encryption key."
+    )
     commands.add_parser("setup-token", help="Show the first-run setup token.")
     commands.add_parser("load-demo", help="Load the fictional BSc Health Sciences (Demo) data.")
     audit_purge = commands.add_parser(
@@ -168,6 +218,10 @@ def main(argv: list[str] | None = None) -> int:
                 return await _sync_roles()
             if args.command == "load-demo":
                 return await _load_demo()
+            if args.command == "new-encryption-key":
+                return _new_encryption_key()
+            if args.command == "rotate-secrets":
+                return await _rotate_secrets()
             if args.command == "setup-token":
                 return await _setup_token()
             if args.command == "purge-audit-log":

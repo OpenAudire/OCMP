@@ -143,3 +143,97 @@ def test_load_demo(
     assert "Added the 2027 draft" in capsys.readouterr().out
     assert cli.main(["load-demo"]) == 0
     assert "already loaded" in capsys.readouterr().out
+
+
+def test_new_encryption_key_prints_a_usable_key(capsys: pytest.CaptureFixture[str]) -> None:
+    from app.core.secrets import SecretBox
+
+    assert cli.main(["new-encryption-key"]) == 0
+
+    key = capsys.readouterr().out.strip()
+    box = SecretBox([key])
+    assert box.decrypt(box.encrypt("value")) == "value"
+
+
+def test_rotate_secrets(
+    cli_settings: str,
+    test_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    import uuid
+
+    from sqlalchemy import insert
+
+    from app.core.secrets import SecretBox, derive_key, new_key
+    from app.models import AIProviderConfig, Institution
+
+    old_box = SecretBox([derive_key(test_settings.secret_key)])
+    foreign = SecretBox([new_key()]).encrypt("lost")
+    institution_id = uuid.uuid4()
+    ids = {name: uuid.uuid4() for name in ("old", "lost", "none")}
+    asyncio.run(
+        _query(
+            cli_settings,
+            insert(Institution.__table__).values(
+                id=institution_id, name="Rotate U", short_code="RU", country="ZA", settings={}
+            ),
+        )
+    )
+    rows = [
+        (ids["old"], "anthropic", old_box.encrypt("sk-test-not-a-real-key")),
+        (ids["lost"], "openai_compatible", foreign),
+        (ids["none"], "ollama", None),
+    ]
+    for config_id, provider, stored in rows:
+        asyncio.run(
+            _query(
+                cli_settings,
+                insert(AIProviderConfig.__table__).values(
+                    id=config_id,
+                    institution_id=institution_id,
+                    provider=provider,
+                    api_key_encrypted=stored,
+                ),
+            )
+        )
+    new = new_key()
+    configured = test_settings.model_copy(
+        update={"database_url": cli_settings, "secrets_encryption_keys": [new]}
+    )
+    monkeypatch.setattr(cli, "get_settings", lambda: configured)
+    try:
+        assert cli.main(["rotate-secrets"]) == 1  # one secret could not be read
+
+        captured = capsys.readouterr()
+        assert "Re-encrypted 1 secrets" in captured.out
+        assert "1 secrets could not be read" in captured.err
+        stored = {
+            row[0]: row[1]
+            for row in asyncio.run(
+                _query(
+                    cli_settings,
+                    select(AIProviderConfig.id, AIProviderConfig.api_key_encrypted).where(
+                        AIProviderConfig.institution_id == institution_id
+                    ),
+                )
+            )
+        }
+        new_box = SecretBox([new])
+        assert new_box.decrypt(stored[ids["old"]]) == "sk-test-not-a-real-key"
+        assert not new_box.needs_rotation(stored[ids["old"]])
+        assert stored[ids["lost"]] == foreign  # left as it was
+        assert stored[ids["none"]] is None
+
+        assert cli.main(["rotate-secrets"]) == 1
+        assert "Re-encrypted 0 secrets; 1 already used" in capsys.readouterr().out
+    finally:
+        asyncio.run(
+            _query(
+                cli_settings,
+                delete(AIProviderConfig).where(AIProviderConfig.institution_id == institution_id),
+            )
+        )
+        asyncio.run(
+            _query(cli_settings, delete(Institution).where(Institution.id == institution_id))
+        )

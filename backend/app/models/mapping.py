@@ -33,6 +33,7 @@ class AIRunType(StrEnum):
     MIGRATION = "migration"
     QA = "qa"
     CLASSIFICATION = "classification"
+    CONNECTION_TEST = "connection_test"  # the admin's "test connection" button (ADR 042)
 
 
 class AIRunStatus(StrEnum):

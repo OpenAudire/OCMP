@@ -109,7 +109,7 @@ class TestSettings:
         assert settings.debug is False
         assert settings.log_level == "INFO"
         assert settings.session_expire_hours == 24
-        assert settings.ai_enabled is False
+        assert settings.secrets_encryption_keys == []
         assert settings.embeddings_local is False
 
 

@@ -1,5 +1,5 @@
-import { Button } from '@mantine/core';
-import { IconTags } from '@tabler/icons-react';
+import { Button, Group } from '@mantine/core';
+import { IconSparkles, IconTags } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { Link, Route, Routes } from 'react-router';
 
@@ -7,22 +7,25 @@ import { NoAccessPage } from '../pages/StatusPages';
 import { Permission } from '../session/permissions';
 import { useSession } from '../session/useSession';
 import { Page } from '../ui/Page';
+import { AiSettingsPage } from './AiSettingsPage';
 import { TagListsPage } from './TagListsPage';
 
 export const TAG_LISTS_PATH = '/admin/tag-lists';
+export const AI_SETTINGS_PATH = '/admin/ai';
 
 /** `/admin`: the admin screens this user may use (more arrive in later slices). */
 function AdminHome() {
   const { t } = useTranslation();
   const { data: session } = useSession();
   const canManageTags = session?.permissions.has(Permission.TaglistsManage) ?? false;
+  const canManageSettings = session?.permissions.has(Permission.SettingsManage) ?? false;
   return (
     <Page
       title={t('nav.admin')}
-      description={canManageTags ? t('admin.intro') : t('pages.comingSoon')}
+      description={canManageTags || canManageSettings ? t('admin.intro') : t('pages.comingSoon')}
     >
-      {canManageTags && (
-        <div>
+      <Group>
+        {canManageTags && (
           <Button
             component={Link}
             to={TAG_LISTS_PATH}
@@ -31,22 +34,37 @@ function AdminHome() {
           >
             {t('admin.tagListsLink')}
           </Button>
-        </div>
-      )}
+        )}
+        {canManageSettings && (
+          <Button
+            component={Link}
+            to={AI_SETTINGS_PATH}
+            variant="default"
+            leftSection={<IconSparkles size={18} aria-hidden />}
+          >
+            {t('admin.aiLink')}
+          </Button>
+        )}
+      </Group>
     </Page>
   );
 }
 
-/** The admin section: tag lists for the curriculum office. */
+/** The admin section: tag lists for the curriculum office, AI settings for administrators. */
 export function AdminSection() {
   const { data: session } = useSession();
   const canManageTags = session?.permissions.has(Permission.TaglistsManage) ?? false;
+  const canManageSettings = session?.permissions.has(Permission.SettingsManage) ?? false;
   return (
     <Routes>
       <Route index element={<AdminHome />} />
       <Route
         path="tag-lists"
         element={canManageTags ? <TagListsPage /> : <NoAccessPage />}
+      />
+      <Route
+        path="ai"
+        element={canManageSettings ? <AiSettingsPage /> : <NoAccessPage />}
       />
       <Route path="*" element={<AdminHome />} />
     </Routes>

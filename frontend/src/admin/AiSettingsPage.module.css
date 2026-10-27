@@ -1,0 +1,104 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 26px;
+}
+
+@media (max-width: 48em) {
+  .card {
+    padding: 20px;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.sectionTitle {
+  font-size: 22px;
+}
+
+.sub {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 8px;
+  border-top: 1px solid var(--cic-line);
+}
+
+.subTitle {
+  font-size: 17px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 20px;
+  align-items: start;
+}
+
+.reasons {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--cic-soft);
+  color: var(--cic-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Ochre means "needs attention" (ADR 026); the word says so as well. */
+.chip[data-tone='attention'] {
+  background: var(--cic-warm-soft);
+  color: var(--cic-warm-ink);
+}
+
+/* Ochre means "needs attention" (ADR 026); the heading says so in words and an icon. */
+.warning {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--cic-warm-line);
+  border-radius: 12px;
+  background: var(--cic-warm-soft);
+  color: var(--cic-warm-ink);
+  overflow-wrap: anywhere;
+}
+
+.warningTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+}
+
+/* Focused after saving so the confirmation is read out. */
+.notice:focus {
+  outline: none;
+}
+
+.notice:focus-visible > * {
+  outline: 2px solid var(--cic-brand);
+  outline-offset: 2px;
+}

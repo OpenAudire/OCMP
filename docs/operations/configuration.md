@@ -74,11 +74,22 @@ Needed for password reset and "password changed" notices.
 
 The purge commands are run on a schedule; see [Admin basics](../admin/basics.md#retention).
 
+## Secrets
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `SECRETS_ENCRYPTION_KEYS` | empty | Keys that encrypt stored secrets (AI provider keys), comma-separated, **newest first**. Make one with `docker compose exec api python -m app.cli new-encryption-key`. Empty: a key is derived from `SECRET_KEY`. A key derived from `SECRET_KEY` is always kept as a read-only fallback, so values stored before this was set stay readable until `rotate-secrets` re-encrypts them. See [AI settings](../admin/ai.md#encryption-keys-and-rotation). |
+
+AI providers, their keys, budgets and local-only mode are set on the admin AI settings screen, not
+in `.env`. The `AI_ENABLED`, `AI_ANTHROPIC_API_KEY`, `AI_OPENAI_*`, `AI_OLLAMA_BASE_URL` and
+`AI_MONTHLY_BUDGET_CAP` settings of earlier templates were never read and have been removed; delete
+them from your `.env` if present (they are ignored).
+
 ## Reserved for later phases
 
-`AI_*`, `EMBEDDINGS_*` and `CONNECTOR_ENCRYPTION_KEY` are read but not used yet: AI
-mapping arrives in Phase 1 and the Brightspace connector in Phase 2. Leave them as they
-are in the template.
+`EMBEDDINGS_*` and `CONNECTOR_ENCRYPTION_KEY` are read but not used yet: meaning-based search
+arrives later in Phase 1 and the Brightspace connector in Phase 2. Leave them as they are in the
+template.
 
 ## Images
 

@@ -1017,3 +1017,92 @@ export interface BulkAcceptResult {
   status_after: LinkStatus;
   dry_run: boolean;
 }
+
+// --- AI settings (Admin > AI settings) ---------------------------------------------
+
+export type AiProviderKind = 'null' | 'anthropic' | 'openai_compatible' | 'ollama';
+export type AiDataLocation = 'local' | 'south_africa' | 'outside_south_africa';
+export type AiKeyStatus = 'not_set' | 'set' | 'unreadable';
+
+export interface AiProvider {
+  kind: Exclude<AiProviderKind, 'null'>;
+  model: string | null;
+  base_url: string | null;
+  data_location: AiDataLocation;
+  data_location_fixed: boolean;
+  outside_south_africa: boolean;
+  is_local: boolean;
+  temperature: string | null;
+  input_price_per_mtok: string | null;
+  output_price_per_mtok: string | null;
+  key_mode: 'required' | 'optional' | 'none';
+  /** Whether a key is stored. The key itself is never returned. */
+  key_status: AiKeyStatus;
+  key_set_at: string | null;
+  base_url_mode: 'fixed' | 'required';
+  default_base_url: string | null;
+  suggested_models: string[];
+  /** Fields still to fill in: model, base_url, api_key. */
+  missing: string[];
+}
+
+export interface AiBudget {
+  monthly_cost_cap: string | null;
+  monthly_token_cap: number | null;
+  monthly_call_cap: number | null;
+  max_calls_per_run: number;
+  max_output_tokens: number;
+}
+
+export type AiStatusReason =
+  | 'not_configured'
+  | 'local_only'
+  | 'acknowledgement_missing'
+  | 'budget_exceeded';
+
+export interface AiSettings {
+  active_provider: AiProviderKind;
+  local_only: boolean;
+  on_personal_data: 'refuse' | 'redact';
+  budget: AiBudget;
+  acknowledgement: { acknowledged_at: string | null; current: boolean };
+  usage: { period_start: string; period_end: string; calls: number; tokens: number; cost: string };
+  status: { state: 'off' | 'ready' | 'blocked'; reasons: AiStatusReason[]; budget_message: string | null };
+  providers: AiProvider[];
+}
+
+export interface AiProviderUpdate {
+  model?: string | null;
+  base_url?: string | null;
+  data_location?: AiDataLocation;
+  temperature?: string | null;
+  input_price_per_mtok?: string | null;
+  output_price_per_mtok?: string | null;
+  /** Write-only. */
+  api_key?: string;
+  clear_api_key?: boolean;
+}
+
+export interface AiUpdate {
+  active_provider?: AiProviderKind;
+  local_only?: boolean;
+  on_personal_data?: 'refuse' | 'redact';
+  monthly_cost_cap?: string | null;
+  monthly_token_cap?: number | null;
+  monthly_call_cap?: number | null;
+  max_calls_per_run?: number;
+  max_output_tokens?: number;
+  acknowledge_outside_south_africa?: boolean;
+  providers?: Partial<Record<Exclude<AiProviderKind, 'null'>, AiProviderUpdate>>;
+}
+
+export interface AiConnectionTest {
+  ok: boolean;
+  code: string;
+  message: string;
+  provider: AiProviderKind;
+  model: string | null;
+  input_tokens: number;
+  output_tokens: number;
+  duration_ms: number;
+}

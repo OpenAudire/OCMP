@@ -43,10 +43,25 @@ students or patients.
 
 ## AI processing
 
-AI prompts and responses (`ai_run_calls`, Phase 1) contain curriculum text only. Personal
-information must never be sent to an AI provider; the brief requires a privacy guard that
-enforces this in code before any provider is called. Stored prompts and responses are
-cleared after `AI_CALL_RETENTION_DAYS` (default 365).
+AI is off by default. When an administrator chooses a provider (Admin > AI settings, ADR 042), the
+only thing sent is curriculum text built from fixed templates and allow-listed fields (objective
+text, framework items, module and session titles and descriptions, study-guide text). Personal
+information must never be sent to an AI provider, and a privacy guard enforces this in code before any
+provider is called (`app/ai/privacy.py`): email addresses, phone numbers, ID, student and staff
+numbers, IP addresses, titles followed by a name and the names of this installation's users are found
+and the call is refused (or, if the administrator chose it, the found text is replaced by a
+placeholder and checked again). A refusal is recorded with counts and kinds only, never the text.
+
+| Data | Where | Purpose | Retention |
+|---|---|---|---|
+| The prompt as sent (after the guard) and the provider's answer | `ai_run_calls.request`, `.response`, `.error_message` | Audit of every AI call | Cleared after `AI_CALL_RETENTION_DAYS` (default 365) by `purge-ai-content`; the run, token counts and timings are always kept. Curriculum text only; it can hold personal information only if staff typed it into a curriculum field and the guard did not recognise it |
+| Who made a call or run, and when | `ai_runs.created_by_id`, `ai_run_calls.created_by_id`, timestamps | Accountability, budgets | Kept; set to empty when the user is deleted |
+| Who acknowledged the warning about text leaving South Africa, and when | `ai_settings.ack_by_id`, `.ack_at` | POPIA transparency about the transfer | Kept; set to empty when the user is deleted |
+| AI provider API key | `ai_provider_configs.api_key_encrypted` (encrypted, ADR 041) | Calling the provider | Until removed or replaced. Not personal data; a secret. It is never returned by the API, never in the audit log (the column is recorded as "changed" only) and never in a log. Backups hold only the ciphertext |
+| Provider choice, addresses, budgets, local-only mode | `ai_settings`, `ai_provider_configs` | Configuration | Kept; changes are in the audit log with the acting admin |
+
+Logs of AI calls hold run ids, user ids, the provider name, token counts, timings and the number of
+findings of a refusal. Never a prompt, an answer, a name, an address or a key.
 
 ## Redis (temporary)
 
@@ -57,6 +72,7 @@ cleared after `AI_CALL_RETENTION_DAYS` (default 365).
 | Rate-limit counter keyed by a hash of the user id (live objective quality check) | Stopping runaway requests while someone types | 1 minute |
 | Rate-limit counter keyed by a hash of the user id (framework pack preview) | Stopping runaway uploads | 1 minute |
 | Checked framework pack file (`pack-import:<random token>`): the file text and the id of the user who uploaded it. A pack describes frameworks and holds no personal data unless someone puts it there | Confirming an import without uploading the file again | 30 minutes, removed once imported |
+| Rate-limit counter keyed by a hash of the user id (AI "Test connection" button) | Stopping repeated test calls to a paid provider | 1 minute |
 | Password reset token (hashed) and the user id | Reset links | `PASSWORD_RESET_TOKEN_MINUTES` (default 60), single use |
 | SSO sign-in state (nonce, PKCE verifier, return path) | Completing an SSO sign-in | 10 minutes, single use |
 | Queued job messages, e.g. "send reset email to <address>" | Sending email in the background | Until processed, usually seconds |
@@ -83,10 +99,14 @@ backups expire.
 |---|---|---|
 | The institution's SMTP server | Recipient email address, name, reset link | Password reset and "password changed" emails |
 | The institution's identity provider | The sign-in request; the provider returns subject id, email and name | SSO sign-in |
-| AI provider (Phase 1, optional) | Curriculum text only, never personal information | When AI features are used |
+| AI provider (optional, chosen by an administrator) | Curriculum text only, never personal information (the privacy guard refuses it); the API key in a header; for the "Test connection" button a fixed test sentence | When an AI feature runs, and when an administrator presses "Test connection". Nothing is sent while AI is off (the default) |
 
 If an AI provider outside South Africa is configured, curriculum text (not personal
-information) is transferred abroad; Curriculum in Context will warn the administrator (brief section 9).
+information) is transferred abroad. The admin AI settings screen warns the administrator and
+requires an acknowledgement before the provider can be chosen; it is recorded with who and when and
+stops covering the provider when its address or location changes. Local-only mode blocks every
+provider that is not on this server or network. Which providers process text outside South Africa is
+stated by the administrator (Anthropic is always treated as outside).
 
 ## Rights of data subjects
 

@@ -1208,6 +1208,126 @@
   "admin": {
     "intro": "Settings the curriculum office and administrators keep.",
     "tagListsLink": "Tag lists",
+    "aiLink": "AI settings",
+    "ai": {
+      "title": "AI settings",
+      "description": "Choose whether AI may help draft mappings, which provider it uses and what it may cost. AI is off until you choose a provider. Only curriculum text is ever sent to a provider, never personal information.",
+      "loadErrorTitle": "Couldn't load the AI settings",
+      "loadErrorBody": "Nothing was changed. Check your connection and try again.",
+      "providerTitle": "Provider",
+      "providerHelp": "Everything in Curriculum in Context works without AI. Pick a provider only if you want AI suggestions.",
+      "providerSettings": "{{provider}} settings",
+      "provider": {
+        "null": {
+          "name": "AI off",
+          "about": "No AI. Nothing is sent anywhere.",
+          "detail": "AI is off. Nothing is sent to any provider, and mapping and review work by hand."
+        },
+        "anthropic": {
+          "name": "Anthropic Claude",
+          "about": "A cloud service. Text is processed outside South Africa."
+        },
+        "openai_compatible": {
+          "name": "OpenAI-compatible",
+          "about": "OpenAI, Azure OpenAI, or a server such as vLLM that speaks the same API."
+        },
+        "ollama": {
+          "name": "Ollama",
+          "about": "A language model on your own server or network."
+        }
+      },
+      "fields": {
+        "model": "Model",
+        "modelHelp": "The model's name as the provider writes it.",
+        "baseUrl": "Address",
+        "baseUrlHelp_openai_compatible": "For example https://api.openai.com/v1, or the address of your own server ending in /v1.",
+        "baseUrlHelp_ollama": "For example http://localhost:11434 or the name of the Ollama service.",
+        "location": "Where this provider processes text",
+        "locationHelp": "Your answer decides the warning and local-only mode. Choose \"On this server or my network\" only when the address is a private one.",
+        "locationFixed": "This provider processes text: {{place}}.",
+        "apiKey": "API key",
+        "apiKeySet": "A key is saved. It cannot be shown. Type a new key to replace it.",
+        "apiKeyNotSet": "No key is saved. The key is stored encrypted and is never shown again.",
+        "apiKeyOptional": "Optional. Only if the server asks for a key. It is stored encrypted and never shown again.",
+        "apiKeyUnreadable": "A key is saved but cannot be read with the current encryption keys. Type the key again.",
+        "removeKey": "Remove the saved key",
+        "inputPrice": "Price per million input tokens (USD)",
+        "outputPrice": "Price per million output tokens (USD)",
+        "pricesHelp": "Prices change, so none are built in. Enter the provider's current prices so costs can be counted. Enter 0 for a server you run yourself.",
+        "temperature": "Temperature (optional)",
+        "temperatureHelp": "From 0 to 2. Leave empty to use the provider's default."
+      },
+      "location": {
+        "local": "On this server or my network",
+        "south_africa": "In South Africa",
+        "outside_south_africa": "Outside South Africa"
+      },
+      "openaiNote": "This adapter was checked against Microsoft's and Ollama's published descriptions of the API. OpenAI's own reference could not be read when it was written, so run the connection test before relying on it.",
+      "outside": {
+        "title": "Text will be sent outside South Africa",
+        "body": "This provider processes the text it is sent outside South Africa. Only curriculum text (objectives, framework items, titles and descriptions) is sent, never personal information, but your information officer should know. Check the provider's terms for how it stores and uses what it receives.",
+        "acknowledge": "I understand that curriculum text will be processed outside South Africa",
+        "required": "Tick this to confirm you have read the warning.",
+        "acknowledgedOn": "Acknowledged on {{date}}."
+      },
+      "privacy": {
+        "title": "Privacy",
+        "body": "A privacy guard checks every message before it leaves. Only curriculum fields are allowed, and the text is scanned for email addresses, phone numbers, ID and student numbers, titles with names, and the names of this site's users.",
+        "localOnly": "Local-only mode",
+        "localOnlyHelp": "When on, only a provider on this server or network can be used. Providers anywhere else are blocked.",
+        "personalData": "When personal information is found",
+        "personalDataHelp": "This applies to anything the guard finds in the text.",
+        "refuse": "Refuse the request (recommended)",
+        "refuseHelp": "Nothing is sent. The person is told what kind of information was found, not the text itself.",
+        "redact": "Replace it with a placeholder and send the rest",
+        "redactHelp": "The found text is swapped for a note such as [email removed], and the text is checked again before it is sent."
+      },
+      "budget": {
+        "title": "Budget",
+        "body": "AI stops with a clear message when a limit is reached. Limits count calendar months in UTC.",
+        "blankIsNone": "Leave empty for no limit.",
+        "costCap": "Monthly cost limit (USD)",
+        "tokenCap": "Monthly token limit",
+        "callCap": "Monthly call limit",
+        "callsPerRun": "Most calls in one run",
+        "callsPerRunHelp": "A run that needs more stops.",
+        "maxOutput": "Most tokens in one answer",
+        "maxOutputHelp": "Caps how long one answer can be."
+      },
+      "validation": {
+        "whole": "Enter a whole number, or leave empty.",
+        "atLeastOne": "Enter a whole number of at least 1.",
+        "decimal": "Enter a number such as 2.50, or leave empty.",
+        "temperature": "Enter a number from 0 to 2, or leave empty."
+      },
+      "status": {
+        "title": "Status",
+        "off": "AI is off",
+        "offBody": "Nothing is sent anywhere. Everything in Curriculum in Context works without AI.",
+        "ready": "Ready: {{provider}}",
+        "readyBody": "AI calls go to {{provider}} ({{model}}) once a feature uses them.",
+        "blocked": "Blocked: {{provider}}",
+        "reason": {
+          "not_configured": "The provider is not complete. Fill in the missing details below.",
+          "local_only": "Local-only mode is on, and this provider is not on this server or network.",
+          "acknowledgement_missing": "The warning about text leaving South Africa has not been acknowledged.",
+          "budget_exceeded": "A budget limit is reached."
+        }
+      },
+      "usage": "This month: {{calls}} calls, {{tokens}} tokens, USD {{cost}}. Counting starts again on {{date}}.",
+      "test": {
+        "button": "Test connection",
+        "note": "Sends one fixed test message (\"Reply with the single word: ready\"). No curriculum data is sent. It uses a few tokens.",
+        "offNote": "Choose and save a provider to test it.",
+        "saveFirst": "Save your changes first. The test uses the saved settings.",
+        "ok": "The provider answered. {{input}} tokens in, {{output}} out, {{ms}} ms.",
+        "failed": "The test failed. {{message}}"
+      },
+      "save": "Save AI settings",
+      "discard": "Discard changes",
+      "saved": "AI settings saved.",
+      "saveFailed": "The settings were not saved. {{detail}}"
+    },
     "tagLists": {
       "title": "Tag lists",
       "description_page": "Lists such as teaching methods, assessment methods and themes. People tag modules, sessions and objectives with the tags you keep here.",

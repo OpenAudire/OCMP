@@ -1,5 +1,8 @@
 import { api } from './client';
 import type {
+  AiConnectionTest,
+  AiSettings,
+  AiUpdate,
   AssessableObjective,
   Assessment,
   AssessmentInput,
@@ -633,7 +636,23 @@ export async function deleteFramework(frameworkId: string): Promise<void> {
   await api.delete(`/frameworks/${frameworkId}`);
 }
 
+/** The AI settings, usage this month and what would happen to a call now (no keys). */
+export async function fetchAiSettings(): Promise<AiSettings> {
+  return (await api.get<AiSettings>('/ai/settings')).data;
+}
+
+/** Only the fields sent change. API keys are write-only. */
+export async function updateAiSettings(input: AiUpdate): Promise<AiSettings> {
+  return (await api.patch<AiSettings>('/ai/settings', input)).data;
+}
+
+/** Sends one fixed, harmless prompt through the chosen provider. */
+export async function testAiConnection(): Promise<AiConnectionTest> {
+  return (await api.post<AiConnectionTest>('/ai/test-connection')).data;
+}
+
 export const queryKeys = {
+  aiSettings: ['ai-settings'] as const,
   frameworks: ['frameworks'] as const,
   frameworkItem: (frameworkId: string, itemId: string) =>
     ['frameworks', frameworkId, 'items', itemId] as const,

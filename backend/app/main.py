@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.ai.errors import AIRefusedError, ProviderError
 from app.api.health import router as health_router
 from app.api.v1 import router as v1_router
 from app.core.audit_context import AuditContextMiddleware
@@ -106,6 +107,9 @@ def create_app() -> FastAPI:
         (AuthorizationError, status.HTTP_403_FORBIDDEN),
         (InvalidRequestError, status.HTTP_422_UNPROCESSABLE_CONTENT),
         (ConflictError, status.HTTP_409_CONFLICT),
+        # AI calls: refused before anything was sent, or the provider failed.
+        (AIRefusedError, status.HTTP_409_CONFLICT),
+        (ProviderError, status.HTTP_502_BAD_GATEWAY),
     ):
         app.add_exception_handler(error, _error_handler(code))
 
