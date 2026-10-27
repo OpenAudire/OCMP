@@ -3,7 +3,8 @@
 The **Frameworks** page lists the frameworks that objectives can be mapped to, lets you browse
 one as a tree, search it and see where its items are mapped. The design is in
 [ADR 038](../adr/038-framework-library-and-browser.md). Frameworks are brought in with
-[framework packs](framework-packs.md).
+[framework packs](framework-packs.md). Objectives are linked to their items on the
+[Mapping page](mapping.md).
 
 ## Who sees what
 

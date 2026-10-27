@@ -11,7 +11,14 @@ import classes from './VersionSwitcher.module.css';
  * The programme and version being viewed (header of the builder mockup). Opens a
  * menu of every programme with its visible versions, newest first.
  */
-export function VersionSwitcher({ versionId }: { versionId: string }) {
+export function VersionSwitcher({
+  versionId,
+  pathFor = versionPath,
+}: {
+  versionId: string;
+  /** Where choosing a version goes; the builder by default. */
+  pathFor?: (versionId: string) => string;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: programmes } = useProgrammes();
@@ -20,7 +27,7 @@ export function VersionSwitcher({ versionId }: { versionId: string }) {
 
   const open = (id: string) => {
     rememberVersion(id);
-    navigate(versionPath(id));
+    navigate(pathFor(id));
   };
 
   return (

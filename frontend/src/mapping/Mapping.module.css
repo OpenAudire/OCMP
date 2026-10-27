@@ -1,0 +1,241 @@
+/* Mapping workspace: objectives, the selected objective's links, and the framework. */
+.workspace {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.objectives {
+  flex: 1.2 1 300px;
+}
+
+.links {
+  flex: 1.6 1 380px;
+}
+
+.framework {
+  flex: 1.4 1 320px;
+}
+
+.pane {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paneHeading {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cic-muted);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.objective {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 12px;
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--cic-ink);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.objective:hover {
+  background: var(--cic-soft);
+}
+
+.objective:focus-visible {
+  outline: 2px solid var(--cic-brand);
+  outline-offset: -2px;
+}
+
+.objective[aria-current='true'] {
+  background: var(--cic-brand-soft);
+  border-color: var(--cic-brand);
+}
+
+.where {
+  font-size: 12px;
+  color: var(--cic-muted);
+  overflow-wrap: anywhere;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--cic-soft);
+  color: var(--cic-muted);
+  white-space: nowrap;
+}
+
+.chip[data-tone='good'] {
+  background: var(--cic-brand-soft);
+  color: var(--cic-brand-ink);
+}
+
+.chip[data-tone='attention'] {
+  background: var(--cic-warm-soft);
+  color: var(--cic-warm-ink);
+}
+
+.selectedText {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.linkCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+}
+
+.linkTitle {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.code {
+  font-family: var(--cic-mono);
+  font-size: 13px;
+  color: var(--cic-brand-ink);
+}
+
+.meter {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.segment {
+  width: 14px;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--cic-soft);
+  border: 1px solid var(--cic-field-line);
+}
+
+.segment[data-on='true'] {
+  background: var(--cic-brand);
+  border-color: var(--cic-brand);
+}
+
+.coverageRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  font-size: 13px;
+  color: var(--cic-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reason {
+  margin: 0;
+  font-size: 13px;
+  color: var(--cic-muted);
+  overflow-wrap: anywhere;
+}
+
+/* Dialog: radio choices as bordered cards, at least 44px tall. */
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
+  gap: 8px;
+}
+
+.choice {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid var(--cic-field-line);
+  border-radius: 10px;
+  background: var(--cic-surface);
+}
+
+.choice[data-checked='true'] {
+  border-color: var(--cic-brand);
+  background: var(--cic-brand-soft);
+}
+
+.helpBox {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--cic-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.helpBox dl {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.helpBox dt {
+  font-weight: 600;
+}
+
+.helpBox dd {
+  margin: 0 0 4px;
+  color: var(--cic-muted);
+}
+
+.legendHeading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

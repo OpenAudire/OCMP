@@ -8,6 +8,7 @@ import { LoginPage } from '../auth/LoginPage';
 import { ResetPasswordPage } from '../auth/ResetPasswordPage';
 import { CurriculumSection } from '../curriculum/CurriculumPage';
 import { FrameworksSection } from '../frameworks/FrameworksSection';
+import { MappingSection } from '../mapping/MappingPage';
 import { ImportSection } from '../importing/ImportSection';
 import { InstitutionProvider } from '../institution/InstitutionProvider';
 import { AppLayout } from '../layout/AppLayout';
@@ -51,6 +52,7 @@ function StartPage() {
 const SECTIONS: Partial<Record<string, () => ReactNode>> = {
   curriculum: () => <CurriculumSection />,
   frameworks: () => <FrameworksSection />,
+  mapping: () => <MappingSection />,
   admin: () => <AdminSection />,
   import: () => <ImportSection />,
 };

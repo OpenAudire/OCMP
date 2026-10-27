@@ -821,7 +821,7 @@ export interface MappedObjective {
   status: 'suggested' | 'accepted' | 'rejected' | 'needs_second_review';
   source: 'ai' | 'human' | 'import' | 'migrated';
   coverage: number | null;
-  depth_match: 'below' | 'matches' | 'above' | null;
+  depth_match: DepthMatch | null;
   needs_recheck: boolean;
   needs_discussion: boolean;
   objective_id: string;
@@ -844,4 +844,60 @@ export interface WhereMapped {
   total: number;
   limit: number;
   mappings: MappedObjective[];
+}
+
+/** How the objective's level compares with the level the item expects (ADR 039). */
+export type DepthMatch = 'below' | 'matches' | 'above' | 'not_applicable';
+
+export type LinkStatus = 'suggested' | 'accepted' | 'rejected' | 'needs_second_review';
+
+/** A mapping link as the mapping workspace shows it. */
+export interface WorkspaceLink {
+  id: string;
+  framework_id: string;
+  framework_name: string;
+  framework_version_label: string;
+  item_id: string;
+  item_code: string;
+  item_title: string;
+  coverage: number | null;
+  depth_match: DepthMatch | null;
+  rationale: string;
+  source: 'ai' | 'human' | 'import' | 'migrated';
+  status: LinkStatus;
+  needs_recheck: boolean;
+  needs_discussion: boolean;
+}
+
+export interface WorkspaceObjective {
+  id: string;
+  text: string;
+  level: 'programme' | 'module' | 'learning_event';
+  phase_id: string | null;
+  phase_name: string | null;
+  module_id: string | null;
+  module_code: string | null;
+  module_name: string | null;
+  learning_event_id: string | null;
+  learning_event_title: string | null;
+  can_edit: boolean;
+  can_review: boolean;
+  links: WorkspaceLink[];
+}
+
+export interface MappingWorkspace {
+  version_id: string;
+  academic_year: number;
+  version_status: VersionStatus;
+  programme_id: string;
+  programme_name: string;
+  editable: boolean;
+  four_eyes: boolean;
+  objectives: WorkspaceObjective[];
+}
+
+export interface LinkInput {
+  coverage: number;
+  depth_match: DepthMatch;
+  rationale: string;
 }

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Alert, Anchor, Button, Paper, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { IconAlertTriangle, IconRefresh } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
@@ -140,10 +141,12 @@ interface ItemPanelProps {
   itemId: string;
   /** Offered when the item was found by searching and the tree is hidden. */
   onShowInTree?: (detail: FrameworkItemDetail) => void;
+  /** Buttons or notes for the item, such as linking it to an objective. */
+  actions?: ReactNode;
 }
 
 /** One framework item: where it sits, its wording, and where it is mapped. */
-export function ItemPanel({ frameworkId, itemId, onShowInTree }: ItemPanelProps) {
+export function ItemPanel({ frameworkId, itemId, onShowInTree, actions }: ItemPanelProps) {
   const { t } = useTranslation();
   const item = useQuery({
     queryKey: queryKeys.frameworkItem(frameworkId, itemId),
@@ -201,6 +204,7 @@ export function ItemPanel({ frameworkId, itemId, onShowInTree }: ItemPanelProps)
             </Button>
           </div>
         )}
+        {actions}
       </Paper>
       <Paper withBorder className={classes.itemCard}>
         <WhereMappedList frameworkId={frameworkId} itemId={itemId} />

@@ -788,6 +788,149 @@
       "empty": "No templates are installed."
     }
   },
+  "mapping": {
+    "intro": "Link {{objectives}} to framework items by hand, and say how much of the item each one covers and at what depth.",
+    "helpPrompt": "What do coverage and depth mean?",
+    "readOnly": "This version is {{status}}, so its links can be read but not changed. Copy the version forward to make a draft.",
+    "fourEyes": "This institution uses a second review: links made by a reviewer wait for a second reviewer before they count as accepted.",
+    "where": {
+      "programme": "Programme outcome"
+    },
+    "filters": {
+      "module": "{{module}}",
+      "allModules": "All {{modules}}",
+      "phase": "{{phase}}",
+      "allPhases": "All {{phases}}",
+      "unlinked": "Only those without links",
+      "count": "Showing {{shown}} of {{total}} {{noun}}"
+    },
+    "list": {
+      "links_one": "{{count}} link",
+      "links_other": "{{count}} links",
+      "needsLook": "Needs a look",
+      "none": "There are no {{objectives}} you can see in this version.",
+      "noMatch": "No {{objectives}} match these filters."
+    },
+    "links": {
+      "title": "Links of the selected objective",
+      "select": "Select an objective on the left to see what it is linked to.",
+      "none": "This objective is not linked to any framework item yet. Find an item on the right and choose Link.",
+      "list": "Links of this objective",
+      "cannotEdit": "You may read the links of this objective but not change them.",
+      "show": "Show item",
+      "showItem": "Show item {{name}} in the framework",
+      "edit": "Edit",
+      "editLabel": "Edit the link to {{name}}",
+      "remove": "Remove",
+      "removeLabel": "Remove the link to {{name}}",
+      "recheck": "Still fits",
+      "recheckLabel": "Confirm that the link to {{name}} still fits the changed wording"
+    },
+    "framework": {
+      "title": "Framework",
+      "choose": "Choose a framework",
+      "option": "{{name}} ({{version}})",
+      "none": "No framework has been imported yet. Ask the curriculum office to add one.",
+      "loadFailed": "The frameworks could not be loaded. Nothing was changed."
+    },
+    "item": {
+      "selectObjective": "Select an objective on the left to link it to this item.",
+      "link": "Link to the selected objective",
+      "linkHint": "You choose the coverage and depth next.",
+      "alreadyLinked": "The selected objective is already linked to this item.",
+      "editLink": "Edit this link",
+      "readOnly": "This version cannot be changed, so no links can be made."
+    },
+    "coverage": {
+      "unknown": "Coverage not set yet",
+      "value": "Coverage {{value}} of 5: {{label}}",
+      "level": "Coverage {{value}}",
+      "choice": "{{value}}: {{label}}",
+      "levels": {
+        "0": "None (0%)",
+        "1": "1 to 20%",
+        "2": "21 to 40%",
+        "3": "41 to 60%",
+        "4": "61 to 80%",
+        "5": "81 to 100%"
+      }
+    },
+    "depth": {
+      "unknown": "Depth not set yet",
+      "names": {
+        "below": "Below",
+        "matches": "Matches",
+        "above": "Above",
+        "not_applicable": "Not applicable"
+      },
+      "chip": {
+        "below": "Depth: below the item",
+        "matches": "Depth: matches the item",
+        "above": "Depth: above the item",
+        "not_applicable": "Depth: not applicable"
+      },
+      "definitions": {
+        "below": "The objective asks for less than the item expects. For example, the item says \"manages\" and the objective says \"describes\".",
+        "matches": "The objective asks for the same level as the item.",
+        "above": "The objective goes beyond what the item expects.",
+        "not_applicable": "The item states no depth and implies none, such as a keyword or a topic list. No penalty applies. If the item states no depth but has a verb, judge from that verb."
+      }
+    },
+    "help": {
+      "button": "Help with coverage and depth",
+      "title": "Coverage and depth",
+      "text": "Coverage: how much of this framework item the objective teaches, from 0 (none) to 5 (more than 80%). Depth: whether the objective asks students to work at the level the item expects (for example, knowing versus doing). Both affect the weighted coverage report.",
+      "coverageList": "Coverage levels",
+      "depthList": "Depth choices"
+    },
+    "dialog": {
+      "addTitle": "Link the objective to the item",
+      "editTitle": "Change the link",
+      "add": "Add link",
+      "save": "Save link",
+      "objective": "Objective",
+      "item": "Framework item",
+      "coverageLegend": "How much of the item does the objective cover?",
+      "coverageHint": "Choose one level from 0 to 5.",
+      "depthLegend": "Depth compared with the item (Bloom or Miller level)",
+      "depthHint": "Does the objective ask for less than, the same as, or more than the item expects?",
+      "reason": "Reason (optional)",
+      "reasonHint": "A short note on why this link fits, for the next person who reviews it.",
+      "reasonTooLong": "The reason can be at most 1000 characters.",
+      "chooseCoverage": "Choose a coverage from 0 to 5.",
+      "chooseDepth": "Choose a depth."
+    },
+    "status": {
+      "accepted": "You may review mappings here, so this link is accepted when you save.",
+      "secondReview": "A second reviewer must agree before this link counts as accepted.",
+      "suggested": "You may suggest links here. A reviewer decides on it later."
+    },
+    "remove": {
+      "title": "Remove this link?",
+      "body": "The objective will no longer be linked to {{item}}. The audit log keeps a record.",
+      "submit": "Remove link"
+    },
+    "notice": {
+      "added": "Linked to {{item}}. The link is {{status}}.",
+      "saved": "Saved the link to {{item}}. The link is {{status}}.",
+      "removed": "Removed the link to {{item}}.",
+      "rejected": "The link to {{item}} was a suggestion, so it is now rejected and kept as an example.",
+      "rechecked": "Confirmed that the link to {{item}} still fits."
+    },
+    "empty": {
+      "title": "No {{objectives}} to map",
+      "body": "Add objectives in the curriculum first, or ask for access to a module."
+    },
+    "start": {
+      "emptyTitle": "No curriculum to map yet",
+      "emptyBody": "When a programme version exists and you can see it, its objectives appear here."
+    },
+    "errors": {
+      "loadTitle": "The mapping workspace could not be loaded",
+      "loadBody": "Nothing was changed. Check your connection and try again.",
+      "conflict": "This link cannot be changed now: the version is no longer a draft, or the objective is already linked to this item. Reload and try again."
+    }
+  },
   "frameworks": {
     "intro": "Competency frameworks, level descriptors and keyword lists that objectives can be mapped to. Each one is imported as data, so any discipline can add its own.",
     "import": "Import framework pack",
@@ -904,7 +1047,8 @@
       "depth": {
         "below": "Depth: below the item",
         "matches": "Depth: matches the item",
-        "above": "Depth: above the item"
+        "above": "Depth: above the item",
+        "not_applicable": "Depth: not applicable"
       },
       "linkStatus": {
         "accepted": "Accepted",

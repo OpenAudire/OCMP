@@ -14,7 +14,9 @@ import type {
   FrameworkSearchPage,
   InheritancePreview,
   Institution,
+  MappingWorkspace,
   LearningEventDetail,
+  LinkInput,
   LearningEventInput,
   ModuleDetail,
   ModuleCopyInput,
@@ -52,6 +54,7 @@ import type {
   VersionStatus,
   VersionStructure,
   WhereMapped,
+  WorkspaceLink,
 } from './types';
 
 export async function fetchMe(): Promise<User> {
@@ -554,6 +557,37 @@ export async function fetchWhereMapped(frameworkId: string, itemId: string): Pro
   ).data;
 }
 
+/** The objectives of a version with their links, and what the user may do to each. */
+export async function fetchMappingWorkspace(versionId: string): Promise<MappingWorkspace> {
+  return (await api.get<MappingWorkspace>(`/curriculum-versions/${versionId}/mapping`)).data;
+}
+
+export async function addMappingLink(
+  objectiveId: string,
+  itemId: string,
+  input: LinkInput
+): Promise<WorkspaceLink> {
+  return (
+    await api.post<WorkspaceLink>(`/objectives/${objectiveId}/mapping-links`, {
+      framework_item_id: itemId,
+      ...input,
+    })
+  ).data;
+}
+
+export async function updateMappingLink(linkId: string, input: LinkInput): Promise<WorkspaceLink> {
+  return (await api.patch<WorkspaceLink>(`/mapping-links/${linkId}`, input)).data;
+}
+
+/** `deleted` is false when the link was rejected instead (a suggestion of the system). */
+export async function removeMappingLink(linkId: string): Promise<{ deleted: boolean }> {
+  return (await api.delete<{ deleted: boolean }>(`/mapping-links/${linkId}`)).data;
+}
+
+export async function confirmMappingRecheck(linkId: string): Promise<WorkspaceLink> {
+  return (await api.post<WorkspaceLink>(`/mapping-links/${linkId}/recheck`)).data;
+}
+
 export async function deleteFramework(frameworkId: string): Promise<void> {
   await api.delete(`/frameworks/${frameworkId}`);
 }
@@ -590,6 +624,7 @@ export const queryKeys = {
   taxonomyScales: ['taxonomy-scales'] as const,
   linkOptions: (kind: 'module' | 'event', id: string) => ['link-options', kind, id] as const,
   copyForward: (id: string) => ['curriculum-versions', id, 'copy-forward'] as const,
+  mappingWorkspace: (versionId: string) => ['curriculum-versions', versionId, 'mapping'] as const,
   versionChecks: (id: string) => ['curriculum-versions', id, 'objective-checks'] as const,
   versionDiff: (id: string, base: string) => ['curriculum-versions', id, 'diff', base] as const,
 };

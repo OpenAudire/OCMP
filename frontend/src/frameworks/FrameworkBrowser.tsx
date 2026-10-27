@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Anchor, Button, Paper, Text, TextInput } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
@@ -117,7 +117,38 @@ function SearchResults({ frameworkId, query, selectedId, onPick }: SearchResults
   );
 }
 
-function Browser({ frameworkId, name }: { frameworkId: string; name: string }) {
+type RenderItem = (
+  itemId: string,
+  onShowInTree?: (detail: FrameworkItemDetail) => void
+) => ReactNode;
+
+/** Calls the panel renderer in a component of its own. */
+function ItemSlot({
+  render,
+  itemId,
+  onShowInTree,
+}: {
+  render: RenderItem;
+  itemId: string;
+  onShowInTree?: (detail: FrameworkItemDetail) => void;
+}) {
+  return <>{render(itemId, onShowInTree)}</>;
+}
+
+interface ExplorerProps {
+  frameworkId: string;
+  name: string;
+  /** The panel for the selected item; the item's details and where it is mapped by default. */
+  renderItem?: RenderItem;
+  /** Tree above the panel instead of beside it, for a narrow column (the mapping workspace). */
+  stacked?: boolean;
+}
+
+/**
+ * One framework as a searchable tree with the selected item (`?item=` in the address)
+ * shown beside it. The mapping workspace reuses it with its own item panel (ADR 039).
+ */
+export function FrameworkExplorer({ frameworkId, name, renderItem, stacked = false }: ExplorerProps) {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const selectedId = params.get('item');
@@ -171,9 +202,15 @@ function Browser({ frameworkId, name }: { frameworkId: string; name: string }) {
     void reveal(detail).then(() => setFocusId(detail.id));
   };
 
+  const renderPanel =
+    renderItem ??
+    ((id: string, onShow?: (detail: FrameworkItemDetail) => void) => (
+      <ItemPanel key={id} frameworkId={frameworkId} itemId={id} onShowInTree={onShow} />
+    ));
+
   const rootWindow = tree.windows[ROOT];
   return (
-    <div className={classes.browser}>
+    <div className={`${classes.browser} ${stacked ? classes.stacked : ''}`}>
       <Paper withBorder className={classes.side}>
         <div className={classes.sideHeading}>{t('frameworks.browser.treeTitle')}</div>
         <div className={classes.searchBox}>
@@ -240,9 +277,8 @@ function Browser({ frameworkId, name }: { frameworkId: string; name: string }) {
       </Paper>
       <div className={classes.panel}>
         {selectedId ? (
-          <ItemPanel
-            key={selectedId}
-            frameworkId={frameworkId}
+          <ItemSlot
+            render={renderPanel}
             itemId={selectedId}
             onShowInTree={searching ? showInTree : undefined}
           />
@@ -312,7 +348,7 @@ export function FrameworkBrowser() {
           {t('frameworks.browser.back')}
         </Anchor>
       </div>
-      <Browser key={framework.id} frameworkId={framework.id} name={framework.name} />
+      <FrameworkExplorer key={framework.id} frameworkId={framework.id} name={framework.name} />
     </Page>
   );
 }

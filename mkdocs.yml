@@ -68,6 +68,7 @@ nav:
       - Tag lists and tagging: admin/tag-lists.md
       - Assessments and credits: admin/assessments-and-credits.md
       - Framework library: admin/frameworks.md
+      - Mapping workspace: admin/mapping.md
       - Importing frameworks: admin/framework-packs.md
       - Single sign-on (OIDC): admin/sso.md
   - Privacy (POPIA):

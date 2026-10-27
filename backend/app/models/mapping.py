@@ -45,9 +45,16 @@ class AIRunStatus(StrEnum):
 
 
 class DepthMatch(StrEnum):
+    """How the objective's Bloom/Miller level compares with the level the item expects.
+
+    ``not_applicable`` is for items with no stated or implied depth (keywords, topic lists);
+    it carries no penalty (ADR 039). The brief listed the first three values.
+    """
+
     BELOW = "below"
     MATCHES = "matches"
     ABOVE = "above"
+    NOT_APPLICABLE = "not_applicable"
 
 
 class MappingSource(StrEnum):

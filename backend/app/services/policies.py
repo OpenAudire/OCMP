@@ -4,6 +4,7 @@ Settings are JSON so administrators can change them without migrations; this
 module gives each group of settings a typed, validated shape with defaults.
 """
 
+import uuid
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -52,13 +53,18 @@ def parse_mapping_policy(settings: dict[str, object]) -> MappingPolicy:
         raise InvalidRequestError(f"Invalid mapping settings: {exc}") from exc
 
 
-async def mapping_policy_for(db: AsyncSession, objective: Objective) -> MappingPolicy:
-    """The mapping policy of the institution an objective belongs to."""
+async def mapping_policy_for_version(db: AsyncSession, version_id: uuid.UUID) -> MappingPolicy:
+    """The mapping policy of the institution a curriculum version belongs to."""
     settings = await db.scalar(
         select(Institution.settings)
         .join(Faculty, Faculty.institution_id == Institution.id)
         .join(Programme, Programme.faculty_id == Faculty.id)
         .join(CurriculumVersion, CurriculumVersion.programme_id == Programme.id)
-        .where(CurriculumVersion.id == objective.version_id)
+        .where(CurriculumVersion.id == version_id)
     )
     return parse_mapping_policy(settings or {})
+
+
+async def mapping_policy_for(db: AsyncSession, objective: Objective) -> MappingPolicy:
+    """The mapping policy of the institution an objective belongs to."""
+    return await mapping_policy_for_version(db, objective.version_id)

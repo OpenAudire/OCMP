@@ -221,6 +221,7 @@ export function ModuleCount({ count }: { count: number }) {
 - Tag lists are institution-wide (`faculty_id` null, `taglists.manage` at the instance) or a faculty's own
   (`taglists.manage` at that faculty); a faculty list tags only items of its faculty (ADR 015, 034).
   A tag already set is passed on to newer items only by the explicit `pass-on` action (ADR 034)
+- Manual links are made in `app/services/mapping_links.py` (`mapping.edit` at `objective_scope`, draft versions only; a reviewer's link is accepted or goes to second review, anyone else's is suggested; edits are decided again; `needs_recheck` is cleared only by `confirm_recheck`; ADR 039). Depth has four values (`DepthMatch`, incl. `not_applicable`); the 0-5 coverage and depth wording is in `mapping.coverage` / `mapping.depth` i18n keys
 - Institution settings are read through `app/services/institution_settings.py` (typed sections), never raw JSON
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`

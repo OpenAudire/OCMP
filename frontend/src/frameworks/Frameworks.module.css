@@ -390,3 +390,14 @@
 .inlineIcon {
   vertical-align: text-bottom;
 }
+
+/* In a narrow column the tree sits above the item, each the full width. */
+.stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.stacked > * {
+  flex: 0 0 auto;
+}
