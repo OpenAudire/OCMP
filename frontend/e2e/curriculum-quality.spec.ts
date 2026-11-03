@@ -90,6 +90,11 @@ test.describe('objective quality checker', () => {
     const dialog = page.getByRole('dialog', { name: 'Add objective' });
     const quality = dialog.getByRole('region', { name: 'Quality check' });
     await expect(quality.getByText('Type the wording to see suggestions.')).toBeVisible();
+    // The test admin also holds the AI permission, so the AI help box is there (its buttons are
+    // off until there is wording; nothing is ever asked of the AI in this journey).
+    const aiHelp = dialog.getByRole('group', { name: 'AI help with this wording' });
+    await expect(aiHelp).toBeVisible();
+    await expect(aiHelp.getByRole('button', { name: 'Suggest a measurable rewrite' })).toBeDisabled();
     await expectNoAccessibilityViolations(page);
 
     // Vague and double-barrelled wording: warnings, written out and with icons.

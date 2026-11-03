@@ -171,9 +171,9 @@ To use a dedicated key, or to change it:
 | Feature | Where | Notes |
 |---|---|---|
 | Suggest links to a framework | Mapping page, [AI mapping](mapping.md#suggesting-links-with-ai) | One call per objective that has candidates; suggestions are never accepted automatically |
+| Rewrite an objective, suggest its domain and level | The objective dialog, [AI help with the wording](users-and-roles.md#ai-help-with-the-wording) | One call per button press; a suggestion changes nothing until it is used and saved |
 
-The other planned uses (rewriting an objective, classifying, reading a study guide) arrive in later
-slices. Meaning-based matching in the mapping shortlist uses the optional
+The other planned use (reading a study guide) arrives in a later slice. Meaning-based matching in the mapping shortlist uses the optional
 [embeddings service](../operations/embeddings.md), which is separate and runs on your own server.
 
 ## Who can do what

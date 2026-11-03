@@ -51,3 +51,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [043](043-mapping-links-go-with-their-objective.md) | Mapping Links Go With Their Objective |
 | [044](044-embeddings-model-server-and-cache.md) | Embeddings: Model, Server, Cache and Near-duplicate Detection |
 | [045](045-ai-mapping-pipeline.md) | The AI Mapping Pipeline |
+| [046](046-ai-objective-rewrite-and-classification.md) | AI Objective Rewrite and Classification |

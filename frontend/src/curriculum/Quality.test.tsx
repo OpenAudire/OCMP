@@ -29,6 +29,7 @@ vi.mock('../api/endpoints', async (importOriginal) => ({
   createEventObjective: vi.fn(),
   checkObjectiveText: vi.fn(),
   fetchVersionChecks: vi.fn(),
+  suggestForObjective: vi.fn(),
 }));
 
 const mocked = vi.mocked(endpoints);
@@ -153,6 +154,48 @@ describe('live quality check in the objective dialog', { timeout: COLD_RENDER_BU
     expect(items[0]).toHaveTextContent('Use a verb you can observe');
     expect(items[1]).toHaveTextContent('Note');
     expect(within(form).getByRole('status')).toHaveTextContent('Warnings: 1. Notes: 1.');
+  });
+
+  it('shows the AI help only to people who hold the AI permission', async () => {
+    mocked.checkObjectiveText.mockResolvedValue({ findings: [], detected_verb: null, suggestions: [] });
+    const form = await openDialog();
+
+    expect(within(form).queryByRole('group', { name: 'AI help with this wording' })).toBeNull();
+  });
+
+  it('puts an AI rewrite into the wording field only when the person uses it', async () => {
+    mocked.fetchMyRoles.mockResolvedValue([
+      role('programme_director', ['curriculum.view', 'objectives.edit', 'ai.run']),
+    ]);
+    mocked.checkObjectiveText.mockResolvedValue({ findings: [], detected_verb: null, suggestions: [] });
+    mocked.suggestForObjective.mockResolvedValue({
+      task: 'rewrite',
+      run_id: 'r1',
+      rewrite: { text: 'Describe the heart.', rationale: 'Measurable.', unchanged: false },
+      classification: null,
+    });
+    const form = await openDialog();
+    fireEvent.change(within(form).getByRole('textbox', { name: /Wording/ }), {
+      target: { value: 'Understand the heart.' },
+    });
+
+    fireEvent.click(
+      within(form).getByRole('button', { name: 'Suggest a measurable rewrite' })
+    );
+    await within(form).findByText('Suggested rewrite', {}, eventTimeout);
+    expect(mocked.suggestForObjective).toHaveBeenCalledWith(
+      '/learning-events/e1/objective-ai',
+      expect.objectContaining({ task: 'rewrite', text: 'Understand the heart.' })
+    );
+    expect(within(form).getByRole('textbox', { name: /Wording/ })).toHaveValue(
+      'Understand the heart.'
+    );
+
+    fireEvent.click(within(form).getByRole('button', { name: 'Use this wording' }));
+
+    expect(within(form).getByRole('textbox', { name: /Wording/ })).toHaveValue(
+      'Describe the heart.'
+    );
   });
 
   it('offers a suggested level, applies it only when asked, and never blocks saving', async () => {

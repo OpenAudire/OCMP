@@ -27,6 +27,8 @@ import type {
   ModuleCopyInput,
   ModuleInput,
   AiMappingInput,
+  AiObjectiveInput,
+  AiObjectiveResult,
   AiMappingRun,
   NearDuplicates,
   Objective,
@@ -393,6 +395,14 @@ export async function checkObjectiveText(
   input: QualityCheckInput
 ): Promise<QualityCheck> {
   return (await api.post<QualityCheck>(path, input)).data;
+}
+
+/** Ask the AI to rewrite or classify wording as typed; `path` is the owner's AI address. */
+export async function suggestForObjective(
+  path: string,
+  input: AiObjectiveInput
+): Promise<AiObjectiveResult> {
+  return (await api.post<AiObjectiveResult>(path, input)).data;
 }
 
 /** Check every objective of a version that the user sees. */

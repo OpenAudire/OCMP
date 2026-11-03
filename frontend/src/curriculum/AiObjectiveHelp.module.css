@@ -1,0 +1,38 @@
+.box {
+  padding: 12px 14px;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+  background: var(--cic-soft);
+}
+
+.icon {
+  vertical-align: -3px;
+  margin-right: 6px;
+  color: var(--cic-brand-ink);
+}
+
+.result {
+  padding: 12px 14px;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+  background: var(--cic-surface);
+}
+
+.diff {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Removed and added words differ by line and underline as well as colour. */
+.removed {
+  color: var(--cic-bad);
+  text-decoration: line-through;
+}
+
+.added {
+  color: var(--cic-brand-ink);
+  background: var(--cic-brand-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -723,6 +723,34 @@
         "noModulesTitle": "Nothing to check yet",
         "noModules": "Add {{modules}} to this version to see their credits and hours."
       }
+    },
+    "ai": {
+      "title": "AI help with this wording",
+      "intro": "Only the wording above and the names of the taxonomy levels are sent to the AI service. Nothing changes until you use a suggestion and save.",
+      "rewrite": "Suggest a measurable rewrite",
+      "classify": "Suggest domain and level",
+      "working": "Asking the AI. This takes a few seconds.",
+      "rewriteTitle": "Suggested rewrite",
+      "diffHint": "Compared with your wording: struck-through words are removed and underlined words are added.",
+      "removed": "Removed:",
+      "added": "Added:",
+      "unchanged": "The AI found this wording already measurable and suggests no change.",
+      "reason": "Why: {{reason}}",
+      "useRewrite": "Use this wording",
+      "dismiss": "Dismiss",
+      "classifyTitle": "Suggested domain and level",
+      "domainIs": "Domain: {{domain}}",
+      "levelIs": "Level: {{level}}",
+      "notSure": "not sure",
+      "confidence": "The AI's confidence: {{percent}}%.",
+      "useClassification": "Use these",
+      "errors": {
+        "refused": "The AI could not be used: {{reason}}",
+        "forbidden": "You do not have permission to use AI here.",
+        "tooMany": "Too many requests in a minute. Wait a little and try again.",
+        "failed": "The AI did not give a usable answer. Try again.",
+        "generic": "Something went wrong. Try again."
+      }
     }
   },
   "import": {

@@ -22,7 +22,10 @@ import type {
   ObjectiveOption,
   ObjectiveStatus,
 } from '../api/types';
+import { Permission } from '../session/permissions';
+import { useSession } from '../session/useSession';
 import { LoadingState } from '../ui/States';
+import { AiObjectiveHelp } from './AiObjectiveHelp';
 import { DialogForm, EditDialog } from './EditDialog';
 import {
   editErrorMessage,
@@ -105,6 +108,8 @@ function ObjectiveForm({
   const noun = objectiveNoun(t, owner);
   const scales = useQuery({ queryKey: queryKeys.taxonomyScales, queryFn: fetchTaxonomyScales });
   const options = useLinkOptions(owner);
+  const session = useSession();
+  const canUseAi = session.data?.permissions.has(Permission.AiRun) === true;
   const form = useForm<Values>({
     initialValues: {
       text: objective?.text ?? '',
@@ -192,6 +197,25 @@ function ObjectiveForm({
           form.setFieldValue('taxonomyLevel', suggestion.taxonomy_level_id)
         }
       />
+      {canUseAi && (
+        <AiObjectiveHelp
+          owner={owner}
+          versionId={versionId}
+          text={form.values.text}
+          domain={(optionalText(form.values.domain) as ObjectiveDomain | null) ?? null}
+          taxonomyLevelId={optionalText(form.values.taxonomyLevel)}
+          hasLinks={
+            owner.kind === 'programme' || options.isPending
+              ? null
+              : form.values.parents.length > 0 || hiddenLinks > 0
+          }
+          onUseText={(text) => form.setFieldValue('text', text)}
+          onUseClassification={(values) => {
+            if (values.domain) form.setFieldValue('domain', values.domain);
+            if (values.taxonomyLevelId) form.setFieldValue('taxonomyLevel', values.taxonomyLevelId);
+          }}
+        />
+      )}
       <NativeSelect
         label={t('curriculum.objectives.domain')}
         data={[

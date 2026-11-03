@@ -94,6 +94,18 @@ export function checkPathFor(owner: ObjectiveOwner, versionId: string): string {
   }
 }
 
+/** Where the AI is asked about the owner's wording (needs `ai.run` as well). */
+export function aiPathFor(owner: ObjectiveOwner, versionId: string): string {
+  switch (owner.kind) {
+    case 'programme':
+      return `/curriculum-versions/${versionId}/outcome-ai`;
+    case 'module':
+      return `/modules/${owner.module.id}/outcome-ai`;
+    case 'event':
+      return `/learning-events/${owner.event.id}/objective-ai`;
+  }
+}
+
 /** The word for the thing being edited: outcomes at programme and module level. */
 export function objectiveNoun(t: TFunction, owner: ObjectiveOwner): string {
   return owner.kind === 'event'

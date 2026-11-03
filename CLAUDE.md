@@ -275,6 +275,12 @@ export function ModuleCount({ count }: { count: number }) {
   prompt asks for matches only; `not_applicable` depth is valid only for items that do not `states_depth`;
   `settings["mapping"]` has `ai_min_coverage` and `ai_prefer_specific_item`. Providers report `truncated` and a cut-off
   answer is retried with a fixed phrase. `expire_stale_runs` ends runs whose job died (ADR 045, Slice 1.16b)
+- AI help with one objective (ADR 046): `services/ai_objectives.py` (`rewrite`, `classify`), `ai/objective_answers.py`,
+  router `api/v1/ai_objectives.py`, prompts `REWRITE` and `CLASSIFY`. Synchronous, one `AIRun` per request, nothing is
+  saved: the screen shows a word diff (`curriculum/wordDiff.ts`) and the person saves the objective as usual. Needs
+  `objectives.edit` at the owner and `ai.run`; a rewrite may not add a number the original did not have. New prompt
+  fields (`quality_findings`, `taxonomy_options`, `answer_notes`) are on the allow-list and hold only code-written
+  sentences and configured taxonomy text
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 

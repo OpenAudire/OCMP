@@ -74,6 +74,12 @@ ALLOWED_FIELDS: dict[str, int] = {
     "framework_item_text": 4_000,
     "framework_candidates": 40_000,
     "mapping_examples": 20_000,
+    # Fixed phrases written by the rule-based checker, never the user's words (Slice 1.17).
+    "quality_findings": 2_000,
+    # The taxonomy levels and their verbs, as configured (curriculum settings, Slice 1.17).
+    "taxonomy_options": 8_000,
+    # Fixed phrases naming what was wrong with an earlier answer, for the one retry.
+    "answer_notes": 1_000,
     "study_guide_text": 60_000,
 }
 

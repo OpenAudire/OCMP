@@ -784,6 +784,11 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.16b | A call is made again after 2 s and 8 s (twice at most) for 408, 429, 500, 502, 503, 504, 529, timeouts and connection errors; 400, 401, 403, 404 are final. Every attempt is a recorded call and counts against the limits | Owner's 1.16a item "transient retries". Rate limits and overload are normal for a long run | Easy: constants in `ai_mapping.py` | Decided in 1.16b, to review |
 | 1.16b | A run is ended as `failed` when it has had no progress for 20 minutes (running) or has waited 2 hours (queued); done when a run is started or the runs are read. A live job stops at its next objective | Owner's 1.16a item "stale-run timeout". Without it a crashed job blocks the version and framework for ever | Easy: constants | Decided in 1.16b, to review |
 | 1.16b | **A rejected link is asked about again when the objective's wording changed after the rejection** (`objectives.text_changed_at`, migration 0024). If the AI matches it again it returns to `suggested` and the earlier reviewers are cleared (the audit log keeps them) | Owner's 1.16a item. A rejection is a judgement on the old words | Medium: one nullable column | Decided in 1.16b, to review |
+| 1.17 | **AI rewrite and classification are suggestions only**: nothing is saved, no suggestion is stored, and "Use this wording" / "Use these" only fill the form; the person saves as usual (own permission checks, audit entry, re-check of mappings). An accepted AI wording is **not marked as AI-written** in the data | Brief: "shown as a diff the user can accept". Carrying the AI run id to the save (so reports could show it) is a later decision | Medium: an `ai_run_id` on the save | Decided in 1.17, to review |
+| 1.17 | Needs `objectives.edit` at the owner **and** `ai.run` at the programme (programme outcomes) or module (module outcomes, session objectives): programme directors and module coordinators; not lecturers | Same rule as the AI mapping run; a lecturer sees the quality checker but not the AI box | Easy | Decided in 1.17, to review |
+| 1.17 | **A rewrite may not add a number that is not in the original** and is at most 600 characters; one that does counts as unusable (one retry, then a 502) | A made-up "80%" or "within 5 minutes" would invent a standard. Other inventions (a new topic) are not detected: the comparison is how a person sees them | Easy: `parse_rewrite` | Decided in 1.17, to review |
+| 1.17 | The classification offers the levels as keys (L1, L2, ...), allows `null` for domain and level, and the answer is refused if it names a key that was not offered. **Prompt `classify:2`** tells the model to name levels by their names after the first real run showed "L2" and "L8" in the reasons | The model cannot invent a level; the person never sees internal keys | Easy | Decided in 1.17, to review |
+| 1.17 | New allowed prompt fields: `quality_findings` (the rule-based findings as sentences written in code), `taxonomy_options` (configured levels and verbs) and `answer_notes` (fixed retry phrases); 20 calls a minute per person; one retry for an unusable answer and one after 1.5 seconds for a "try later" status | Fields hold no user words or personal data; the limit is far below the live checker's because each call costs money | Easy | Decided in 1.17, to review |
 
 ---
 
@@ -1456,3 +1461,29 @@ Why the suggestions fell from 21 to 11: 10 were the parent next to a child or in
 **Not in this slice**: a settings screen for the two new settings, an explicit level field on framework items, tuning of the minimum coverage (1.19).
 
 **Commit**: `fix: make AI mapping answers short, skip parents of suggested children and retry transient failures`
+
+
+### Slice 1.17: AI Objective Rewrite and Classification
+**Status**: Complete
+
+Two optional buttons under the wording field of the objective dialog for people who hold `ai.run`. ADR 046 is the design. **Nothing is saved and nothing is accepted by the AI**: the rewrite is shown as a word-by-word comparison and the person applies it by saving as usual.
+
+**Deliverables**:
+- [x] **Prompts** `rewrite:1` and `classify:2` (code-owned; new allow-listed fields `quality_findings`, `taxonomy_options`, `answer_notes`) and pure **answer checkers** `ai/objective_answers.py` (a rewrite may add no number that is not in the original; a classification may only name a level key that was offered; problems are fixed phrases)
+- [x] **Service** `services/ai_objectives.py`: one `AIRun` per request, the rule-based findings sent as fixed sentences, one retry for an unusable or cut-off answer, one retry after 1.5 s for a "try later" status, shared helpers `call_with_retry` and `ask_with_retry` (used again in 1.18)
+- [x] **API** `POST /curriculum-versions/{id}/outcome-ai`, `/modules/{id}/outcome-ai`, `/learning-events/{id}/objective-ai` (`{task: rewrite|classify, text, ...}`); needs `objectives.edit` and `ai.run`; 409 with the reason when AI is off, restricted, over budget or the guard refuses; 502 for a provider failure; 20 calls a minute
+- [x] **Screen** `curriculum/AiObjectiveHelp.tsx` in the objective dialog (hidden without `ai.run`): the two buttons, a working line, errors in words, a comparison with `<del>` and `<ins>` (struck-through and underlined, plus the words "Removed:" and "Added:" for screen readers), the reason, **Use this wording**, **Use these**, **Dismiss**; `wordDiff.ts` (longest common run of words)
+- [x] Docs: ADR 046 (and index), the admin guide, the AI guide ("what uses AI"), the data inventory, CLAUDE.md
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy pass. New: `test_objective_answers.py` (30), `test_ai_objectives.py` (24: the service with mocked provider answers, the prompt contents, a retry that names the problem and never repeats the model's words, a cut-off answer, a made-up number, a busy provider, a refused key, personal information never sent, AI off creating nothing, the three endpoints, permissions for director, module coordinator, lecturer, 409/422/429/502)
+- Frontend: lint and typecheck pass; new `wordDiff.test.ts` (6), `AiObjectiveHelp.test.tsx` (11), two tests in `Quality.test.tsx` (the box only with `ai.run`; "Use this wording" fills the field only when pressed); the Playwright journey for the objective dialog now also asserts the AI box (axe in both themes; the test admin holds `ai.run`, nothing is asked of the AI)
+- `mkdocs build --strict` passes
+- **A real provider** (Anthropic, `claude-sonnet-5-5`): five objectives written like the demo's (vague, measurable, one-word) were rewritten and classified, 10 calls, $0.044, 8 863 tokens. All answers were valid, none cut off, "Understand ..." became "Explain ...", "Be aware of ..." became "Identify ...", "Know the heart." became "Describe the heart.", two measurable ones were returned unchanged, and a wording with no depth ("Know the heart.") got no level. One flaw was found and fixed (prompt `classify:2`): the reasons mentioned the internal keys "L2" and "L8"
+- The full backend and frontend suites ran once on the tree that includes 1.18: backend 1 648 tests (11 minutes); frontend 30 files, 370 tests. **For this commit alone** only the files above and the changed shared files were run (no separate full run of the 1.17-only tree); CI runs on the commit
+
+**Not verified here**: the quality of the rewrites (no gold set; the evaluation harness of 1.19 covers mapping only), the model keeping the **language** of an Afrikaans, isiXhosa or isiZulu objective (only English was tried), the box in a browser in both themes beyond the axe journey (not run locally: CI runs it), the comparison for a very long objective, the wording of the reasons for a screen reader.
+
+**Not in this slice**: marking an accepted AI wording as AI-written, rewriting many objectives at once, a settings screen for the limit, per-institution verb lists in the prompt beyond the configured taxonomy.
+
+**Commit**: `feat: add AI rewrite and classification of objective wording`

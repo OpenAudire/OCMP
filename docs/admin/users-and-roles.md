@@ -128,6 +128,26 @@ stop anyone saving.
 - **Suggested level**: the verb is looked up in the verb lists of the taxonomy levels (they
   come with the scale, from its pack). A button such as "Use Understand (Bloom)" sets the
   level when clicked; nothing is set on its own.
+
+### AI help with the wording
+
+People who also hold **AI run** (programme directors and module coordinators; not lecturers)
+see a second box, **AI help with this wording**, when AI is switched on in
+[AI settings](ai.md). It has two buttons, and each press is one paid call to the AI service:
+
+- **Suggest a measurable rewrite** shows the AI's version next to your wording, word by word:
+  struck-through words are removed and underlined words are added, with a one-sentence reason.
+  **Use this wording** puts it into the wording field; it is not saved until you save the
+  objective. The AI is told to keep your meaning and language and not to add numbers or
+  standards; a suggestion that adds a number is thrown away. If your wording is already
+  measurable it says so and suggests no change.
+- **Suggest domain and level** proposes a domain and a taxonomy level, with a reason and how sure
+  the AI is. **Use these** fills the two fields; either may be "not sure".
+
+Only the wording, its level, short sentences from the rule-based checker and the names and verbs
+of the taxonomy levels are sent, and the privacy guard checks them first: wording that looks
+like it holds personal information is not sent. Read the comparison before using a suggestion:
+the quality of the rewrites is not measured. Design: [ADR 046](../adr/046-ai-objective-rewrite-and-classification.md).
 - **Check wording** (version bar) lists the findings for every objective the person may see
   in the open version, with filters for severity and rule and a link to each objective. It is
   for people who hold `objectives.edit` somewhere; it shows only what they may read.

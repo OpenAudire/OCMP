@@ -942,6 +942,29 @@ export interface AiMappingRun {
   finished_at: string | null;
 }
 
+/** What to ask the AI about one objective's wording (Slice 1.17). */
+export interface AiObjectiveInput {
+  task: 'rewrite' | 'classify';
+  text: string;
+  domain: ObjectiveDomain | null;
+  taxonomy_level_id: string | null;
+  has_parent_links: boolean | null;
+}
+
+export interface AiObjectiveResult {
+  task: 'rewrite' | 'classify';
+  run_id: string;
+  rewrite: { text: string; rationale: string; unchanged: boolean } | null;
+  classification: {
+    domain: ObjectiveDomain | null;
+    taxonomy_level_id: string | null;
+    taxonomy_level_name: string | null;
+    scale_name: string | null;
+    confidence: string;
+    rationale: string;
+  } | null;
+}
+
 export interface AiMappingInput {
   framework_id: string;
   module_id: string | null;
