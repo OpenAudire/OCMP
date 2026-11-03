@@ -262,6 +262,15 @@ export function ModuleCount({ count }: { count: number }) {
   server (counted, never logged) and listed as `possible_personal_information`; a **cloud** embedding provider would
   have to go through `ai_gateway` and the guard. Embedding jobs run after a save (`enqueue_objective`) and need the
   worker to read `EMBEDDINGS_LOCAL=true`
+- AI mapping runs (ADR 045): `services/ai_mapping.py` (start, run, cancel), `services/mapping_shortlist.py`,
+  `ai/mapping_answer.py`, `jobs/mapping.py`, router `api/v1/ai_mapping.py`. A run only ever creates `suggested`
+  links through `mapping.create_link` (never accepted, never a reviewed state) and every call goes through
+  `ai_gateway.complete(..., run=run)`. The prompt is `prompts.MAPPING`: any wording change bumps its `version`.
+  The model's answer is untrusted: `parse_answer` checks codes, ranges and that the evidence quote is words of
+  the objective, retries once with fixed phrases (never the model's text) and counts a second failure. Starting
+  needs `ai.run` and `mapping.edit` at the programme (or the module for a module run). The job has no automatic
+  retries (a retry would pay again) and commits after each objective. Items an objective is already linked to,
+  rejected ones included, are never asked about again
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 

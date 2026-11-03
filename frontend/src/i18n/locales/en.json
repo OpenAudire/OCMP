@@ -822,6 +822,46 @@
     }
   },
   "mapping": {
+    "ai": {
+      "title": "Suggest links with AI",
+      "intro": "The AI service suggests which framework items each objective addresses. Suggestions go to the review queue; nothing is accepted without a person. Only curriculum text is sent, to the provider an administrator chose.",
+      "start": "Suggest links with AI",
+      "dialogTitle": "Suggest links with AI",
+      "framework": "Framework",
+      "scope": "Objectives to map",
+      "scopeAll": "Every objective in this version",
+      "scopeModule": "Only {{module}}",
+      "scopeHelp": "Objectives that already have a link to an item are not asked about that item again.",
+      "submit": "Start",
+      "noFramework": "There is no framework in use to map to yet.",
+      "errors": {
+        "conflict": "This could not be started. AI may be switched off or restricted, or a run for this version and framework is already going. An administrator can check Admin > AI settings.",
+        "generic": "This could not be started. Nothing was changed. Try again."
+      },
+      "run": {
+        "heading": "Latest AI run",
+        "progress": "{{done}} of {{total}} objectives",
+        "progressLabel": "Objectives looked at",
+        "suggestions": "{{count}} suggestions made",
+        "failed": "{{count}} objectives could not be mapped",
+        "cancel": "Cancel run",
+        "cancelling": "Stopping...",
+        "reviewLink": "Open the review queue",
+        "loadFailed": "The progress of the run could not be loaded.",
+        "status": {
+          "queued": "Waiting to start",
+          "running": "Running",
+          "succeeded": "Finished",
+          "failed": "Stopped with a problem",
+          "cancelled": "Cancelled",
+          "budget_exceeded": "Stopped: monthly limit reached"
+        },
+        "reason": {
+          "budget_exceeded": "The monthly AI limit was reached, so the run stopped. What was suggested so far is in the review queue. An administrator can change the limits in Admin > AI settings.",
+          "cancelled": "The run was cancelled. What was suggested so far is in the review queue."
+        }
+      }
+    },
     "intro": "Link {{objectives}} to framework items by hand, and say how much of the item each one covers and at what depth.",
     "helpPrompt": "What do coverage and depth mean?",
     "readOnly": "This version is {{status}}, so its links can be read but not changed. Copy the version forward to make a draft.",

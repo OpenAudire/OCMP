@@ -213,10 +213,10 @@ async def similar_framework_items(
             if rows:
                 return Retrieved([Hit(r[0], max(0.0, float(r[1]))) for r in rows], Mode.MEANING)
             notice = Notice.NOT_EMBEDDED_YET
-    return Retrieved(await _keyword_hits(db, query, framework_ids, limit), Mode.KEYWORD, notice)
+    return Retrieved(await keyword_hits(db, query, framework_ids, limit), Mode.KEYWORD, notice)
 
 
-async def _keyword_hits(
+async def keyword_hits(
     db: AsyncSession, query: str, framework_ids: Sequence[uuid.UUID], limit: int
 ) -> list[Hit]:
     expression = keyword_query(query)

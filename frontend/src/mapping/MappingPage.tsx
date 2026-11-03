@@ -32,6 +32,9 @@ import { NoAccessPage } from '../pages/StatusPages';
 import { SuccessNotice } from '../pages/SuccessNotice';
 import { Page } from '../ui/Page';
 import { EmptyState, ErrorState, LoadingState } from '../ui/States';
+import { useSession } from '../session/useSession';
+import { Permission } from '../session/permissions';
+import { AiMappingPanel } from './AiMappingPanel';
 import { LinkDialog } from './LinkDialog';
 import { MappingHelp } from './MappingHelp';
 import { ObjectiveLinks } from './ObjectiveLinks';
@@ -463,6 +466,9 @@ function VersionMapping() {
     queryFn: () => fetchMappingWorkspace(versionId!),
     enabled: !!versionId,
   });
+  const session = useSession();
+  const held = session.data?.permissions;
+  const canRunAi = !!held?.has(Permission.AiRun) && held.has(Permission.MappingEdit);
 
   useEffect(() => {
     if (versionId) rememberVersion(versionId);
@@ -511,6 +517,9 @@ function VersionMapping() {
           </Text>
         )}
       </div>
+      {canRunAi && workspace.data.editable && (
+        <AiMappingPanel workspace={workspace.data} versionId={versionId} />
+      )}
       <Workspace workspace={workspace.data} versionId={versionId} />
     </Page>
   );

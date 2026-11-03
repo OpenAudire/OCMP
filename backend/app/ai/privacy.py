@@ -73,6 +73,7 @@ ALLOWED_FIELDS: dict[str, int] = {
     "framework_item_code": 100,
     "framework_item_text": 4_000,
     "framework_candidates": 40_000,
+    "mapping_examples": 20_000,
     "study_guide_text": 60_000,
 }
 

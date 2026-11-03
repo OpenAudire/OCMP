@@ -50,3 +50,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [042](042-ai-provider-layer-and-privacy-guard.md) | AI Provider Layer, Privacy Guard, Budgets and Local-only Mode |
 | [043](043-mapping-links-go-with-their-objective.md) | Mapping Links Go With Their Objective |
 | [044](044-embeddings-model-server-and-cache.md) | Embeddings: Model, Server, Cache and Near-duplicate Detection |
+| [045](045-ai-mapping-pipeline.md) | The AI Mapping Pipeline |

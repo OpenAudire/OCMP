@@ -26,6 +26,8 @@ import type {
   ModuleDetail,
   ModuleCopyInput,
   ModuleInput,
+  AiMappingInput,
+  AiMappingRun,
   NearDuplicates,
   Objective,
   ObjectiveInput,
@@ -578,6 +580,25 @@ export async function fetchMappingWorkspace(versionId: string): Promise<MappingW
   return (await api.get<MappingWorkspace>(`/curriculum-versions/${versionId}/mapping`)).data;
 }
 
+/** The latest AI mapping runs of a version (people who may run AI mapping). */
+export async function fetchAiMappingRuns(versionId: string): Promise<AiMappingRun[]> {
+  return (await api.get<AiMappingRun[]>(`/curriculum-versions/${versionId}/ai-mapping-runs`)).data;
+}
+
+/** Queue a run that suggests links from the objectives to a framework. */
+export async function startAiMapping(
+  versionId: string,
+  input: AiMappingInput
+): Promise<AiMappingRun> {
+  return (
+    await api.post<AiMappingRun>(`/curriculum-versions/${versionId}/ai-mapping-runs`, input)
+  ).data;
+}
+
+export async function cancelAiMappingRun(runId: string): Promise<AiMappingRun> {
+  return (await api.post<AiMappingRun>(`/ai-mapping-runs/${runId}/cancel`)).data;
+}
+
 export async function addMappingLink(
   objectiveId: string,
   itemId: string,
@@ -692,6 +713,8 @@ export const queryKeys = {
   copyForward: (id: string) => ['curriculum-versions', id, 'copy-forward'] as const,
   reviewQueue: (params: ReviewQueueParams) => ['review-queue', params] as const,
   reviewCount: ['review-queue', 'count'] as const,
+  aiMappingRuns: (versionId: string) =>
+    ['curriculum-versions', versionId, 'ai-mapping-runs'] as const,
   mappingWorkspace: (versionId: string) => ['curriculum-versions', versionId, 'mapping'] as const,
   versionChecks: (id: string) => ['curriculum-versions', id, 'objective-checks'] as const,
   nearDuplicates: (id: string) => ['curriculum-versions', id, 'near-duplicates'] as const,

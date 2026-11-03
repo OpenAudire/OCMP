@@ -108,6 +108,10 @@ class AIRun(CoreModel):
         CheckConstraint("input_tokens >= 0 AND output_tokens >= 0", name="token_counts_positive"),
         CheckConstraint("estimated_cost >= 0", name="cost_positive"),
         CheckConstraint(
+            "total_items >= 0 AND done_items >= 0 AND failed_items >= 0 AND links_created >= 0",
+            name="progress_positive",
+        ),
+        CheckConstraint(
             "finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at",
             name="finished_after_started",
         ),
@@ -137,6 +141,12 @@ class AIRun(CoreModel):
     estimated_cost: Mapped[Decimal] = mapped_column(
         Numeric(12, 6), default=Decimal(0), server_default="0"
     )
+    # Progress of a mapping run (Slice 1.16): objectives to do, finished, failed, and the
+    # suggestions made. Zero for runs that are not made of items.
+    total_items: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    done_items: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    failed_items: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    links_created: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     started_at: Mapped[datetime | None] = mapped_column(default=None)
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
     error_message: Mapped[str | None] = mapped_column(Text, default=None)

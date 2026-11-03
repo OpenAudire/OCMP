@@ -294,6 +294,17 @@ async def complete(
     )
 
 
+async def ensure_ready(db: AsyncSession, settings: Settings) -> tuple[str, str]:
+    """Check that a call could be made now and say with which provider and model.
+
+    Raises:
+        AIRefusedError: AI is off, restricted to local providers, not set up, or the
+            outside-South-Africa acknowledgement is missing. Nothing is sent or recorded.
+    """
+    plan = await _plan(db, settings)
+    return plan.kind.value, plan.config.model or ""
+
+
 async def check_connection(
     db: AsyncSession,
     settings: Settings,

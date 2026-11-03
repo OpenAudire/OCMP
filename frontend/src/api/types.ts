@@ -910,6 +910,43 @@ export interface WorkspaceObjective {
   links: WorkspaceLink[];
 }
 
+/** An AI mapping run (ADR 045): the job that suggests links for a version. */
+export type AiRunStatus =
+  | 'queued'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'cancelled'
+  | 'budget_exceeded';
+
+export interface AiMappingRun {
+  id: string;
+  status: AiRunStatus;
+  version_id: string;
+  framework_id: string;
+  module_id: string | null;
+  prompt_version: string;
+  provider: string;
+  model: string;
+  top_k: number;
+  total_items: number;
+  done_items: number;
+  failed_items: number;
+  links_created: number;
+  input_tokens: number;
+  output_tokens: number;
+  estimated_cost: string;
+  error_message: string | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface AiMappingInput {
+  framework_id: string;
+  module_id: string | null;
+}
+
 export interface MappingWorkspace {
   version_id: string;
   academic_year: number;
