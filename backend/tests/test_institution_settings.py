@@ -206,6 +206,8 @@ class TestAPI:
             "second_review_for_rejects": False,
             "bulk_accept_min_percent": 80,
             "bulk_accept_max_links": 200,
+            "ai_min_coverage": 1,
+            "ai_prefer_specific_item": True,
         }
 
     async def test_requires_sign_in(self, api_client: AsyncClient) -> None:

@@ -31,6 +31,8 @@ class Completion:
     output_tokens: int
     model: str
     request_id: str | None = None
+    # The provider stopped because the answer reached the token limit (it is cut off).
+    truncated: bool = False
 
 
 class LLMProvider(Protocol):

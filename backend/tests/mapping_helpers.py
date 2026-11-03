@@ -108,9 +108,11 @@ class Model:
         self,
         answer: Callable[[str], str] = good_answer,
         statuses: list[int] | None = None,
+        stop_reasons: list[str] | None = None,
     ) -> None:
         self.answer = answer
         self.statuses = list(statuses or [])
+        self.stop_reasons = list(stop_reasons or [])
         self.requests: list[httpx.Request] = []
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
@@ -122,6 +124,7 @@ class Model:
             "content": [{"type": "text", "text": self.answer(prompt_of(request))}],
             "usage": USAGE,
             "model": "claude-sonnet-5-5",
+            "stop_reason": self.stop_reasons.pop(0) if self.stop_reasons else "end_turn",
         }
         return httpx.Response(200, json=body)
 

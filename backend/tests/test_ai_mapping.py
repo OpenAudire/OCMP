@@ -25,6 +25,12 @@ from tests.test_curriculum_objectives_api import world as world  # fixture
 from tests.test_mapping_shortlist import AtAngle, link, vector
 
 
+@pytest.fixture(autouse=True)
+def no_waiting(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Calls that failed for a passing reason are made again; do not really wait."""
+    monkeypatch.setattr(ai_mapping, "RETRY_DELAYS", (0.0, 0.0))
+
+
 @pytest.fixture
 async def library(db_session: AsyncSession) -> Library:
     return await make_library(db_session)
@@ -76,7 +82,7 @@ class TestStarting:
         assert run.status is AIRunStatus.QUEUED
         assert run.total_items == 4  # the draft's four objectives; the published one is not in it
         assert run.parameters == {"top_k": 7}
-        assert run.prompt_version == "mapping:1"
+        assert run.prompt_version == "mapping:2"
         assert (run.provider, run.model) == ("anthropic", "claude-sonnet-5-5")
         assert run.scope["framework_id"] == str(library.framework.id)
 
@@ -279,8 +285,9 @@ class TestRunning:
                 select(AIRunCall).where(AIRunCall.run_id == run.id).order_by(AIRunCall.created_at)
             )
         )
-        assert [c.valid for c in calls] == [False, True]
-        assert calls[0].error_message == "the answer is not JSON"
+        # Both calls were made in one transaction, so compare them without their order.
+        assert sorted(c.valid for c in calls) == [False, True]
+        assert {c.error_message for c in calls if not c.valid} == {"the answer is not JSON"}
 
     async def test_an_objective_that_fails_twice_is_counted_and_skipped(
         self,
@@ -333,7 +340,7 @@ class TestRunning:
         for n in range(2):
             await add_objective(db_session, ready_world.lab, f"Interpret the cardiac cycle {n}.")
         run = await start(db_session, test_settings, ready_world, library)
-        model = Model(statuses=[500] * 10)
+        model = Model(statuses=[401] * 10)  # refused, so not tried again
 
         done = await ai_mapping.execute_run(
             db_session, test_settings, run.id, transport=model.transport
@@ -551,7 +558,7 @@ class TestExamples:
         assert "Name the long bones." not in prompt  # not similar enough to count
 
     async def test_the_prompt_template_is_versioned_and_uses_only_allowed_fields(self) -> None:
-        assert prompts.MAPPING.version == "1"
+        assert prompts.MAPPING.version == "2"
         assert set(prompts.MAPPING.field_names) == {
             "framework_name",
             "objective_level",

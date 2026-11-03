@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (Slice 1.16). Builds on ADR 016 (AI runs and links), ADR 039 (coverage and depth),
+Accepted (Slice 1.16; amended in Slice 1.16b after the first real run, see the end). Builds on ADR 016 (AI runs and links), ADR 039 (coverage and depth),
 ADR 040 (review queue), ADR 042 (provider layer and privacy guard), ADR 043 (live links) and
 ADR 044 (embeddings and the keyword fallback). Brief section 8, "Mapping pipeline".
 
@@ -108,6 +108,48 @@ the panel then shows the state in words, a progress bar, the numbers of objectiv
 and failures, **Cancel run** while it goes on, and a link to the review queue when it made suggestions.
 It polls every two seconds while a run is queued or running and refreshes the workspace and the review
 count when it ends.
+
+## Slice 1.16b: what the first real run changed
+
+The first run on a real provider (Anthropic, one module of the demo programme: 14 objectives, 19
+calls, about $0.16) showed what mocked tests could not. It is the evidence for these changes.
+
+**Why two objectives failed.** The prompt asked for *every* candidate, with a rationale for each,
+so an answer was about 850 tokens on average and 7 of the 19 answers stopped at the administrator's
+limit of 1 024 tokens. A cut-off answer is not JSON, so it counted as invalid, and the one retry
+was cut off in the same way. Both failed objectives were of this kind. The cause was the prompt, not
+the limit, so the limit stays an administrator's decision.
+
+| Change | What | Why |
+|---|---|---|
+| Matches only (prompt version 2) | The model lists only the candidates the objective matches, with a rationale of at most 25 words, and `{"candidates": []}` when none does. The checker already accepted missing candidates | Answers are a fraction of the length; the non-matches carried no information that was used |
+| Cut-off answers are recognised | Providers report why they stopped (`stop_reason` `max_tokens`; `finish_reason` `length`). A cut-off answer is retried once with the fixed phrase "cut off because it was too long: list only the matching candidates...", and is recorded as cut off, not as "not JSON" | The retry now asks for something shorter instead of repeating the same question |
+| Depth `not_applicable` | Only a match on an item that states no verb or level may say it. An item **states a depth** when it has a description, a `level`, `verb`, `taxonomy_level` or `bloom` key in its metadata, or a title that starts with a verb of the taxonomy scales. Other items (bare keywords and topics) are marked `[no verb or level]` in the prompt. Any other use is an invalid answer and uses the one retry. A non-match may say it | The first run had 4 matches with depth `not_applicable` on competencies that do have a level; reviewers would see no depth comparison for them |
+| Most specific item | When an item and one of its descendants are both suggested for an objective, only the descendant is saved. Links the objective already has (not rejected) count as the descendant too. Setting `ai_prefer_specific_item`, on by default; reviewers can still link a parent by hand | 9 of the 21 first suggestions were a parent next to its own child |
+| Minimum coverage | Setting `ai_min_coverage` (1 to 5, default 1): a suggestion below it is dropped before it is saved | 8 of the 21 first suggestions were coverage 1. The default stays 1 until the evaluation (1.19) measures the best value |
+
+**Calls made again.** A call that fails with a status that means "try later" (408, 429, 500, 502,
+503, 504, 529), a timeout or a connection error is made again after 2 and then 8 seconds, at most
+twice more. A refusal (400, 401, 403, 404) is final. Each attempt is recorded as a call of the run
+and counts against the run's call limit and the monthly budget. This is separate from the one
+retry for an unusable answer. Three objectives in a row that still fail end the run, as before.
+
+**Stale runs.** A job that dies (a restart, a crash) leaves the run `running`, which blocks the next
+run for that version and framework. A running run whose row has not changed for 20 minutes (each
+objective changes it) and a queued run that has waited 2 hours are now ended as `failed` with a
+message, when someone starts a run or reads the runs. A job that is still alive notices and stops
+before its next objective. Suggestions already made stay.
+
+**Rejected items and rewording.** A rejected link is still never asked about again, **unless the
+objective's wording changed after the rejection**. `objectives.text_changed_at` (migration 0024) is
+set whenever an edit changes the text. If the AI then matches the item again, the rejected link goes
+back to `suggested` with the AI's new rationale and the earlier reviewers are cleared (the audit
+log keeps the earlier decision). A rejection made after the rewording stands.
+
+**Not decided here.** The default minimum coverage and whether reviewers want parents at all are
+for the evaluation (1.19) and the owner. English words are not stemmed in the keyword fallback (see
+ADR 044), so "communicate" does not find "communication" there; meaning search does not have this
+limit.
 
 ## Consequences
 

@@ -269,8 +269,12 @@ export function ModuleCount({ count }: { count: number }) {
   The model's answer is untrusted: `parse_answer` checks codes, ranges and that the evidence quote is words of
   the objective, retries once with fixed phrases (never the model's text) and counts a second failure. Starting
   needs `ai.run` and `mapping.edit` at the programme (or the module for a module run). The job has no automatic
-  retries (a retry would pay again) and commits after each objective. Items an objective is already linked to,
-  rejected ones included, are never asked about again
+  retries of the job (a retry would pay again; a single call is made again only for "try later" statuses, in
+  `ai_mapping._call`) and commits after each objective. Items an objective is already linked to, rejected ones
+  included, are never asked about again unless the objective's `text_changed_at` is later than the rejection. The
+  prompt asks for matches only; `not_applicable` depth is valid only for items that do not `states_depth`;
+  `settings["mapping"]` has `ai_min_coverage` and `ai_prefer_specific_item`. Providers report `truncated` and a cut-off
+  answer is retried with a fixed phrase. `expire_stale_runs` ends runs whose job died (ADR 045, Slice 1.16b)
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 

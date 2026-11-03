@@ -146,6 +146,50 @@ async def create_link(
     return link
 
 
+async def resuggest_link(
+    db: AsyncSession,
+    link: MappingLink,
+    objective: Objective,
+    *,
+    ai_run: AIRun,
+    coverage: int,
+    depth_match: DepthMatch,
+    rationale: str,
+    evidence_quote: str,
+    confidence: Decimal | float,
+) -> MappingLink:
+    """Suggest a rejected link again because the objective's wording changed since (ADR 045).
+
+    The old decision no longer stands for the new words, so the link goes back to ``suggested``
+    with the AI's new reasoning and the earlier reviewers are cleared (the audit log keeps them).
+
+    Raises:
+        InvalidRequestError: For out-of-range scores or a quote not taken from the objective.
+        ConflictError: If the link is not rejected.
+    """
+    if link.status != MappingStatus.REJECTED:
+        raise ConflictError("Only rejected links can be suggested again.")
+    _check_scores(coverage, confidence)
+    if evidence_quote and _normalise(evidence_quote) not in _normalise(objective.text):
+        raise InvalidRequestError("The evidence quote must be words from the objective.")
+    link.status = MappingStatus.SUGGESTED
+    link.source = MappingSource.AI
+    link.ai_run_id = ai_run.id
+    link.coverage = coverage
+    link.depth_match = depth_match
+    link.rationale = rationale
+    link.evidence_quote = evidence_quote
+    link.confidence = Decimal(str(confidence))
+    link.accept_method = None
+    link.needs_discussion = False
+    link.needs_recheck = False
+    link.first_reviewer_id = link.second_reviewer_id = None
+    link.first_reviewed_at = link.second_reviewed_at = None
+    link.first_decision = None
+    await db.flush()
+    return link
+
+
 def _accept(link: MappingLink, method: AcceptMethod) -> None:
     link.status = MappingStatus.ACCEPTED
     link.accept_method = method

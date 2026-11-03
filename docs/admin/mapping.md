@@ -95,6 +95,23 @@ A run ends in one of these ways:
 | Stopped: monthly limit reached | The monthly or per-run limit in [AI settings](ai.md#budget) was reached. What was done stays; an administrator can raise the limit |
 | Cancelled | A person stopped it |
 
+The AI is asked to list **only the items that fit** and to keep each reason short. Four rules shape
+what you see (the last two are settings, see [Basics](basics.md)):
+
+- **The most specific item.** When the AI suggests an item and one of its children for the same objective,
+  only the child is kept (`ai_prefer_specific_item`, on by default). You can still link a parent by hand.
+- **Minimum coverage.** Suggestions that cover less than `ai_min_coverage` (default 1, meaning any) are
+  dropped. A higher value gives fewer, stronger suggestions.
+- **A depth comparison.** "Not applicable" depth is only allowed for items that state no verb or level (a
+  keyword, a topic). For any other item the AI must say whether the objective is below, matches or is above.
+- **Rejections stand, until the wording changes.** A link you rejected is not suggested again. If the
+  objective's wording is edited after the rejection, the AI looks at that item again and may suggest it
+  anew; you then decide again.
+
+A call that fails because the provider is busy (rate limit, overload, timeout) is tried again up to twice.
+If a run's background job is lost (for example the server restarted), the run shows *Stopped with a
+problem* after about 20 minutes and you can start it again; suggestions already made stay.
+
 Only one run for a version and framework can go at a time. A run costs one AI call for each objective
 that has candidates, and one more when an answer has to be asked for again; it counts against the
 budget. The quality of the suggestions is not yet measured (the evaluation tool comes in a later

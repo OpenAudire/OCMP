@@ -130,7 +130,7 @@ deleted frameworks are not embedded; objectives that are deleted or retired lose
 
 `app/services/retrieval.py` finds framework items for a text: **by meaning** when the server
 answers and the chosen frameworks are embedded, otherwise **by keywords** (PostgreSQL full-text
-search, `simple` configuration, so there is no stemming that would suit only English) with a
+search, `simple` configuration, so there is no stemming that would suit only English: "communicate" does not find "communication", and an English word list would not help Afrikaans, isiXhosa or isiZulu) with a
 `notice`: `embeddings_off`, `embeddings_unreachable` or `not_embedded_yet`. It never raises for
 these cases. The 1.16 shortlist and the 1.20 search call it; the screens show the notice in words.
 The exact searches are scoped by materialised subqueries, not by the vector index, because an index

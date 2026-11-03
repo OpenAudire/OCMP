@@ -80,4 +80,5 @@ class OpenAICompatibleProvider:
             output_tokens=int_or_zero(usage.get("completion_tokens")),
             model=str(data.get("model") or self._config.model),
             request_id=response.headers.get("x-request-id"),
+            truncated=choices[0].get("finish_reason") == "length",
         )

@@ -12,6 +12,7 @@ from typing import Any
 
 from sqlalchemy import (
     CheckConstraint,
+    DateTime,
     ForeignKey,
     ForeignKeyConstraint,
     Integer,
@@ -341,6 +342,9 @@ class Objective(Audited, SoftDeleteMixin, CoreModel):
         ForeignKey("learning_events.id", ondelete="CASCADE"), default=None, index=True
     )
     text: Mapped[str] = mapped_column(Text)
+    # When the wording last changed (null: not since it was made). A rejected AI suggestion is
+    # asked about again only if the wording changed after the rejection (ADR 045).
+    text_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     domain: Mapped[ObjectiveDomain | None] = mapped_column(
         str_enum(ObjectiveDomain, "objective_domain"), default=None
     )

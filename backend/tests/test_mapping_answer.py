@@ -132,3 +132,40 @@ class TestInvalid:
 
         assert len(problems) == 4
         assert all(secret not in p and "ZZZ" not in p for p in problems)
+
+
+class TestDepthNotApplicable:
+    """not_applicable is only for an item that states no verb or level (keywords, topics)."""
+
+    def test_a_match_on_an_item_with_a_level_cannot_say_it(self) -> None:
+        text = answer(row(depth_match="not_applicable"))
+        assert problems_of(text) == [
+            "candidate 1: not_applicable is only for an item that states no verb or level; "
+            "use below, matches or above"
+        ]
+
+    def test_a_match_on_an_item_without_one_may_say_it(self) -> None:
+        verdicts = parse_answer(
+            answer(row(depth_match="not_applicable")),
+            objective_text=OBJECTIVE,
+            codes=CODES,
+            depthless={"A1"},
+        )
+        assert verdicts[0].depth_match is DepthMatch.NOT_APPLICABLE
+
+    def test_only_the_items_without_a_level_are_excused(self) -> None:
+        text = answer(
+            row(depth_match="not_applicable"), row(code="B2", depth_match="not_applicable")
+        )
+        with pytest.raises(InvalidAnswer) as raised:
+            parse_answer(text, objective_text=OBJECTIVE, codes=CODES, depthless={"A1"})
+        assert raised.value.problems == [
+            "candidate 2: not_applicable is only for an item that states no verb or level; "
+            "use below, matches or above"
+        ]
+
+    def test_a_non_match_may_say_it_for_any_item(self) -> None:
+        verdicts = parse(
+            answer(row(is_match=False, coverage=0, depth_match="not_applicable", evidence_quote=""))
+        )
+        assert verdicts[0].is_match is False

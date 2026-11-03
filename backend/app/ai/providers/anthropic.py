@@ -80,4 +80,5 @@ class AnthropicProvider:
             output_tokens=int_or_zero(usage.get("output_tokens")),
             model=str(data.get("model") or self._config.model),
             request_id=response.headers.get("request-id"),
+            truncated=data.get("stop_reason") == "max_tokens",
         )

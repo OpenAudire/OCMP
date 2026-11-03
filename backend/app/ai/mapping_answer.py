@@ -43,11 +43,19 @@ def _normalise(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip().casefold()
 
 
-def parse_answer(text: str, *, objective_text: str, codes: set[str]) -> list[Candidate]:
+def parse_answer(
+    text: str,
+    *,
+    objective_text: str,
+    codes: set[str],
+    depthless: frozenset[str] | set[str] = frozenset(),
+) -> list[Candidate]:
     """The verdicts in ``text`` for the codes that were offered.
 
     Candidates the model left out are simply absent (no suggestion); a candidate that was not
-    offered, was repeated, or has a value out of range makes the answer invalid.
+    offered, was repeated, or has a value out of range makes the answer invalid. ``depthless``
+    are the codes of items that state no verb or level (keywords, topics): only for those may a
+    match say ``not_applicable`` for its depth.
 
     Raises:
         InvalidAnswer: With every problem found.
@@ -75,7 +83,7 @@ def parse_answer(text: str, *, objective_text: str, codes: set[str]) -> list[Can
         if code in found:
             problems.append(f"{label} repeats a code")
             continue
-        verdict, issues = _verdict(row, code, objective_text, label)
+        verdict, issues = _verdict(row, code, objective_text, label, code in depthless)
         problems.extend(issues)
         if verdict is not None:
             found[code] = verdict
@@ -85,7 +93,7 @@ def parse_answer(text: str, *, objective_text: str, codes: set[str]) -> list[Can
 
 
 def _verdict(
-    row: dict[str, object], code: str, objective_text: str, label: str
+    row: dict[str, object], code: str, objective_text: str, label: str, depthless: bool
 ) -> tuple[Candidate | None, list[str]]:
     problems: list[str] = []
     is_match = row.get("is_match")
@@ -119,6 +127,11 @@ def _verdict(
             problems.append(f"{label}: the evidence_quote is not words of the objective")
         if not rationale:
             problems.append(f"{label}: a match needs a rationale")
+        if depth is DepthMatch.NOT_APPLICABLE and not depthless:
+            problems.append(
+                f"{label}: not_applicable is only for an item that states no verb or level; "
+                "use below, matches or above"
+            )
     if problems:
         return None, problems
     assert isinstance(coverage, int) and isinstance(confidence, int | float)

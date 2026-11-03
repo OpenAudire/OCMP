@@ -16,7 +16,7 @@ CONNECTION_TEST = PromptTemplate(
 # (Slice 1.19) compares versions. The answer is checked by ``app.ai.mapping_answer``.
 MAPPING = PromptTemplate(
     name="mapping",
-    version="1",
+    version="2",
     system=(
         "You help a curriculum committee map learning objectives to the items of a competency "
         "framework. For each candidate item decide whether the objective, as it is worded, "
@@ -34,12 +34,14 @@ MAPPING = PromptTemplate(
         '"is_match": true, "coverage": 3, "depth_match": "matches", "confidence": 0.8, '
         '"rationale": "<one sentence>", "evidence_quote": "<words copied exactly from the '
         'objective>"}]}\n'
-        "Rules: include every candidate exactly once. coverage is how much of the item the "
-        "objective covers: 0 none, 1 up to 20%, 2 up to 40%, 3 up to 60%, 4 up to 80%, 5 up to "
-        "100%. depth_match compares the level of the objective's verb with the level the item "
-        'expects: "below", "matches", "above", or "not_applicable" when the item states no '
-        "depth. confidence is between 0 and 1. For a candidate that is not a match use "
-        "is_match false, coverage 0 and an empty evidence_quote. The evidence_quote of a match "
-        "must be words copied exactly from the objective."
+        "Rules: list ONLY the candidates the objective matches (is_match true) and leave every "
+        'other candidate out; if none match return {"candidates": []}. List each code at most '
+        "once. coverage is how much of the item the objective covers: 1 up to 20%, 2 up to 40%, "
+        "3 up to 60%, 4 up to 80%, 5 up to 100%. depth_match compares the level of the "
+        'objective\'s verb with the level the item expects: "below", "matches" or "above". Use '
+        '"not_applicable" only for an item marked [no verb or level]; any other item has a level '
+        "to compare. confidence is between 0 and 1. The rationale is one sentence of at most 25 "
+        "words. The evidence_quote must be words copied exactly from the objective. Keep the "
+        "whole answer short."
     ),
 )

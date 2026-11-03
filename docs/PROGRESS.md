@@ -776,6 +776,14 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.16 | A verdict of "no match" or coverage 0 makes **no link** (so the AI does not create rejected examples); only matches with coverage 1 or more become `suggested` links | Keeps the review queue to things worth reading | Easy | Decided in 1.16, to review |
 | 1.16 | A run is `failed` when every objective that was actually asked about failed; objectives with nothing to ask about count as done, not failed | An empty shortlist is not an error | Easy | Decided in 1.16, to review |
 | 1.16 | `mapping_examples` added to the privacy guard's allow-list (20 000 characters), a reviewed change | The examples are curriculum text and pass the guard like every field | Easy | Decided in 1.16, to review |
+| 1.16b | **The prompt asks for matches only** (version 2), with a rationale of at most 25 words | 7 of 19 answers in the first real run stopped at the 1 024-token limit because every candidate was listed with a rationale; both failed objectives were cut-off answers. The limit stays the administrator's | Easy: prompt text and `parse_answer` already accepted missing candidates | Decided in 1.16b, to review |
+| 1.16b | A cut-off answer is detected from the provider's stop reason (`stop_reason` `max_tokens`, `finish_reason` `length`) and retried once with a fixed phrase; recorded as "cut off", not "not JSON" | A retry that repeats the same question is cut off again | Easy | Decided in 1.16b, to review |
+| 1.16b | **`not_applicable` depth is valid only for items that state no verb or level.** An item *states a depth* when it has a description, a `level`/`verb`/`taxonomy_level`/`bloom` metadata key, or a title that starts with a taxonomy verb. Items without one are marked `[no verb or level]` in the prompt; a wrong use is an invalid answer and uses the one retry. Non-matches may say it | Owner request. **The test for "states a depth" is a heuristic** (framework items have no explicit level field): a keyword with a long description counts as having a level | Medium: an explicit field in the pack format (ADR 014) would be better | Decided in 1.16b, to review |
+| 1.16b | **Most specific item** (`ai_prefer_specific_item`, on by default): when an item and a descendant are both suggested, only the descendant is saved; existing non-rejected links of the objective count as the descendant too. Reviewers can still link a parent by hand | Owner request. Counting existing links means an objective a person already mapped to a child gets no parent suggestion | Easy: the setting | Decided in 1.16b, to review |
+| 1.16b | **Minimum coverage** (`ai_min_coverage`, 1 to 5, default 1) | Owner request; 1.19 measures the best default | Easy: the setting | Decided in 1.16b, to review |
+| 1.16b | A call is made again after 2 s and 8 s (twice at most) for 408, 429, 500, 502, 503, 504, 529, timeouts and connection errors; 400, 401, 403, 404 are final. Every attempt is a recorded call and counts against the limits | Owner's 1.16a item "transient retries". Rate limits and overload are normal for a long run | Easy: constants in `ai_mapping.py` | Decided in 1.16b, to review |
+| 1.16b | A run is ended as `failed` when it has had no progress for 20 minutes (running) or has waited 2 hours (queued); done when a run is started or the runs are read. A live job stops at its next objective | Owner's 1.16a item "stale-run timeout". Without it a crashed job blocks the version and framework for ever | Easy: constants | Decided in 1.16b, to review |
+| 1.16b | **A rejected link is asked about again when the objective's wording changed after the rejection** (`objectives.text_changed_at`, migration 0024). If the AI matches it again it returns to `suggested` and the earlier reviewers are cleared (the audit log keeps them) | Owner's 1.16a item. A rejection is a judgement on the old words | Medium: one nullable column | Decided in 1.16b, to review |
 
 ---
 
@@ -1406,3 +1414,45 @@ The first feature to use the provider layer (1.14) and the embeddings (1.15). AD
 **Not in this slice**: the evaluation harness and gold set (1.19), rewriting and classifying objectives (1.17), study-guide extraction (1.18), choosing the shortlist size in the screen (the API takes it), a screen listing past runs and their calls, auto-accept above a confidence threshold (brief; off and not built), per-user limits, cost shown before a run.
 
 **Commit**: `feat: add the AI mapping pipeline`
+
+
+### Slice 1.16b: Fixes From the First Real Run
+**Status**: Complete
+
+The first run on a real provider (Anthropic, `claude-sonnet-5-5`, one module of the demo programme, 14 objectives) was reviewed by the owner, and this slice fixes what it showed. ADR 045 has a new section with the reasons.
+
+**Deliverables**:
+- [x] **Why 2 objectives failed**: the prompt listed every candidate with a rationale, so 7 of 19 answers reached the 1 024-token limit and were cut off; a cut-off answer is not JSON, so the one retry (same question) was cut off too. Fixed by asking for matches only (prompt `mapping:2`) and by recognising a cut-off answer from the provider's stop reason and retrying with "list only the matching candidates and keep every rationale very short"
+- [x] **Most specific item first** (`ai_prefer_specific_item`, default on), **minimum coverage** (`ai_min_coverage`, default 1) in `settings["mapping"]`
+- [x] **`not_applicable` depth** only for items that state no verb or level; those items are marked `[no verb or level]` in the prompt; a wrong use is an invalid answer and uses the retry
+- [x] **1.16a items**: calls made again after "try later" statuses (2 s and 8 s), stale runs ended after 20 minutes without progress (2 hours queued), a rejected link asked about again when the wording changed after the rejection (`objectives.text_changed_at`, migration 0024), and the note that the keyword fallback has no stemming (ADR 044, ADR 045)
+- [x] Docs: ADR 045 section, the mapping guide, the settings in `basics.md`, CLAUDE.md
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy (135 files) pass; the **whole pytest suite passed**: 1 514 tests (the first full run had one failure, the settings test that lists the mapping policy, which had to list the two new fields; it was fixed and that file rerun and passes). Coverage was not recorded for this run. New: `test_ai_mapping_rules.py` (26: cut-off answers, matches-only prompt, the depth rule in the pipeline, minimum coverage, the child before its parent in four cases, calls made again, stale runs, rewording in four cases), 4 depth-rule cases in `test_mapping_answer.py`; four existing tests changed for prompt version 2, calls made again (a 401 now stands for "failed several times") and the unordered call list
+- `mkdocs build --strict` passes
+- **Docker**: the stack was rebuilt (migration 0024 applied) and the same module was run again with the real provider (below)
+
+**Same module, before and after** (14 objectives, `claude-sonnet-5-5`, the real API):
+
+| | Run 1 (`mapping:1`) | Run 2 (`mapping:2`) |
+|---|---|---|
+| Objectives done / failed | 14 / **2** | 14 / **0** |
+| Calls (retries included) | 19 | 14 |
+| Calls cut off at 1 024 tokens | **7** | **0** |
+| Output tokens (average per call) | 16 192 (852) | 4 477 (320) |
+| Input tokens | 16 268 | 12 469 |
+| Cost | $0.1623 | $0.0847 |
+| Suggestions | 21 | 11 |
+| Parent next to its own child | 9 | 0 |
+| Matches with depth `not_applicable` on a competency | 4 | 0 |
+| Coverage 1 / 2 / 3 / 4 | 8 / 10 / 2 / 1 | 4 / 4 / 3 / 0 |
+| Objectives with a suggestion | 12 | 10 |
+
+Why the suggestions fell from 21 to 11: 10 were the parent next to a child or in place of a child a person had already accepted (three objectives had an accepted child link, so their redundant parent suggestion is gone), and two objectives that failed now have a suggestion. To rerun, the 21 unreviewed suggestions of run 1 were **soft-deleted** (audit operation `dev.ai_rerun_cleanup`; they can be restored); the first run's links are saved in the scratchpad as CSV. No suggestion of run 2 has been judged by a person.
+
+**Not verified here**: the quality of the 11 suggestions against a gold set (1.19); whether the heuristic for "states a depth" fits real frameworks other than the demo one (the demo has only items with descriptions, so no `[no verb or level]` item was exercised against the real provider; the unit tests cover it); stale-run expiry and the transient retries against a real provider (unit tests with mocked responses only; no real rate limit was hit); the OpenAI-compatible adapter's `finish_reason` reading (mocked only); a rerun on a larger module; the front end (no screen changed; the two new settings are set through the settings API, as the other mapping policies are).
+
+**Not in this slice**: a settings screen for the two new settings, an explicit level field on framework items, tuning of the minimum coverage (1.19).
+
+**Commit**: `fix: make AI mapping answers short, skip parents of suggested children and retry transient failures`

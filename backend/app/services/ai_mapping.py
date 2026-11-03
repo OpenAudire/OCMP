@@ -16,9 +16,10 @@ monthly budget is reached (``budget_exceeded``), when AI is turned off or restri
 meanwhile, or after three provider failures in a row; a person can cancel it between objectives.
 """
 
+import asyncio
 import uuid
 from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import httpx
 from redis.asyncio import Redis
@@ -44,18 +45,22 @@ from app.models import (
     Framework,
     FrameworkItem,
     LearningEvent,
+    MappingLink,
     Module,
     Objective,
+    TaxonomyLevel,
 )
 from app.models.curriculum import ObjectiveLevel, ObjectiveStatus
 from app.models.framework import FrameworkStatus
-from app.models.mapping import AIRunStatus, AIRunType, MappingSource
+from app.models.mapping import AIRunStatus, AIRunType, MappingSource, MappingStatus
 from app.services import ai_gateway, mapping
 from app.services.audit import audit_operation
 from app.services.authorization import ConflictError, InvalidRequestError
 from app.services.curriculum_edit import ensure_editable
+from app.services.mapping_live import live_link
 from app.services.mapping_shortlist import DEFAULT_K, shortlist
 from app.services.mapping_shortlist import Candidate as Shortlisted
+from app.services.policies import MappingPolicy, mapping_policy_for_version
 
 logger = get_logger(__name__)
 
@@ -66,6 +71,19 @@ TEXT_CUT = 500
 # A run gives up when the provider fails this many objectives one after another.
 MAX_IN_ROW = 3
 ACTIVE = (AIRunStatus.QUEUED, AIRunStatus.RUNNING)
+# A run that shows no progress for this long has lost its job (a restart, a crash) and is ended
+# so that a new run can start. Every objective bumps the run row, and one objective takes well
+# under a minute, so twenty minutes is generous. A queued run waits longer: workers may be busy.
+RUNNING_STALE_AFTER = timedelta(minutes=20)
+QUEUED_STALE_AFTER = timedelta(hours=2)
+# A call that failed for a reason that may pass (rate limit, overload, a timeout) is made again
+# after these pauses. Only the providers' "try later" statuses count; a refused key is final.
+TRANSIENT_STATUSES = frozenset({408, 429, 500, 502, 503, 504, 529})
+RETRY_DELAYS = (2.0, 8.0)
+CUT_OFF = (
+    "the answer was cut off because it was too long: list only the matching candidates "
+    "and keep every rationale very short"
+)
 
 _EXAMPLES_SQL = text(
     """
@@ -157,6 +175,7 @@ async def start_run(
     objectives = await scope_objectives(db, version.id, module.id if module else None)
     if not objectives:
         raise InvalidRequestError("There are no objectives to map in this scope.")
+    await expire_stale_runs(db)
     scope = {
         "version_id": str(version.id),
         "framework_id": str(framework.id),
@@ -200,16 +219,38 @@ async def cancel_run(db: AsyncSession, run: AIRun) -> AIRun:
 # --- Running ------------------------------------------------------------------------------
 
 
-def candidate_lines(shortlisted: list[Shortlisted]) -> str:
-    """The shortlist as the prompt shows it: one line per item, code first."""
+def states_depth(item: FrameworkItem, verbs: frozenset[str]) -> bool:
+    """Whether an item expects a level of performance: it has a description (a competency
+    says what a person does), a level in its metadata, or an action verb to start its title.
+    A bare keyword or topic does not, and only for those may a match say "not_applicable"."""
+    if item.description.strip():
+        return True
+    if any(key in item.item_metadata for key in ("level", "verb", "taxonomy_level", "bloom")):
+        return True
+    first = item.title.strip().split(" ", 1)[0].casefold() if item.title.strip() else ""
+    return first in verbs
+
+
+def candidate_lines(
+    shortlisted: list[Shortlisted], depthless: frozenset[str] | set[str] = frozenset()
+) -> str:
+    """The shortlist as the prompt shows it: one line per item, code first. Items that state no
+    verb or level are marked, so the model knows depth cannot be compared for them."""
     lines = []
     for entry in shortlisted:
         item = entry.item
         wording = item.title.strip()
         if item.description.strip():
             wording = f"{wording}. {item.description.strip()}"
-        lines.append(f"{item.code}: {_cut(wording)}")
+        mark = " [no verb or level]" if item.code in depthless else ""
+        lines.append(f"{item.code}: {_cut(wording)}{mark}")
     return "\n".join(lines)
+
+
+async def taxonomy_verbs(db: AsyncSession) -> frozenset[str]:
+    """Every action verb of the taxonomy scales, lower case."""
+    rows = await db.scalars(select(TaxonomyLevel.verbs))
+    return frozenset(verb.casefold() for verbs in rows for verb in verbs)
 
 
 async def example_lines(
@@ -243,6 +284,41 @@ async def example_lines(
     return "\n".join(lines) + "\n"
 
 
+async def _call(
+    db: AsyncSession,
+    settings: Settings,
+    run: AIRun,
+    fields: dict[str, str],
+    transport: httpx.AsyncBaseTransport | None,
+) -> ai_gateway.GatewayResult:
+    """One guarded call, made again after a pause when the provider says "try later".
+
+    Every attempt is recorded as a call of the run and counts against its limits.
+    """
+    delays = iter(RETRY_DELAYS)
+    while True:
+        try:
+            return await ai_gateway.complete(
+                db,
+                settings,
+                template=prompts.MAPPING,
+                fields=fields,
+                run_type=AIRunType.MAPPING,
+                actor_id=run.created_by_id,
+                run=run,
+                transport=transport,
+            )
+        except ProviderError as exc:
+            transient = exc.status_code is None or exc.status_code in TRANSIENT_STATUSES
+            delay = next(delays, None)
+            if not transient or delay is None:
+                raise
+            logger.warning(
+                "mapping_call_retry", run_id=str(run.id), status_code=exc.status_code, wait=delay
+            )
+            await asyncio.sleep(delay)
+
+
 async def _ask(
     db: AsyncSession,
     settings: Settings,
@@ -252,6 +328,7 @@ async def _ask(
     shortlisted: list[Shortlisted],
     examples: str,
     transport: httpx.AsyncBaseTransport | None,
+    depthless: frozenset[str] = frozenset(),
 ) -> list[Candidate]:
     """One call and, if the answer is unusable, one retry that names what was wrong."""
     codes = {entry.item.code for entry in shortlisted}
@@ -259,7 +336,7 @@ async def _ask(
         "framework_name": framework.name,
         "objective_level": objective.level.value,
         "objective_text": objective.text,
-        "framework_candidates": candidate_lines(shortlisted),
+        "framework_candidates": candidate_lines(shortlisted, depthless),
     }
     problems: list[str] = []
     for attempt in (1, 2):
@@ -270,19 +347,20 @@ async def _ask(
                 + "; ".join(problems[:6])
                 + ". Answer again with valid JSON only.\n"
             )
-        result = await ai_gateway.complete(
-            db,
-            settings,
-            template=prompts.MAPPING,
-            fields={**base_fields, "mapping_examples": notes},
-            run_type=AIRunType.MAPPING,
-            actor_id=run.created_by_id,
-            run=run,
-            transport=transport,
-        )
+        fields = {**base_fields, "mapping_examples": notes}
+        result = await _call(db, settings, run, fields, transport)
         call = await db.get(AIRunCall, result.call_id)
+        if result.truncated:
+            problems = [CUT_OFF]
+            if call is not None:
+                call.valid = False
+                call.error_message = "the answer was cut off at the token limit"
+            logger.warning("mapping_answer_cut_off", run_id=str(run.id), attempt=attempt)
+            continue
         try:
-            verdicts = parse_answer(result.text, objective_text=objective.text, codes=codes)
+            verdicts = parse_answer(
+                result.text, objective_text=objective.text, codes=codes, depthless=depthless
+            )
         except InvalidAnswer as exc:
             problems = exc.problems
             if call is not None:
@@ -296,6 +374,104 @@ async def _ask(
     raise InvalidAnswer(problems)
 
 
+_ANCESTORS_SQL = text(
+    """
+    WITH RECURSIVE up(item_id, ancestor_id) AS (
+        SELECT id, parent_id FROM framework_items
+        WHERE id = ANY(CAST(:ids AS uuid[])) AND parent_id IS NOT NULL
+        UNION ALL
+        SELECT up.item_id, f.parent_id FROM up
+        JOIN framework_items f ON f.id = up.ancestor_id
+        WHERE f.parent_id IS NOT NULL
+    )
+    SELECT ancestor_id FROM up
+    """
+)
+
+
+async def _ancestors(db: AsyncSession, item_ids: list[uuid.UUID]) -> set[uuid.UUID]:
+    """Every parent, grandparent and so on of the given items."""
+    if not item_ids:
+        return set()
+    return set(await db.scalars(_ANCESTORS_SQL, {"ids": item_ids}))
+
+
+async def prefer_specific(
+    db: AsyncSession,
+    objective: Objective,
+    verdicts: list[Candidate],
+    by_code: dict[str, FrameworkItem],
+) -> list[Candidate]:
+    """Drop a suggested parent when a more specific item below it is suggested or already linked.
+
+    The links an objective already has (suggested, accepted or waiting for a second review) count
+    as the more specific item too, so a rerun does not add a parent next to a child made earlier.
+    Reviewers can still link a parent by hand."""
+    existing = list(
+        await db.scalars(
+            select(MappingLink.framework_item_id).where(
+                MappingLink.objective_id == objective.id,
+                live_link(),
+                MappingLink.status != MappingStatus.REJECTED,
+            )
+        )
+    )
+    specific = [by_code[v.code].id for v in verdicts] + existing
+    covered = await _ancestors(db, specific)
+    return [v for v in verdicts if by_code[v.code].id not in covered]
+
+
+async def _save(
+    db: AsyncSession,
+    run: AIRun,
+    objective: Objective,
+    item: FrameworkItem,
+    verdict: Candidate,
+) -> bool:
+    """Save one suggestion. A rejected link the shortlist let through again (the wording changed
+    after the rejection) is suggested anew; any other existing link is left alone."""
+    try:
+        # The suggestion is attributed to the person who started the run (audit log).
+        with audit_operation("mapping.ai_suggest", actor_id=run.created_by_id, run_id=str(run.id)):
+            existing = await db.scalar(
+                select(MappingLink).where(
+                    MappingLink.objective_id == objective.id,
+                    MappingLink.framework_item_id == item.id,
+                    live_link(),
+                )
+            )
+            if existing is not None:
+                if existing.status != MappingStatus.REJECTED:
+                    return False
+                await mapping.resuggest_link(
+                    db,
+                    existing,
+                    objective,
+                    ai_run=run,
+                    coverage=verdict.coverage,
+                    depth_match=verdict.depth_match,
+                    rationale=verdict.rationale,
+                    evidence_quote=verdict.evidence_quote,
+                    confidence=verdict.confidence,
+                )
+                return True
+            await mapping.create_link(
+                db,
+                objective,
+                item,
+                source=MappingSource.AI,
+                coverage=verdict.coverage,
+                depth_match=verdict.depth_match,
+                rationale=verdict.rationale,
+                evidence_quote=verdict.evidence_quote,
+                confidence=verdict.confidence,
+                ai_run=run,
+            )
+    except (ConflictError, InvalidRequestError):
+        return False
+    return True
+
+
 async def _map_objective(
     db: AsyncSession,
     settings: Settings,
@@ -306,43 +482,66 @@ async def _map_objective(
     transport: httpx.AsyncBaseTransport | None,
     embedder: EmbeddingProvider | None,
     redis: Redis | None,
+    policy: MappingPolicy | None = None,
+    verbs: frozenset[str] = frozenset(),
 ) -> int | None:
     """Suggestions made for one objective; ``None`` when there was nothing to ask about."""
+    policy = policy or MappingPolicy()
     chosen = await shortlist(
         db, settings, objective, framework.id, k=k, provider=embedder, redis=redis
     )
     if not chosen.candidates:
         return None
     examples = await example_lines(db, objective, framework.id, settings)
+    depthless = frozenset(c.item.code for c in chosen.candidates if not states_depth(c.item, verbs))
     verdicts = await _ask(
-        db, settings, run, objective, framework, chosen.candidates, examples, transport
+        db, settings, run, objective, framework, chosen.candidates, examples, transport, depthless
     )
     by_code: dict[str, FrameworkItem] = {c.item.code: c.item for c in chosen.candidates}
+    matches = [
+        v
+        for v in verdicts
+        if v.is_match and v.coverage >= max(1, policy.ai_min_coverage) and v.code in by_code
+    ]
+    if policy.ai_prefer_specific_item:
+        matches = await prefer_specific(db, objective, matches, by_code)
     created = 0
-    for verdict in verdicts:
-        if not verdict.is_match or verdict.coverage < 1:
-            continue
-        try:
-            # The suggestion is attributed to the person who started the run (audit log).
-            with audit_operation(
-                "mapping.ai_suggest", actor_id=run.created_by_id, run_id=str(run.id)
-            ):
-                await mapping.create_link(
-                    db,
-                    objective,
-                    by_code[verdict.code],
-                    source=MappingSource.AI,
-                    coverage=verdict.coverage,
-                    depth_match=verdict.depth_match,
-                    rationale=verdict.rationale,
-                    evidence_quote=verdict.evidence_quote,
-                    confidence=verdict.confidence,
-                    ai_run=run,
-                )
-        except (ConflictError, InvalidRequestError):
-            continue
-        created += 1
+    for verdict in matches:
+        if await _save(db, run, objective, by_code[verdict.code], verdict):
+            created += 1
     return created
+
+
+async def expire_stale_runs(db: AsyncSession, *, now: datetime | None = None) -> int:
+    """End runs whose job has stopped without finishing, so a new run can start.
+
+    A running run counts as stale when its row has not changed for ``RUNNING_STALE_AFTER`` (each
+    objective changes it); a queued run when it has waited ``QUEUED_STALE_AFTER``. Suggestions
+    already made stay. Returns how many runs were ended.
+    """
+    now = now or datetime.now(UTC)
+    runs = await db.scalars(
+        select(AIRun).where(AIRun.type == AIRunType.MAPPING, AIRun.status.in_(ACTIVE))
+    )
+    ended = 0
+    for run in runs:
+        if run.status == AIRunStatus.RUNNING:
+            stale = now - run.updated_at > RUNNING_STALE_AFTER
+        else:
+            stale = now - run.created_at > QUEUED_STALE_AFTER
+        if not stale:
+            continue
+        run.status = AIRunStatus.FAILED
+        run.finished_at = now
+        run.error_message = (
+            "The run stopped without finishing (no progress for a long time, perhaps the server "
+            "restarted). Suggestions already made stay. Start the run again to continue."
+        )
+        ended += 1
+        logger.warning("mapping_run_expired", run_id=str(run.id))
+    if ended:
+        await db.flush()
+    return ended
 
 
 async def execute_run(
@@ -375,6 +574,8 @@ async def execute_run(
         db, uuid.UUID(run.scope["version_id"]), uuid.UUID(module_id) if module_id else None
     )
     k = int(run.parameters.get("top_k", DEFAULT_K))
+    policy = await mapping_policy_for_version(db, uuid.UUID(run.scope["version_id"]))
+    verbs = await taxonomy_verbs(db)
     in_row = 0
     attempts = 0
     notes: list[str] = []
@@ -383,11 +584,22 @@ async def execute_run(
             raise InvalidRequestError("The framework was deleted.")
         for objective in objectives:
             await db.refresh(run)
-            if run.status == AIRunStatus.CANCELLED:
+            if run.status != AIRunStatus.RUNNING:
+                # Cancelled by a person, or ended as stale while this job was still alive.
                 break
             try:
                 made = await _map_objective(
-                    db, settings, run, objective, framework, k, transport, embedder, redis
+                    db,
+                    settings,
+                    run,
+                    objective,
+                    framework,
+                    k,
+                    transport,
+                    embedder,
+                    redis,
+                    policy,
+                    verbs,
                 )
                 if made is not None:
                     attempts += 1

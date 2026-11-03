@@ -176,6 +176,7 @@ async def list_ai_mapping_runs(
     """The latest runs of a version (up to ten), newest first."""
     visible = await _visible(db, access, version_id)
     await _require_runner(db, actor, visible, None)
+    await ai_mapping.expire_stale_runs(db)
     runs = await db.scalars(
         select(AIRun)
         .where(AIRun.type == AIRunType.MAPPING)
@@ -192,6 +193,8 @@ async def get_ai_mapping_run(
 ) -> AiRunRead:
     """A run's state and progress (poll this while it is queued or running)."""
     run, _ = await _run_for(db, access, actor, run_id)
+    await ai_mapping.expire_stale_runs(db)
+    await db.refresh(run)
     return run_read(run)
 
 

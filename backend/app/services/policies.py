@@ -28,6 +28,11 @@ class MappingPolicy(BaseModel):
     # links in one action (ADR 040). The limits are the allowed range for admins to choose from.
     bulk_accept_min_percent: Annotated[int, Field(ge=50, le=100)] = 80
     bulk_accept_max_links: Annotated[int, Field(ge=1, le=1000)] = 200
+    # AI mapping runs (ADR 045): a suggestion covering less than this (0 to 5 scale) is dropped,
+    # and when a more specific item (a child) is suggested its parent is not. Reviewers can
+    # still link a parent by hand. 1.19 measures the best minimum coverage.
+    ai_min_coverage: Annotated[int, Field(ge=1, le=5)] = 1
+    ai_prefer_specific_item: bool = True
 
 
 class CreditPolicy(BaseModel):

@@ -21,6 +21,7 @@ All changes go through ORM objects so the audit log records them (ADR 017).
 """
 
 import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import or_, select
@@ -223,6 +224,7 @@ async def update_objective(
     if "parent_ids" in changes:
         await _sync_parents(db, objective, changes["parent_ids"] or [], options, created_by_id)
     if text_changed:
+        objective.text_changed_at = datetime.now(UTC)
         await flag_for_recheck(db, objective)
     await db.flush()
     return objective

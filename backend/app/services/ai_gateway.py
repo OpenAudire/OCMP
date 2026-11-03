@@ -57,6 +57,8 @@ class GatewayResult:
     call_id: uuid.UUID
     provider: AIProviderKind
     model: str
+    # The answer stopped at the token limit, so it is cut off.
+    truncated: bool = False
 
 
 @dataclass(frozen=True)
@@ -291,6 +293,7 @@ async def complete(
         call_id=call.id,
         provider=plan.kind,
         model=completion.model,
+        truncated=completion.truncated,
     )
 
 

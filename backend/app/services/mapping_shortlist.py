@@ -24,6 +24,7 @@ from app.ai.embeddings import MODEL_KEY, EmbeddingProvider
 from app.core.config import Settings
 from app.models import FrameworkItem, MappingLink, Objective
 from app.models.framework import FrameworkCrossRef
+from app.models.mapping import MappingStatus
 from app.services.mapping_live import live_link
 from app.services.retrieval import Mode, Notice, keyword_hits, similar_framework_items
 
@@ -151,14 +152,27 @@ async def shortlist(
             name for name, value in (("meaning", m), ("words", k_), ("precedent", p)) if value > 0
         ]
 
-    # Items the objective is already linked to are not asked about again.
-    linked = set(
-        await db.scalars(
-            select(MappingLink.framework_item_id).where(
-                MappingLink.objective_id == objective.id, live_link()
-            )
-        )
-    )
+    # Items the objective is already linked to are not asked about again, rejected ones included
+    # (a rejection is a person's "no"), unless the wording changed after the rejection.
+    linked: set[uuid.UUID] = set()
+    for item_id, status, first_at, second_at in await db.execute(
+        select(
+            MappingLink.framework_item_id,
+            MappingLink.status,
+            MappingLink.first_reviewed_at,
+            MappingLink.second_reviewed_at,
+        ).where(MappingLink.objective_id == objective.id, live_link())
+    ):
+        decided = second_at or first_at
+        changed = objective.text_changed_at
+        if (
+            status == MappingStatus.REJECTED
+            and changed is not None
+            and decided is not None
+            and decided < changed
+        ):
+            continue
+        linked.add(item_id)
     ranked = sorted(
         (i for i in scores if i not in linked and scores[i] > 0), key=lambda i: -scores[i]
     )

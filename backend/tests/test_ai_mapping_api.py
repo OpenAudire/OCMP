@@ -77,7 +77,7 @@ class TestStarting:
         assert (run["total_items"], run["done_items"], run["links_created"]) == (4, 0, 0)
         assert run["top_k"] == 8 and run["module_id"] is None
         assert run["framework_id"] == str(library.framework.id)
-        assert run["prompt_version"] == "mapping:1"
+        assert run["prompt_version"] == "mapping:2"
         jobs = [j for j in enqueued_jobs if j.actor == "run_ai_mapping"]
         assert [j.args for j in jobs] == [(run["id"],)]
 
