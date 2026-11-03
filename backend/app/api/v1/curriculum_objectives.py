@@ -16,7 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import CurrentUser, ScopeFromRequest, require_permission
+from app.api.deps import CurrentUser, ScopeFromRequest, SettingsDep, require_permission
 from app.api.v1.curriculum_edit import (
     Target,
     event_scope,
@@ -30,6 +30,7 @@ from app.api.v1.curriculum_edit import (
 )
 from app.core.database import DbSession
 from app.core.permissions import Permission, ScopeType
+from app.jobs.embeddings import enqueue_objective
 from app.models import Module, Objective, ObjectiveLink, TaxonomyScale, User
 from app.models.curriculum import ObjectiveLevel
 from app.schemas.curriculum import (
@@ -153,6 +154,7 @@ async def create_programme_outcome(
     request: Request,
     actor: OutcomeEditor,
     db: DbSession,
+    settings: SettingsDep,
 ) -> ObjectiveSaved:
     """Add a programme outcome at the end of the version's outcomes."""
     target = target_of(request)
@@ -168,6 +170,7 @@ async def create_programme_outcome(
             ),
             created_by_id=actor.id,
         )
+    enqueue_objective(settings, objective.id)
     return await _saved(db, objective)
 
 
@@ -182,6 +185,7 @@ async def create_module_outcome(
     request: Request,
     actor: ModuleObjectiveEditor,
     db: DbSession,
+    settings: SettingsDep,
 ) -> ObjectiveSaved:
     """Add an outcome to a module; its upward links go to programme outcomes."""
     target = target_of(request)
@@ -197,6 +201,7 @@ async def create_module_outcome(
             can_approve=await _can_approve(db, actor, ScopeRef(ScopeType.MODULE, target.module.id)),
             created_by_id=actor.id,
         )
+    enqueue_objective(settings, objective.id)
     return await _saved(db, objective)
 
 
@@ -211,6 +216,7 @@ async def create_event_objective(
     request: Request,
     actor: EventObjectiveEditor,
     db: DbSession,
+    settings: SettingsDep,
 ) -> ObjectiveSaved:
     """Add an objective to a session; its upward links go to its module's outcomes or
     to programme outcomes."""
@@ -229,6 +235,7 @@ async def create_event_objective(
             ),
             created_by_id=actor.id,
         )
+    enqueue_objective(settings, objective.id)
     return await _saved(db, objective)
 
 
@@ -239,6 +246,7 @@ async def update_objective(
     request: Request,
     actor: ObjectiveEditor,
     db: DbSession,
+    settings: SettingsDep,
 ) -> ObjectiveSaved:
     """Change an objective's text, domain, taxonomy level, status or upward links.
 
@@ -259,18 +267,24 @@ async def update_objective(
             can_approve=await _can_approve(db, actor, await objective_scope(db, objective)),
             created_by_id=actor.id,
         )
+    enqueue_objective(settings, objective.id)
     return await _saved(db, objective)
 
 
 @router.delete("/objectives/{objective_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_objective(
-    objective_id: uuid.UUID, request: Request, actor: ObjectiveEditor, db: DbSession
+    objective_id: uuid.UUID,
+    request: Request,
+    actor: ObjectiveEditor,
+    db: DbSession,
+    settings: SettingsDep,
 ) -> Response:
     """Delete an objective (soft delete)."""
     target = target_of(request)
     assert target.objective is not None
     with audit_operation("curriculum.objective_delete", actor_id=actor.id):
         await curriculum_objectives.delete_objective(db, target.objective, target.version)
+    enqueue_objective(settings, target.objective.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

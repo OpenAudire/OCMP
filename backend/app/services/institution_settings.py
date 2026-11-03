@@ -1,4 +1,4 @@
-"""Typed access to ``institutions.settings``: terminology, profiles, taxonomy, mapping, credits.
+"""Typed access to ``institutions.settings``: terminology, profiles, taxonomy, policies.
 
 Each section is validated with defaults. Updates replace whole sections and
 keep any keys this version does not know about, so newer settings survive.
@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.profiles import Feature, Profile, Term, features_for
 from app.models import Institution, TaxonomyScale
 from app.services.authorization import InvalidRequestError
-from app.services.policies import CreditPolicy, MappingPolicy
+from app.services.policies import CreditPolicy, MappingPolicy, QualityPolicy
 
 Word = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)]
 
@@ -38,6 +38,7 @@ class InstitutionSettings(BaseModel):
     default_taxonomy_scale: str | None = None
     mapping: MappingPolicy = MappingPolicy()
     credits: CreditPolicy = CreditPolicy()
+    quality: QualityPolicy = QualityPolicy()
 
     @field_validator("profiles", mode="after")
     @classmethod
@@ -60,7 +61,14 @@ class InstitutionSettings(BaseModel):
         return value
 
 
-SECTIONS = ("terminology", "profiles", "default_taxonomy_scale", "mapping", "credits")
+SECTIONS = (
+    "terminology",
+    "profiles",
+    "default_taxonomy_scale",
+    "mapping",
+    "credits",
+    "quality",
+)
 
 
 def parse_settings(raw: dict[str, Any]) -> InstitutionSettings:

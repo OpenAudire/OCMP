@@ -26,6 +26,7 @@ import type {
   ModuleDetail,
   ModuleCopyInput,
   ModuleInput,
+  NearDuplicates,
   Objective,
   ObjectiveInput,
   ObjectiveOption,
@@ -397,6 +398,11 @@ export async function fetchVersionChecks(versionId: string): Promise<VersionChec
   return (await api.get<VersionChecks>(`/curriculum-versions/${versionId}/objective-checks`)).data;
 }
 
+/** Near-duplicate objectives of a version, for the objective cards (editors only). */
+export async function fetchNearDuplicates(versionId: string): Promise<NearDuplicates> {
+  return (await api.get<NearDuplicates>(`/curriculum-versions/${versionId}/near-duplicates`)).data;
+}
+
 /** Tag lists with their values (everyone: active ones; managers: all, with usage). */
 export async function fetchTagLists(): Promise<TagList[]> {
   return (await api.get<TagList[]>('/tag-lists')).data;
@@ -688,5 +694,6 @@ export const queryKeys = {
   reviewCount: ['review-queue', 'count'] as const,
   mappingWorkspace: (versionId: string) => ['curriculum-versions', versionId, 'mapping'] as const,
   versionChecks: (id: string) => ['curriculum-versions', id, 'objective-checks'] as const,
+  nearDuplicates: (id: string) => ['curriculum-versions', id, 'near-duplicates'] as const,
   versionDiff: (id: string, base: string) => ['curriculum-versions', id, 'diff', base] as const,
 };

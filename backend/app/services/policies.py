@@ -45,6 +45,48 @@ class CreditPolicy(BaseModel):
     min_exit_level_credits: Annotated[int, Field(ge=0, le=10_000)] | None = None
 
 
+# Pairs below this similarity are never stored (ADR 044), so it is also the lowest threshold
+# an admin can choose. Set from the measurements recorded in the ADR.
+NEAR_DUPLICATE_FLOOR_PERCENT = 85
+NEAR_DUPLICATE_DEFAULT_PERCENT = 95
+
+
+class QualityPolicy(BaseModel):
+    """Wording checks that depend on the institution (``settings["quality"]``); advice only."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore", strict=True)
+
+    # Two objectives of one version and level at least this similar (percent, by meaning)
+    # are reported as near-duplicates (ADR 044).
+    near_duplicate_min_percent: Annotated[int, Field(ge=NEAR_DUPLICATE_FLOOR_PERCENT, le=100)] = (
+        NEAR_DUPLICATE_DEFAULT_PERCENT
+    )
+
+
+def parse_quality_policy(settings: dict[str, object]) -> QualityPolicy:
+    """Read the quality policy from an institution's settings.
+
+    Raises:
+        InvalidRequestError: If the stored settings have the wrong shape.
+    """
+    try:
+        return QualityPolicy.model_validate(settings.get("quality") or {})
+    except ValidationError as exc:
+        raise InvalidRequestError(f"Invalid quality settings: {exc}") from exc
+
+
+async def quality_policy_for_version(db: AsyncSession, version_id: uuid.UUID) -> QualityPolicy:
+    """The quality policy of the institution a curriculum version belongs to."""
+    settings = await db.scalar(
+        select(Institution.settings)
+        .join(Faculty, Faculty.institution_id == Institution.id)
+        .join(Programme, Programme.faculty_id == Faculty.id)
+        .join(CurriculumVersion, CurriculumVersion.programme_id == Programme.id)
+        .where(CurriculumVersion.id == version_id)
+    )
+    return parse_quality_policy(settings or {})
+
+
 def parse_mapping_policy(settings: dict[str, object]) -> MappingPolicy:
     """Read the mapping policy from an institution's settings.
 

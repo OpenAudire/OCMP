@@ -1,12 +1,13 @@
 import { useState, type ReactNode } from 'react';
 import { Button, Group, Paper, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { IconAlertTriangle, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import {
   fetchLearningEvent,
   fetchModule,
+  fetchNearDuplicates,
   fetchProgramme,
   fetchProgrammeOutcomes,
   fetchTaxonomyScales,
@@ -23,6 +24,7 @@ import { objectiveNoun, type EditResult, type ObjectiveOwner } from './editing';
 import { Assessments } from './Assessments';
 import { HoursStatusLine } from './CreditAdvice';
 import { ItemTags } from './ItemTags';
+import { NearDuplicateFlag } from './NearDuplicateFlag';
 import { ObjectiveDeleteDialog, ObjectiveDialog } from './ObjectiveDialog';
 import type { TreeItem } from './treeModel';
 import classes from './ItemDetails.module.css';
@@ -88,6 +90,9 @@ interface ObjectivesProps {
   onSaved: (result: EditResult) => void;
 }
 
+/** How long after a save the near-duplicates are read again (a job finds them). */
+const NEAR_DUPLICATE_REFRESH_MS = 6000;
+
 /** A short form of the text for button names, so each button is told apart. */
 function excerpt(text: string): string {
   return text.length > 60 ? `${text.slice(0, 57)}…` : text;
@@ -126,10 +131,29 @@ function Objectives({
       scale.levels.map((level) => [level.id, `${scale.name}: ${level.name}`] as const)
     )
   );
+  // Near-duplicates are found by a background job a few seconds after a save, so they are
+  // read again shortly afterwards. Only editors see them (the same right as the quality
+  // check) and a failure leaves the card as it was: they are advice.
+  const client = useQueryClient();
+  const duplicates = useQuery({
+    queryKey: queryKeys.nearDuplicates(versionId),
+    queryFn: () => fetchNearDuplicates(versionId),
+    enabled: canEdit,
+    retry: false,
+  });
+  const matchesOf = new Map(
+    (duplicates.data?.objectives ?? []).map((o) => [o.objective_id, o.matches] as const)
+  );
   const close = () => setDialog(null);
   const saved = (result: EditResult) => {
     setDialog(null);
     onSaved(result);
+    if (duplicates.data?.enabled) {
+      window.setTimeout(
+        () => void client.invalidateQueries({ queryKey: queryKeys.nearDuplicates(versionId) }),
+        NEAR_DUPLICATE_REFRESH_MS
+      );
+    }
   };
   const common = { versionId, owner, onClose: close, onSaved: saved };
   return (
@@ -198,6 +222,12 @@ function Objectives({
                   </span>
                 )}
               </Group>
+              {(matchesOf.get(objective.id)?.length ?? 0) > 0 && (
+                <NearDuplicateFlag
+                  text={objective.text}
+                  matches={matchesOf.get(objective.id) ?? []}
+                />
+              )}
               <ItemTags
                 kind="objective"
                 itemId={objective.id}

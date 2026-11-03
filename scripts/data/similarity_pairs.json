@@ -1,0 +1,311 @@
+{
+ "_comment": "Fictional health-sciences objectives for choosing the near-duplicate threshold (ADR 044). Each row has the same meaning in English (en), Afrikaans (af) and isiXhosa (xh). 'same' = paraphrases that should be reported; 'different' = same style, different content, which must not be. The Afrikaans and isiXhosa wording was written by the model that built this slice and has NOT been checked by a native speaker: treat the results for those languages as indicative until a speaker has reviewed the file.",
+ "languages": {
+  "en": {
+   "same": [
+    [
+     "Describe the main stages of the cardiac cycle.",
+     "Outline the principal phases of the cardiac cycle."
+    ],
+    [
+     "Explain how insulin regulates blood glucose.",
+     "Describe the way insulin controls the level of glucose in the blood."
+    ],
+    [
+     "Demonstrate correct hand hygiene technique before a clinical procedure.",
+     "Perform proper handwashing before carrying out a clinical procedure."
+    ],
+    [
+     "List the common signs and symptoms of tuberculosis.",
+     "Identify the typical symptoms and signs of tuberculosis."
+    ],
+    [
+     "Communicate a diagnosis to a patient in clear, simple language.",
+     "Explain a diagnosis to a patient using plain and understandable language."
+    ],
+    [
+     "Apply the principles of informed consent in clinical practice.",
+     "Use the principles of informed consent when practising clinically."
+    ],
+    [
+     "Calculate drug dosages accurately for paediatric patients.",
+     "Work out accurate medication doses for children."
+    ],
+    [
+     "Identify the risk factors for non-communicable diseases in a community.",
+     "Recognise the factors that put a community at risk of non-communicable diseases."
+    ],
+    [
+     "Interpret a standard 12-lead electrocardiogram.",
+     "Read and interpret a routine twelve-lead ECG."
+    ],
+    [
+     "Work effectively as a member of an interprofessional healthcare team.",
+     "Collaborate productively within a multidisciplinary health care team."
+    ],
+    [
+     "Evaluate the quality of a published clinical trial.",
+     "Appraise the quality of a published clinical trial critically."
+    ],
+    [
+     "Describe the role of community health workers in primary health care.",
+     "Explain what community health workers do within primary health care."
+    ]
+   ],
+   "different": [
+    [
+     "Describe the main stages of the cardiac cycle.",
+     "Describe the main stages of the menstrual cycle."
+    ],
+    [
+     "Explain how insulin regulates blood glucose.",
+     "Explain how aldosterone regulates blood pressure."
+    ],
+    [
+     "Demonstrate correct hand hygiene technique before a clinical procedure.",
+     "Demonstrate correct technique for taking a blood pressure reading."
+    ],
+    [
+     "List the common signs and symptoms of tuberculosis.",
+     "List the common side effects of antiretroviral therapy."
+    ],
+    [
+     "Communicate a diagnosis to a patient in clear, simple language.",
+     "Document a patient's history in a structured clinical record."
+    ],
+    [
+     "Apply the principles of informed consent in clinical practice.",
+     "Apply the principles of infection control in clinical practice."
+    ],
+    [
+     "Calculate drug dosages accurately for paediatric patients.",
+     "Calculate the body mass index of adult patients."
+    ],
+    [
+     "Identify the risk factors for non-communicable diseases in a community.",
+     "Identify the barriers to accessing health services in a rural community."
+    ],
+    [
+     "Interpret a standard 12-lead electrocardiogram.",
+     "Interpret a standard chest radiograph."
+    ],
+    [
+     "Work effectively as a member of an interprofessional healthcare team.",
+     "Lead a ward round and delegate tasks to junior colleagues."
+    ],
+    [
+     "Evaluate the quality of a published clinical trial.",
+     "Design a simple survey to measure patient satisfaction."
+    ],
+    [
+     "Describe the role of community health workers in primary health care.",
+     "Describe the role of the pharmacist in primary health care."
+    ]
+   ]
+  },
+  "af": {
+   "same": [
+    [
+     "Beskryf die hoofstadiums van die hartsiklus.",
+     "Skets die vernaamste fases van die hartsiklus."
+    ],
+    [
+     "Verduidelik hoe insulien bloedglukose reguleer.",
+     "Beskryf hoe insulien die vlak van glukose in die bloed beheer."
+    ],
+    [
+     "Demonstreer die korrekte handhigiëne-tegniek voor 'n kliniese prosedure.",
+     "Voer behoorlike handewas uit voordat 'n kliniese prosedure uitgevoer word."
+    ],
+    [
+     "Lys die algemene tekens en simptome van tuberkulose.",
+     "Identifiseer die tipiese simptome en tekens van tuberkulose."
+    ],
+    [
+     "Kommunikeer 'n diagnose aan 'n pasiënt in duidelike, eenvoudige taal.",
+     "Verduidelik 'n diagnose aan 'n pasiënt in gewone, verstaanbare taal."
+    ],
+    [
+     "Pas die beginsels van ingeligte toestemming in kliniese praktyk toe.",
+     "Gebruik die beginsels van ingeligte toestemming wanneer jy klinies praktiseer."
+    ],
+    [
+     "Bereken geneesmiddeldosisse akkuraat vir pediatriese pasiënte.",
+     "Bepaal akkurate medikasiedosisse vir kinders."
+    ],
+    [
+     "Identifiseer die risikofaktore vir nie-oordraagbare siektes in 'n gemeenskap.",
+     "Herken die faktore wat 'n gemeenskap aan nie-oordraagbare siektes blootstel."
+    ],
+    [
+     "Interpreteer 'n standaard 12-afleiding-elektrokardiogram.",
+     "Lees en interpreteer 'n roetine-twaalf-afleiding-EKG."
+    ],
+    [
+     "Werk doeltreffend as lid van 'n interprofessionele gesondheidsorgspan.",
+     "Werk produktief saam binne 'n multidissiplinêre gesondheidsorgspan."
+    ],
+    [
+     "Evalueer die gehalte van 'n gepubliseerde kliniese proef.",
+     "Beoordeel die gehalte van 'n gepubliseerde kliniese proef krities."
+    ],
+    [
+     "Beskryf die rol van gemeenskapsgesondheidswerkers in primêre gesondheidsorg.",
+     "Verduidelik wat gemeenskapsgesondheidswerkers in primêre gesondheidsorg doen."
+    ]
+   ],
+   "different": [
+    [
+     "Beskryf die hoofstadiums van die hartsiklus.",
+     "Beskryf die hoofstadiums van die menstruele siklus."
+    ],
+    [
+     "Verduidelik hoe insulien bloedglukose reguleer.",
+     "Verduidelik hoe aldosteroon bloeddruk reguleer."
+    ],
+    [
+     "Demonstreer die korrekte handhigiëne-tegniek voor 'n kliniese prosedure.",
+     "Demonstreer die korrekte tegniek om 'n bloeddrukmeting te neem."
+    ],
+    [
+     "Lys die algemene tekens en simptome van tuberkulose.",
+     "Lys die algemene newe-effekte van antiretrovirale terapie."
+    ],
+    [
+     "Kommunikeer 'n diagnose aan 'n pasiënt in duidelike, eenvoudige taal.",
+     "Dokumenteer 'n pasiënt se geskiedenis in 'n gestruktureerde kliniese rekord."
+    ],
+    [
+     "Pas die beginsels van ingeligte toestemming in kliniese praktyk toe.",
+     "Pas die beginsels van infeksiebeheer in kliniese praktyk toe."
+    ],
+    [
+     "Bereken geneesmiddeldosisse akkuraat vir pediatriese pasiënte.",
+     "Bereken die liggaamsmassa-indeks van volwasse pasiënte."
+    ],
+    [
+     "Identifiseer die risikofaktore vir nie-oordraagbare siektes in 'n gemeenskap.",
+     "Identifiseer die hindernisse tot toegang tot gesondheidsdienste in 'n landelike gemeenskap."
+    ],
+    [
+     "Interpreteer 'n standaard 12-afleiding-elektrokardiogram.",
+     "Interpreteer 'n standaard borskas-X-straal."
+    ],
+    [
+     "Werk doeltreffend as lid van 'n interprofessionele gesondheidsorgspan.",
+     "Lei 'n saalrondte en delegeer take aan junior kollegas."
+    ],
+    [
+     "Evalueer die gehalte van 'n gepubliseerde kliniese proef.",
+     "Ontwerp 'n eenvoudige opname om pasiënttevredenheid te meet."
+    ],
+    [
+     "Beskryf die rol van gemeenskapsgesondheidswerkers in primêre gesondheidsorg.",
+     "Beskryf die rol van die apteker in primêre gesondheidsorg."
+    ]
+   ]
+  },
+  "xh": {
+   "same": [
+    [
+     "Chaza amanqanaba aphambili omjikelo wentliziyo.",
+     "Cacisa izigaba eziphambili zomjikelo wentliziyo."
+    ],
+    [
+     "Cacisa ukuba i-insulin ilawula njani iglucose egazini.",
+     "Chaza indlela i-insulin elawula ngayo inqanaba leglucose egazini."
+    ],
+    [
+     "Bonisa indlela echanekileyo yokuhlamba izandla phambi kwenkqubo yezonyango.",
+     "Hlamba izandla ngokufanelekileyo phambi kokwenza inkqubo yezonyango."
+    ],
+    [
+     "Bhala iimpawu eziqhelekileyo ze-TB.",
+     "Khomba iimpawu ezixhaphakileyo ze-TB."
+    ],
+    [
+     "Xelela isigulana ngesifo sakhe ngolwimi olucacileyo nolulula.",
+     "Cacisela isigulana ukuxilongwa ngolwimi olulula noluqondakalayo."
+    ],
+    [
+     "Sebenzisa imigaqo yemvume enolwazi kwimpilo yezonyango.",
+     "Sebenzisa imigaqo yemvume enolwazi xa usebenza ezonyangweni."
+    ],
+    [
+     "Bala ngokuchanekileyo umlinganiselo wamayeza wabantwana abagulayo.",
+     "Cacisa ngokuchanekileyo ubungakanani bamayeza abanikwa abantwana."
+    ],
+    [
+     "Chonga izinto ezibeka uluntu emngciphekweni wezifo ezingosulelaniyo.",
+     "Khomba izinto ezonyusa umngcipheko wezifo ezingosulelaniyo ekuhlaleni."
+    ],
+    [
+     "Hlaziya i-electrocardiogram eqhelekileyo yeelead ezili-12.",
+     "Funda uze uhlaziye i-ECG yeelead ezilishumi elinambini."
+    ],
+    [
+     "Sebenza ngokufanelekileyo njengelungu leqela lezempilo elixubeneyo.",
+     "Sebenzisana ngempumelelo kwiqela lezempilo lezifundo ezahlukeneyo."
+    ],
+    [
+     "Vavanya umgangatho wophando lwezonyango olupapashiweyo.",
+     "Phonononga umgangatho wophando lwezonyango olupapashiweyo."
+    ],
+    [
+     "Chaza indima yabasebenzi bezempilo basekuhlaleni kunyango lokuqala.",
+     "Cacisa oko kwenziwa ngabasebenzi bezempilo basekuhlaleni kwiqonga lokuqala lonyango."
+    ]
+   ],
+   "different": [
+    [
+     "Chaza amanqanaba aphambili omjikelo wentliziyo.",
+     "Chaza amanqanaba aphambili omjikelo wokuya exesheni."
+    ],
+    [
+     "Cacisa ukuba i-insulin ilawula njani iglucose egazini.",
+     "Cacisa ukuba i-aldosterone ilawula njani uxinzelelo lwegazi."
+    ],
+    [
+     "Bonisa indlela echanekileyo yokuhlamba izandla phambi kwenkqubo yezonyango.",
+     "Bonisa indlela echanekileyo yokulinganisa uxinzelelo lwegazi."
+    ],
+    [
+     "Bhala iimpawu eziqhelekileyo ze-TB.",
+     "Bhala iziphumo ezingalunganga eziqhelekileyo zonyango lwe-ARV."
+    ],
+    [
+     "Xelela isigulana ngesifo sakhe ngolwimi olucacileyo nolulula.",
+     "Bhala imbali yesigulana kwirekhodi yezonyango ecwangcisiweyo."
+    ],
+    [
+     "Sebenzisa imigaqo yemvume enolwazi kwimpilo yezonyango.",
+     "Sebenzisa imigaqo yokulawula usulelo kwimpilo yezonyango."
+    ],
+    [
+     "Bala ngokuchanekileyo umlinganiselo wamayeza wabantwana abagulayo.",
+     "Bala isalathiso sobunzima bomzimba sabantu abadala abagulayo."
+    ],
+    [
+     "Chonga izinto ezibeka uluntu emngciphekweni wezifo ezingosulelaniyo.",
+     "Chonga imiqobo yokufumana iinkonzo zempilo kuluntu lasemaphandleni."
+    ],
+    [
+     "Hlaziya i-electrocardiogram eqhelekileyo yeelead ezili-12.",
+     "Hlaziya i-X-ray eqhelekileyo yesifuba."
+    ],
+    [
+     "Sebenza ngokufanelekileyo njengelungu leqela lezempilo elixubeneyo.",
+     "Hola uhambo lwezigulana ewodini unikele imisebenzi kubasebenzi abangaphantsi."
+    ],
+    [
+     "Vavanya umgangatho wophando lwezonyango olupapashiweyo.",
+     "Yila uphando olulula lokulinganisa ukwaneliseka kwezigulana."
+    ],
+    [
+     "Chaza indima yabasebenzi bezempilo basekuhlaleni kunyango lokuqala.",
+     "Chaza indima yegqirha lamayeza kunyango lokuqala."
+    ]
+   ]
+  }
+ }
+}

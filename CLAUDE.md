@@ -250,6 +250,18 @@ export function ModuleCount({ count }: { count: number }) {
   test that an upload without the confirmation is 422 and writes no file
 - Privacy guard rules (`app/ai/privacy.py`): every new pattern needs tests for what it finds and what it must
   leave alone (ordinary curriculum dates, years, week numbers); findings are categories and counts, never text
+- Embeddings (ADR 044): vectors come only from `app/ai/embeddings.py` (`LocalEmbeddingProvider`, a server on this
+  machine or private network; `NullEmbeddingProvider` while `EMBEDDINGS_LOCAL` is false). The `query: ` prefix is
+  added in code and `MODEL_KEY` names model, prefix and recipe: changing any of them is a new ADR and a full
+  `embed-all`. Vectors live in `embeddings` and near-duplicate pairs in `objective_similarities` (derived data, not
+  audited, not exported); always join them to the live item, never trust the cache for what exists. Anything that
+  finds framework items for a text (the AI shortlist, search) calls `services/retrieval.similar_framework_items`, which
+  falls back to full-text search **with a notice** and never raises because embeddings are off, unreachable or empty.
+  Near-duplicates are shown through `objective_checks.near_duplicates_among` (only pairs the user may see on both
+  sides, ADR 027) and only while embeddings are on. A text the privacy detectors flag is still embedded by the local
+  server (counted, never logged) and listed as `possible_personal_information`; a **cloud** embedding provider would
+  have to go through `ai_gateway` and the guard. Embedding jobs run after a save (`enqueue_objective`) and need the
+  worker to read `EMBEDDINGS_LOCAL=true`
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 

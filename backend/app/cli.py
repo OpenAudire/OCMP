@@ -26,6 +26,8 @@ import sys
 
 from sqlalchemy import select
 
+from app.ai.embeddings import MODEL_NAME, get_embedding_provider
+from app.ai.errors import ProviderError
 from app.core import database
 from app.core.config import get_settings
 from app.core.permissions import ScopeType
@@ -33,6 +35,7 @@ from app.core.secrets import SecretBox, SecretUnreadableError, new_key
 from app.core.security import PasswordPolicyError
 from app.demo.loader import load_demo
 from app.models import AIProviderConfig
+from app.models.embedding import EmbeddedType
 from app.services.ai_runs import purge_ai_call_content
 from app.services.audit import audit_operation, purge_audit_log
 from app.services.authorization import (
@@ -42,7 +45,9 @@ from app.services.authorization import (
     get_role,
     sync_system_roles,
 )
+from app.services.embeddings import coverage, sweep
 from app.services.mapping_live import clean_orphan_links
+from app.services.retrieval import EmbeddingsState, embeddings_state
 from app.services.setup import setup_needed, setup_token
 from app.services.users import InvalidEmailError, create_local_user, get_user_by_email
 
@@ -113,6 +118,42 @@ async def _clean_orphan_links(apply: bool) -> int:
             "add --apply to soft-delete them."
         )
     return 0
+
+
+async def _embed_all() -> int:
+    """Make the vectors of every objective and framework item that lacks a current one."""
+    settings = get_settings()
+    if not settings.embeddings_local:
+        print(  # noqa: T201
+            "Embeddings are off (EMBEDDINGS_LOCAL=false). Start the 'embeddings' profile and "
+            "set EMBEDDINGS_LOCAL=true first.",
+            file=sys.stderr,
+        )
+        return 1
+    provider = get_embedding_provider(settings)
+    try:
+        async with database.session_scope() as db:
+            for kind in (EmbeddedType.OBJECTIVE, EmbeddedType.FRAMEWORK_ITEM):
+                result = await sweep(db, provider, kind)
+                print(  # noqa: T201
+                    f"{kind.value}: {result.embedded} embedded, {result.unchanged} already "
+                    f"current, {result.removed} removed; {result.flagged} of the embedded texts "
+                    "hold something the privacy detectors flag (see the quality check)."
+                )
+    except ProviderError as exc:
+        print(f"Error: {exc}", file=sys.stderr)  # noqa: T201
+        return 1
+    return 0
+
+
+async def _embeddings_status() -> int:
+    settings = get_settings()
+    state = await embeddings_state(settings)
+    print(f"Embeddings: {state.value} (model {MODEL_NAME})")  # noqa: T201
+    async with database.session_scope() as db:
+        for item in await coverage(db):
+            print(f"  {item.entity_type.value}: {item.embedded} of {item.live} have a vector")  # noqa: T201
+    return 0 if state is not EmbeddingsState.UNREACHABLE else 1
 
 
 async def _load_demo() -> int:
@@ -221,6 +262,12 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser(
         "rotate-secrets", help="Re-encrypt stored secrets with the newest encryption key."
     )
+    commands.add_parser(
+        "embed-all", help="Make the embeddings of objectives and framework items that lack one."
+    )
+    commands.add_parser(
+        "embeddings-status", help="Show whether the embeddings server answers and what is embedded."
+    )
     commands.add_parser("setup-token", help="Show the first-run setup token.")
     commands.add_parser("load-demo", help="Load the fictional BSc Health Sciences (Demo) data.")
     orphans = commands.add_parser(
@@ -245,6 +292,10 @@ def main(argv: list[str] | None = None) -> int:
                 return await _sync_roles()
             if args.command == "clean-orphan-links":
                 return await _clean_orphan_links(args.apply)
+            if args.command == "embed-all":
+                return await _embed_all()
+            if args.command == "embeddings-status":
+                return await _embeddings_status()
             if args.command == "load-demo":
                 return await _load_demo()
             if args.command == "new-encryption-key":

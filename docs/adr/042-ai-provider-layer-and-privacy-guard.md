@@ -30,7 +30,8 @@ Model names are typed by the admin; Anthropic's four documented ids are offered 
 only. Anthropic's `temperature` is sent only when the admin sets one (current models were not
 checked for accepting it). Structured output is asked for in the prompt (and in Ollama's `format`),
 not with provider features whose current shape was not verified. Embeddings (`EmbeddingProvider`)
-arrive with Slice 1.15. vLLM is reached through the OpenAI-compatible adapter.
+arrived with Slice 1.15 (ADR 044): the local embeddings server only; a cloud embedding provider
+would have to go through this guard. vLLM is reached through the OpenAI-compatible adapter.
 
 Adapters never follow redirects (a redirect would carry the key), time out after 60 seconds, and
 turn failures into `ProviderError` with the status code and a trimmed provider message with the key

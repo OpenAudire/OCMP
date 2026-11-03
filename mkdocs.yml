@@ -62,6 +62,7 @@ nav:
       - Configuration: operations/configuration.md
       - Upgrade: operations/upgrade.md
       - Backup and restore: operations/backup-restore.md
+      - Embeddings: operations/embeddings.md
   - Administration:
       - Admin basics: admin/basics.md
       - Users and roles: admin/users-and-roles.md

@@ -67,6 +67,28 @@ How a bulk-accepted mapping link was accepted (`mapping_links.accept_method`) re
 Logs of AI calls hold run ids, user ids, the provider name, token counts, timings and the number of
 findings of a refusal. Never a prompt, an answer, a name, an address or a key.
 
+## Embeddings
+
+Optional and off by default (ADR 044, [Embeddings](../operations/embeddings.md)). When an administrator turns
+them on, objective text and framework item text (title and description) is sent to the
+**embeddings server that runs on your own server or private network**, which returns a vector of
+384 numbers. The address must be local; a public address is refused. The privacy guard's detectors
+look at each text first; unlike a call to an AI provider, **a text they flag is still sent** to
+this local server (it never leaves the installation and is already stored), and it is listed on the
+objective quality page (kinds only, never the value) so the wording gets fixed.
+
+| Data | Where | Purpose | Retention |
+|---|---|---|---|
+| A vector of each live objective and framework item, and a hash of its wording | `embeddings` | Finding near-duplicate objectives, and meaning-based search and the AI shortlist later | Rebuilt from the text and removed with a sweep (`embed-all`) once the item is deleted or retired; a vector can leak some meaning of the text, so it follows the database's access and backup rules and is **not exported**. If the text held personal information, so does the vector in a diffuse form: fix the wording and the vector is replaced |
+| Pairs of close objectives of one version, with their similarity | `objective_similarities` | Showing near-duplicates on the objective card and in the quality check | Replaced whenever either objective is saved; deleted with the objectives |
+| Whether the embeddings server answers (a short-lived flag) | Redis key `embeddings:ready` | Not asking again on every page | 30 seconds |
+
+The server downloads the model (about 470 MB) from huggingface.co the first time it starts. That
+request carries no curriculum text and no personal data; it can be avoided by copying the model into
+the volume ([Embeddings](../operations/embeddings.md#a-server-without-internet-access)). Logs of the
+embedding jobs hold ids and counts only (how many were embedded, unchanged, removed or flagged), never a text or a
+vector.
+
 ## Redis (temporary)
 
 | Data | Purpose | Retention |
@@ -103,6 +125,8 @@ backups expire.
 |---|---|---|
 | The institution's SMTP server | Recipient email address, name, reset link | Password reset and "password changed" emails |
 | The institution's identity provider | The sign-in request; the provider returns subject id, email and name | SSO sign-in |
+| The embeddings server (optional, on your own server or network) | Objective and framework item text; nothing leaves the installation | When an objective is saved and when `embed-all` runs. Nothing is sent while embeddings are off (the default) |
+| huggingface.co (only the embeddings server, only on its first start) | A request for the model files; no curriculum text | Once, unless the model is copied in by hand |
 | AI provider (optional, chosen by an administrator) | Curriculum text only, never personal information (the privacy guard refuses it); the API key in a header; for the "Test connection" button a fixed test sentence | When an AI feature runs, and when an administrator presses "Test connection". Nothing is sent while AI is off (the default) |
 
 If an AI provider outside South Africa is configured, curriculum text (not personal

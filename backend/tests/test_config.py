@@ -111,6 +111,8 @@ class TestSettings:
         assert settings.session_expire_hours == 24
         assert settings.secrets_encryption_keys == []
         assert settings.embeddings_local is False
+        assert settings.embeddings_local_url == "http://embeddings:8080"
+        assert not hasattr(settings, "embeddings_openai")
 
 
 class TestListSettingsFromEnvironment:

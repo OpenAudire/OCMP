@@ -164,6 +164,67 @@ def test_clean_orphan_links_is_a_dry_run_unless_applied(
     assert modes == [False, True]
 
 
+def test_embed_all_refuses_while_embeddings_are_off(
+    cli_settings: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert cli.main(["embed-all"]) == 1
+
+    assert "Embeddings are off" in capsys.readouterr().err
+
+
+def test_embed_all_runs_through_both_types_and_reports_counts(
+    cli_settings: str,
+    test_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from tests.fakes import FakeEmbeddingProvider
+
+    settings = test_settings.model_copy(
+        update={"database_url": cli_settings, "embeddings_local": True}
+    )
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+    monkeypatch.setattr(cli, "get_embedding_provider", lambda _settings: FakeEmbeddingProvider())
+
+    assert cli.main(["embed-all"]) == 0
+
+    out = capsys.readouterr().out
+    assert "objective: " in out and "framework_item: " in out
+    assert "privacy detectors flag" in out
+
+
+def test_embed_all_reports_a_server_that_cannot_be_used(
+    cli_settings: str,
+    test_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Command wiring only; the sweep itself is tested in test_embeddings_service.py."""
+    from app.ai.errors import ProviderError
+
+    settings = test_settings.model_copy(
+        update={"database_url": cli_settings, "embeddings_local": True}
+    )
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+
+    async def failing_sweep(*_args: object) -> object:
+        raise ProviderError("The embeddings server could not be reached (test).")
+
+    monkeypatch.setattr(cli, "sweep", failing_sweep)
+
+    assert cli.main(["embed-all"]) == 1
+
+    assert "could not be reached" in capsys.readouterr().err
+
+
+def test_embeddings_status_when_off(cli_settings: str, capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(["embeddings-status"]) == 0
+
+    out = capsys.readouterr().out
+    assert "Embeddings: off (model intfloat/multilingual-e5-small)" in out
+    assert "objective: " in out and "have a vector" in out
+
+
 def test_new_encryption_key_prints_a_usable_key(capsys: pytest.CaptureFixture[str]) -> None:
     from app.core.secrets import SecretBox
 

@@ -18,12 +18,14 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 
-from app.api.deps import ScopeFromRequest, require_permission
+from app.api.deps import ScopeFromRequest, SettingsDep, require_permission
 from app.api.v1.curriculum import Access
 from app.api.v1.curriculum_edit import version_programme
 from app.core.database import DbSession
 from app.core.permissions import Permission, ScopeType
+from app.jobs.embeddings import enqueue_pending
 from app.models import CurriculumVersion, User
+from app.models.embedding import EmbeddedType
 from app.schemas.curriculum import (
     ChangeCounts,
     CopyForwardPreview,
@@ -150,19 +152,22 @@ async def copy_forward(
     request: Request,
     actor: VersionEditor,
     db: DbSession,
+    settings: SettingsDep,
 ) -> CurriculumVersion:
     """Copy the version, with everything in it, to a new draft for another academic year."""
     version = _whole(request).version
     with audit_operation(
         "curriculum.version_copy_forward", actor_id=actor.id, source_id=version_id
     ):
-        return await curriculum_versions.copy_forward(
+        copy = await curriculum_versions.copy_forward(
             db,
             actor,
             version,
             academic_year=body.academic_year,
             role_assignment_ids=body.role_assignment_ids,
         )
+    enqueue_pending(settings, EmbeddedType.OBJECTIVE)
+    return copy
 
 
 @router.get("/curriculum-versions/{version_id}/diff", response_model=VersionDiffRead)

@@ -167,19 +167,26 @@ services:
     ports:
       - "127.0.0.1:8025:8025"
 
-  # Optional, off by default: local embedding model (ADR 007). Not available yet:
-  # nothing uses embeddings before Phase 1, and the image is published from the
-  # Phase 1 embeddings slice. Starting this profile before then fails to pull.
+  # Optional, off by default: the local embeddings server (ADR 044). Hugging Face Text
+  # Embeddings Inference serving intfloat/multilingual-e5-small on the CPU, pinned by digest
+  # (version 1.9.4, image about 1 GB, the model about 470 MB). On an ARM server set
+  # OCMP_EMBEDDINGS_IMAGE to the cpu-arm64-1.9 digest in .env.example. The first start
+  # downloads the model into the embeddings_data volume; for a server without internet access
+  # see docs/operations/embeddings.md. Also set EMBEDDINGS_LOCAL=true for the api and worker.
   embeddings:
-    image: ${OCMP_EMBEDDINGS_IMAGE:-ghcr.io/openaudire/ocmp-embeddings:latest}
+    image: ${OCMP_EMBEDDINGS_IMAGE:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.9@sha256:2538ea1c9640d3763b15af668039d24172d063b42337b0c27796fc2be180c78d}
     profiles: ["embeddings"]
     restart: unless-stopped
     logging: *logging
+    command: ["--model-id", "${EMBEDDINGS_MODEL_ID:-intfloat/multilingual-e5-small}", "--port", "8080"]
+    volumes:
+      - embeddings_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 300s
 
   # Optional: Ollama for local LLM
   ollama:
@@ -196,3 +203,4 @@ volumes:
   caddy_data:
   caddy_config:
   ollama_data:
+  embeddings_data:

@@ -12,7 +12,7 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [004](004-database-migrations.md) | Database Migrations |
 | [005](005-api-versioning.md) | API Versioning |
 | [006](006-testing-strategy.md) | Testing Strategy |
-| [007](007-embedding-model.md) | Embedding Model |
+| [007](007-embedding-model.md) | Embedding Model (superseded by 044) |
 | [008](008-core-data-model-conventions.md) | Core Data Model Conventions |
 | [009](009-session-and-csrf-implementation.md) | Session, CSRF and Sign-in Rate Limiting Implementation |
 | [010](010-password-reset.md) | Password Reset by Email |
@@ -49,3 +49,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [041](041-encrypted-secrets-at-rest.md) | Encrypted Secrets at Rest and Key Rotation |
 | [042](042-ai-provider-layer-and-privacy-guard.md) | AI Provider Layer, Privacy Guard, Budgets and Local-only Mode |
 | [043](043-mapping-links-go-with-their-objective.md) | Mapping Links Go With Their Objective |
+| [044](044-embeddings-model-server-and-cache.md) | Embeddings: Model, Server, Cache and Near-duplicate Detection |

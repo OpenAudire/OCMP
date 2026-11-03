@@ -88,9 +88,23 @@ them from your `.env` if present (they are ignored).
 
 ## Reserved for later phases
 
-`EMBEDDINGS_*` and `CONNECTOR_ENCRYPTION_KEY` are read but not used yet: meaning-based search
-arrives later in Phase 1 and the Brightspace connector in Phase 2. Leave them as they are in the
-template.
+`CONNECTOR_ENCRYPTION_KEY` is read but not used yet: the Brightspace connector is Phase 2. Leave
+it as it is in the template.
+
+## Embeddings
+
+Optional (ADR 044); see [Embeddings](embeddings.md) for the whole procedure.
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `EMBEDDINGS_LOCAL` | `false` | Turn meaning-based matching on. Set it for the `api` and the `worker` (both read `.env`). Everything works without it |
+| `EMBEDDINGS_LOCAL_URL` | `http://embeddings:8080` | Where the embeddings server is. It must be on this server or a private network; a public address is refused |
+| `EMBEDDINGS_MODEL_ID` | `intfloat/multilingual-e5-small` | Read by Compose for the `embeddings` service: a model id, or a folder inside its volume for a server without internet access. Do not change it without asking |
+| `OCMP_EMBEDDINGS_IMAGE` | the pinned CPU image | Set the ARM image on an ARM server (digest in `.env.example`) |
+
+The Phase 0 settings `EMBEDDINGS_OPENAI` and `EMBEDDINGS_OPENAI_MODEL` were never used and are
+removed; delete them from your `.env` if present (they are ignored). Cloud embeddings are not
+offered in Phase 1.
 
 ## Images
 
@@ -106,7 +120,7 @@ These Docker Compose profiles are off unless started with `--profile <name>`:
 | Profile | Service | State |
 |---|---|---|
 | `mailpit` | Catches all outgoing email, web UI on `http://localhost:8025` | Development only |
-| `embeddings` | Local embedding model (ADR 007) | Not available yet: its image is published with the Phase 1 search features. Leave it off; `EMBEDDINGS_LOCAL` defaults to `false` |
+| `embeddings` | Local embedding model (ADR 044): about 1 GB image, 470 MB model, about 3 GB of memory | Optional; [turn it on](embeddings.md#turn-it-on) with `EMBEDDINGS_LOCAL=true` |
 | `ollama` | Local language model | For Phase 1 AI features; not used yet |
 
 ## Backup scripts

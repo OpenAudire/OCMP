@@ -242,6 +242,7 @@ function checked(overrides: Partial<CheckedObjective> & Pick<CheckedObjective, '
     findings: [],
     detected_verb: 'explain',
     suggestions: [],
+    near_duplicates: [],
     ...overrides,
   } satisfies CheckedObjective;
 }
@@ -250,6 +251,7 @@ const checks: VersionChecks = {
   version_id: 'v2027',
   rules_language: 'en',
   rules_version: 1,
+  near_duplicates_checked: true,
   objectives: [
     checked({ objective_id: 'a', text: 'Understand the heart.', findings: [vague] }),
     checked({
@@ -330,6 +332,72 @@ describe('objective quality page', () => {
       target: { value: 'too_long' },
     });
     expect(await screen.findByRole('heading', { name: 'Nothing matches' })).toBeInTheDocument();
+  });
+
+  it('lists near-duplicates and personal information as findings that can be filtered', async () => {
+    mocked.fetchVersionChecks.mockResolvedValue({
+      ...checks,
+      objectives: [
+        checked({
+          objective_id: 'd',
+          text: 'Describe the cardiac cycle.',
+          findings: [
+            {
+              code: 'near_duplicate',
+              severity: 'info',
+              message_key: 'curriculum.quality.near_duplicate.message',
+              suggestion_key: 'curriculum.quality.near_duplicate.suggestion',
+              params: { percent: '97', where: 'HSC103 Lecture 9' },
+            },
+          ],
+        }),
+        checked({
+          objective_id: 'e',
+          text: 'Phone the patient after the lab.',
+          findings: [
+            {
+              code: 'possible_personal_information',
+              severity: 'warning',
+              message_key: 'curriculum.quality.possible_personal_information.message',
+              suggestion_key: 'curriculum.quality.possible_personal_information.suggestion',
+              params: { kinds: 'phone, email' },
+            },
+          ],
+        }),
+        checked({ objective_id: 'f', text: 'Name the valves.' }),
+      ],
+    });
+    renderAt('/curriculum/versions/v2027/quality');
+
+    expect(
+      await screen.findByText(
+        'Near-duplicate of an objective in HSC103 Lecture 9 (97% similar). Repeat on purpose, or remove?'
+      )
+    ).toBeInTheDocument();
+    // The kinds are put into words; no value from the objective is repeated.
+    expect(
+      screen.getByText(
+        'The wording may hold personal information: a phone number, an email address.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Near-duplicate checking is off/)).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Rule' }), {
+      target: { value: 'possible_personal_information' },
+    });
+    expect(screen.getByText('Showing 1 of 3 objectives checked.')).toBeInTheDocument();
+    expect(screen.getByText('Phone the patient after the lab.')).toBeInTheDocument();
+  });
+
+  it('says so when near-duplicate checking is off', async () => {
+    mocked.fetchVersionChecks.mockResolvedValue({ ...checks, near_duplicates_checked: false });
+    renderAt('/curriculum/versions/v2027/quality');
+
+    expect(
+      await screen.findByText(
+        'Near-duplicate checking is off on this installation, so none are listed. An administrator can turn it on (see the operations guide).'
+      )
+    ).toBeInTheDocument();
   });
 
   it('links each objective to the item that holds it', async () => {

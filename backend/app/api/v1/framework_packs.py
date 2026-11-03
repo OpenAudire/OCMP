@@ -18,7 +18,9 @@ from fastapi.responses import FileResponse
 from app.api.deps import RedisDep, SettingsDep, require_permission, too_many_attempts
 from app.core.database import DbSession
 from app.core.permissions import Permission
+from app.jobs.embeddings import enqueue_pending
 from app.models import User
+from app.models.embedding import EmbeddedType
 from app.schemas.framework_packs import (
     PackCountsRead,
     PackImportRead,
@@ -236,6 +238,8 @@ async def import_checked_pack(
         if body.activate:
             superseded = await activate_framework(db, result.framework)
     await redis.delete(_redis_key(body.token))
+    if body.activate:
+        enqueue_pending(settings, EmbeddedType.FRAMEWORK_ITEM)
     summary = result.summary
     framework = result.framework
     return PackImportRead(

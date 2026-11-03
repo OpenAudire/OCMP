@@ -1,0 +1,31 @@
+/* Ochre means "needs attention" (ADR 026); the icon and the words say so as well. */
+.flag {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--cic-warm-line);
+  border-radius: 12px;
+  background: var(--cic-warm-soft);
+  color: var(--cic-warm-ink);
+}
+
+.icon {
+  flex: none;
+}
+
+.text {
+  flex: 1 1 260px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.wording {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+}

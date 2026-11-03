@@ -56,6 +56,7 @@ export interface Institution {
   default_taxonomy_scale: string | null;
   mapping: { four_eyes: boolean; second_review_for_rejects: boolean };
   credits?: CreditPolicy;
+  quality?: { near_duplicate_min_percent: number };
 }
 
 /** Credits and notional hours settings (advice only; ADR 035). */
@@ -538,6 +539,18 @@ export interface QualityCheckInput {
   has_parent_links: boolean | null;
 }
 
+/** Another objective of the same version and level that reads almost the same (ADR 044). */
+export interface NearDuplicate {
+  objective_id: string;
+  percent: number;
+  level: 'programme' | 'module' | 'learning_event';
+  text: string;
+  module_id: string | null;
+  module_code: string | null;
+  event_id: string | null;
+  event_title: string | null;
+}
+
 export interface CheckedObjective extends QualityCheck {
   objective_id: string;
   level: 'programme' | 'module' | 'learning_event';
@@ -549,13 +562,24 @@ export interface CheckedObjective extends QualityCheck {
   event_id: string | null;
   event_title: string | null;
   can_edit: boolean;
+  near_duplicates: NearDuplicate[];
 }
 
 export interface VersionChecks {
   version_id: string;
   rules_language: string;
   rules_version: number;
+  /** False while embeddings are off: the list has no near-duplicate findings then. */
+  near_duplicates_checked: boolean;
   objectives: CheckedObjective[];
+}
+
+/** What the objective cards show; `enabled` is false while embeddings are off. */
+export interface NearDuplicates {
+  version_id: string;
+  enabled: boolean;
+  threshold_percent: number;
+  objectives: { objective_id: string; matches: NearDuplicate[] }[];
 }
 
 /** Tag lists and tagging (ADR 034). */

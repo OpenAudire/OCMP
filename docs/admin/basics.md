@@ -112,6 +112,8 @@ All on the server, as `docker compose exec api python -m app.cli <command>`:
 | `sync-roles` | Creates or updates the built-in roles (runs automatically on every start). |
 | `load-demo` | Loads the fictional demo programme (once; see [Install](../operations/install.md#try-curriculum-in-context-with-the-demo-data)). With `OCMP_DEMO_OFFICE_PASSWORD` set it also makes the faculty-scoped demo account `curriculum.office@example.org`; run again with it set to add the account to an earlier load. |
 | `clean-orphan-links [--apply]` | Data hygiene for installs from before 1.14b: lists (dry run, the default) or, with `--apply`, soft-deletes mapping links whose objective was already deleted. Audited as `mapping.orphan_cleanup`; safe to repeat. See [Mapping](mapping.md#deleting-objectives-and-their-links). |
+| `embed-all` | Makes the embeddings of every objective and framework item that lacks a current one, and removes vectors of deleted items; also finds near-duplicate objectives. Needs `EMBEDDINGS_LOCAL=true` and the `embeddings` service ([Embeddings](../operations/embeddings.md)). Safe to repeat. |
+| `embeddings-status` | Says whether the embeddings server answers (`off`, `ready` or `unreachable`) and how many objectives and framework items have a vector. Exits with 1 when unreachable. |
 | `purge-audit-log [--days N]` | Deletes audit log entries older than N days (default from `.env`). |
 | `purge-ai-content [--days N]` | Clears stored AI prompts and responses older than N days. |
 | `new-encryption-key` | Prints a new key for `SECRETS_ENCRYPTION_KEYS` ([AI settings](ai.md#encryption-keys-and-rotation)). |

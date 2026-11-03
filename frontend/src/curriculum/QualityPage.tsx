@@ -28,6 +28,8 @@ const RULES = [
   'learner_framing',
   'ambiguous_qualifier',
   'level_differs',
+  'near_duplicate',
+  'possible_personal_information',
 ] as const;
 
 type SeverityFilter = 'all' | FindingSeverity;
@@ -193,6 +195,11 @@ export function QualityPage() {
             onChange={(event) => setFilter('findings', event.currentTarget.value)}
           />
         </div>
+        {!data.near_duplicates_checked && (
+          <Text size="sm" c="dimmed">
+            {t('curriculum.quality.page.nearDuplicatesOff')}
+          </Text>
+        )}
         <Text size="sm" role="status">
           {t('curriculum.quality.page.showing', {
             shown: rows.length,

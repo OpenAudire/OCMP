@@ -2,7 +2,14 @@
 
 ## Status
 
-Accepted
+**Superseded by [ADR 044](044-embeddings-model-server-and-cache.md)** (Slice 1.15, 2026-11-03), which
+replaces the model, the serving approach and the dimension notes below.
+
+**Correction.** This ADR said the model supports "50+ languages including English, Afrikaans". That
+was an error: the model card's language list and the Sentence Transformers documentation do not
+include Afrikaans (or isiZulu or isiXhosa). The 128-token input limit it states is also too short
+for descriptions. ADR 044 chooses `intfloat/multilingual-e5-small`, whose card lists Afrikaans and
+isiXhosa but not isiZulu. The text below is kept as it was for the record.
 
 ## Context
 

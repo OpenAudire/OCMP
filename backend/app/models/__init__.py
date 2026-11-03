@@ -17,6 +17,7 @@ from app.models.curriculum import (
     Programme,
     QualificationType,
 )
+from app.models.embedding import Embedding, ObjectiveSimilarity
 from app.models.framework import (
     Crosswalk,
     CrosswalkEntry,
@@ -48,6 +49,7 @@ __all__ = [
     "CrosswalkEntry",
     "CurriculumVersion",
     "Department",
+    "Embedding",
     "Faculty",
     "Framework",
     "FrameworkCrossRef",
@@ -58,6 +60,7 @@ __all__ = [
     "Module",
     "Objective",
     "ObjectiveLink",
+    "ObjectiveSimilarity",
     "Phase",
     "Programme",
     "QualificationType",

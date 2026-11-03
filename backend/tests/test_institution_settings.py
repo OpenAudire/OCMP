@@ -241,6 +241,25 @@ class TestAPI:
         assert cleared.json()["terminology"] == {}
         assert cleared.json()["mapping"]["four_eyes"] is True
 
+    async def test_the_near_duplicate_threshold_defaults_to_the_measured_value_and_is_changed(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        institution: Institution,
+    ) -> None:
+        await self.sign_in(api_client, db_session, test_settings, "platform_admin")
+
+        before = await api_client.get("/api/v1/institution")
+        changed = await api_client.patch(
+            "/api/v1/institution/settings", json={"quality": {"near_duplicate_min_percent": 90}}
+        )
+        cleared = await api_client.patch("/api/v1/institution/settings", json={"quality": None})
+
+        assert before.json()["quality"] == {"near_duplicate_min_percent": 95}
+        assert changed.json()["quality"] == {"near_duplicate_min_percent": 90}
+        assert cleared.json()["quality"] == {"near_duplicate_min_percent": 95}
+
     @pytest.mark.parametrize(
         "body",
         [
@@ -248,6 +267,8 @@ class TestAPI:
             {"terminology": {"widget": {"singular": "W", "plural": "Ws"}}},
             {"default_taxonomy_scale": "missing-scale"},
             {"colour_scheme": "blue"},
+            {"quality": {"near_duplicate_min_percent": 84}},
+            {"quality": {"near_duplicate_min_percent": 101}},
         ],
     )
     async def test_invalid_changes(

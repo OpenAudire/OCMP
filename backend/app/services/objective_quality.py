@@ -44,6 +44,10 @@ RULE_SEVERITY: dict[str, Severity] = {
     "learner_framing": Severity.INFO,
     "ambiguous_qualifier": Severity.INFO,
     "level_differs": Severity.INFO,
+    # Found only by the bulk check (ADR 044): they need stored embeddings and the privacy
+    # detectors, which the pure live rules do not use.
+    "near_duplicate": Severity.INFO,
+    "possible_personal_information": Severity.WARNING,
 }
 
 

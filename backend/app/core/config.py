@@ -146,12 +146,10 @@ class Settings(BaseSettings):
     pack_max_upload_mb: int = Field(default=10, ge=1, le=200)
     pack_max_items: int = Field(default=20000, ge=1)
 
-    # Embeddings
-    # Off by default: the local model is an optional compose profile (ADR 007).
+    # Embeddings (ADR 044). Off by default: the model runs in the optional `embeddings`
+    # compose profile. Only a server on this machine or a private network is accepted.
     embeddings_local: bool = False
     embeddings_local_url: str = "http://embeddings:8080"
-    embeddings_openai: bool = False
-    embeddings_openai_model: str = "text-embedding-3-small"
 
     # Connector encryption
     connector_encryption_key: str | None = None

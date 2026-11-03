@@ -137,6 +137,33 @@ stop anyone saving.
 - The wording lists are versioned files per language (`app/services/objective_rules/en.json`);
   only English exists so far. See ADR 033.
 
+### Near-duplicates and possible personal information
+
+Two findings come from the **Check wording** list and the objective cards, not from the live
+check under the wording:
+
+- **Near-duplicate** (a note). Another objective of the **same version and level** has almost
+  the same meaning. The objective's card shows "Near-duplicate of an objective in HSC103, Lecture 9
+  (96% similar). Repeat on purpose, or remove?" with a **Compare** button that shows the wordings.
+  Repeating on purpose is allowed; nothing is blocked. It needs the optional
+  [embeddings service](../operations/embeddings.md): while it is off the list says so and
+  nothing is reported. A new or changed objective is compared by a background job, so its
+  note appears a few seconds after saving. A pair is shown only to someone who may see both
+  objectives.
+- **May hold personal information** (a warning). The privacy detectors found something that
+  looks like an email address, phone number, ID or student number, date of birth or the name of
+  someone in the system. The finding names the **kind**, never the value. Fix the wording: the
+  same detectors would stop this text being sent to an AI service (ADR 042).
+
+The similarity needed for a near-duplicate is the institution setting
+`quality.near_duplicate_min_percent` (default 95, between 85 and 100). It was chosen from
+measurements on fictional objectives (ADR 044) and is a starting point: raise it if too much is
+flagged, lower it to catch looser repeats. The model gives unrelated objectives of one subject
+scores in the high 80s, so values near 85 flag a lot. There is no screen for it yet; use
+`PATCH /api/v1/institution/settings` with `{"quality": {"near_duplicate_min_percent": 92}}`.
+Afrikaans and isiXhosa wording is compared less sharply than English (ADR 044), and isiZulu is not
+supported by the model.
+
 ## Publishing and copying a year forward
 
 Each programme has one version per academic year. A version is a **draft** (editable, seen

@@ -18,7 +18,7 @@ from app.services.institution_settings import (
     parse_settings,
     update_settings,
 )
-from app.services.policies import CreditPolicy, MappingPolicy
+from app.services.policies import CreditPolicy, MappingPolicy, QualityPolicy
 
 router = APIRouter(prefix="/institution", tags=["institution"])
 
@@ -39,6 +39,7 @@ class InstitutionRead(BaseModel):
     default_taxonomy_scale: str | None
     mapping: MappingPolicy
     credits: CreditPolicy
+    quality: QualityPolicy
 
 
 class SettingsUpdate(BaseModel):
@@ -51,6 +52,7 @@ class SettingsUpdate(BaseModel):
     default_taxonomy_scale: str | None = None
     mapping: MappingPolicy | None = None
     credits: CreditPolicy | None = None
+    quality: QualityPolicy | None = None
 
 
 def _read(institution: Institution, settings: InstitutionSettings) -> InstitutionRead:
@@ -65,6 +67,7 @@ def _read(institution: Institution, settings: InstitutionSettings) -> Institutio
         default_taxonomy_scale=settings.default_taxonomy_scale,
         mapping=settings.mapping,
         credits=settings.credits,
+        quality=settings.quality,
     )
 
 

@@ -494,6 +494,17 @@
       "loadTitle": "Couldn't compare the versions",
       "loadBody": "Nothing was changed. Check your connection and try again."
     },
+    "nearDuplicate": {
+      "label": "Near-duplicate",
+      "body": "of an objective in {{where}} ({{percent}}% similar). Repeat on purpose, or remove?",
+      "more_one": "and {{count}} other.",
+      "more_other": "and {{count}} others.",
+      "compare": "Compare",
+      "compareTitle": "Compare the wording",
+      "compareHelp": "These objectives read almost the same. This is advice only: keep both if the repeat is on purpose.",
+      "thisOne": "This objective",
+      "otherOne": "{{where}} ({{percent}}% similar)"
+    },
     "quality": {
       "title": "Quality check",
       "advisory": "These are suggestions from fixed rules. They never stop you saving, and nothing is sent to an AI service.",
@@ -559,6 +570,26 @@
         "message": "The level chosen ({{chosen}}) differs from the level the verb \"{{verb}}\" usually points to ({{suggested}}).",
         "suggestion": "Check the level, or keep it if the objective needs it."
       },
+      "near_duplicate": {
+        "name": "Near-duplicate",
+        "message": "Near-duplicate of an objective in {{where}} ({{percent}}% similar). Repeat on purpose, or remove?",
+        "suggestion": "Compare the two. Keep both if the repeat is on purpose; otherwise remove or reword one."
+      },
+      "possible_personal_information": {
+        "name": "May hold personal information",
+        "message": "The wording may hold personal information: {{kinds}}.",
+        "suggestion": "Remove or generalise it. Objectives must not name or identify people, and never a patient.",
+        "kinds": {
+          "email": "an email address",
+          "phone": "a phone number",
+          "id_number": "an ID number",
+          "student_number": "a student or staff number",
+          "ip_address": "an IP address",
+          "hospital_number": "a hospital or file number",
+          "date_of_birth": "a date of birth",
+          "name": "a person's name"
+        }
+      },
       "page": {
         "title": "Objective quality",
         "description": "Rule-based checks of the wording of the objectives you can see in {{programme}}. Suggestions only; nothing is changed or sent to an AI service.",
@@ -588,7 +619,8 @@
         "list": "Objectives and their findings",
         "levelSuggested": "Suggested level: {{levels}}",
         "openItem": "Open in the curriculum: {{text}}",
-        "findingsOnly": "Show"
+        "findingsOnly": "Show",
+        "nearDuplicatesOff": "Near-duplicate checking is off on this installation, so none are listed. An administrator can turn it on (see the operations guide)."
       }
     },
     "assessments": {

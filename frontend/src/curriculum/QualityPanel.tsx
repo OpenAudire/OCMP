@@ -39,9 +39,22 @@ function summaryOf(t: TFunction, check: QualityCheck): string {
     : t('curriculum.quality.summary', { warnings, notes });
 }
 
+/** The values for a finding's text; the kinds of personal information are put into words. */
+function paramsOf(t: TFunction, finding: QualityFinding): Record<string, string> {
+  if (finding.code !== 'possible_personal_information' || !finding.params.kinds) {
+    return finding.params;
+  }
+  const kinds = finding.params.kinds
+    .split(',')
+    .map((kind) => t(`curriculum.quality.possible_personal_information.kinds.${kind.trim()}`))
+    .join(', ');
+  return { ...finding.params, kinds };
+}
+
 /** One finding: the severity is written out and has an icon, never colour alone. */
 export function FindingItem({ finding }: { finding: QualityFinding }) {
   const { t } = useTranslation();
+  const params = paramsOf(t, finding);
   const Icon = finding.severity === 'warning' ? IconAlertTriangle : IconInfoCircle;
   return (
     <li className={classes.finding}>
@@ -50,10 +63,10 @@ export function FindingItem({ finding }: { finding: QualityFinding }) {
         {t(`curriculum.quality.severity.${finding.severity}`)}
       </span>
       <span className={classes.text}>
-        <span>{t(finding.message_key, finding.params)}</span>
+        <span>{t(finding.message_key, params)}</span>
         {finding.suggestion_key && (
           <Text span size="sm" c="dimmed">
-            {t(finding.suggestion_key, finding.params)}
+            {t(finding.suggestion_key, params)}
           </Text>
         )}
       </span>

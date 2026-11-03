@@ -13,6 +13,12 @@ a taxonomy level suggested from the verb using the scale's verb lists, "rule-bas
 It runs as you type and in bulk. Near-duplicate detection (embeddings) and AI rewriting come
 in later slices (1.15, 1.17).
 
+**Update, Slice 1.15 (ADR 044).** The pure rules above are unchanged and the live check stays
+rule-based. The bulk check (`Check wording`) now also reports `near_duplicate` (a note, from stored
+embeddings, only while embeddings are on) and `possible_personal_information` (a warning, from the
+privacy detectors, kinds only). They are added by `objective_checks.check_version`, not by
+`check_objective`.
+
 ## Decision
 
 ### Rules, not AI

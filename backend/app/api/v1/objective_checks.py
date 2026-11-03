@@ -10,7 +10,7 @@ import uuid
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import CurrentUser, RedisDep, too_many_attempts
+from app.api.deps import CurrentUser, RedisDep, SettingsDep, too_many_attempts
 from app.api.v1.curriculum import Access
 from app.api.v1.curriculum_objectives import (
     EventObjectiveEditor,
@@ -23,13 +23,17 @@ from app.schemas.objective_quality import (
     CheckedObjectiveRead,
     CheckRead,
     CheckRequest,
+    NearDuplicatesRead,
+    ObjectiveDuplicatesRead,
     VersionCheckRead,
     check_read,
+    duplicate_read,
 )
 from app.services import objective_checks, rate_limit
 from app.services.authorization import AuthorizationError
 from app.services.curriculum_read import visible_version
 from app.services.objective_quality import CheckContext, load_rules
+from app.services.policies import quality_policy_for_version
 
 router = APIRouter(tags=["objective-quality"])
 
@@ -96,14 +100,16 @@ async def check_event_objective(
 
 @router.get("/curriculum-versions/{version_id}/objective-checks", response_model=VersionCheckRead)
 async def check_version_objectives(
-    version_id: uuid.UUID, access: Access, db: DbSession
+    version_id: uuid.UUID, access: Access, db: DbSession, settings: SettingsDep
 ) -> VersionCheckRead:
     """Check every objective of a version that the user sees (needs ``objectives.edit``)."""
     visible = await visible_version(db, access, version_id)
     if visible is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Curriculum version not found.")
     try:
-        checked = await objective_checks.check_version(db, visible)
+        checked = await objective_checks.check_version(
+            db, visible, near_duplicates=settings.embeddings_local
+        )
     except AuthorizationError as error:
         raise HTTPException(status.HTTP_403_FORBIDDEN, str(error)) from error
     rules = load_rules()
@@ -111,6 +117,7 @@ async def check_version_objectives(
         version_id=version_id,
         rules_language=rules.language,
         rules_version=rules.version,
+        near_duplicates_checked=settings.embeddings_local,
         objectives=[
             CheckedObjectiveRead(
                 **check_read(item.result).model_dump(),
@@ -124,7 +131,43 @@ async def check_version_objectives(
                 event_id=item.event.id if item.event else None,
                 event_title=item.event.title if item.event else None,
                 can_edit=item.can_edit,
+                near_duplicates=[duplicate_read(match) for match in item.near_duplicates],
             )
             for item in checked
+        ],
+    )
+
+
+@router.get("/curriculum-versions/{version_id}/near-duplicates", response_model=NearDuplicatesRead)
+async def near_duplicates(
+    version_id: uuid.UUID, access: Access, db: DbSession, settings: SettingsDep
+) -> NearDuplicatesRead:
+    """Near-duplicate objectives of a version, for the objective cards (needs
+    ``objectives.edit`` somewhere). A pair is shown only if the user sees both objectives.
+
+    Results come from a background job that runs after each save, so a new objective shows
+    its pairs a few seconds later. Nothing is reported while embeddings are off."""
+    visible = await visible_version(db, access, version_id)
+    if visible is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Curriculum version not found.")
+    if not objective_checks.may_use_checker(visible.access):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "You do not have permission to check objectives."
+        )
+    policy = await quality_policy_for_version(db, version_id)
+    found = {}
+    if settings.embeddings_local:
+        chosen = await objective_checks.visible_objectives(db, visible)
+        found = await objective_checks.near_duplicates_among(db, version_id, chosen)
+    return NearDuplicatesRead(
+        version_id=version_id,
+        enabled=settings.embeddings_local,
+        threshold_percent=policy.near_duplicate_min_percent,
+        objectives=[
+            ObjectiveDuplicatesRead(
+                objective_id=objective_id,
+                matches=[duplicate_read(match) for match in matches],
+            )
+            for objective_id, matches in found.items()
         ],
     )
