@@ -94,6 +94,7 @@ function UploadForm({
         onChange={setFile}
         required
         clearable
+        clearButtonProps={{ 'aria-label': t('curriculum.studyGuide.clearFile') }}
         data-autofocus
       />
       <StudyGuideConfirmation

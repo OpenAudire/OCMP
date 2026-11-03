@@ -94,6 +94,10 @@ describe('study guide panel', () => {
     show();
     const dialog = await openDialog();
     choose(dialog, new File(['x'], 'guide.docx'));
+    // The button that clears the chosen file has a name (it had none in the first version).
+    expect(
+      await within(dialog).findByRole('button', { name: 'Remove the chosen file' }),
+    ).toBeVisible();
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Read it' }));
 

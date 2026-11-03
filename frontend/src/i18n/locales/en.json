@@ -796,7 +796,8 @@
         "generic": "Something went wrong. Try again.",
         "decided": "Someone has already decided this proposal. Reload the page.",
         "progress": "The progress of the reading could not be loaded."
-      }
+      },
+      "clearFile": "Remove the chosen file"
     }
   },
   "import": {
