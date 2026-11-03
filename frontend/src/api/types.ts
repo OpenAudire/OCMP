@@ -965,6 +965,38 @@ export interface AiObjectiveResult {
   } | null;
 }
 
+/** The AI's reading of one uploaded study guide (Slice 1.18). */
+export interface StudyGuideRun {
+  id: string;
+  status: 'queued' | 'running' | 'succeeded' | 'failed' | 'budget_exceeded' | 'cancelled';
+  module_id: string;
+  total_items: number;
+  done_items: number;
+  failed_items: number;
+  proposals_created: number;
+  truncated: boolean;
+  error_message: string | null;
+  created_at: string;
+  finished_at: string | null;
+}
+
+/** An objective found in a study guide, waiting for a person to accept or reject it. */
+export interface ObjectiveProposal {
+  id: string;
+  run_id: string;
+  module_id: string;
+  text: string;
+  domain: ObjectiveDomain | null;
+  source_quote: string;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+
+export interface ProposalAcceptInput {
+  text: string;
+  domain: ObjectiveDomain | null;
+  set_domain: boolean;
+}
+
 export interface AiMappingInput {
   framework_id: string;
   module_id: string | null;

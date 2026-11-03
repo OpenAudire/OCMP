@@ -21,6 +21,7 @@ from app.api.v1.objective_checks import router as objective_checks_router
 from app.api.v1.oidc import router as oidc_router
 from app.api.v1.roles import router as roles_router
 from app.api.v1.setup import router as setup_router
+from app.api.v1.study_guides import router as study_guides_router
 from app.api.v1.tagging import router as tagging_router
 from app.api.v1.users import router as users_router
 
@@ -40,6 +41,7 @@ router.include_router(curriculum_objectives_router)
 router.include_router(assessments_router)
 router.include_router(curriculum_versions_router)
 router.include_router(objective_checks_router)
+router.include_router(study_guides_router)
 router.include_router(tagging_router)
 router.include_router(framework_packs_router)
 router.include_router(frameworks_router)

@@ -30,6 +30,7 @@ from app.models.framework import (
 from app.models.identity import UserIdentity
 from app.models.institution import Department, Faculty, Institution
 from app.models.mapping import AIRun, AIRunCall, MappingLink, ReviewAssignment
+from app.models.proposal import ObjectiveProposal, ProposalStatus
 from app.models.role import Role, RoleAssignment
 from app.models.tagging import Tagging, TagList, TagValue
 from app.models.user import User
@@ -60,9 +61,11 @@ __all__ = [
     "Module",
     "Objective",
     "ObjectiveLink",
+    "ObjectiveProposal",
     "ObjectiveSimilarity",
     "Phase",
     "Programme",
+    "ProposalStatus",
     "QualificationType",
     "ReviewAssignment",
     "Role",

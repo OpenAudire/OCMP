@@ -172,8 +172,9 @@ To use a dedicated key, or to change it:
 |---|---|---|
 | Suggest links to a framework | Mapping page, [AI mapping](mapping.md#suggesting-links-with-ai) | One call per objective that has candidates; suggestions are never accepted automatically |
 | Rewrite an objective, suggest its domain and level | The objective dialog, [AI help with the wording](users-and-roles.md#ai-help-with-the-wording) | One call per button press; a suggestion changes nothing until it is used and saved |
+| Read a study guide into proposed objectives | A module's page, [Study guides](users-and-roles.md#study-guides) | One call per part of the guide (about 12 000 characters each, at most 8 parts); every proposal needs a person to accept it. The uploader must confirm that the guide holds no real patient information |
 
-The other planned use (reading a study guide) arrives in a later slice. Meaning-based matching in the mapping shortlist uses the optional
+Meaning-based matching in the mapping shortlist uses the optional
 [embeddings service](../operations/embeddings.md), which is separate and runs on your own server.
 
 ## Who can do what

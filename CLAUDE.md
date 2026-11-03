@@ -242,12 +242,15 @@ export function ModuleCount({ count }: { count: number }) {
   and counts only, never prompts, answers, names or keys. Tests use `httpx.MockTransport`, never a real provider.
   `ENVIRONMENT` (`production` by default) decides whether `SECRETS_ENCRYPTION_KEYS` is required: in production
   a new secret is refused without it; development may fall back to the key derived from `SECRET_KEY`
-- **Study-guide upload (Slice 1.18) must** call `app/services/study_guide_confirmation.confirm_no_patient_information`
-  first, refuse the upload without a ticked confirmation (the required `StudyGuideConfirmation` field of the
-  request, text version checked), show `frontend/src/ui/StudyGuideConfirmation.tsx`, send its payload, never
-  store or log the file name in that audit event, and pass the returned receipt to `ai_gateway.complete(...,
-  study_guide_confirmation=receipt)`: the privacy guard refuses `study_guide_text` without one. Add an API
-  test that an upload without the confirmation is 422 and writes no file
+- **Study-guide upload (ADR 047, built in 1.18)**: `api/v1/study_guides.py` (router), `services/study_guide_extraction.py`
+  (start, run, accept, reject), `services/study_guide_text.py` (reads PDF/DOCX in memory with size limits), `ai/extraction_answer.py`,
+  `jobs/study_guides.py`. Any new way to send study-guide text must keep these: call
+  `study_guide_confirmation.confirm_no_patient_information` **before** reading the file (the form fields `confirmed` and
+  `text_version` are required; unticked or stale is 422 and nothing is read or recorded), never read, store or log the file
+  name, never store the file, and pass a receipt to `ai_gateway.complete(..., study_guide_confirmation=receipt)` (a job gets it
+  from `recorded_receipt`, which looks the confirmation up in the audit log). The guard refuses `study_guide_text` without one.
+  Results are `ObjectiveProposal` rows, never objectives: accepting goes through `curriculum_objectives.create_objective`. Every
+  proposed objective needs a `source_quote` that is words of the piece sent, and no number that is not in the quote
 - Privacy guard rules (`app/ai/privacy.py`): every new pattern needs tests for what it finds and what it must
   leave alone (ordinary curriculum dates, years, week numbers); findings are categories and counts, never text
 - Embeddings (ADR 044): vectors come only from `app/ai/embeddings.py` (`LocalEmbeddingProvider`, a server on this

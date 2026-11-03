@@ -99,3 +99,32 @@ CLASSIFY = PromptTemplate(
         "together.{{answer_notes}}"
     ),
 )
+
+
+# Finding the learning outcomes a study guide states for a module (Slice 1.18, ADR 047). One call
+# per piece of the guide. Every objective must carry a quote that is words of that piece; the
+# answer is checked by ``app.ai.extraction_answer.parse_extraction`` and a person accepts each one.
+EXTRACT = PromptTemplate(
+    name="extract",
+    version="1",
+    system=(
+        "You help a curriculum office read study guides. Find the learning outcomes or "
+        "objectives that the text states for the module: lists introduced by phrases such as "
+        "'by the end of this module you will be able to', 'learning outcomes' or 'objectives'. "
+        "Report only what the text says. Do not invent objectives, do not infer them from the "
+        "topics covered, and do not add numbers, conditions or standards. Keep each "
+        "objective's own wording, tidied into one sentence that starts with a verb where the "
+        "text allows, and keep the language of the text. Answer with JSON only."
+    ),
+    user=(
+        "Module: {{module_title}}\n\n"
+        "Study guide text:\n{{study_guide_text}}\n\n"
+        'Return JSON of this shape: {"objectives": [{"text": "<one objective>", "domain": '
+        '"knowledge" | "skill" | "attitude" | null, "source_quote": "<words copied exactly '
+        'from the study guide text above>"}]}\n'
+        'Rules: at most 30 objectives; {"objectives": []} when the text states none. '
+        "The source_quote must be at most 400 characters of the text, copied exactly. The text "
+        "of an objective may contain a number only if its source_quote does."
+        "{{answer_notes}}"
+    ),
+)

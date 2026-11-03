@@ -15,6 +15,13 @@
         Strict-Transport-Security "max-age=31536000; includeSubDomains" defer
     }
 
+    # A study guide is at most 10 MB (the API says so too). Stopping a larger upload here means
+    # it is not received and written to disk first.
+    @study_guide_upload path_regexp ^/api/v1/modules/[^/]+/study-guides$
+    request_body @study_guide_upload {
+        max_size 11MB
+    }
+
     # API routes
     handle /api/* {
         reverse_proxy api:8000

@@ -751,6 +751,52 @@
         "failed": "The AI did not give a usable answer. Try again.",
         "generic": "Something went wrong. Try again."
       }
+    },
+    "studyGuide": {
+      "title": "Study guide",
+      "intro": "Upload a module's study guide (PDF or Word) and the AI proposes the learning outcomes it finds in the text. Nothing becomes an outcome until you accept it.",
+      "open": "Read a study guide",
+      "dialogTitle": "Read a study guide",
+      "uploadIntro": "The text of the file is sent to the AI service in parts. The file itself is not kept, and its name is not recorded.",
+      "file": "Study guide file",
+      "fileHint": "A PDF or a Word (.docx) file of up to 10 MB with text in it. Scans are not supported.",
+      "confirmFirst": "Confirm this before the study guide is read.",
+      "start": "Read it",
+      "progress": "Parts of the study guide read",
+      "parts": "{{done}} of {{total}} parts read.",
+      "proposed_one": "{{count}} objective proposed.",
+      "proposed_other": "{{count}} objectives proposed.",
+      "failedParts_one": "{{count}} part could not be read.",
+      "failedParts_other": "{{count}} parts could not be read.",
+      "truncated": "The study guide is long, so only the first part was read.",
+      "cancel": "Cancel reading",
+      "state": {
+        "queued": "Waiting to start",
+        "running": "Reading",
+        "succeeded": "Finished",
+        "failed": "Stopped with a problem",
+        "budget_exceeded": "Stopped: monthly limit reached",
+        "cancelled": "Cancelled"
+      },
+      "pending_one": "{{count}} proposed objective to decide",
+      "pending_other": "{{count}} proposed objectives to decide",
+      "pendingList": "Proposed objectives",
+      "wording": "Wording",
+      "source": "From the study guide: “{{quote}}”",
+      "accept": "Accept as a draft objective",
+      "reject": "Reject",
+      "accepted": "The objective was added as a draft.",
+      "rejected": "The proposal was rejected.",
+      "errors": {
+        "tooLarge": "The file is larger than 10 MB.",
+        "refused": "The study guide could not be read: {{reason}}",
+        "unusable": "This file could not be used. {{reason}}",
+        "forbidden": "You do not have permission to use AI here.",
+        "tooMany": "Too many uploads in a minute. Wait a little and try again.",
+        "generic": "Something went wrong. Try again.",
+        "decided": "Someone has already decided this proposal. Reload the page.",
+        "progress": "The progress of the reading could not be loaded."
+      }
     }
   },
   "import": {

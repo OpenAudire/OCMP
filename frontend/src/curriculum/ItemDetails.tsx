@@ -20,11 +20,14 @@ import type {
   StructurePhase,
   VersionStructure,
 } from '../api/types';
+import { Permission } from '../session/permissions';
+import { useSession } from '../session/useSession';
 import { objectiveNoun, type EditResult, type ObjectiveOwner } from './editing';
 import { Assessments } from './Assessments';
 import { HoursStatusLine } from './CreditAdvice';
 import { ItemTags } from './ItemTags';
 import { NearDuplicateFlag } from './NearDuplicateFlag';
+import { StudyGuidePanel } from './StudyGuidePanel';
 import { ObjectiveDeleteDialog, ObjectiveDialog } from './ObjectiveDialog';
 import type { TreeItem } from './treeModel';
 import classes from './ItemDetails.module.css';
@@ -414,6 +417,8 @@ function ModuleDetails({
 }) {
   const { t } = useTranslation();
   const number = useNumber();
+  const session = useSession();
+  const canReadGuides = session.data?.permissions.has(Permission.AiRun) === true;
   const detail = useQuery({
     queryKey: queryKeys.module(module.id),
     queryFn: () => fetchModule(module.id),
@@ -523,6 +528,9 @@ function ModuleDetails({
           canTag={data?.can_edit_tags ?? false}
           onSaved={onSaved}
         />
+      )}
+      {!module.context_only && canReadGuides && (data?.can_edit_objectives ?? false) && (
+        <StudyGuidePanel moduleId={module.id} versionId={versionId} onSaved={onSaved} />
       )}
       {!module.context_only && (
         <Assessments

@@ -13,9 +13,11 @@ import hashlib
 import uuid
 
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.confirmation import ConfirmationReceipt, issue_receipt
+from app.models import AuditLog
 from app.services.audit import audit_operation, record_event
 from app.services.authorization import InvalidRequestError
 
@@ -65,3 +67,30 @@ async def confirm_no_patient_information(
             },
         )
     return issue_receipt(text_version=CONFIRMATION_VERSION, document_sha256=digest)
+
+
+async def recorded_receipt(
+    db: AsyncSession, actor_id: uuid.UUID | None, document_sha256: str
+) -> ConfirmationReceipt | None:
+    """The receipt for a confirmation that was recorded earlier, or ``None`` if there is none.
+
+    A background job cannot be handed the receipt of the request that queued it, so it asks for
+    it again here: it exists only if this person's confirmation of this document (by its hash,
+    for the current text) is in the audit log. Nothing is recorded by asking.
+    """
+    if actor_id is None:
+        return None
+    found = await db.scalar(
+        select(AuditLog.id)
+        .where(
+            AuditLog.entity_type == "study_guide",
+            AuditLog.action == "study_guide_confirmation",
+            AuditLog.actor_id == actor_id,
+            AuditLog.context["document_sha256"].astext == document_sha256,
+            AuditLog.context["text_version"].astext == CONFIRMATION_VERSION,
+        )
+        .limit(1)
+    )
+    if found is None:
+        return None
+    return issue_receipt(text_version=CONFIRMATION_VERSION, document_sha256=document_sha256)

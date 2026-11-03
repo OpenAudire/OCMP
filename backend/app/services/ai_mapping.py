@@ -521,7 +521,9 @@ async def expire_stale_runs(db: AsyncSession, *, now: datetime | None = None) ->
     """
     now = now or datetime.now(UTC)
     runs = await db.scalars(
-        select(AIRun).where(AIRun.type == AIRunType.MAPPING, AIRun.status.in_(ACTIVE))
+        select(AIRun).where(
+            AIRun.type.in_((AIRunType.MAPPING, AIRunType.EXTRACTION)), AIRun.status.in_(ACTIVE)
+        )
     )
     ended = 0
     for run in runs:

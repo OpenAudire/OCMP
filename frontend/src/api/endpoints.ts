@@ -29,6 +29,9 @@ import type {
   AiMappingInput,
   AiObjectiveInput,
   AiObjectiveResult,
+  ObjectiveProposal,
+  ProposalAcceptInput,
+  StudyGuideRun,
   AiMappingRun,
   NearDuplicates,
   Objective,
@@ -609,6 +612,48 @@ export async function cancelAiMappingRun(runId: string): Promise<AiMappingRun> {
   return (await api.post<AiMappingRun>(`/ai-mapping-runs/${runId}/cancel`)).data;
 }
 
+/** Upload a study guide (PDF or Word) for a module with the patient-information confirmation. */
+export async function uploadStudyGuide(
+  moduleId: string,
+  file: File,
+  confirmation: { confirmed: boolean; text_version: string }
+): Promise<StudyGuideRun> {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('confirmed', String(confirmation.confirmed));
+  form.append('text_version', confirmation.text_version);
+  return (await api.post<StudyGuideRun>(`/modules/${moduleId}/study-guides`, form)).data;
+}
+
+export async function fetchStudyGuideRuns(moduleId: string): Promise<StudyGuideRun[]> {
+  return (await api.get<StudyGuideRun[]>(`/modules/${moduleId}/study-guide-runs`)).data;
+}
+
+export async function cancelStudyGuideRun(runId: string): Promise<StudyGuideRun> {
+  return (await api.post<StudyGuideRun>(`/study-guide-runs/${runId}/cancel`)).data;
+}
+
+/** The module's proposed objectives that no one has decided yet. */
+export async function fetchProposals(moduleId: string): Promise<ObjectiveProposal[]> {
+  return (await api.get<ObjectiveProposal[]>(`/modules/${moduleId}/objective-proposals`)).data;
+}
+
+export async function acceptProposal(
+  proposalId: string,
+  input: ProposalAcceptInput
+): Promise<{ proposal: ObjectiveProposal; objective_id: string }> {
+  return (
+    await api.post<{ proposal: ObjectiveProposal; objective_id: string }>(
+      `/objective-proposals/${proposalId}/accept`,
+      input
+    )
+  ).data;
+}
+
+export async function rejectProposal(proposalId: string): Promise<ObjectiveProposal> {
+  return (await api.post<ObjectiveProposal>(`/objective-proposals/${proposalId}/reject`)).data;
+}
+
 export async function addMappingLink(
   objectiveId: string,
   itemId: string,
@@ -723,6 +768,8 @@ export const queryKeys = {
   copyForward: (id: string) => ['curriculum-versions', id, 'copy-forward'] as const,
   reviewQueue: (params: ReviewQueueParams) => ['review-queue', params] as const,
   reviewCount: ['review-queue', 'count'] as const,
+  studyGuideRuns: (moduleId: string) => ['modules', moduleId, 'study-guide-runs'] as const,
+  proposals: (moduleId: string) => ['modules', moduleId, 'objective-proposals'] as const,
   aiMappingRuns: (versionId: string) =>
     ['curriculum-versions', versionId, 'ai-mapping-runs'] as const,
   mappingWorkspace: (versionId: string) => ['curriculum-versions', versionId, 'mapping'] as const,

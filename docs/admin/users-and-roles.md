@@ -113,6 +113,32 @@ outcomes, a session objective to its module's outcomes or to programme outcomes.
 - Audit labels: `curriculum.objective_create`, `curriculum.objective_update`,
   `curriculum.objective_delete`.
 
+## Study guides
+
+If a module's learning outcomes are already written in its study guide, the AI can read them out
+for you. On a **draft** version, people who hold **objectives edit** and **AI run** for the module
+(programme directors and module coordinators) see a **Study guide** section under the module's
+outcomes, when AI is switched on in [AI settings](ai.md):
+
+1. Press **Read a study guide**, choose a **PDF or Word (.docx)** file of up to 10 MB that has
+   text in it (a scan will be refused: there is no text recognition), and **tick the box saying the
+   study guide contains no real patient information**. Nothing is read until you tick it. Your
+   confirmation is recorded in the [audit log](basics.md#audit-log) with the time and a fingerprint
+   of the file, **never the file's name**, and the file itself is not kept.
+2. The text is sent to the AI service in parts and the section shows progress. You can leave the page
+   and cancel while it reads. A long guide is read from the start only, and the section says so. If a
+   part looks like it holds personal information (an email address, a phone number, "Dr Smith"), that
+   part is **not sent** and is counted as unread.
+3. Each outcome the AI finds appears as a **proposed objective**, with the words of the study guide
+   it is based on. You can change the wording or the domain, then **Accept as a draft objective** or
+   **Reject**. **Nothing is added to the module until you accept it**, and accepted outcomes are
+   drafts. Wording the module already has, or you have rejected before, is not proposed again.
+
+Only module outcomes are proposed; session objectives, upward links, taxonomy levels and mappings are
+yours to set (the [AI help](#ai-help-with-the-wording) can suggest a level). Read every proposal: the
+quote shows that the words are in the guide, not that it is the right outcome. Design:
+[ADR 047](../adr/047-study-guide-extraction.md).
+
 ## Objective quality checker
 
 While someone writes an objective, a **Quality check** box under the wording flags likely

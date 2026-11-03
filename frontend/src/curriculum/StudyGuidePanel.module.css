@@ -1,0 +1,43 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--cic-line);
+  border-radius: 14px;
+  background: var(--cic-surface);
+}
+
+.title {
+  font-size: 17px;
+  margin: 0;
+}
+
+.icon {
+  vertical-align: -3px;
+  margin-right: 8px;
+  color: var(--cic-brand-ink);
+}
+
+.run {
+  padding: 12px 14px;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+  background: var(--cic-soft);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proposal {
+  padding: 14px;
+  border: 1px solid var(--cic-line);
+  border-radius: 12px;
+  background: var(--cic-surface);
+}
