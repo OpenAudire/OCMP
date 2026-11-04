@@ -801,7 +801,7 @@
     }
   },
   "import": {
-    "intro": "Bring frameworks into Curriculum in Context. Spreadsheet import and exports arrive in later releases.",
+    "intro": "Bring curriculum and frameworks into Curriculum in Context. Exports and imports of tags, frameworks and mappings arrive in later releases.",
     "pack": {
       "title": "Framework pack",
       "description": "A framework pack is a JSON file with one framework version: its items, and optionally cross-references, crosswalks from earlier versions, tag lists and taxonomy scales. Nothing is saved until you have checked the preview and confirmed.",
@@ -894,6 +894,55 @@
       "itemCount_other": "{{count}} placeholder items",
       "loadError": "The templates could not be loaded.",
       "empty": "No templates are installed."
+    },
+    "curriculum": {
+      "title": "Curriculum from Excel",
+      "intro": "Import phases, modules, sessions and objectives into a draft curriculum version from the Excel template. The file is checked first and nothing is changed until you confirm. Rows are matched by their External ID, so importing again updates instead of duplicating; an import never deletes anything.",
+      "noDraft": "There is no draft curriculum version to import into. Create or copy forward a draft version first.",
+      "version": "Curriculum version",
+      "template": "Download the Excel template",
+      "file": "Filled-in template",
+      "fileHelp": "An Excel (.xlsx) file made from the template. Do not put the names of people or patients in any cell.",
+      "check": "Check the file",
+      "sheet": "Sheet",
+      "row": "Row",
+      "column": "Column",
+      "externalId": "External ID",
+      "what": "Item",
+      "change": "What happens",
+      "invalidTitle": "The file cannot be imported yet",
+      "invalidBody_one": "{{count}} problem was found. Fix it in the file and check it again.",
+      "invalidBody_other": "{{count}} problems were found. Fix them in the file and check it again.",
+      "moreProblems_one": "And {{count}} more problem is not shown.",
+      "moreProblems_other": "And {{count}} more problems are not shown.",
+      "warnings": "Notes",
+      "previewTitle": "What importing this file would do",
+      "previewBody": "Nothing has been changed yet. Read the list, then confirm.",
+      "nothingToDo": "Every row is already in the curriculum exactly as in the file, so there is nothing to import.",
+      "rowsRegion": "Rows of the file and what would happen to each",
+      "moreRows_one": "And {{count}} more row is not listed.",
+      "moreRows_other": "And {{count}} more rows are not listed.",
+      "apply": "Import into the curriculum",
+      "done": "Imported: {{created}} new and {{updated}} updated rows.",
+      "action": {
+        "create": "New",
+        "update": "Updated",
+        "unchanged": "Unchanged"
+      },
+      "sheets": {
+        "phases": "Phases",
+        "modules": "Modules",
+        "sessions": "Sessions",
+        "objectives": "Objectives"
+      },
+      "errors": {
+        "tooLarge": "The file is larger than this installation accepts.",
+        "tooMany": "Too many checks in a short time. Wait a minute and try again.",
+        "forbidden": "You may not import into this curriculum version.",
+        "conflict": "The curriculum changed since the check, or the version is no longer a draft. Check the file again.",
+        "expired": "The check has expired. Upload the file and check it again.",
+        "generic": "The import did not work. Try again."
+      }
     }
   },
   "mapping": {

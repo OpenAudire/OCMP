@@ -125,6 +125,7 @@ def _copy_event(
         week=event.week,
         description=event.description,
         external_lms_ref=None,
+        external_id=event.external_id if copies.forward else None,
         based_on_id=copies.based_on(event.id),
         created_by_id=copies.actor_id,
     )
@@ -151,6 +152,7 @@ async def copy_module_rows(
         nqf_level=module.nqf_level,
         description=module.description,
         external_lms_ref=None,
+        external_id=module.external_id if copies.forward else None,
         position=position,
         based_on_id=copies.based_on(module.id),
         created_by_id=copies.actor_id,
@@ -275,6 +277,7 @@ async def _copy_objectives(db: AsyncSession, copies: Copies) -> None:
             detected_verb=objective.detected_verb,
             quality_flags=list(objective.quality_flags),
             status=objective.status,
+            external_id=objective.external_id if copies.forward else None,
             position=objective.position,
             based_on_id=copies.based_on(objective.id),
             created_by_id=copies.actor_id,

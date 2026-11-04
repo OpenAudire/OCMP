@@ -8,6 +8,8 @@ import type {
   EvalDetail,
   EvalRun,
   GapReport,
+  CurriculumImportApplied,
+  CurriculumImportPreview,
   IntendedRepeats,
   ReportDocument,
   GoldPreview,
@@ -977,3 +979,44 @@ export async function removeIntendedRepeat(
     )
   ).data;
 }
+
+// --- Curriculum import from Excel (Slice 1.25) ---
+
+/** Address of the Excel template for a draft version (a plain link; the session authorises it). */
+export function curriculumImportTemplateUrl(versionId: string): string {
+  return `/api/v1/curriculum-versions/${versionId}/import/template`;
+}
+
+/** Check a filled-in workbook and say what importing it would do. Nothing is written. */
+export async function previewCurriculumImport(
+  versionId: string,
+  file: File
+): Promise<CurriculumImportPreview> {
+  return (
+    await api.post<CurriculumImportPreview>(
+      `/curriculum-versions/${versionId}/import/preview`,
+      file,
+      {
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        },
+        timeout: 300_000,
+      }
+    )
+  ).data;
+}
+
+/** Carry out a previewed import. */
+export async function applyCurriculumImport(
+  versionId: string,
+  token: string
+): Promise<CurriculumImportApplied> {
+  return (
+    await api.post<CurriculumImportApplied>(
+      `/curriculum-versions/${versionId}/import/apply`,
+      { token },
+      { timeout: 600_000 }
+    )
+  ).data;
+}
+

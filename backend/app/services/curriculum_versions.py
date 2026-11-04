@@ -400,6 +400,7 @@ async def copy_forward(
             version_id=new.id,
             name=phase.name,
             kind=phase.kind,
+            external_id=phase.external_id,
             position=phase.position,
             based_on_id=phase.id,
             created_by_id=actor_id,

@@ -211,6 +211,7 @@ class Phase(Audited, SoftDeleteMixin, CoreModel):
     __table_args__ = (
         # Target of the composite FK that keeps a module's phase in the same version.
         UniqueConstraint("id", "version_id"),
+        live_unique("uq_phases_version_external_id_live", "version_id", "external_id"),
     )
 
     version_id: Mapped[uuid.UUID] = mapped_column(
@@ -223,6 +224,9 @@ class Phase(Audited, SoftDeleteMixin, CoreModel):
         default=PhaseKind.YEAR,
         server_default=PhaseKind.YEAR.value,
     )
+    # The item's id in the institution's own system or spreadsheet (Slice 1.25, ADR 054): an Excel
+    # import updates the item with this id instead of making a second one. Copied forward.
+    external_id: Mapped[str | None] = mapped_column(String(128), default=None, index=True)
     # Copy forward: the item of the earlier version this one continues (version diff).
     based_on_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("phases.id", ondelete="SET NULL"), default=None, index=True
@@ -241,6 +245,7 @@ class Module(Audited, SoftDeleteMixin, CoreModel):
     __tablename__ = "modules"
     __table_args__ = (
         live_unique("uq_modules_version_code_live", "version_id", "code"),
+        live_unique("uq_modules_version_external_id_live", "version_id", "external_id"),
         # The phase, if any, must belong to the same version.
         ForeignKeyConstraint(
             ["phase_id", "version_id"],
@@ -261,6 +266,9 @@ class Module(Audited, SoftDeleteMixin, CoreModel):
     nqf_level: Mapped[int | None] = mapped_column(Integer, default=None)
     description: Mapped[str] = mapped_column(Text, default="", server_default="")
     external_lms_ref: Mapped[str | None] = mapped_column(String(255), default=None)
+    # The item's id in the institution's own system or spreadsheet (Slice 1.25, ADR 054): an Excel
+    # import updates the item with this id instead of making a second one. Copied forward.
+    external_id: Mapped[str | None] = mapped_column(String(128), default=None, index=True)
     position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     # Copy forward: the item of the earlier version this one continues (version diff).
     based_on_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -303,6 +311,9 @@ class LearningEvent(Audited, SoftDeleteMixin, CoreModel):
     week: Mapped[int | None] = mapped_column(Integer, default=None)
     description: Mapped[str] = mapped_column(Text, default="", server_default="")
     external_lms_ref: Mapped[str | None] = mapped_column(String(255), default=None)
+    # The item's id in the institution's own system or spreadsheet (Slice 1.25, ADR 054): an Excel
+    # import updates the item with this id instead of making a second one. Copied forward.
+    external_id: Mapped[str | None] = mapped_column(String(128), default=None, index=True)
     # Copy forward: the item of the earlier version this one continues (version diff).
     based_on_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("learning_events.id", ondelete="SET NULL"), default=None, index=True
@@ -329,6 +340,7 @@ class Objective(Audited, SoftDeleteMixin, CoreModel):
             name="owner_matches_level",
         ),
         CheckConstraint("length(btrim(text)) > 0", name="text_not_blank"),
+        live_unique("uq_objectives_version_external_id_live", "version_id", "external_id"),
     )
 
     version_id: Mapped[uuid.UUID] = mapped_column(
@@ -361,6 +373,9 @@ class Objective(Audited, SoftDeleteMixin, CoreModel):
         default=ObjectiveStatus.DRAFT,
         server_default=ObjectiveStatus.DRAFT.value,
     )
+    # The item's id in the institution's own system or spreadsheet (Slice 1.25, ADR 054): an Excel
+    # import updates the item with this id instead of making a second one. Copied forward.
+    external_id: Mapped[str | None] = mapped_column(String(128), default=None, index=True)
     position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     # Copy forward: the item of the earlier version this one continues (version diff).
     based_on_id: Mapped[uuid.UUID | None] = mapped_column(

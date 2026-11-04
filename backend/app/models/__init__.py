@@ -29,6 +29,7 @@ from app.models.framework import (
     TaxonomyScale,
 )
 from app.models.identity import UserIdentity
+from app.models.import_job import ImportJob
 from app.models.institution import Department, Faculty, Institution
 from app.models.intended_repeat import IntendedRepeat
 from app.models.mapping import AIRun, AIRunCall, MappingLink, ReviewAssignment
@@ -61,6 +62,7 @@ __all__ = [
     "GoldCase",
     "GoldLink",
     "GoldSet",
+    "ImportJob",
     "Institution",
     "IntendedRepeat",
     "LearningEvent",

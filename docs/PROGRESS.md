@@ -832,6 +832,9 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.24a | Coverage wording: the prompt, the reviewer's screen and now the gold-set template all use the same bands (1 = 1 to 20% ... 5 = 81 to 100%) for "how much of this one item this one objective covers". **The prompt was not changed** | The template had said "1 = a mention, 5 = fully", a looser scale than the AI was given | The template text is documentation for raters | Decided in 1.24a, to review |
 | 1.24a | Role balance: each objective gets an equal share of its session's time, divided among its groups; an objective with no link of its own is **estimated** from the module outcomes it links up to, else (no upward link at all) from its module's outcomes; estimated hours and objectives have their own column | Owner's rules | One pure module (`role_balance.py`) | Decided by the owner in 1.24a |
 | 1.24a | The redundancy report is labelled **Taught in many sessions**; its two numbers are settings (`repeat_min_sessions` 4, `repeat_spread` 1.5 in `settings["coverage"]`); an item can be marked **intentional (spiral curriculum)** per programme by someone with `curriculum.edit` at the programme, audited, with a reason; marked items are shown in their own table | Owner's rules; the permission for "a coordinator" is my choice (programme director and curriculum office hold it) | A new permission is easy to add | Decided in 1.24a, to review |
+| 1.25 | **Rows are matched by an External ID of the institution's own** (new nullable `external_id` on phases, modules, sessions and objectives; unique per version; copy forward keeps it); a known id updates, a new id creates, **nothing is ever deleted or moved**; a module made on the screens is adopted by its code | The brief: "upsert by external ID". Modules have only `external_lms_ref`, which means something else (Phase 2) | A different matching key (for example module code only) is a small change; phases, sessions and objectives made on the screens cannot be matched | Decided in 1.25, to review |
+| 1.25 | **The preview is the dry run**: it writes nothing, shows every row as new / updated / unchanged, and a valid preview gets a 30-minute token; applying checks the file again and runs in **one transaction**; **any problem means nothing is imported** | Safer than partial imports; the same pattern as framework packs | Skipping bad rows would be a deliberate option for later | Decided in 1.25, to review |
+| 1.25 | Importing needs `curriculum.edit` **and** `objectives.edit` at the programme, draft versions only; new objectives are draft; a column that is kept and blank clears the value, an absent column is left alone, *Broader objectives* only adds links | Mirrors the screens' rules; my choice on blanks (spreadsheets cannot say "leave this") | Easy | Decided in 1.25, to review |
 
 ---
 
@@ -1779,3 +1782,28 @@ The owner's review of 1.21a to 1.24, applied. ADR 048, 052 and 053 are amended.
 **Not in this slice**: a screen for the two new settings (API only, like the other coverage settings), a phase filter on the screen, tuning the prompt's coverage scale.
 
 **Commit**: `feat: apply the review of 1.21a-1.24 (plain kappa, per-objective time split, estimated role balance, intentional repeats)`
+
+
+### Slice 1.25: Excel Templates and the Curriculum Import
+**Status**: Complete
+
+Excel templates made from field definitions and an import of phases, modules, sessions and objectives into a draft version, with preview, dry run, row errors and upsert by External ID. ADR 054 is the design; tags, frameworks and mappings are Slice 1.26, the full export Slice 1.27.
+
+**Deliverables**:
+- [x] **Field definitions** `services/import_fields.py` (four sheets) make **both** the template (`build_workbook`: headings with help, dropdowns from a Lists sheet, whole-number and decimal checks, Instructions) and the checking of an upload; a test compares them. `build_workbook` takes rows, for the full export of 1.27
+- [x] **Engine** `services/curriculum_import.py`: `check` (read, clean, resolve references, detect clashes, plan create / update / unchanged per row; writes nothing) and `apply` (one transaction, through `curriculum_edit` and `curriculum_objectives`, audited as `import.curriculum`)
+- [x] **API** `api/v1/curriculum_import.py`: template, preview (raw body, rate limited, token in Redis), apply; model `ImportJob` (counts only) and migration 0028 (`external_id` on four tables, three partial unique indexes, `import_jobs`)
+- [x] **Screen** `importing/CurriculumImportCard.tsx` on Import and export: draft version, template link, file, problems by sheet / row / column, the plan row by row, confirm
+- [x] Docs: ADR 054, `admin/importing-curriculum.md`, CLAUDE.md, data inventory
+
+**On the dev database** (real data): a throwaway draft copied forward from the 2027 version, a workbook built from its three real modules plus a new module, session and two objectives: the first preview rightly refused the three codes that were already in use by modules with no External ID (this led to the **adoption of a module by its code**); after that the preview showed 1 module and 1 session and 2 objectives new and the 3 modules updated; applying made them; the same file again was all "unchanged". The throwaway version was deleted.
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy pass; `test_curriculum_import.py` (22: the template made from the definitions with dropdowns and checks, formula-looking text, problems with sheet / row / column, wrong files, draft only, broader-objective rules, creating everything with links and ids and the import job and audit, the same file unchanged and a changed row updated in place, no moving, blank and absent columns, no apply with problems, adoption by code, external ids carried by copy forward, template / preview / apply through the API with a single-use token, no token for a bad file, published and unseen versions, no rights, a token of another version)
+- Frontend: lint and typecheck pass; `CurriculumImport.test.tsx` (7) and the framework pack tests pass; the Playwright journey (download the template, upload it blank, read the explanation, axe in both themes) and the pack journeys (their file input is now the second one on the page) are **not run locally: CI runs them**
+
+**Not verified here**: a large file (thousands of rows), a workbook written by Excel itself or LibreOffice with the template's dropdowns in use (the tests read workbooks written by openpyxl), the Afrikaans / isiXhosa / isiZulu wording (English for now), an import by a non-administrator in a browser.
+
+**Not in this slice**: tags, frameworks and mappings (1.26), the import history screen (1.26), the full export (1.27), deleting or moving by import, assessments and users.
+
+**Commit**: `feat: add the Excel template and curriculum import with preview and upsert by external ID`

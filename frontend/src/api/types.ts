@@ -1583,3 +1583,34 @@ export interface IntendedRepeats {
   can_edit: boolean;
   marks: IntendedRepeatMark[];
 }
+
+export type ImportAction = 'create' | 'update' | 'unchanged';
+
+/** Row counts by sheet (phases, modules, sessions, objectives) and action. */
+export type ImportCounts = Record<string, Partial<Record<ImportAction, number>>>;
+
+/** What importing a workbook into a draft version would do (Slice 1.25). */
+export interface CurriculumImportPreview {
+  valid: boolean;
+  would_change: boolean;
+  problems: { sheet: string | null; row: number | null; column: string | null; message: string }[];
+  more_problems: number;
+  warnings: string[];
+  counts: ImportCounts;
+  rows: {
+    sheet: string;
+    row: number;
+    external_id: string;
+    action: ImportAction;
+    label: string;
+    changes: string[];
+  }[];
+  more_rows: number;
+  token: string | null;
+}
+
+export interface CurriculumImportApplied {
+  counts: ImportCounts;
+  job_id: string;
+}
+

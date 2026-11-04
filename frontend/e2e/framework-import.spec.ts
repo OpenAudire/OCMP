@@ -54,7 +54,7 @@ test.describe('framework pack import', () => {
     await expect(page.getByRole('link', { name: /download hpcsa core competencies/i })).toBeVisible();
     await expectNoAccessibilityViolations(page);
 
-    await page.locator('input[type="file"]').setInputFiles({
+    await page.locator('input[type="file"]').last().setInputFiles({
       name: 'pack.json',
       mimeType: 'application/json',
       buffer: Buffer.from(packJson(key)),
@@ -83,7 +83,7 @@ test.describe('framework pack import', () => {
 
     // The same version cannot be imported twice: the second check explains why.
     await page.getByRole('button', { name: 'Import another pack' }).click();
-    await page.locator('input[type="file"]').setInputFiles({
+    await page.locator('input[type="file"]').last().setInputFiles({
       name: 'pack.json',
       mimeType: 'application/json',
       buffer: Buffer.from(packJson(key)),
@@ -102,7 +102,7 @@ test.describe('framework pack import', () => {
       ],
     });
 
-    await page.locator('input[type="file"]').setInputFiles({
+    await page.locator('input[type="file"]').last().setInputFiles({
       name: 'broken.json',
       mimeType: 'application/json',
       buffer: Buffer.from(broken),
@@ -127,7 +127,7 @@ test.describe('framework pack import', () => {
     expect(response.ok()).toBe(true);
     const template = await response.body();
 
-    await page.locator('input[type="file"]').setInputFiles({
+    await page.locator('input[type="file"]').last().setInputFiles({
       name: 'nqf-level-descriptors.json',
       mimeType: 'application/json',
       buffer: template,
