@@ -822,6 +822,9 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.22 | **Every Excel sheet starts with the title, method and time; every PDF page has them in the footer**; the file also says when the person sees only part of the curriculum and which numbers were used | Brief: every report states its method and date | Easy | Decided in 1.22, to review |
 | 1.22 | **Text from people is untrusted in the file**: cells that look like formulas are written as text; PDF text is escaped; file names are fixed | An objective that starts with `=` would otherwise run in a spreadsheet | Easy | Decided in 1.22, to review |
 | 1.22 | New dependency **reportlab** (BSD; brings pillow). **The PDF draws Western European letters only (other scripts print as `?`), and exports are in English**, whatever the screen's language | The built-in font needs no file; embedding a font and translating the exports are separate work | Medium: embed a font (and its licence) and translate the labels | Decided in 1.22, to review |
+| 1.23 | **"Unusually many sessions" is stated, not guessed**: an item is listed from the larger of 4 sessions and (once five or more items are taught) the average plus 1.5 standard deviations; the report prints the threshold and how many items are taught | The brief says "unusually many" without a number | Easy: two constants. **Not measured on a real programme** | Decided in 1.23, to review |
+| 1.23 | Redundancy counts **distinct sessions** (and modules) whose objectives are **accepted** for the item; near-duplicates are the stored pairs across **different modules**, at the objective checker's threshold | Reuses what exists (ADR 033, 044); sessions are compared through their objectives only | Easy | Decided in 1.23, to review |
+| 1.23 | Traceability follows the **upward links** from each programme outcome (module outcomes, session objectives, and session objectives linked straight to it), ending in the accepted framework items of the last objective; a second table lists what **no programme outcome reaches** | The brief's chain; an honest list of the gaps | Easy | Decided in 1.23, to review |
 
 ---
 
@@ -1700,3 +1703,27 @@ Every report can be downloaded as an Excel workbook or a PDF, and each file stat
 **Not in this slice**: a font for other scripts, translated exports, an evidence-pack layout, charts, stored or emailed reports.
 
 **Commit**: `feat: export reports to Excel and PDF, each stating method and date`
+
+
+### Slice 1.23: Redundancy and Traceability Reports
+**Status**: Complete
+
+Two reports as report documents (ADR 051): the redundancy report (framework items taught in unusually many sessions; near-duplicate objectives in different modules) and the traceability report (programme outcome to module outcomes to session objectives to mapped framework items). ADR 052 is the design.
+
+**Deliverables**:
+- [x] **Builders** `services/report_docs_curriculum.py` (`build_redundancy`, `build_traceability`, `unusual_threshold`), registered in the new `services/report_registry.py` (`ReportContext` moved to `services/report_context.py`); they get the JSON, Excel and PDF of Slice 1.22 and its access rules
+- [x] **Screen** `reports/ReportPage.tsx` at `/reports/:key`: a generic page for reports built on the server (version, framework where the report needs one or allows one, how it was made, the tables with figures formatted, "None." for an empty table, the Excel and PDF downloads); the reports page now lists four reports. Slice 1.24 uses the same page
+- [x] Docs: ADR 052 (and index), `admin/curriculum-reports.md`, CLAUDE.md
+
+**On the dev database** (the real embeddings server and the demo data): the 2026 version's traceability report has 50 paths and **no** objective unlinked; the **2027 draft lists the four study-guide objectives as "not linked upward"**, which is true until someone links them. The redundancy report finds no item in unusually many sessions (only module outcomes are mapped in the demo, so no session has an accepted link) and no near-duplicates across modules.
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy pass; `test_reports_curriculum.py` (9: the threshold by hand, items flagged by distinct sessions and modules in order, three sessions and unaccepted links not flagged, near-duplicates across modules only and at the threshold, a framework needed, the traceability chains and the direct link, a programme outcome with nothing below it, all frameworks named, a module coordinator's partial report); the whole suite is run once at the end of 1.24
+- Frontend: lint and typecheck pass; `ReportPage.test.tsx` (9) and `Coverage.test.tsx` (16) pass
+- `mkdocs build --strict` passes; the e2e journey opens both reports, downloads the traceability workbook and runs axe in both themes (**not run locally: CI runs it**). CI on the 1.21a commit failed once on my own journey (the old definition wording) and was fixed in `5099cdb`
+
+**Not verified here**: the thresholds on a real programme, a programme with thousands of paths (cut at 5 000 rows), the tables in Afrikaans, isiXhosa or isiZulu (English for now).
+
+**Not in this slice**: judging whether repetition is wrong, a diagram of the chain (the committee dashboard, 1.28), comparing with another version.
+
+**Commit**: `feat: add the redundancy and traceability reports`

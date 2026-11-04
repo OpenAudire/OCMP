@@ -8,6 +8,7 @@ import type {
   EvalDetail,
   EvalRun,
   GapReport,
+  ReportDocument,
   GoldPreview,
   GoldSet,
   SearchFilterOptions,
@@ -750,6 +751,8 @@ export const queryKeys = {
   search: (versionId: string, query: string, filters: object, view: string) =>
     ['search', versionId, view, query, filters] as const,
   searchFilters: (versionId: string) => ['search', versionId, 'filters'] as const,
+  report: (versionId: string, key: string, params: object) =>
+    ['reports', 'document', versionId, key, params] as const,
   coverage: (versionId: string, frameworkId: string, method: string) =>
     ['reports', 'coverage', versionId, frameworkId, method] as const,
   gaps: (versionId: string, frameworkId: string, method: string) =>
@@ -933,4 +936,15 @@ export function reportExportUrl(
 ): string {
   const query = new URLSearchParams(params).toString();
   return `/api/v1/curriculum-versions/${versionId}/reports/${key}/export?${query}`;
+}
+
+/** A report built on the server, as tables. */
+export async function fetchReport(
+  versionId: string,
+  key: string,
+  params: Record<string, string>
+): Promise<ReportDocument> {
+  return (
+    await api.get<ReportDocument>(`/curriculum-versions/${versionId}/reports/${key}`, { params })
+  ).data;
 }

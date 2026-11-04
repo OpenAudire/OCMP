@@ -24,8 +24,9 @@ from app.services.coverage_engine import Method
 from app.services.curriculum_read import visible_version
 from app.services.policies import coverage_policy_for_version
 from app.services.report_access import may_report
-from app.services.report_docs import REPORTS, ReportContext
+from app.services.report_context import ReportContext
 from app.services.report_export import ReportDoc
+from app.services.report_registry import REPORTS
 
 router = APIRouter(tags=["reports"])
 logger = get_logger(__name__)

@@ -311,7 +311,7 @@ export function ModuleCount({ count }: { count: number }) {
   prints its method, the institution's numbers (`settings["coverage"]`, `policies.CoveragePolicy`) and when it was made. The arithmetic follows Theurich et al. 2025 as the owner specified it (Slice 1.21a): groups are built up from their items and links made to a group are shown apart and never counted; keep it comparable. Changing
   the arithmetic of a method changes every report: change the definition text with it
 - Report documents and exports (ADR 051): a report is a `ReportDoc` built by a function in `services/report_docs.py`
-  (registered in `REPORTS`) and shown by `api/v1/reports.py` as JSON, Excel (`report_export.to_xlsx`) and PDF
+  (`report_docs_curriculum.py` and later modules; registered in `report_registry.REPORTS`) and shown by `api/v1/reports.py` as JSON, Excel (`report_export.to_xlsx`) and PDF
   (`to_pdf`); **a new report is only a builder**, never its own exporter. Every sheet and page must state the method and the
   date (`ReportDoc.method`, `made_on`). Text from people is untrusted: cells that look like formulas are written as text
   (keep that when touching `to_xlsx`), PDF text is escaped and limited to the built-in font. Access is `report_access.may_report`

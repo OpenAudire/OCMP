@@ -1,0 +1,13 @@
+/** The reports built on the server as tables (shown by `ReportPage`) and whether they need a
+ * framework. Coverage and gaps have their own pages. */
+export const REPORT_PAGES: Record<string, { framework: 'required' | 'optional' | 'none' }> = {
+  redundancy: { framework: 'required' },
+  traceability: { framework: 'optional' },
+};
+
+/** Every report on the reports page, in order. */
+export const ALL_REPORTS = ['coverage', 'gaps', 'redundancy', 'traceability'];
+
+export function reportPath(key: string): string {
+  return `/reports/${key}`;
+}

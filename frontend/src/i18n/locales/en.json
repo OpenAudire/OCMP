@@ -1900,6 +1900,30 @@
       "excel": "Download as Excel",
       "pdf": "Download as PDF",
       "help": "The file states the method and when the report was made on every sheet and page. Exports are in English for now, and the PDF draws Western European letters only."
+    },
+    "pages": {
+      "coverage": {
+        "title": "Coverage report",
+        "description": "How well a framework is covered by the accepted mapping of a curriculum version, by one of four methods, with a heatmap of framework groups by phase."
+      },
+      "gaps": {
+        "title": "Gap report",
+        "description": "Framework items that are not covered, groups under the share set for subordinate match, and objectives with no mapping."
+      },
+      "redundancy": {
+        "title": "Redundancy report",
+        "description": "Framework items taught in unusually many sessions, and near-duplicate objectives in different modules."
+      },
+      "traceability": {
+        "title": "Traceability report",
+        "description": "From each programme outcome through the module outcomes and session objectives that contribute to it, to the framework items they are mapped to."
+      }
+    },
+    "generic": {
+      "none": "None.",
+      "choose": "Choose a version (and a framework where the report needs one).",
+      "allFrameworks": "All frameworks",
+      "madeNote": "Made on {{made}}. The words of the tables are in English for now."
     }
   }
 }

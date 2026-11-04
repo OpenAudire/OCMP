@@ -6,24 +6,9 @@ import { reportExportUrl } from '../api/endpoints';
 import type { CoverageMethod } from '../api/types';
 import classes from './Coverage.module.css';
 
-/** Download the report on the screen as an Excel workbook or a PDF. The file states the method
- * and the time it was made on every sheet and page. The link is a plain address, so the browser
- * downloads it with the session; the server checks who may. */
-export function ExportLinks({
-  versionId,
-  frameworkId,
-  reportKey,
-  method,
-}: {
-  versionId: string | null;
-  frameworkId: string | null;
-  reportKey: string;
-  method: CoverageMethod;
-}) {
+/** The two download links of a report; `href` gives the address for a format. */
+export function ExportLinksFor({ href }: { href: (format: 'xlsx' | 'pdf') => string }) {
   const { t } = useTranslation();
-  if (!versionId || !frameworkId) return null;
-  const href = (format: 'xlsx' | 'pdf') =>
-    reportExportUrl(versionId, reportKey, { format, framework_id: frameworkId, method });
   return (
     <div className={classes.exports}>
       <Group gap="lg">
@@ -38,5 +23,29 @@ export function ExportLinks({
         {t('reports.export.help')}
       </Text>
     </div>
+  );
+}
+
+/** Download the coverage or gap report on the screen as an Excel workbook or a PDF. The file
+ * states the method and the time it was made on every sheet and page. The link is a plain
+ * address, so the browser downloads it with the session; the server checks who may. */
+export function ExportLinks({
+  versionId,
+  frameworkId,
+  reportKey,
+  method,
+}: {
+  versionId: string | null;
+  frameworkId: string | null;
+  reportKey: string;
+  method: CoverageMethod;
+}) {
+  if (!versionId || !frameworkId) return null;
+  return (
+    <ExportLinksFor
+      href={(format) =>
+        reportExportUrl(versionId, reportKey, { format, framework_id: frameworkId, method })
+      }
+    />
   );
 }

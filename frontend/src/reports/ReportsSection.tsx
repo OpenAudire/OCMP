@@ -1,63 +1,72 @@
-import { Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
-import { IconChartDots3, IconGrid4x4 } from '@tabler/icons-react';
+import { Button, Paper, Stack, Text, Title } from '@mantine/core';
+import { IconChartDots3, IconGrid4x4, IconListTree, IconCopy } from '@tabler/icons-react';
+import type { TablerIcon } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { Link, Route, Routes } from 'react-router';
 
 import { Page } from '../ui/Page';
 import { CoveragePage } from './CoveragePage';
 import { GapsPage } from './GapsPage';
+import { ReportPage } from './ReportPage';
+import { ALL_REPORTS, reportPath } from './reportPages';
 import classes from './Coverage.module.css';
 
 export const COVERAGE_PATH = '/reports/coverage';
 export const GAPS_PATH = '/reports/gaps';
+
+const ICONS: Record<string, TablerIcon> = {
+  coverage: IconGrid4x4,
+  gaps: IconChartDots3,
+  redundancy: IconCopy,
+  traceability: IconListTree,
+};
 
 function ReportsHome() {
   const { t } = useTranslation();
   return (
     <Page title={t('nav.reports')} description={t('reports.intro')}>
       <Stack gap="md">
-        <Paper withBorder className={classes.card} component="section" aria-labelledby="r-coverage">
-          <Title order={2} id="r-coverage" className={classes.title}>
-            {t('reports.coverage.title')}
-          </Title>
-          <Text c="dimmed">{t('reports.coverage.description')}</Text>
-          <Group mt="sm">
-            <Button
-              component={Link}
-              to={COVERAGE_PATH}
-              leftSection={<IconGrid4x4 size={18} aria-hidden />}
+        {ALL_REPORTS.map((key) => {
+          const Icon = ICONS[key] ?? IconGrid4x4;
+          return (
+            <Paper
+              key={key}
+              withBorder
+              className={classes.card}
+              component="section"
+              aria-labelledby={`r-${key}`}
             >
-              {t('reports.open')}
-            </Button>
-          </Group>
-        </Paper>
-        <Paper withBorder className={classes.card} component="section" aria-labelledby="r-gaps">
-          <Title order={2} id="r-gaps" className={classes.title}>
-            {t('reports.gaps.title')}
-          </Title>
-          <Text c="dimmed">{t('reports.gaps.description')}</Text>
-          <Group mt="sm">
-            <Button
-              component={Link}
-              to={GAPS_PATH}
-              leftSection={<IconChartDots3 size={18} aria-hidden />}
-            >
-              {t('reports.open')}
-            </Button>
-          </Group>
-        </Paper>
+              <Title order={2} id={`r-${key}`} className={classes.title}>
+                {t(`reports.pages.${key}.title`)}
+              </Title>
+              <Text c="dimmed">{t(`reports.pages.${key}.description`)}</Text>
+              <div>
+                <Button
+                  component={Link}
+                  to={reportPath(key)}
+                  mt="sm"
+                  leftSection={<Icon size={18} aria-hidden />}
+                >
+                  {t('reports.open')}
+                </Button>
+              </div>
+            </Paper>
+          );
+        })}
       </Stack>
     </Page>
   );
 }
 
-/** The reports (Slice 1.21 builds the coverage and gap reports; the others follow). */
+/** The reports: the coverage and gap reports have their own pages; the others are tables built
+ * on the server (`ReportPage`). */
 export function ReportsSection() {
   return (
     <Routes>
       <Route index element={<ReportsHome />} />
       <Route path="coverage" element={<CoveragePage />} />
       <Route path="gaps" element={<GapsPage />} />
+      <Route path=":key" element={<ReportPage />} />
       <Route path="*" element={<ReportsHome />} />
     </Routes>
   );

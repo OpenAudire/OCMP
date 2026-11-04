@@ -7,20 +7,11 @@ Labels are English: exports are not translated yet (see ADR 051).
 
 from __future__ import annotations
 
-import uuid
-from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models import Framework
-from app.models.framework import FrameworkStatus
 from app.services import coverage_report
-from app.services.authorization import InvalidRequestError
 from app.services.coverage_engine import Method, Status
 from app.services.coverage_report import GapReport, Report
 from app.services.curriculum_read import VisibleVersion
-from app.services.policies import CoveragePolicy
+from app.services.report_context import ReportContext
 from app.services.report_export import Column, Kind, ReportDoc, Section
 
 METHOD_NAMES: dict[Method, str] = {
@@ -41,31 +32,7 @@ LEVEL_NAMES = {
 }
 
 
-@dataclass
-class ReportContext:
-    """What a report builder needs: the database, what the user may see, the institution's
-    numbers and the choices made on the screen."""
-
-    db: AsyncSession
-    visible: VisibleVersion
-    policy: CoveragePolicy
-    framework_id: uuid.UUID | None = None
-    method: Method = Method.SINGLE
-    phase_id: uuid.UUID | None = None
-
-    async def framework(self) -> Framework:
-        if self.framework_id is None:
-            raise InvalidRequestError("Choose a framework for this report.")
-        framework = await self.db.get(Framework, self.framework_id)
-        if framework is None or framework.is_deleted or framework.status == FrameworkStatus.DRAFT:
-            raise InvalidRequestError("That framework cannot be used for a report.")
-        return framework
-
-
-Builder = Callable[[ReportContext], Awaitable[ReportDoc]]
-
-
-def common_about(
+def coverage_about(
     visible: VisibleVersion, made_on_text: str, partial: bool
 ) -> list[tuple[str, str]]:
     version = visible.version
@@ -111,7 +78,7 @@ def coverage_doc(report: Report, visible: VisibleVersion) -> ReportDoc:
         ("Report", "Coverage report"),
         ("Method", f"{name}. {report.definition}"),
         ("Framework", f"{report.framework.name} ({report.framework.version_label})"),
-        *common_about(visible, made, report.partial),
+        *coverage_about(visible, made, report.partial),
         ("Numbers used", _numbers(report)),
     ]
     summary = Section(
@@ -233,7 +200,7 @@ def gaps_doc(found: GapReport, visible: VisibleVersion) -> ReportDoc:
         ("Report", "Gap report"),
         ("Method", f"{name}. {report.definition}"),
         ("Framework", f"{report.framework.name} ({report.framework.version_label})"),
-        *common_about(visible, made, report.partial),
+        *coverage_about(visible, made, report.partial),
         ("Numbers used", _numbers(found)),
     ]
     gap_columns = [
@@ -345,9 +312,3 @@ async def build_gaps(ctx: ReportContext) -> ReportDoc:
     framework = await ctx.framework()
     found = await coverage_report.build_gaps(ctx.db, ctx.visible, framework, ctx.method, ctx.policy)
     return gaps_doc(found, ctx.visible)
-
-
-REPORTS: dict[str, Builder] = {
-    "coverage": build_coverage,
-    "gaps": build_gaps,
-}

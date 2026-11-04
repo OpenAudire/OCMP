@@ -59,4 +59,27 @@ test.describe('Reports', () => {
     ).toBeVisible();
     await expectNoAccessibilityViolations(page);
   });
+
+  test('the redundancy and traceability reports state their method and can be downloaded', async ({
+    page,
+  }) => {
+    await openApp(page, '/reports/traceability');
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Traceability report' })).toBeVisible();
+    await expect(page.getByLabel('The method and what it covers')).toContainText('Method');
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'From programme outcome to framework item' })
+    ).toBeVisible();
+    const excel = page.getByRole('link', { name: /Download as Excel/ });
+    const workbook = await page.request.get((await excel.getAttribute('href')) as string);
+    expect(workbook.status()).toBe(200);
+    await expectNoAccessibilityViolations(page);
+
+    await openApp(page, '/reports/redundancy');
+    await expect(page.getByRole('heading', { level: 1, name: 'Redundancy report' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Items taught in many sessions' })
+    ).toBeVisible();
+    await expectNoAccessibilityViolations(page);
+  });
 });

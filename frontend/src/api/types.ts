@@ -1540,3 +1540,27 @@ export interface GapReport extends CoverageMeta {
   unlinked_total: number;
   only_waiting_total: number;
 }
+
+// --- Report documents (Slices 1.22 to 1.24, ADR 051) ---
+
+export interface ReportColumn {
+  label: string;
+  kind: 'text' | 'integer' | 'number' | 'percent';
+}
+
+export interface ReportSectionData {
+  title: string;
+  note: string;
+  columns: ReportColumn[];
+  rows: (string | number | null)[][];
+}
+
+/** A report as tables, with how it was made. */
+export interface ReportDocument {
+  key: string;
+  title: string;
+  method: string;
+  made_on: string;
+  about: { label: string; value: string }[];
+  sections: ReportSectionData[];
+}
