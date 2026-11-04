@@ -18,7 +18,7 @@ test.describe('Reports', () => {
     const panel = page.getByLabel('The method and what it covers');
     await expect(panel).toBeVisible();
     await expect(panel).toContainText('Single match');
-    await expect(panel).toContainText('Covered when at least one accepted link');
+    await expect(panel).toContainText('covered when at least one accepted link');
     await expect(panel).toContainText('Made on');
     await expect(
       page.getByRole('heading', { level: 2, name: 'Summary of the framework' })
