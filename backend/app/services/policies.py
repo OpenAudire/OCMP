@@ -57,11 +57,9 @@ class CoveragePolicy(BaseModel):
 
     # Multiple match: an item is covered when it has at least this many accepted links.
     multiple_match_n: Annotated[int, Field(ge=1, le=20)] = 3
-    # Subordinate match: a group is covered when this share of the items below it are.
+    # Subordinate match: the gap report lists the groups under this share of items covered.
     subordinate_min_percent: Annotated[int, Field(ge=1, le=100)] = 50
-    # Weighted coverage: a link whose depth is below the target counts for this share of its score.
-    below_depth_percent: Annotated[int, Field(ge=0, le=100)] = 50
-    # Weighted coverage: an item is covered from this share of full coverage, partial below it.
+    # Weighted coverage: the gap report lists the items under this share of full coverage.
     weighted_low_percent: Annotated[int, Field(ge=1, le=100)] = 40
 
 

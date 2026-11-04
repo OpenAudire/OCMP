@@ -21,24 +21,33 @@ institution's numbers in it), the framework, the version and the time it was mad
 
 ## The four methods
 
-Choose one at the top of the page. The definition under the choice is the exact rule.
+Choose one at the top of the page. The definition under the choice is the exact rule. They follow the
+study the curriculum office asked us to be comparable with (Theurich et al. 2025); the definitions were
+taken from its specification and **the paper itself was not read when they were written**, so tell us of
+any difference.
 
-| Method | An item with nothing below it is covered | A group (an item with items below it) |
-|---|---|---|
-| **Single match** | with one accepted link | by its own links only |
-| **Multiple match** | with at least N accepted links (3 by default); fewer is *partial* | by its own links |
-| **Subordinate match** | as single match | when at least 50% of the items below it are covered by a single match |
-| **Weighted content coverage** | each link counts for its coverage score out of 5, and half of that when its depth is *below* the target; an item's links add up to at most 100%; covered from 40% | the better of its own links and the average of the items below it |
+An **item** below is a framework item with nothing below it; a **group** has items below it.
 
-The numbers in bold (3, 50%, half, 40%) are settings of the institution: `multiple_match_n`,
-`subordinate_min_percent`, `below_depth_percent` and `weighted_low_percent` in the `coverage` section of
-the institution settings (there is no screen for them yet; the defaults are starting values that have
-not been measured on a real programme).
+| Method | An item is covered | A group | Headline |
+|---|---|---|---|
+| **Single match** | with one accepted link | the share of its items covered | the share of items covered |
+| **Multiple match** | with at least N accepted links (3 by default); with fewer it is *not* covered (no partial credit) | the share of its items covered | the share of items covered |
+| **Subordinate match** | as single match | the percentage of its items covered by a single match | the average of those percentages over the groups |
+| **Weighted content coverage** | each link scores its coverage out of 5 and loses one point when its depth is *below* the target; an item's links add up to at most 100% | the average of its items | the average over the items: the *degree of coverage* |
+
+**Links made directly to a group** are shown on its row ("made to the group itself, not counted") and in
+the summary, but they never count towards a figure: a group's figure is built up from its items, so
+nothing is counted twice.
+
+The number N (3) is a setting of the institution: `multiple_match_n` in the `coverage` section of the
+institution settings (there is no screen for it yet). Two more settings only decide what the **gap report
+lists**: `subordinate_min_percent` (50: groups under it are listed, for subordinate match) and
+`weighted_low_percent` (40: items under it are listed, for weighted coverage).
 
 ## The coverage report
 
-1. **Summary of the framework**: for each of the four methods, how many of the framework's items (those
-   with nothing below them) are covered, partial or not covered. The method you chose is marked.
+1. **Summary of the framework**: for each of the four methods its **headline** and the counts behind it (of
+   items; of groups for subordinate match). The method you chose is marked.
 2. **Heatmap**: each row is a group of the framework (a top-level item), each column a phase, plus
    *All phases*, *Programme outcomes* and *Modules without a phase*. A cell is the average, over the
    items of the group, of how covered each is by the links of **that phase's** modules and sessions.
@@ -50,9 +59,9 @@ not been measured on a real programme).
 
 ## The gap report
 
-1. **Items with no or low coverage**: the items with nothing below them that the method does not call
-   covered, those with no accepted link first, each with the groups above it, why it is a gap ("no
-   accepted link", "1 of 3 accepted links") and how many suggestions are waiting.
+1. **Items not covered** (for weighted coverage: under the low line), those with no accepted link first,
+   each with the groups above it, why ("no accepted link", "1 of 3 accepted links") and how many
+   suggestions are waiting. For subordinate match the report also lists the **groups under the share** set.
 2. **Objectives with no mapping**: objectives with no accepted link to this framework, and apart from
    them those that only have suggestions waiting (the quickest to close: review them). Each links to the
    objective in the curriculum builder.

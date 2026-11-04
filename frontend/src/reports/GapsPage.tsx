@@ -22,7 +22,10 @@ function where(t: ReturnType<typeof useTranslation>['t'], o: UnmappedObjective):
 
 /** Why an item is a gap, in words, from its figures and the method. */
 function reasonOf(t: ReturnType<typeof useTranslation>['t'], gap: GapRow, report: GapReport): string {
-  if (gap.status === 'none') return t('reports.gaps.reasons.none');
+  if (gap.leaves_covered !== null && gap.leaves > 1) {
+    return t('reports.gaps.reasons.group', { covered: gap.leaves_covered, total: gap.leaves });
+  }
+  if (gap.links === 0) return t('reports.gaps.reasons.none');
   if (report.method === 'multiple') {
     return t('reports.gaps.reasons.multiple', {
       links: gap.links,
@@ -86,6 +89,34 @@ function ObjectiveList({
           {t('reports.gaps.showing', { shown: rows.length, total })}
         </Text>
       )}
+    </section>
+  );
+}
+
+function GapGroups({ report }: { report: GapReport }) {
+  const { t } = useTranslation();
+  if (report.group_gaps.length === 0) return null;
+  return (
+    <section aria-labelledby="gap-groups">
+      <Title order={2} id="gap-groups" className={classes.title}>
+        {t('reports.gaps.groupsTitle', {
+          count: report.group_gaps.length,
+          share: report.params.subordinate_min_percent,
+        })}
+      </Title>
+      <Text size="sm" c="dimmed">
+        {t('reports.gaps.groupsHelp', { share: report.params.subordinate_min_percent })}
+      </Text>
+      <ul className={classes.objectives}>
+        {report.group_gaps.map((gap) => (
+          <li key={gap.id}>
+            <span className={classes.itemCode}>{gap.code}</span> {gap.title}{' '}
+            <Text span size="sm" c="dimmed">
+              {reasonOf(t, gap, report)} · {percent(gap.value)}
+            </Text>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -185,6 +216,7 @@ export function GapsPage() {
         {report.data && (
           <>
             <MetaPanel report={report.data} method={choice.method} />
+            <GapGroups report={report.data} />
             <GapItems report={report.data} />
             <ObjectiveList
               versionId={choice.versionId as string}

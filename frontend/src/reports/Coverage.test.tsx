@@ -56,7 +56,16 @@ const meta = {
   objectives_in_scope: 60,
 };
 
-const counts = (covered: number, partial: number, uncovered: number) => ({
+const counts = (
+  headline: number | null,
+  unit: 'items' | 'groups',
+  covered: number,
+  partial: number,
+  uncovered: number
+) => ({
+  headline,
+  unit,
+  total: covered + partial + uncovered,
   covered,
   partial,
   uncovered,
@@ -66,13 +75,15 @@ const report: CoverageReport = {
   ...meta,
   summary: {
     leaves: 4,
+    groups: 1,
     methods: {
-      single: counts(3, 0, 1),
-      multiple: counts(1, 2, 1),
-      subordinate: counts(3, 0, 1),
-      weighted: counts(2, 1, 1),
+      single: counts(0.75, 'items', 3, 0, 1),
+      multiple: counts(0.25, 'items', 1, 0, 3),
+      subordinate: counts(0.6667, 'groups', 1, 0, 0),
+      weighted: counts(0.55, 'items', 2, 1, 1),
     },
     links: 9,
+    group_links: 2,
     bulk_links: 3,
     recheck_links: 1,
     waiting_links: 2,
@@ -87,13 +98,13 @@ const report: CoverageReport = {
       is_leaf: false,
       leaves: 3,
       leaves_covered: 2,
-      links: 0,
+      links: 2,
       bulk_links: 0,
       recheck_links: 0,
       waiting: 0,
-      objectives: 0,
-      value: 0,
-      status: 'none',
+      objectives: 2,
+      value: 0.6667,
+      status: 'partial',
       only_bulk: false,
     },
     {
@@ -156,17 +167,36 @@ const gaps: GapReport = {
       links: 0,
       waiting: 1,
       reason: 'no accepted link',
+      leaves: 1,
+      leaves_covered: null,
     },
     {
       id: 'i2',
       code: 'G1.2',
       title: 'Skill 2',
       path: [{ id: 'g1', code: 'G1', title: 'Clinical' }],
-      status: 'partial',
-      value: 0.33,
+      status: 'none',
+      value: 0,
       links: 1,
       waiting: 0,
       reason: '1 of 3 accepted links',
+      leaves: 1,
+      leaves_covered: null,
+    },
+  ],
+  group_gaps: [
+    {
+      id: 'g1',
+      code: 'G1',
+      title: 'Clinical',
+      path: [],
+      status: 'partial',
+      value: 0.3333,
+      links: 0,
+      waiting: 0,
+      reason: '1 of 3 items below it covered',
+      leaves: 3,
+      leaves_covered: 1,
     },
   ],
   unlinked: [
@@ -255,7 +285,17 @@ describe('Coverage report', () => {
     const rows = within(table).getAllByRole('row');
     expect(rows).toHaveLength(5);
     expect(within(rows[1]).getByText(/Single match.*\(shown below\)/)).toBeInTheDocument();
-    expect(within(rows[2]).getByText('1 (25%)')).toBeInTheDocument();
+    // The headline of each method, in its own words.
+    expect(within(rows[1]).getByText('75%')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('of items covered')).toBeInTheDocument();
+    expect(within(rows[2]).getByText('25%')).toBeInTheDocument();
+    expect(within(rows[3]).getByText('67%')).toBeInTheDocument();
+    expect(within(rows[3]).getByText('average over groups')).toBeInTheDocument();
+    expect(within(rows[3]).getByText('1 groups')).toBeInTheDocument();
+    expect(within(rows[4]).getByText('55%')).toBeInTheDocument();
+    expect(within(rows[4]).getByText('degree of coverage')).toBeInTheDocument();
+    expect(within(table).getByText(/7 accepted links counted/)).toBeInTheDocument();
+    expect(within(table).getByText(/2 links made to groups themselves, not counted/)).toBeInTheDocument();
     expect(within(table).getByText(/3 links accepted in bulk/)).toBeInTheDocument();
     expect(within(table).getByText(/1 link needs a re-check/)).toBeInTheDocument();
     expect(within(table).getByText(/2 suggestions waiting for review/)).toBeInTheDocument();
@@ -280,8 +320,10 @@ describe('Coverage report', () => {
     const second = screen.getByText('Skill 2').closest('tr') as HTMLElement;
     expect(within(second).getByText('1 link needs a re-check')).toBeInTheDocument();
     expect(within(second).getByText('2 suggestions waiting')).toBeInTheDocument();
-    const group = screen.getByText(/Not covered · 2 of 3 items covered/).closest('tr') as HTMLElement;
+    const group = screen.getByText(/Partial · 2 of 3 items covered/).closest('tr') as HTMLElement;
     expect(within(group).getByText('G1')).toBeInTheDocument();
+    // Links made to the group itself are on its row but are not what its figure is made of.
+    expect(within(group).getByText('2 made to the group itself, not counted')).toBeInTheDocument();
   });
 
   it('asks again when the method changes', async () => {
@@ -328,11 +370,11 @@ describe('Gap report', () => {
     mocked.fetchGaps.mockResolvedValue(gaps);
   });
 
-  it('lists the items with no or low coverage, with the group above and why', async () => {
+  it('lists the items that are not covered, with the group above and why', async () => {
     mocked.fetchGaps.mockResolvedValue({ ...gaps, method: 'multiple' });
     renderAt('/reports/gaps?version=v1&framework=fw1&method=multiple');
 
-    const section = (await screen.findByRole('heading', { level: 2, name: /Items with no or low coverage \(2\)/ }))
+    const section = (await screen.findByRole('heading', { level: 2, name: /Items not covered \(2\)/ }))
       .closest('section') as HTMLElement;
     const rows = within(section).getAllByRole('row');
     expect(within(rows[1]).getByText('G1 Clinical')).toBeInTheDocument();
@@ -340,6 +382,16 @@ describe('Gap report', () => {
     expect(within(rows[1]).getByText('1 suggestion waiting')).toBeInTheDocument();
     expect(within(rows[2]).getByText('1 of 3 accepted links')).toBeInTheDocument();
     expect(mocked.fetchGaps).toHaveBeenCalledWith('v1', 'fw1', 'multiple');
+  });
+
+  it('lists the groups under the share set for subordinate match', async () => {
+    mocked.fetchGaps.mockResolvedValue({ ...gaps, method: 'subordinate' });
+    renderAt('/reports/gaps?version=v1&framework=fw1&method=subordinate');
+
+    const section = (await screen.findByRole('heading', { level: 2, name: /Groups under 50% \(1\)/ }))
+      .closest('section') as HTMLElement;
+    expect(within(section).getByText('G1')).toBeInTheDocument();
+    expect(within(section).getByText(/1 of 3 items below it covered · 33%/)).toBeInTheDocument();
   });
 
   it('lists objectives with no accepted mapping apart from those with suggestions waiting', async () => {

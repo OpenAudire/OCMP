@@ -48,7 +48,6 @@ class VersionRef(BaseModel):
 class ParamsRead(BaseModel):
     multiple_match_n: int
     subordinate_min_percent: int
-    below_depth_percent: int
     weighted_low_percent: int
 
 
@@ -84,7 +83,13 @@ class ItemRow(BaseModel):
     only_bulk: bool
 
 
-class MethodCounts(BaseModel):
+class MethodFigureRead(BaseModel):
+    # The method's headline: a share of items (single, multiple), the average over groups
+    # (subordinate) or the degree of coverage (weighted); null when there is nothing to average.
+    headline: float | None
+    # What the counts count: "items" or "groups".
+    unit: str
+    total: int
     covered: int
     partial: int
     uncovered: int
@@ -92,8 +97,11 @@ class MethodCounts(BaseModel):
 
 class SummaryRead(BaseModel):
     leaves: int
-    methods: dict[Method, MethodCounts]
+    groups: int
+    methods: dict[Method, MethodFigureRead]
     links: int
+    # Accepted links made directly to a group: shown apart, not counted in any figure.
+    group_links: int
     bulk_links: int
     recheck_links: int
     waiting_links: int
@@ -137,6 +145,8 @@ class GapRow(BaseModel):
     links: int
     waiting: int
     reason: str
+    leaves: int
+    leaves_covered: int | None
 
 
 class UnmappedRead(BaseModel):
@@ -152,6 +162,8 @@ class UnmappedRead(BaseModel):
 
 class GapsRead(Meta):
     gaps: list[GapRow]
+    # Groups under the share set for subordinate match (empty for the other methods).
+    group_gaps: list[GapRow]
     unlinked: list[UnmappedRead]
     only_waiting: list[UnmappedRead]
     unlinked_total: int
@@ -177,7 +189,6 @@ def _meta(report: Report, visible: VisibleVersion, policy: CoveragePolicy) -> Me
         params=ParamsRead(
             multiple_match_n=policy.multiple_match_n,
             subordinate_min_percent=policy.subordinate_min_percent,
-            below_depth_percent=policy.below_depth_percent,
             weighted_low_percent=policy.weighted_low_percent,
         ),
         generated_at=report.generated_at,
@@ -240,6 +251,22 @@ async def _allowed(
     return visible, framework, await coverage_policy_for_version(db, version_id)
 
 
+def _gap_row(g: coverage_report.Gap) -> GapRow:
+    return GapRow(
+        id=g.result.item.id,
+        code=g.result.item.code,
+        title=g.result.item.title,
+        path=[PathItem(id=p.id, code=p.code, title=p.title) for p in g.path],
+        status=g.result.status,
+        value=round(g.result.value, 4),
+        links=g.result.links,
+        waiting=g.result.waiting,
+        reason=g.reason,
+        leaves=g.result.leaves,
+        leaves_covered=g.result.leaves_covered,
+    )
+
+
 @router.get("/curriculum-versions/{version_id}/coverage", response_model=CoverageRead)
 async def coverage(
     version_id: uuid.UUID,
@@ -258,15 +285,20 @@ async def coverage(
         **_meta(report, visible, policy).model_dump(),
         summary=SummaryRead(
             leaves=summary.leaves,
+            groups=summary.groups,
             methods={
-                m: MethodCounts(
-                    covered=summary.covered[m],
-                    partial=summary.partial[m],
-                    uncovered=summary.uncovered[m],
+                m: MethodFigureRead(
+                    headline=None if f.headline is None else round(f.headline, 4),
+                    unit=f.unit,
+                    total=f.total,
+                    covered=f.covered,
+                    partial=f.partial,
+                    uncovered=f.uncovered,
                 )
-                for m in Method
+                for m, f in summary.methods.items()
             },
             links=summary.links,
+            group_links=summary.group_links,
             bulk_links=summary.bulk_links,
             recheck_links=summary.recheck_links,
             waiting_links=summary.waiting_links,
@@ -303,20 +335,8 @@ async def gaps(
 
     return GapsRead(
         **_meta(found.report, visible, policy).model_dump(),
-        gaps=[
-            GapRow(
-                id=g.result.item.id,
-                code=g.result.item.code,
-                title=g.result.item.title,
-                path=[PathItem(id=p.id, code=p.code, title=p.title) for p in g.path],
-                status=g.result.status,
-                value=round(g.result.value, 4),
-                links=g.result.links,
-                waiting=g.result.waiting,
-                reason=g.reason,
-            )
-            for g in found.gaps
-        ],
+        gaps=[_gap_row(g) for g in found.gaps],
+        group_gaps=[_gap_row(g) for g in found.group_gaps],
         unlinked=unmapped(found.unlinked),
         only_waiting=unmapped(found.only_waiting),
         unlinked_total=found.unlinked_total,

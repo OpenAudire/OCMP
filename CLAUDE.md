@@ -308,7 +308,7 @@ export function ModuleCount({ count }: { count: number }) {
   Only **accepted** links with a coverage of at least 1 count, through `live_link()`, for objectives from
   `search.visible_objective_ids`; waiting links are counted apart; links accepted in bulk (`accept_method = bulk`) and links with
   `needs_recheck` are counted and **flagged on every item, never hidden** (a later report or export must keep that). Every report
-  prints its method, the institution's numbers (`settings["coverage"]`, `policies.CoveragePolicy`) and when it was made. Changing
+  prints its method, the institution's numbers (`settings["coverage"]`, `policies.CoveragePolicy`) and when it was made. The arithmetic follows Theurich et al. 2025 as the owner specified it (Slice 1.21a): groups are built up from their items and links made to a group are shown apart and never counted; keep it comparable. Changing
   the arithmetic of a method changes every report: change the definition text with it
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`

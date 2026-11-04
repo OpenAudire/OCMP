@@ -54,13 +54,21 @@ function errorText(t: ReturnType<typeof useTranslation>['t'], error: unknown): s
 
 function Figures({ scores }: { scores: EvalScores | null }) {
   const { t } = useTranslation();
-  if (!scores) return <Table.Td colSpan={5}>{t('admin.evaluation.results.notReady')}</Table.Td>;
+  if (!scores) return <Table.Td colSpan={6}>{t('admin.evaluation.results.notReady')}</Table.Td>;
   return (
     <>
       <Table.Td>{percent(scores.precision)}</Table.Td>
       <Table.Td>{percent(scores.recall)}</Table.Td>
       <Table.Td>{decimal(scores.f1)}</Table.Td>
       <Table.Td>{decimal(scores.kappa)}</Table.Td>
+      <Table.Td>
+        {decimal(scores.coverage_kappa)}
+        {scores.coverage_kappa !== null && (
+          <Text size="xs" c="dimmed">
+            {t('admin.evaluation.detail.scoreKappaN', { n: scores.coverage_pairs })}
+          </Text>
+        )}
+      </Table.Td>
       <Table.Td>{percent(scores.shortlist_recall)}</Table.Td>
     </>
   );
@@ -381,6 +389,9 @@ function RunDetail({ run, minCoverage }: { run: EvalRun; minCoverage: number }) 
               <Table.Th>{t('admin.evaluation.results.recall')}</Table.Th>
               <Table.Th>{t('admin.evaluation.results.f1')}</Table.Th>
               <Table.Th>{t('admin.evaluation.results.kappa')}</Table.Th>
+              <Table.Th title={t('admin.evaluation.results.scoreKappaTitle')}>
+                {t('admin.evaluation.results.scoreKappa')}
+              </Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -392,11 +403,19 @@ function RunDetail({ run, minCoverage }: { run: EvalRun; minCoverage: number }) 
                 <Table.Td>{percent(row.recall)}</Table.Td>
                 <Table.Td>{decimal(row.f1)}</Table.Td>
                 <Table.Td>{decimal(row.kappa)}</Table.Td>
+                <Table.Td>
+                  {decimal(row.coverage_kappa)}
+                  {row.coverage_kappa !== null && ` (${t('admin.evaluation.detail.scoreKappaN', { n: row.coverage_pairs })})`}
+                </Table.Td>
               </Table.Tr>
             ))}
           </Table.Tbody>
         </Table>
       </Table.ScrollContainer>
+
+      <Text size="sm" c="dimmed">
+        {t('admin.evaluation.detail.scoreKappaHelp')}
+      </Text>
 
       <Title order={4}>{t('admin.evaluation.detail.bulkTitle', { n: minCoverage })}</Title>
       <Text size="sm" c="dimmed">
@@ -501,6 +520,9 @@ function ResultsCard() {
                 <Table.Th>{t('admin.evaluation.results.recall')}</Table.Th>
                 <Table.Th>{t('admin.evaluation.results.f1')}</Table.Th>
                 <Table.Th>{t('admin.evaluation.results.kappa')}</Table.Th>
+                <Table.Th title={t('admin.evaluation.results.scoreKappaTitle')}>
+                  {t('admin.evaluation.results.scoreKappa')}
+                </Table.Th>
                 <Table.Th>{t('admin.evaluation.results.shown')}</Table.Th>
                 <Table.Th>{t('admin.evaluation.results.cost')}</Table.Th>
               </Table.Tr>

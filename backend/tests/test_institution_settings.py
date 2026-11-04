@@ -254,14 +254,13 @@ class TestAPI:
         defaults = {
             "multiple_match_n": 3,
             "subordinate_min_percent": 50,
-            "below_depth_percent": 50,
             "weighted_low_percent": 40,
         }
 
         assert (await api_client.get("/api/v1/institution")).json()["coverage"] == defaults
         changed = await api_client.patch(
             "/api/v1/institution/settings",
-            json={"coverage": {**defaults, "multiple_match_n": 5, "below_depth_percent": 25}},
+            json={"coverage": {**defaults, "multiple_match_n": 5, "weighted_low_percent": 25}},
         )
         too_many = await api_client.patch(
             "/api/v1/institution/settings", json={"coverage": {**defaults, "multiple_match_n": 21}}
@@ -270,7 +269,7 @@ class TestAPI:
 
         assert changed.status_code == 200
         assert changed.json()["coverage"]["multiple_match_n"] == 5
-        assert changed.json()["coverage"]["below_depth_percent"] == 25
+        assert changed.json()["coverage"]["weighted_low_percent"] == 25
         assert too_many.status_code == 422
         assert cleared.json()["coverage"] == defaults
 

@@ -48,6 +48,8 @@ function scores(overrides: Partial<EvalScores> = {}): EvalScores {
     kappa: 0.6123,
     shortlist_recall: 1,
     coverage_gap: 0.5,
+    coverage_kappa: 0.52,
+    coverage_pairs: 40,
     coverage_within_one: 0.9,
     depth_agreement: 0.8,
     objectives: 60,

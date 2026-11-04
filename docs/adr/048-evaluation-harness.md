@@ -87,6 +87,14 @@ bulk-accept floor, without calling the AI again. Definitions:
 * Objectives the AI could not answer (invalid answer twice, provider failure) are **left out of
   the figures and counted separately**; they are not counted as wrong.
 
+**Agreement on the coverage score (Slice 1.21a).** The existing figures stay, now labelled *link*
+agreement. Beside them the harness reports the **quadratic-weighted kappa between the AI's and the
+gold set's coverage score (0 to 5) on the links both made** (the true positives), and the number of
+links it is worked out on. It is labelled as the kind of figure the study the owner follows reports
+between its two raters (0.68; Theurich et al. 2025, as the owner cited it; we did not read the paper
+and do not know its weights, so quadratic is our choice). It is `None` under two links or when both
+sides give the same single score.
+
 **Kappa depends on the shortlist length**: a longer shortlist adds true negatives and raises
 kappa without the AI getting better. The figures always show the average number of items shown,
 and kappa is compared only between runs with the same shortlist size. This is a property of

@@ -241,15 +241,27 @@ async def _find_gold_set(db: AsyncSession, name_or_id: str) -> GoldSet | None:
 
 
 def _print_figures(cases: list[eval_metrics.CaseResult], min_coverage: int) -> None:
-    print("Minimum coverage:  precision recall    F1  kappa  suggestions  (right / wrong / missed)")  # noqa: T201
+    print(  # noqa: T201
+        "Agreement on which links exist (precision, recall, F1, kappa over links) and on the\n"
+        "coverage score (weighted kappa on the links both made):\n"
+        "Minimum coverage:  precision recall    F1  kappa  score-kappa  suggestions"
+        "  (right / wrong / missed)"
+    )
     for row in eval_metrics.sweep(cases):
         c = row["counts"]
         mark = "  <-" if row["min_coverage"] == min_coverage else ""
         print(  # noqa: T201
             f"  {row['min_coverage']} or more:       {_percent(row['precision'])}%"
             f" {_percent(row['recall'])}% {_number(row['f1'])} {_number(row['kappa'])}"
+            f"  {_number(row['coverage_kappa'])} (n={row['coverage_pairs']})"
             f"  {row['suggestions']:>6}       ({c['tp']} / {c['fp']} / {c['fn']}){mark}"
         )
+    print(  # noqa: T201
+        "\nscore-kappa: quadratic-weighted kappa between the AI's and the gold set's coverage\n"
+        "score on the links both made; the study cited by the owner reports 0.68 between its\n"
+        "two raters (Theurich et al. 2025), so this is that kind of figure. It is not worked\n"
+        "out over which links exist."
+    )
     print(f"\nBulk accept at minimum coverage {min_coverage}:")  # noqa: T201
     print("  floor   accepted  right  wrong  precision  left for review")  # noqa: T201
     for row in eval_metrics.bulk_sweep(cases, min_coverage=min_coverage):

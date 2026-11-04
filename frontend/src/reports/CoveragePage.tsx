@@ -84,37 +84,52 @@ function Summary({ report }: { report: CoverageReport }) {
         {t('reports.coverage.summaryTitle')}
       </Title>
       <Text size="sm" c="dimmed">
-        {t('reports.coverage.summaryHelp', { count: s.leaves })}
+        {t('reports.coverage.summaryHelp', { items: s.leaves, groups: s.groups })}
       </Text>
-      <Table.ScrollContainer minWidth={520}>
+      <Table.ScrollContainer minWidth={560}>
         <Table>
           <Table.Thead>
             <Table.Tr>
               <Table.Th>{t('reports.coverage.method')}</Table.Th>
+              <Table.Th>{t('reports.coverage.headline')}</Table.Th>
               <Table.Th>{t('reports.status.covered')}</Table.Th>
               <Table.Th>{t('reports.status.partial')}</Table.Th>
               <Table.Th>{t('reports.status.none')}</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {METHODS.map((m) => (
-              <Table.Tr key={m} data-current={m === report.method}>
-                <Table.Th scope="row">
-                  {t(`reports.methods.${m}`)}
-                  {m === report.method && ` ${t('reports.coverage.shown')}`}
-                </Table.Th>
-                <Table.Td>
-                  {s.methods[m].covered} ({percent(s.methods[m].covered / Math.max(1, s.leaves))})
-                </Table.Td>
-                <Table.Td>{s.methods[m].partial}</Table.Td>
-                <Table.Td>{s.methods[m].uncovered}</Table.Td>
-              </Table.Tr>
-            ))}
+            {METHODS.map((m) => {
+              const figure = s.methods[m];
+              return (
+                <Table.Tr key={m} data-current={m === report.method}>
+                  <Table.Th scope="row">
+                    {t(`reports.methods.${m}`)}
+                    {m === report.method && ` ${t('reports.coverage.shown')}`}
+                  </Table.Th>
+                  <Table.Td>
+                    <strong>{figure.headline === null ? '–' : percent(figure.headline)}</strong>{' '}
+                    <Text span size="sm" c="dimmed">
+                      {t(`reports.headline.${m}`)}
+                    </Text>
+                  </Table.Td>
+                  <Table.Td>
+                    {figure.covered} {t(`reports.unit.${figure.unit}`)}
+                  </Table.Td>
+                  <Table.Td>{figure.partial}</Table.Td>
+                  <Table.Td>{figure.uncovered}</Table.Td>
+                </Table.Tr>
+              );
+            })}
           </Table.Tbody>
         </Table>
       </Table.ScrollContainer>
       <Group gap="md" mt="sm">
-        <Text size="sm">{t('reports.coverage.linksCounted', { count: s.links })}</Text>
+        <Text size="sm">{t('reports.coverage.linksCounted', { count: s.links - s.group_links })}</Text>
+        {s.group_links > 0 && (
+          <Badge variant="outline" color="gray">
+            {t('reports.coverage.groupLinks', { count: s.group_links })}
+          </Badge>
+        )}
         {s.bulk_links > 0 && (
           <Badge variant="light" color="gray">
             {t('reports.coverage.bulkLinks', { count: s.bulk_links })}
@@ -218,10 +233,20 @@ function Items({ report }: { report: CoverageReport }) {
                 </Table.Td>
                 <Table.Td>{percent(item.value)}</Table.Td>
                 <Table.Td>
-                  {item.links}
-                  {item.objectives !== item.links && item.links > 0
-                    ? ` (${t('reports.coverage.objectivesCount', { count: item.objectives })})`
-                    : ''}
+                  {item.is_leaf ? (
+                    <>
+                      {item.links}
+                      {item.objectives !== item.links && item.links > 0
+                        ? ` (${t('reports.coverage.objectivesCount', { count: item.objectives })})`
+                        : ''}
+                    </>
+                  ) : item.links > 0 ? (
+                    <Text size="sm" c="dimmed">
+                      {t('reports.coverage.madeToGroup', { count: item.links })}
+                    </Text>
+                  ) : (
+                    '–'
+                  )}
                 </Table.Td>
                 <Table.Td>
                   <div className={classes.flags}>

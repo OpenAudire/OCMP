@@ -1278,6 +1278,9 @@ export interface EvalScores {
   kappa: number | null;
   shortlist_recall: number | null;
   coverage_gap: number | null;
+  /** Quadratic-weighted kappa on the coverage score, on the links both made. */
+  coverage_kappa: number | null;
+  coverage_pairs: number;
   coverage_within_one: number | null;
   depth_agreement: number | null;
   objectives: number;
@@ -1447,7 +1450,6 @@ export interface CoverageMeta {
   params: {
     multiple_match_n: number;
     subordinate_min_percent: number;
-    below_depth_percent: number;
     weighted_low_percent: number;
   };
   generated_at: string;
@@ -1478,8 +1480,23 @@ export interface CoverageItem {
 export interface CoverageReport extends CoverageMeta {
   summary: {
     leaves: number;
-    methods: Record<CoverageMethod, { covered: number; partial: number; uncovered: number }>;
+    groups: number;
+    /** Each method's headline (null when there is nothing to average) and the counts behind it;
+     * the counts are of items, except subordinate match: of groups. */
+    methods: Record<
+      CoverageMethod,
+      {
+        headline: number | null;
+        unit: 'items' | 'groups';
+        total: number;
+        covered: number;
+        partial: number;
+        uncovered: number;
+      }
+    >;
     links: number;
+    /** Accepted links made directly to a group: shown apart, not counted. */
+    group_links: number;
     bulk_links: number;
     recheck_links: number;
     waiting_links: number;
@@ -1499,6 +1516,8 @@ export interface GapRow {
   links: number;
   waiting: number;
   reason: string;
+  leaves: number;
+  leaves_covered: number | null;
 }
 
 export interface UnmappedObjective {
@@ -1514,6 +1533,8 @@ export interface UnmappedObjective {
 
 export interface GapReport extends CoverageMeta {
   gaps: GapRow[];
+  /** Groups under the share set for subordinate match (empty for the other methods). */
+  group_gaps: GapRow[];
   unlinked: UnmappedObjective[];
   only_waiting: UnmappedObjective[];
   unlinked_total: number;

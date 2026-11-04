@@ -86,12 +86,48 @@ class Scores:
     # On true positives: average gap between AI and gold coverage; share within one point; share
     # of gold depths (where the gold set gives one) that the AI matched.
     coverage_gap: float | None
+    # Agreement on the coverage score (0 to 5) between the AI and the gold set, on the links both
+    # made: quadratic-weighted kappa and how many links it is worked out on. The study the owner
+    # wants us comparable with reports 0.68 between its two raters; this is that kind of figure.
+    coverage_kappa: float | None
+    coverage_pairs: int
     coverage_within_one: float | None
     depth_agreement: float | None
     objectives: int
     failed: int
     suggestions: int
     average_shortlist: float | None
+
+
+SCORE_LEVELS = 6  # coverage scores 0 to 5
+
+
+def weighted_kappa(pairs: Sequence[tuple[int, int]], levels: int = SCORE_LEVELS) -> float | None:
+    """Cohen's kappa for two raters' scores on an ordered scale, with quadratic weights (a
+    disagreement counts for the square of its distance, so 1 against 5 is far worse than 4
+    against 5). ``pairs`` are (first rater, second rater). ``None`` below two pairs or when the
+    raters' scores give chance nothing to explain (everything identical on both sides)."""
+    n = len(pairs)
+    if n < 2:
+        return None
+    first = [0] * levels
+    second = [0] * levels
+    joint = [[0] * levels for _ in range(levels)]
+    for a, b in pairs:
+        a, b = max(0, min(levels - 1, a)), max(0, min(levels - 1, b))
+        first[a] += 1
+        second[b] += 1
+        joint[a][b] += 1
+    scale = (levels - 1) ** 2
+    observed = expected = 0.0
+    for i in range(levels):
+        for j in range(levels):
+            weight = (i - j) ** 2 / scale
+            observed += weight * joint[i][j] / n
+            expected += weight * (first[i] / n) * (second[j] / n)
+    if expected == 0:
+        return None
+    return 1 - observed / expected
 
 
 def ratio(numerator: float, denominator: float) -> float | None:
@@ -149,6 +185,7 @@ def score(
     whose confidence reaches it count as AI-positive: those are what bulk accept would accept."""
     tp = fp = fn = tn = 0
     gaps: list[int] = []
+    score_pairs: list[tuple[int, int]] = []
     depth_pairs: list[bool] = []
     shown = gold_total = 0
     suggestions = 0
@@ -176,6 +213,7 @@ def score(
         for code in both:
             g, m = gold_by_code[code], suggested_by_code[code]
             gaps.append(abs(g.coverage - m.coverage))
+            score_pairs.append((g.coverage, m.coverage))
             if g.depth is not None:
                 depth_pairs.append(g.depth == m.depth)
     counts = Counts(tp, fp, fn, tn)
@@ -194,6 +232,8 @@ def score(
         kappa=kappa_of(counts),
         shortlist_recall=ratio(shown, gold_total),
         coverage_gap=ratio(sum(gaps), len(gaps)),
+        coverage_kappa=weighted_kappa(score_pairs),
+        coverage_pairs=len(score_pairs),
         coverage_within_one=ratio(sum(1 for g in gaps if g <= 1), len(gaps)),
         depth_agreement=ratio(sum(depth_pairs), len(depth_pairs)),
         objectives=len(answered),

@@ -41,7 +41,7 @@ test.describe('Reports', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Gap report' })).toBeVisible();
     await expect(page.getByLabel('The method and what it covers')).toBeVisible();
     await expect(
-      page.getByRole('heading', { level: 2, name: /^Items with no or low coverage/ })
+      page.getByRole('heading', { level: 2, name: /^Items not covered/ })
     ).toBeVisible();
     await expect(
       page.getByRole('heading', { level: 2, name: /^Objectives with no mapping/ })

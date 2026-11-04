@@ -64,7 +64,6 @@ def params_of(policy: CoveragePolicy) -> Params:
     return Params(
         multiple_n=policy.multiple_match_n,
         subordinate_min_share=policy.subordinate_min_percent / 100,
-        below_depth_factor=policy.below_depth_percent / 100,
         weighted_low=policy.weighted_low_percent / 100,
     )
 
@@ -74,7 +73,6 @@ def definition(method: Method, policy: CoveragePolicy) -> str:
     return DEFINITIONS[method].format(
         n=policy.multiple_match_n,
         share=policy.subordinate_min_percent,
-        factor=policy.below_depth_percent,
         low=policy.weighted_low_percent,
     )
 
@@ -132,6 +130,8 @@ class Gap:
 class GapReport:
     report: Report
     gaps: list[Gap]
+    # Groups under the share set for subordinate match; empty for the other methods.
+    group_gaps: list[Gap]
     unlinked: list[UnmappedObjective]
     only_waiting: list[UnmappedObjective]
     unlinked_total: int
@@ -279,15 +279,14 @@ async def build_report(
 
 
 def _reason(result: ItemResult, method: Method, params: Params) -> str:
-    if result.status is Status.NONE:
-        if method is Method.SUBORDINATE and not result.is_leaf:
-            return "none of the items below it is covered"
+    """Why an item or group is listed, in words (the screens build their own, translated)."""
+    if not result.is_leaf:
+        return f"{result.leaves_covered} of {result.leaves} items below it covered"
+    if result.links == 0:
         return "no accepted link"
     if method is Method.MULTIPLE:
         return f"{result.links} of {params.multiple_n} accepted links"
-    if method is Method.SUBORDINATE:
-        return f"{result.leaves_covered} of {result.leaves} items below it covered"
-    return f"{round(result.value * 100)}% of the coverage wanted"
+    return f"{round(result.value * 100)}% of full coverage"
 
 
 async def build_gaps(
@@ -300,17 +299,22 @@ async def build_gaps(
     """Framework items with no or low coverage, and objectives with no accepted mapping."""
     report = await build_report(db, visible, framework, method, policy)
     gaps: list[Gap] = []
+    group_gaps: list[Gap] = []
     for result in report.rows:
-        if result.status is Status.COVERED or not result.is_leaf:
+        if result.status is Status.COVERED:
+            continue
+        if not result.is_leaf and method is not Method.SUBORDINATE:
             continue
         path: list[Item] = []
         parent = result.item.parent_id
         while parent is not None and parent in report.tree.by_id:
             path.append(report.tree.by_id[parent])
             parent = report.tree.by_id[parent].parent_id
-        gaps.append(Gap(result, list(reversed(path)), _reason(result, method, report.params)))
-    # Items with nothing at all first, then the partial ones; each in tree order.
+        gap = Gap(result, list(reversed(path)), _reason(result, method, report.params))
+        (gaps if result.is_leaf else group_gaps).append(gap)
+    # Those with nothing at all first, then the partial ones; each in tree order.
     gaps.sort(key=lambda g: g.result.status is not Status.NONE)
+    group_gaps.sort(key=lambda g: g.result.status is not Status.NONE)
 
     allowed = await visible_objective_ids(db, visible)
     accepted = (
@@ -372,6 +376,7 @@ async def build_gaps(
     return GapReport(
         report=report,
         gaps=gaps,
+        group_gaps=group_gaps,
         unlinked=unlinked[:MAX_UNMAPPED],
         only_waiting=only_waiting[:MAX_UNMAPPED],
         unlinked_total=len(unlinked),

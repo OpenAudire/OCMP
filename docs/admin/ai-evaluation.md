@@ -90,7 +90,8 @@ changing the prompt (a new release) or the model ([AI settings](ai.md)).
 | **Precision** | Of the links the AI suggested, the share the gold set also has. Low precision means reviewers spend time rejecting |
 | **Recall** | Of the links in the gold set, the share the AI suggested. Low recall means gaps the AI never raises |
 | **F1** | One number from the two (their harmonic mean) |
-| **Kappa** | Agreement between the AI and the gold set beyond chance. 0.6 is the target for the real pilot (brief, section 8); 0 is no better than chance |
+| **Link kappa** (kappa) | Agreement between the AI and the gold set, beyond chance, on **which links exist**. 0.6 is the target for the real pilot (brief, section 8); 0 is no better than chance |
+| **Coverage-score kappa** | Agreement on the **coverage score** (0 to 5) between the AI and the gold set, on the links **both** made: quadratic-weighted kappa, so a near miss counts for little and a far miss for a lot. It is the kind of figure the study the curriculum office cited reports between its two human raters (0.68, Theurich et al. 2025), so it is the one to compare with that. It is worked out on a different set (links both made) from the link kappa and says nothing about which links exist; the page shows how many links it rests on |
 | **Shown to the AI** | The share of gold links that were on the AI's shortlist at all. Recall can never be higher than this, so a low figure points at retrieval (embeddings, shortlist size), not at the model |
 
 !!! warning "Kappa depends on the shortlist"

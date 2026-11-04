@@ -1633,11 +1633,15 @@
         "precision": "Precision",
         "recall": "Recall",
         "f1": "F1",
-        "kappa": "Kappa",
+        "kappa": "Link kappa",
         "shown": "Shown to the AI",
         "cost": "Cost",
         "progress": "{{done}} of {{total}} objectives",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "scoreKappa": "Coverage-score kappa",
+        "scoreKappaTitle": "Weighted kappa on the coverage score of the links both made",
+        "linkAgreement": "Agreement on which links exist",
+        "scoreAgreement": "Agreement on the coverage score"
       },
       "status": {
         "queued": "Waiting to start",
@@ -1664,7 +1668,9 @@
         "noDisagreements": "They agree on every objective at this setting.",
         "onlyAi": "Only the AI",
         "onlyGold": "Only the gold set",
-        "notShown": "never shown to the AI: {{codes}}"
+        "notShown": "never shown to the AI: {{codes}}",
+        "scoreKappaHelp": "Coverage-score kappa is worked out on the links that both the AI and the gold set made, from the two coverage scores (0 to 5), with quadratic weights so that a near miss counts for little and a far miss for a lot. It is the kind of figure the study the owner cited reports between its two raters (0.68; Theurich et al. 2025), so it is the one to compare with that. It says nothing about which links exist: the other figures do. Read it with the number of links it is based on.",
+        "scoreKappaN": "{{n}} links"
       }
     }
   },
@@ -1819,7 +1825,7 @@
       "partial": "This report covers only the part of the curriculum you can see.",
       "choose": "Choose a version and a framework.",
       "summaryTitle": "Summary of the framework",
-      "summaryHelp": "{{count}} framework items have nothing below them. This is how many of them each method calls covered, partial or not covered.",
+      "summaryHelp": "{{items}} framework items have nothing below them, in {{groups}} groups. The headline is the figure of the method; the counts are of items, except subordinate match, which counts groups.",
       "shown": "(shown below)",
       "linksCounted_one": "{{count}} accepted link counted",
       "linksCounted_other": "{{count}} accepted links counted",
@@ -1849,19 +1855,25 @@
       "recheck_one": "{{count}} link needs a re-check",
       "recheck_other": "{{count}} links need a re-check",
       "waiting_one": "{{count}} suggestion waiting",
-      "waiting_other": "{{count}} suggestions waiting"
+      "waiting_other": "{{count}} suggestions waiting",
+      "headline": "Headline",
+      "groupLinks_one": "{{count}} link made to a group itself, not counted",
+      "groupLinks_other": "{{count}} links made to groups themselves, not counted",
+      "madeToGroup_one": "{{count}} made to the group itself, not counted",
+      "madeToGroup_other": "{{count}} made to the group itself, not counted"
     },
     "gaps": {
       "title": "Gap report",
-      "description": "Framework items with no or low coverage, and objectives with no mapping.",
-      "itemsTitle": "Items with no or low coverage ({{count}})",
-      "itemsHelp": "Items with nothing below them that the method does not call covered, those with no accepted link first.",
+      "description": "Framework items that are not covered, groups under the share set for subordinate match, and objectives with no mapping.",
+      "itemsTitle": "Items not covered ({{count}})",
+      "itemsHelp": "Items with nothing below them that the method does not call covered (for weighted coverage: under the low line), those with no accepted link first.",
       "noGaps": "Every item is covered by this method.",
       "why": "Why",
       "reasons": {
         "none": "No accepted link",
         "multiple": "{{links}} of {{n}} accepted links",
-        "weighted": "{{percent}} of the coverage wanted"
+        "weighted": "{{percent}} of full coverage",
+        "group": "{{covered}} of {{total}} items below it covered"
       },
       "unlinkedTitle": "Objectives with no mapping",
       "unlinkedHelp": "Objectives with no accepted link to this framework and nothing waiting for review.",
@@ -1870,7 +1882,19 @@
       "noneHere": "None.",
       "showing": "Showing {{shown}} of {{total}}.",
       "programmeOutcome": "Programme outcome",
-      "toCoverage": "See the coverage report"
+      "toCoverage": "See the coverage report",
+      "groupsTitle": "Groups under {{share}}% ({{count}})",
+      "groupsHelp": "Subordinate match: groups where fewer than {{share}}% of the items below them are covered by a single match."
+    },
+    "headline": {
+      "single": "of items covered",
+      "multiple": "of items covered",
+      "subordinate": "average over groups",
+      "weighted": "degree of coverage"
+    },
+    "unit": {
+      "items": "items",
+      "groups": "groups"
     }
   }
 }

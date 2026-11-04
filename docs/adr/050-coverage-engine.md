@@ -35,26 +35,39 @@ Links accepted in bulk (`accept_method = bulk`) and links with `needs_recheck` a
 so when *all* of its links were bulk-accepted. The summary shows the totals. (Brief section 8:
 AI- or bulk-accepted links are marked in reports; CLAUDE.md since Slice 1.13.)
 
-### 2. The four methods
+### 2. The four methods (amended by Slice 1.21a)
 
-Each is a labelled method, its definition is printed with the figures (with the institution's
-numbers in it), and each gives an item a value from 0 to 1 and a status of covered, partial or none:
+Slice 1.21 chose the sums itself. The owner then required them to **match Theurich et al. 2025 so
+that our figures are comparable with theirs**, and Slice 1.21a replaced them with the definitions
+below. They were taken from the owner's specification; **the paper itself was not read by us**, so
+a difference between this text and the paper is possible and should be reported.
 
-| Method | An item without items below it | A group (an item with items below it) |
-|---|---|---|
-| **Single match** | Covered with 1 or more accepted links | Its **own** links only; the items below are not looked at |
-| **Multiple match** | Covered with N or more links (default 3); partial with fewer; value = links / N, at most 1 | The same, on its own links |
-| **Subordinate match** | Same as single match | The share of the items below it **that have nothing below them** and are covered by a single match; covered from 50% (configurable), partial below, none at 0 |
-| **Weighted content coverage** | Each link counts for its coverage score out of 5, and for 50% of that when its depth is *below* (configurable); an item's links **add up, at most 1**. Covered from 40% (configurable), partial below, none at 0 | The better of its own links and the average of the items below it |
+Throughout, an **item** is a framework item with nothing below it and a **group** is an item with
+items below it. Every method has a **headline** for the whole framework and a figure for each item
+and group; the definition is printed with the figures (with the institution's numbers in it).
 
-The sums are deliberately simple and explainable: "five links of coverage 2 on one item are
-covered, not five times covered". Alternatives (one minus the product of the gaps; a maximum) give
-different numbers and were not chosen. A link without a stated depth is not reduced.
+| Method | Item | Group | Headline |
+|---|---|---|---|
+| **Single match** | Covered (yes or no) with 1 or more accepted links | The share of the items below it that are covered | The share of items covered |
+| **Multiple match** | Covered (yes or no) with N or more accepted links (N = 3); **no partial credit** | The share of the items below it that are covered | The share of items covered |
+| **Subordinate match** | Same as single match | The percentage of the items below it covered by a **single match** | The **average of those percentages over the groups** (not defined when there is no group) |
+| **Weighted content coverage** | Each link scores its coverage out of 5; a depth of *below* takes **one point** off (of the five, as approved in Slice 1.12); an item's links **add up to at most 1** | The average of the items below it | The **average over the items**: the "degree of coverage" |
 
-Settings, `settings["coverage"]` (typed, with defaults, in `policies.CoveragePolicy`):
-`multiple_match_n` 3 (1 to 20), `subordinate_min_percent` 50, `below_depth_percent` 50,
-`weighted_low_percent` 40. There is no screen for them yet (as for the mapping settings); they are
-changed through the institution settings API.
+**Group figures are built up from their items for every method.** Links made directly to a group
+are counted, shown on the group's row and in the summary ("made to the group itself, not
+counted"), and **do not count towards any figure**, so nothing is counted twice. (Slice 1.21 judged
+a group by its own links under single and multiple match and gave weighted coverage the better of
+the two; both are gone.)
+
+Two settings no longer change a figure and only decide what the **gap report lists**:
+`subordinate_min_percent` (50: the groups under it are listed, for subordinate match only) and
+`weighted_low_percent` (40: the items under it are listed, for weighted coverage). The setting
+for half credit below the target depth (`below_depth_percent`) is removed: the rule is one point.
+`multiple_match_n` (3, 1 to 20) stays. Settings are `settings["coverage"]`
+(`policies.CoveragePolicy`), changed through the institution settings API; there is no screen.
+
+The statuses still exist for the gap report (covered, partial, none), but the figures the reports
+lead with are the percentages.
 
 ### 3. The report
 
@@ -62,11 +75,12 @@ changed through the institution settings API.
 
 * the method, its definition, the institution's numbers, the version, the framework, the time it
   was made, and whether the user sees only part of the version (`partial`);
-* **a summary** of the whole framework for all four methods (items covered, partial, uncovered, out
-  of the items that have nothing below them), and the link totals (accepted, bulk, to re-check,
-  waiting);
+* **a summary** of the whole framework for all four methods: each method's **headline** and the
+  counts behind it (of items, or of groups for subordinate match), and the link totals (accepted,
+  made to groups, bulk, to re-check, waiting);
 * **one row per item** in tree order with its links, bulk and re-check links, waiting suggestions,
-  distinct objectives, value and status, and for a group how many of its items are covered;
+  distinct objectives, value and status, and for a group how many of its items are covered and the
+  links made to the group itself (apart, not counted);
 * **a heatmap of the framework's groups (top-level items) by phase**: each cell is the average, over
   the items of the group that have nothing below them, of the item's value *using only the links
   whose objectives belong to that phase*; plus a column for all phases together. Columns are the
@@ -76,9 +90,10 @@ changed through the institution settings API.
 
 ### 4. The gap report
 
-`GET …/coverage/gaps` returns **the items that have nothing below them and are not covered** by the
-chosen method, those with nothing first, each with the groups above it, the reason in words
-("no accepted link", "1 of 3 accepted links") and its waiting suggestions; and **the objectives
+`GET …/coverage/gaps` returns **the items that are not covered** by the chosen method (for weighted
+coverage: under the low line), those with nothing first, each with the groups above it, the reason in
+words ("no accepted link", "1 of 3 accepted links") and its waiting suggestions; for subordinate match
+also **the groups under the share set** (`group_gaps`); and **the objectives
 with no accepted link to this framework**, in two lists: those with nothing, and those that only
 have suggestions or reviews waiting (the quicker wins). The lists are capped at 200 objectives each
 and the totals are returned.
@@ -96,6 +111,7 @@ whole version, so a module coordinator gets a report on their module and is told
 * Compare two versions or two frameworks, or show trends.
 * Cover crosswalks (links to one framework do not count towards another).
 * Change a number for you: the defaults are starting values, not measured on a real programme.
+* Claim equality with the study it follows: the definitions come from the owner's specification of it.
 * A settings screen for the four numbers.
 
 ## Consequences
