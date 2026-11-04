@@ -127,3 +127,16 @@
   flex-direction: column;
   gap: 8px;
 }
+
+.exports {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exportLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+}

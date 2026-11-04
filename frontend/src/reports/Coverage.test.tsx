@@ -326,6 +326,22 @@ describe('Coverage report', () => {
     expect(within(group).getByText('2 made to the group itself, not counted')).toBeInTheDocument();
   });
 
+  it('offers the report as Excel and PDF with the choices in the address', async () => {
+    renderAt('/reports/coverage?version=v1&framework=fw1&method=weighted');
+
+    const excel = await screen.findByRole('link', { name: /Download as Excel/ });
+    const pdf = screen.getByRole('link', { name: /Download as PDF/ });
+    expect(excel).toHaveAttribute(
+      'href',
+      '/api/v1/curriculum-versions/v1/reports/coverage/export?format=xlsx&framework_id=fw1&method=weighted'
+    );
+    expect(pdf).toHaveAttribute(
+      'href',
+      '/api/v1/curriculum-versions/v1/reports/coverage/export?format=pdf&framework_id=fw1&method=weighted'
+    );
+    expect(screen.getByText(/states the method and when the report was made/)).toBeInTheDocument();
+  });
+
   it('asks again when the method changes', async () => {
     renderAt('/reports/coverage?version=v1&framework=fw1');
     await screen.findByLabelText('The method and what it covers');
@@ -382,6 +398,16 @@ describe('Gap report', () => {
     expect(within(rows[1]).getByText('1 suggestion waiting')).toBeInTheDocument();
     expect(within(rows[2]).getByText('1 of 3 accepted links')).toBeInTheDocument();
     expect(mocked.fetchGaps).toHaveBeenCalledWith('v1', 'fw1', 'multiple');
+  });
+
+  it('offers the gap report as Excel and PDF', async () => {
+    renderAt('/reports/gaps?version=v1&framework=fw1');
+
+    expect(await screen.findByRole('link', { name: /Download as Excel/ })).toHaveAttribute(
+      'href',
+      '/api/v1/curriculum-versions/v1/reports/gaps/export?format=xlsx&framework_id=fw1&method=single'
+    );
+    expect(screen.getByRole('link', { name: /Download as PDF/ })).toBeInTheDocument();
   });
 
   it('lists the groups under the share set for subordinate match', async () => {

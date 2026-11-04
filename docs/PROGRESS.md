@@ -818,6 +818,10 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.21a | **The four methods now follow Theurich et al. 2025 as the owner specified them**: multiple match is yes or no per item (N = 3), no partial credit; subordinate match is, per group, the percentage of its items covered by a single match, and its headline the average over the groups; weighted coverage scores a link coverage / 5, a depth of below takes **one point** off, an item's links add up to at most 1, and its headline (the degree of coverage) is the average over the items. Every group's figure is built up from its items; **links made to a group are shown apart and never counted** | The owner: figures must be comparable with the study's. **We did not read the paper; the definitions are the owner's specification of it** | Medium: every report's numbers changed | Decided in 1.21a, to review |
 | 1.21a | The 50% and 40% settings now **only decide what the gap report lists** (groups under 50% for subordinate match; items under 40% for weighted coverage); the half-credit setting is removed | The owner's instruction | Easy | Decided in 1.21a, to review |
 | 1.21a | The evaluation also reports the **quadratic-weighted kappa between the AI's and the gold set's coverage score, on the links both made**, with the number of links, labelled as comparable to the 0.68 between Charité's two raters; the link figures stay, labelled as link agreement | The owner's instruction. **Quadratic weights are our choice**: the paper's weights are unknown to us | Easy | Decided in 1.21a, to review |
+| 1.22 | **A report is built once as a document** (title, how it was made, typed tables) and shown on screen, written to Excel and written to PDF from it; a new report is only a builder registered in `REPORTS` | Each later report (1.23, 1.24) must state its method and date without its own exporter | Easy | Decided in 1.22, to review |
+| 1.22 | **Every Excel sheet starts with the title, method and time; every PDF page has them in the footer**; the file also says when the person sees only part of the curriculum and which numbers were used | Brief: every report states its method and date | Easy | Decided in 1.22, to review |
+| 1.22 | **Text from people is untrusted in the file**: cells that look like formulas are written as text; PDF text is escaped; file names are fixed | An objective that starts with `=` would otherwise run in a spreadsheet | Easy | Decided in 1.22, to review |
+| 1.22 | New dependency **reportlab** (BSD; brings pillow). **The PDF draws Western European letters only (other scripts print as `?`), and exports are in English**, whatever the screen's language | The built-in font needs no file; embedding a font and translating the exports are separate work | Medium: embed a font (and its licence) and translate the labels | Decided in 1.22, to review |
 
 ---
 
@@ -1672,3 +1676,27 @@ The owner's review of 1.19 to 1.21 approved everything except the coverage arith
 **Not in this slice**: exports (1.22).
 
 **Commit**: `feat: make the coverage arithmetic match Theurich et al. 2025 and report score agreement`
+
+
+### Slice 1.22: Report Exports to Excel and PDF
+**Status**: Complete
+
+Every report can be downloaded as an Excel workbook or a PDF, and each file states the report's method and when it was made on every sheet and page. ADR 051 is the design.
+
+**Deliverables**:
+- [x] **Documents and exports** `services/report_export.py` (`ReportDoc`, `to_xlsx`, `to_pdf`): an About sheet and a sheet per table, each beginning with the title, the method and the time; percentages as numbers with a percent format; a PDF in A4 landscape with a repeating header row and the title, method, time and page number in every footer; formula-looking text written as text; PDF text escaped and limited to the built-in font
+- [x] **Builders** `services/report_docs.py` for the coverage report (summary, heatmap, items) and the gap report (items not covered, groups under the share, objectives with no mapping, objectives with suggestions waiting), with `REPORTS` for the later reports
+- [x] **API** `GET /curriculum-versions/{id}/reports/{key}` (the document as JSON) and `.../export?format=xlsx|pdf`; the same access as the reports (`services/report_access.may_report`); 20 exports a minute; fixed file names
+- [x] **Screens**: "Download as Excel" and "Download as PDF" on the coverage and gap pages, with the version, framework and method of the screen
+- [x] Docs: ADR 051 (and index), the exports section of `admin/coverage-reports.md`, CLAUDE.md
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy pass; `test_report_export.py` (15, no database: sheets and stamps, percent format, formula-looking text, sheet names, empty tables; PDF text on every page of a 300-row table with its footer and page number, markup and symbols, an empty table) and `test_reports_api.py` (17: the document as JSON, both reports, unknown report, missing and draft framework, the files with their headers and stamps, formulas stay text, formats, the rate limit, signed out, no `reports.view`, a version that cannot be seen, a module coordinator's partial report); the whole suite is run once at the end of 1.24
+- Frontend: lint and typecheck pass; `Coverage.test.tsx` (16) includes the download links
+- `mkdocs build --strict` passes; the e2e journey downloads both files and checks their type (**not run locally: CI runs it**)
+
+**Not verified here**: a file opened in Excel itself or in a PDF viewer (read back with `openpyxl` and `pypdf` only), a very large report, scripts other than Western European letters in the PDF (they print as `?`), the exports in Afrikaans, isiXhosa or isiZulu (they are in English).
+
+**Not in this slice**: a font for other scripts, translated exports, an evidence-pack layout, charts, stored or emailed reports.
+
+**Commit**: `feat: export reports to Excel and PDF, each stating method and date`

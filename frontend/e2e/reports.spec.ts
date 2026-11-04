@@ -27,6 +27,17 @@ test.describe('Reports', () => {
     await expect(page.getByRole('heading', { level: 2, name: 'Items' })).toBeVisible();
     await expectNoAccessibilityViolations(page);
 
+    // The report can be downloaded as Excel and as PDF, and the files are real.
+    const excel = page.getByRole('link', { name: /Download as Excel/ });
+    const pdf = page.getByRole('link', { name: /Download as PDF/ });
+    await expect(excel).toBeVisible();
+    const workbook = await page.request.get((await excel.getAttribute('href')) as string);
+    expect(workbook.status()).toBe(200);
+    expect(workbook.headers()['content-type']).toContain('spreadsheetml');
+    const file = await page.request.get((await pdf.getAttribute('href')) as string);
+    expect(file.status()).toBe(200);
+    expect((await file.body()).subarray(0, 4).toString()).toBe('%PDF');
+
     // Another method changes the definition on the page and in the address.
     await page.getByLabel('Method', { exact: true }).selectOption('weighted');
     await expect(page).toHaveURL(/method=weighted/);

@@ -17,16 +17,16 @@ from pydantic import BaseModel
 from app.api.deps import CurrentUser
 from app.api.v1.curriculum import Access
 from app.core.database import DbSession
-from app.core.permissions import Permission, ScopeType
 from app.models import Framework
 from app.models.curriculum import ObjectiveLevel, VersionStatus
 from app.models.framework import FrameworkStatus
 from app.services import coverage_report
-from app.services.authorization import AuthorizationError, ScopeRef, has_permission
+from app.services.authorization import AuthorizationError
 from app.services.coverage_engine import ItemResult, Method, Status
 from app.services.coverage_report import Report
 from app.services.curriculum_read import VisibleVersion, visible_version
 from app.services.policies import CoveragePolicy, coverage_policy_for_version
+from app.services.report_access import may_report
 
 router = APIRouter(tags=["coverage"])
 
@@ -219,20 +219,6 @@ def _row(result: ItemResult) -> ItemRow:
     )
 
 
-async def _may_report(db: DbSession, actor: CurrentUser, visible: VisibleVersion) -> bool:
-    """``reports.view`` at the programme, or (for a narrower view) at a module of it: then the
-    report covers only the modules that person sees."""
-    programme = ScopeRef(ScopeType.PROGRAMME, visible.programme.id)
-    if await has_permission(db, actor, Permission.REPORTS_VIEW, programme):
-        return True
-    return not visible.view.full and any(
-        [
-            await has_permission(db, actor, Permission.REPORTS_VIEW, ScopeRef(ScopeType.MODULE, m))
-            for m in visible.view.modules
-        ]
-    )
-
-
 async def _allowed(
     db: DbSession,
     access: Access,
@@ -243,7 +229,7 @@ async def _allowed(
     visible = await visible_version(db, access, version_id)
     if visible is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Curriculum version not found.")
-    if not await _may_report(db, actor, visible):
+    if not await may_report(db, actor, visible):
         raise AuthorizationError("You do not have permission to see reports for this programme.")
     framework = await db.get(Framework, framework_id)
     if framework is None or framework.is_deleted or framework.status == FrameworkStatus.DRAFT:

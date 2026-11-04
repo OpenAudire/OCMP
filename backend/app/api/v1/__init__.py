@@ -21,6 +21,7 @@ from app.api.v1.mapping import router as mapping_router
 from app.api.v1.mapping_review import router as mapping_review_router
 from app.api.v1.objective_checks import router as objective_checks_router
 from app.api.v1.oidc import router as oidc_router
+from app.api.v1.reports import router as reports_router
 from app.api.v1.roles import router as roles_router
 from app.api.v1.search import router as search_router
 from app.api.v1.setup import router as setup_router
@@ -53,4 +54,5 @@ router.include_router(mapping_router)
 router.include_router(mapping_review_router)
 router.include_router(search_router)
 router.include_router(coverage_router)
+router.include_router(reports_router)
 router.include_router(setup_router)

@@ -922,3 +922,15 @@ export async function fetchGaps(
     })
   ).data;
 }
+
+// --- Report exports (Slice 1.22) ---
+
+/** The address of a report as an Excel workbook or a PDF (opened by the browser with the session). */
+export function reportExportUrl(
+  versionId: string,
+  key: string,
+  params: Record<string, string>
+): string {
+  const query = new URLSearchParams(params).toString();
+  return `/api/v1/curriculum-versions/${versionId}/reports/${key}/export?${query}`;
+}

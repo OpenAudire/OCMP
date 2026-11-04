@@ -11,6 +11,7 @@ import { Page } from '../ui/Page';
 import { ErrorState, LoadingState } from '../ui/States';
 import { MetaPanel } from './CoveragePage';
 import { CoverageControls } from './CoverageControls';
+import { ExportLinks } from './ExportLinks';
 import { useChoice } from './useChoice';
 import classes from './Coverage.module.css';
 import { percent } from './coverageFormat';
@@ -199,6 +200,14 @@ export function GapsPage() {
         <Paper withBorder className={classes.card}>
           <CoverageControls choice={choice} definition={report.data?.definition} />
         </Paper>
+        {report.data && (
+          <ExportLinks
+            versionId={choice.versionId}
+            frameworkId={choice.frameworkId}
+            reportKey="gaps"
+            method={choice.method}
+          />
+        )}
         {!ready && <Text c="dimmed">{t('reports.coverage.choose')}</Text>}
         {ready && report.isLoading && <LoadingState />}
         {ready && report.isError && (

@@ -66,6 +66,23 @@ lists**: `subordinate_min_percent` (50: groups under it are listed, for subordin
    them those that only have suggestions waiting (the quickest to close: review them). Each links to the
    objective in the curriculum builder.
 
+## Exporting a report
+
+Every report page has **Download as Excel** and **Download as PDF**, for the report as it is on the screen
+(the same version, framework and method).
+
+* The workbook has an *About* sheet and one sheet for each table. **Each sheet begins with the report's
+  title, its method and the time it was made.** Percentages are real numbers with a percent format, so
+  they can be sorted and charted.
+* The PDF (A4 landscape) has the same tables, with the heading row repeated and **the title, method and
+  time in the footer of every page**.
+* The file says when you see only part of the curriculum, and which numbers were used.
+* Text that looks like a formula (starting with `=`, `+`, `-` or `@`) is written as text, never run.
+* Exports are **in English** whatever language the screen is in, and the PDF draws Western European
+  letters only (other scripts print as `?`). Both are known limits of this version
+  ([ADR 051](../adr/051-report-exports.md)).
+* Nothing is stored: a file is made when you ask for it. You can make 20 a minute.
+
 ## Reading the reports with care
 
 * A framework **gap** is not necessarily a curriculum gap: the objectives may exist and not yet be

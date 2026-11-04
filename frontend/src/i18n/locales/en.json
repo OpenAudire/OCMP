@@ -1895,6 +1895,11 @@
     "unit": {
       "items": "items",
       "groups": "groups"
+    },
+    "export": {
+      "excel": "Download as Excel",
+      "pdf": "Download as PDF",
+      "help": "The file states the method and when the report was made on every sheet and page. Exports are in English for now, and the PDF draws Western European letters only."
     }
   }
 }

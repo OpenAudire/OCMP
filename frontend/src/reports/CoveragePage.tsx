@@ -9,6 +9,7 @@ import type { CoverageItem, CoverageMethod, CoverageReport, ItemStatus } from '.
 import { Page } from '../ui/Page';
 import { ErrorState, LoadingState } from '../ui/States';
 import { CoverageControls } from './CoverageControls';
+import { ExportLinks } from './ExportLinks';
 import { METHODS, useChoice } from './useChoice';
 import classes from './Coverage.module.css';
 import { formatMade, percent, shadeOf } from './coverageFormat';
@@ -299,6 +300,14 @@ export function CoveragePage() {
         <Paper withBorder className={classes.card}>
           <CoverageControls choice={choice} definition={report.data?.definition} />
         </Paper>
+        {report.data && (
+          <ExportLinks
+            versionId={choice.versionId}
+            frameworkId={choice.frameworkId}
+            reportKey="coverage"
+            method={choice.method}
+          />
+        )}
         {!ready && <Text c="dimmed">{t('reports.coverage.choose')}</Text>}
         {ready && report.isLoading && <LoadingState />}
         {ready && report.isError && (

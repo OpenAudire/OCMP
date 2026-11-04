@@ -310,6 +310,11 @@ export function ModuleCount({ count }: { count: number }) {
   `needs_recheck` are counted and **flagged on every item, never hidden** (a later report or export must keep that). Every report
   prints its method, the institution's numbers (`settings["coverage"]`, `policies.CoveragePolicy`) and when it was made. The arithmetic follows Theurich et al. 2025 as the owner specified it (Slice 1.21a): groups are built up from their items and links made to a group are shown apart and never counted; keep it comparable. Changing
   the arithmetic of a method changes every report: change the definition text with it
+- Report documents and exports (ADR 051): a report is a `ReportDoc` built by a function in `services/report_docs.py`
+  (registered in `REPORTS`) and shown by `api/v1/reports.py` as JSON, Excel (`report_export.to_xlsx`) and PDF
+  (`to_pdf`); **a new report is only a builder**, never its own exporter. Every sheet and page must state the method and the
+  date (`ReportDoc.method`, `made_on`). Text from people is untrusted: cells that look like formulas are written as text
+  (keep that when touching `to_xlsx`), PDF text is escaped and limited to the built-in font. Access is `report_access.may_report`
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 
