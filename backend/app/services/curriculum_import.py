@@ -69,6 +69,12 @@ _LEVEL_OF = {word: ObjectiveLevel(value) for word, value in LEVEL_WORDS.items()}
 # --- The state of the version -------------------------------------------------------------
 
 
+def key_of(item: Any) -> str:
+    """The External ID an item answers to: its own, or (for an item made on the screens) its
+    internal id, which is what a full export writes for it, so that an export imports back."""
+    return str(item.external_id or item.id)
+
+
 @dataclass
 class Existing:
     version: CurriculumVersion
@@ -145,10 +151,10 @@ async def load_existing(
 
     return Existing(
         version=version,
-        phases={p.external_id: p for p in phases if p.external_id},
-        modules={m.external_id: m for m in modules if m.external_id},
-        events={e.external_id: e for e in events if e.external_id},
-        objectives={o.external_id: o for o in objectives if o.external_id},
+        phases={key_of(p): p for p in phases},
+        modules={key_of(m): m for m in modules},
+        events={key_of(e): e for e in events},
+        objectives={key_of(o): o for o in objectives},
         modules_by_id={m.id: m for m in modules},
         phases_by_id={p.id: p for p in phases},
         events_by_id={e.id: e for e in events},
@@ -261,7 +267,7 @@ def _plan_modules(
     # in order (a module that gets a new code gives up its old one).
     owners: dict[str, str] = {}
     for m in existing.modules_by_id.values():
-        owners[m.code.casefold()] = m.external_id or str(m.id)
+        owners[m.code.casefold()] = key_of(m)
     # A module made on the screens has no External ID yet: a row with its code adopts it.
     adoptable = {m.code.casefold(): m for m in existing.modules_by_id.values() if not m.external_id}
     for row, values in rows:
@@ -306,7 +312,7 @@ def _plan_modules(
             changed.insert(0, "External ID")
         if "phase" in present:
             current = (
-                existing.phases_by_id[found.phase_id].external_id
+                key_of(existing.phases_by_id[found.phase_id])
                 if found.phase_id in existing.phases_by_id
                 else None
             )
@@ -347,8 +353,8 @@ def _plan_sessions(
     module_of: dict[str, str] = {}
     for ext, event in existing.events.items():
         module = existing.modules_by_id.get(event.module_id)
-        if module is not None and module.external_id:
-            module_of[ext] = module.external_id
+        if module is not None:
+            module_of[ext] = key_of(module)
     for row, values in rows:
         ext = values["external_id"]
         module_ext = values["module"]
@@ -426,15 +432,15 @@ def _plan_objectives(
         if objective.level is ObjectiveLevel.LEARNING_EVENT:
             event = existing.events_by_id.get(objective.learning_event_id or uuid.uuid4())
             module = existing.modules_by_id.get(event.module_id) if event else None
-        known[ext] = (objective.level, module.external_id if module else None)
+        known[ext] = (objective.level, key_of(module) if module else None)
     owner_of: dict[str, str | None] = {}
     for ext, objective in existing.objectives.items():
         if objective.level is ObjectiveLevel.MODULE and objective.module_id:
             m = existing.modules_by_id.get(objective.module_id)
-            owner_of[ext] = m.external_id if m else None
+            owner_of[ext] = key_of(m) if m else None
         elif objective.level is ObjectiveLevel.LEARNING_EVENT and objective.learning_event_id:
             e = existing.events_by_id.get(objective.learning_event_id)
-            owner_of[ext] = e.external_id if e else None
+            owner_of[ext] = key_of(e) if e else None
         else:
             owner_of[ext] = None
     current_owner = dict(owner_of)

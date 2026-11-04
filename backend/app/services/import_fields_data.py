@@ -158,6 +158,14 @@ MAPPINGS = Sheet(
             max_length=1000,
             width=50,
         ),
+        Field(
+            "status",
+            "Status",
+            Kind.TEXT,
+            "Written by an export (accepted, suggested...). An import ignores it.",
+            max_length=32,
+            width=14,
+        ),
     ),
 )
 

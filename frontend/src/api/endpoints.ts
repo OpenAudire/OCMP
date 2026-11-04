@@ -1093,3 +1093,15 @@ export async function fetchImportJobs(): Promise<ImportJob[]> {
   return (await api.get<ImportJob[]>('/import-jobs')).data;
 }
 
+// --- Exports of a curriculum version (Slice 1.27) ---
+
+/** Address of an export of a version (a plain link; the session authorises it). */
+export function versionExportUrl(
+  versionId: string,
+  kind: 'workbook' | 'matrix' | 'json',
+  params: Record<string, string> = {}
+): string {
+  const query = new URLSearchParams(params).toString();
+  return `/api/v1/curriculum-versions/${versionId}/export/${kind}${query ? `?${query}` : ''}`;
+}
+

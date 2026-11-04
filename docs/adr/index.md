@@ -61,3 +61,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [053](053-teaching-reports.md) | Teaching Reports |
 | [054](054-curriculum-excel-import.md) | Excel Template and Import of Curriculum Structure and Objectives |
 | [055](055-excel-imports-tags-frameworks-mappings.md) | Excel Imports of Tags, Frameworks and Mappings, and the Import History |
+| [056](056-version-exports.md) | Exports of a Curriculum Version |

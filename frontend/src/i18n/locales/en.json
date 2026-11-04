@@ -801,7 +801,7 @@
     }
   },
   "import": {
-    "intro": "Bring curriculum and frameworks into Curriculum in Context. Exports and imports of tags, frameworks and mappings arrive in later releases.",
+    "intro": "Bring curriculum, tags, mappings and frameworks into Curriculum in Context from Excel or JSON files, and take a curriculum version out again.",
     "pack": {
       "title": "Framework pack",
       "description": "A framework pack is a JSON file with one framework version: its items, and optionally cross-references, crosswalks from earlier versions, tag lists and taxonomy scales. Nothing is saved until you have checked the preview and confirmed.",
@@ -984,6 +984,18 @@
         "mappings": "Mappings",
         "framework": "Framework"
       }
+    },
+    "export": {
+      "title": "Export a curriculum version",
+      "intro": "Download a version as files. They contain only what you may see of it and are not stored anywhere.",
+      "none": "There is no curriculum version you may export.",
+      "framework": "Framework (for the objectives by items table)",
+      "workbook": "Download the whole version as Excel",
+      "workbookHelp": "Phases, modules, sessions, objectives, tags and mappings in the same sheets as the import templates. Edit it and import it back; items made on the screens are written with their internal id so that importing updates them. Needs access to the whole version.",
+      "matrix": "Download objectives by framework items (Excel)",
+      "matrixHelp": "One row for each objective, one column for each item of the framework; a cell shows the coverage score (1 to 5) of the accepted link.",
+      "json": "Download the version as JSON",
+      "jsonHelp": "Everything you may see of the version as one document: structure, objectives and their links, assessments, tags and mapping links with their status."
     }
   },
   "mapping": {

@@ -839,6 +839,9 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.26 | **Tags: lists and values only** (matched by list key and by label, institution-wide lists, nothing deleted or deactivated); applying tags to items stays on the screens | The brief's "tags" templates; per-item tagging would need an item key for every kind of item | Applying tags by External ID is a possible later sheet | Decided in 1.26, to review |
 | 1.26 | **A framework in Excel is converted to a pack** and uses the existing pack preview and import unchanged | One import path to keep correct; cross-references, crosswalks and tag lists stay JSON-only | Easy | Decided in 1.26, to review |
 | 1.26 | The import history shows your own jobs, or everyone's with `audit.view`; counts only | No new permission; never the file or a cell | Easy | Decided in 1.26, to review |
+| 1.27 | **The round-trip export writes an item's internal id as its External ID when it has none**, and the import recognises it (`key_of`), so an export imports back into the same version without a change; the External ID column of an exported row must not be edited (an import never renames) | Items made on the screens have no External ID; the alternative was writing to the database on export | Easy; a bulk "give every item an External ID" action could come later | Decided in 1.27, to review |
+| 1.27 | **Exporting needs `reports.view` and `curriculum.view`** (programme, or a module for a partial view), so an external reviewer, who reads published evidence only, may not export; the full workbook needs the whole version | Exports leave the system as files | Easy; the rule is `report_access.may_export` | Decided in 1.27, to review |
+| 1.27 | The matrix shows the **accepted** link's coverage (1 to 5) and nothing else; the workbook leaves out rejected links and faculty-owned tag lists, keeps retired objectives, and adds an informational Status column to the Mappings sheet | Same counting rule as the coverage reports; what the import can read back | Easy | Decided in 1.27, to review |
 
 ---
 
@@ -1838,3 +1841,28 @@ Three more imports built like the curriculum import (ADR 054), and the history o
 **Not in this slice**: applying tags to items from Excel, cross-references and crosswalks from Excel, flagging `imported` links in the reports, the full export (1.27).
 
 **Commit**: `feat: add Excel imports of tags, frameworks and mappings and the import history`
+
+
+### Slice 1.27: Exports of a Curriculum Version
+**Status**: Complete
+
+The full round-trip workbook, the objectives x framework items matrix and the JSON of a version. ADR 056 is the design.
+
+**Deliverables**:
+- [x] **Services** `services/curriculum_export.py`: `build_roundtrip` (the sheets of the import templates: curriculum, tags, mappings; items without an External ID are written with their internal id), `build_matrix` (accepted coverage by objective and framework item, with totals, an Items sheet and an About sheet stating the method and the time), `build_json` (version, structure, objectives and their links, assessments, tags, mapping links with status)
+- [x] **Round trip** `curriculum_import.key_of`: an item answers to its External ID or to its internal id; the Mappings sheet gets an informational Status column
+- [x] **API** `api/v1/exports.py` (`workbook`, `matrix`, `json`; 20 a minute; fixed file names) with `report_access.may_export` (`reports.view` and `curriculum.view`, so external reviewers cannot export; the full workbook needs the whole version)
+- [x] **Screen** `importing/ExportCard.tsx` on Import and export (version, framework, three links); the menu item shows for staff who can read reports and the curriculum
+- [x] Docs: ADR 056, `admin/exporting.md`, CLAUDE.md
+
+**On the dev database** (real data): the **2027 draft** exports to a 37 KB workbook (2 phases, 3 modules, 20 sessions, 64 objectives, 3 tag lists with 16 tags, 24 mappings); **importing that file back into the same draft is valid with no change at all** for the curriculum (every row unchanged), the mappings (24 unchanged) and the tags (3 lists, 16 tags unchanged). The matrix of the 2027 draft has 64 objectives by 8 items with 13 cells filled (the accepted links); the JSON is 46 KB. The published 2026 version exports the same way (60 objectives, 13 mappings).
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy pass; `test_version_export.py` (10: the **export imports back with no change** for curriculum, tags and mappings on a version made entirely on the screens, with a format, a taxonomy level, an accepted and a suggested link; the broader links and the sessions; the matrix cells, a suggested link not shown, totals and the About sheet; the JSON with ids, broader links and statuses; the three downloads with fixed names; the framework needed for the matrix; an unseen version; a module coordinator gets a partial JSON but not the workbook; a student; an external reviewer cannot export a published version they can read reports of); the import tests still pass
+- Frontend: lint and typecheck pass; `Export.test.tsx` (3: the links of the chosen version and framework, the version change and no draft framework, not shown to an external reviewer) and the navigation and import tests pass; the Playwright journey (the three downloads, axe) is **not run locally: CI runs it**
+
+**Not verified here**: a workbook opened and re-saved in Excel before importing it back, a version with thousands of objectives (the matrix has one column for each framework item, which can be wide), the PDF of a matrix (not offered), the Afrikaans / isiXhosa / isiZulu wording (English for now).
+
+**Not in this slice**: exporting frameworks, assessments to Excel, several versions at once, an importable JSON, 1.28 or later.
+
+**Commit**: `feat: add exports of a curriculum version (round-trip workbook, matrix, JSON)`

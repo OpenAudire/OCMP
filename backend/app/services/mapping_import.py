@@ -58,15 +58,12 @@ async def load_existing(
     db: AsyncSession, version: CurriculumVersion, framework_keys: set[str]
 ) -> Existing:
     objectives = {
-        o.external_id: o
+        str(o.external_id or o.id): o
         for o in await db.scalars(
             select(Objective).where(
-                Objective.version_id == version.id,
-                Objective.deleted_at.is_(None),
-                Objective.external_id.is_not(None),
+                Objective.version_id == version.id, Objective.deleted_at.is_(None)
             )
         )
-        if o.external_id
     }
     frameworks: dict[str, list[Framework]] = {}
     for framework in await db.scalars(

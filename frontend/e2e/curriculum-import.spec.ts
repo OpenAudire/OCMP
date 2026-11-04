@@ -56,5 +56,34 @@ test.describe('Curriculum import from Excel', () => {
     await expect(page.getByRole('heading', { level: 2, name: 'Import history' })).toBeVisible();
     await expectNoAccessibilityViolations(page);
   });
+
+  test('a curriculum version can be exported as Excel, a matrix and JSON', async ({ page }) => {
+    await openApp(page, '/import');
+
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Export a curriculum version' })
+    ).toBeVisible();
+    const workbook = await page.request.get(
+      (await page
+        .getByRole('link', { name: /Download the whole version as Excel/ })
+        .getAttribute('href')) as string
+    );
+    expect(workbook.status()).toBe(200);
+    expect(workbook.headers()['content-type']).toContain('spreadsheetml');
+    const matrix = await page.request.get(
+      (await page
+        .getByRole('link', { name: /objectives by framework items/ })
+        .getAttribute('href')) as string
+    );
+    expect(matrix.status()).toBe(200);
+    const json = await page.request.get(
+      (await page
+        .getByRole('link', { name: /Download the version as JSON/ })
+        .getAttribute('href')) as string
+    );
+    expect(json.status()).toBe(200);
+    expect((await json.json()).schema).toBe('ocmp.curriculum-version');
+    await expectNoAccessibilityViolations(page);
+  });
 });
 

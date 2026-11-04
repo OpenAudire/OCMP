@@ -80,7 +80,9 @@ export const NAV_ITEMS: NavItem[] = [
         Permission.FrameworksManage,
         Permission.TaglistsManage,
         Permission.MappingEdit
-      ),
+      ) ||
+      // Exports: staff who read the whole curriculum and its reports (not external reviewers).
+      (p.has(Permission.ReportsView) && p.has(Permission.CurriculumView)),
   },
   {
     key: 'explorer',

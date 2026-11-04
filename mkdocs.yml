@@ -77,6 +77,7 @@ nav:
       - Teaching reports: admin/teaching-reports.md
       - Importing the curriculum from Excel: admin/importing-curriculum.md
       - Importing tags, mappings and frameworks: admin/importing-tags-mappings-frameworks.md
+      - Exporting a curriculum version: admin/exporting.md
       - AI settings: admin/ai.md
       - Checking the AI's mapping: admin/ai-evaluation.md
       - Importing frameworks: admin/framework-packs.md

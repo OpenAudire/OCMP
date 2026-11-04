@@ -49,6 +49,9 @@ version that has that External ID.
   (counts only: never the file or its name).
 * Only draft versions can be imported into.
 
+To get a file to start from, [export the version](exporting.md): the export is in the same sheets and imports
+back without changes.
+
 ## Limits
 
 The file may be as large as the installation's upload limit (`PACK_MAX_UPLOAD_MB`, 10 MB by default) and has

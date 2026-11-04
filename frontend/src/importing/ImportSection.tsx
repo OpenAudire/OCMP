@@ -6,6 +6,7 @@ import { Permission } from '../session/permissions';
 import { useSession } from '../session/useSession';
 import { Page } from '../ui/Page';
 import { CurriculumImportCard } from './CurriculumImportCard';
+import { ExportCard } from './ExportCard';
 import { ImportHistoryCard } from './ImportHistoryCard';
 import { PackImportCard } from './PackImportPage';
 import { MappingImportCard, TagImportCard } from './TagAndMappingImportCards';
@@ -16,6 +17,7 @@ interface Allowed {
   frameworks: boolean;
   tags: boolean;
   mappings: boolean;
+  exports: boolean;
 }
 
 function ImportHome({ allowed }: { allowed: Allowed }) {
@@ -27,6 +29,7 @@ function ImportHome({ allowed }: { allowed: Allowed }) {
       {allowed.tags && <TagImportCard />}
       {allowed.frameworks && <PackImportCard />}
       {allowed.frameworks && <TemplatesCard />}
+      {allowed.exports && <ExportCard />}
       <ImportHistoryCard />
     </Page>
   );
@@ -43,6 +46,7 @@ export function ImportSection() {
     curriculum: has(Permission.CurriculumEdit) && has(Permission.ObjectivesEdit),
     tags: has(Permission.TaglistsManage),
     mappings: has(Permission.MappingEdit),
+    exports: has(Permission.ReportsView) && has(Permission.CurriculumView),
   };
   if (!Object.values(allowed).some(Boolean)) return <PlaceholderPage titleKey="nav.import" />;
   return (
