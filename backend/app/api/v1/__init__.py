@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter
 
+from app.api.v1.ai_evaluation import router as ai_evaluation_router
 from app.api.v1.ai_mapping import router as ai_mapping_router
 from app.api.v1.ai_objectives import router as ai_objectives_router
 from app.api.v1.ai_settings import router as ai_settings_router
@@ -34,6 +35,7 @@ router.include_router(audit_router)
 router.include_router(institution_router)
 router.include_router(ai_settings_router)
 router.include_router(ai_mapping_router)
+router.include_router(ai_evaluation_router)
 router.include_router(ai_objectives_router)
 router.include_router(curriculum_router)
 router.include_router(curriculum_edit_router)

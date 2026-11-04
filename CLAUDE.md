@@ -16,7 +16,7 @@ People see only the product name (no acronym); technical identifiers stay `ocmp`
 /packs          Framework/taxonomy pack schema and demo pack
 /deploy         Docker Compose, Caddyfile, backup/restore scripts, .env.example
 /docs           MkDocs site (operations/, admin/), ADRs, PROJECT_BRIEF.md, PROGRESS.md
-/scripts        Dev helpers, eval harness (stub until Phase 1)
+/scripts        Dev helpers; eval_mapping.py points at the eval-* commands of app.cli
 mkdocs.yml      Documentation site configuration
 ```
 
@@ -284,6 +284,16 @@ export function ModuleCount({ count }: { count: number }) {
   `objectives.edit` at the owner and `ai.run`; a rewrite may not add a number the original did not have. New prompt
   fields (`quality_findings`, `taxonomy_options`, `answer_notes`) are on the allow-list and hold only code-written
   sentences and configured taxonomy text
+- Evaluation harness (ADR 048): `services/eval_gold.py` (the Excel template, reading it, saving a gold set), `eval_run.py`
+  (the run), `eval_metrics.py` (pure: precision, recall, F1, Cohen's kappa, sweeps by minimum coverage and bulk-accept floor),
+  `jobs/evaluation.py`, router `api/v1/ai_evaluation.py` (all `settings.manage`), CLI `eval-template/import/run/report`. A run
+  is an `AIRun` of type `evaluation` plus an `EvalRun` that keeps the raw answers; it reuses `ai_mapping._ask` and **never saves a
+  link or changes an objective**. It runs a cold start (`shortlist(include_linked=True, use_precedent=False)`, no examples of
+  earlier decisions) so earlier decisions cannot leak in: keep that when the mapping pipeline changes. Any change to the
+  pipeline's prompt or checks changes what is measured; run the evaluation before and after. Gold objectives are matched to a
+  version's objectives by normalised wording. Failed objectives are left out of the figures and counted, never counted as wrong.
+  The demo gold set (`demo/data/gold-set-demo.json`) is fictional and written by the developers: never present its figures as
+  a measure of quality (a test keeps it in step with the demo data)
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 

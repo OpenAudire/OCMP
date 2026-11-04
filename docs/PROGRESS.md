@@ -797,6 +797,13 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.18 | **A proposal needs a quote that is words of the piece sent** (at most 400 characters), at most 30 per piece, **no number that is not in the quote**; wording the module already has, or has ever had proposed (rejected included), is skipped | The quote shows where the wording comes from; a made-up number would invent a standard; a rejection is a person's "no" | Easy | Decided in 1.18, to review |
 | 1.18 | Accepting makes a **draft** objective through the ordinary service (reviewer may edit wording and domain first); proposals are derived data: not audited, kept after the decision, deleted with the module | Approval stays a separate right (`objectives.approve`) | Easy | Decided in 1.18, to review |
 | 1.18 | New dependencies **pypdf** (BSD-3-Clause) and **python-docx** (MIT, with lxml) | Reading in memory with no other tool | Easy | Decided in 1.18, to review |
+| 1.19 | **A gold set is Excel-first**: one row per objective and framework item (Objective text, Framework item code, Coverage 0-5, Depth, Notes); an objective that maps to nothing has one row without a code; a coverage of 0 is an explicit "no"; objectives are matched by wording, not id | Owner request; people can fill it in by hand without ids | Medium: the format is the contract with every gold set made | Decided in 1.19, to review |
+| 1.19 | **A run is a cold start and saves nothing**: the shortlist ignores existing links and the precedent boost, the prompt carries no earlier decisions, no link is made | Earlier decisions (the AI's own accepted suggestions, the demo's hand-made links) would flatter the figures; the cost is that figures are conservative for a programme with reviewed links | Easy: two flags | Decided in 1.19, to review |
+| 1.19 | **Kappa is worked out over the objective's whole universe** (the shortlist plus every item named), so it depends on the shortlist length; precision, recall and shortlist recall are reported with it and the page says so | Cohen's kappa needs true negatives and the pipeline only judges a shortlist | Medium: another definition changes every figure | Decided in 1.19, to review |
+| 1.19 | **Objectives the AI could not answer are left out of the figures and counted**, not counted as wrong | A provider failure says nothing about the mapping | Easy | Decided in 1.19, to review |
+| 1.19 | The raw answers are kept so that every threshold is worked out afterwards at no cost; the gold set is read as it is at that time (editing a gold set changes old figures) | Choosing a default needs a sweep, not a rerun per value | Easy | Decided in 1.19, to review |
+| 1.19 | **No default was changed.** The first run (demo gold set, developers' marks) does not separate a minimum coverage of 1 from 2, shows 3 or more is worse, and is consistent with a bulk floor of 80, but a set the developers wrote on an 8-item framework cannot decide any of it | The owner chooses, from a real gold set | Easy: the settings | Decided in 1.19, to review |
+| 1.19 | New dependency **openpyxl** (MIT); workbooks limited to 5 MB and 5 000 rows, read in memory, never stored | The brief requires Excel templates; this is the first slice to need them | Easy | Decided in 1.19, to review |
 
 ---
 
@@ -1522,3 +1529,52 @@ Upload a module's study guide (PDF or Word), let the AI read it, and accept or r
 **Not in this slice**: text recognition for scans, session objectives, linking proposals upward, mapping or levelling proposals automatically, a screen listing earlier readings, deleting old proposals, reading several guides for one module at once.
 
 **Commit**: `feat: add study-guide extraction into proposed objectives`
+
+
+### Slice 1.19: Evaluation Harness and Gold Sets
+**Status**: Complete
+
+Marks the AI's mapping against an answer key that people wrote, with precision, recall, F1 and Cohen's kappa per prompt version and model, and the figures at every minimum coverage and bulk-accept floor, so those two settings can be chosen from evidence. ADR 048 is the design. **A run saves no link and changes no objective.**
+
+**Deliverables**:
+- [x] **Gold sets** `models/evaluation.py` (`GoldSet`, `GoldCase`, `GoldLink`; audited), migration **0026** (also `evaluation` as an AI run type); `services/eval_gold.py`: the **Excel template** (columns Objective text, Framework item code, Coverage (0-5), Depth, Notes; dropdowns for coverage, depth and the framework's item codes; an instruction sheet; no example rows), reading it (every problem with its row number, nothing saved unless the file is sound, `dry_run`), saving, and exporting in the same layout so a set can be edited and imported again
+- [x] **The run** `services/eval_run.py`, `jobs/evaluation.py`: reuses the mapping pipeline (`_ask`, shortlist, prompt `mapping:2`) but is a **cold start** (`shortlist(include_linked=True, use_precedent=False)`, no examples of earlier decisions) and **saves nothing**; the raw answers are kept on `eval_runs.results`; failed objectives are left out of the figures and counted; objectives are found in a version by wording
+- [x] **The figures** `services/eval_metrics.py` (pure): precision, recall, F1, kappa, shortlist recall (the ceiling for recall), coverage and depth agreement, the sweep by minimum coverage, and the **bulk-accept table** (accepted, right, wrong, precision, left for review) at each floor from 50 to 100
+- [x] **Surfaces** `api/v1/ai_evaluation.py` (`settings.manage`): template download, gold sets (list, import with dry run, export, delete), runs (start, list with figures at a chosen minimum coverage, detail with the sweeps and the disagreements, cancel); CLI `eval-template`, `eval-import` (and `--demo`), `eval-run`, `eval-report`; `scripts/eval_mapping.py` now points at them; the admin page **Admin > Check the AI's mapping** (`admin/AiEvaluationPage.tsx`)
+- [x] **The fictional demo gold set** `demo/data/gold-set-demo.json`: the 60 demo objectives marked against the 8-item Demo Graduate Competencies by the developers (10 map to nothing); marked fictional everywhere; a test keeps it in step with the demo data
+- [x] **Quality checker check** (owner request): "Appreciate the importance of communicating clearly..." is flagged `vague_verb` ("appreciate") and "Interpret a normal electrocardiogram and recognise common rhythm disturbances." is flagged `multiple_verbs` ("interpret, recognize"); both checked on the dev database's real taxonomy and now kept by three regression tests
+- [x] New dependency **openpyxl** (MIT) for the workbooks (5 MB and 5 000 rows at most, read in memory, never stored)
+- [x] Docs: ADR 048 (and index), the admin guide `admin/ai-evaluation.md` (how to make, import and run a gold set and how to read the figures), the AI guide, the CLI list, the data inventory, CLAUDE.md
+
+**First real run** (the demo gold set, `mapping:2` on `claude-sonnet-5-5`, the 2026 demo version, 60 objectives, shortlist of 8 = every item, 60 calls, none invalid, $0.345, about six minutes; nothing saved: 0 links made, the objectives untouched):
+
+| Minimum coverage | Suggestions | Precision | Recall | F1 | Kappa |
+|---|---|---|---|---|---|
+| 1 or more (today's default) | 64 | 82.8% | 89.8% | 0.86 | 0.84 |
+| 2 or more | 53 | 90.6% | 81.4% | 0.86 | 0.84 |
+| 3 or more | 21 | 100% | 35.6% | 0.53 | 0.49 |
+| 4 or more | 6 | 100% | 10.2% | 0.18 | 0.17 |
+| 5 | 1 | 100% | 1.7% | 0.03 | 0.03 |
+
+| Bulk-accept floor (min coverage 1) | Accepted | Wrong | Precision | Left for review |
+|---|---|---|---|---|
+| 50% | 58 | 6 | 89.7% | 6 |
+| 60% | 50 | 2 | 96.0% | 14 |
+| 70% | 43 | 1 | 97.7% | 21 |
+| 75% | 30 | 0 | 100% | 34 |
+| **80% (today's default)** | 26 | 0 | 100% | 38 |
+| 90% | 6 | 0 | 100% | 58 |
+
+What it says, with the caveats: **a minimum of 1 and 2 cannot be told apart on this evidence** (F1 is 0.86 and 0.86: going from 1 to 2 removes six wrong suggestions and five right ones, trading about eight points of recall for eight points of precision), and **3 or more is clearly worse** (recall falls to 36%) because the AI **scores coverage lower than the key**: the mean gap on agreed links is 1.36 points and only 55% are within one point (in the raw answers, before the most-specific rule, 28 of the 34 links the key scored 4 or 5 got 2 or 3 from the AI). Whether to prefer fewer wrong suggestions or fewer missed links is a decision about reviewers' time, not something this run settles. For bulk accept, **no wrong suggestion has a confidence above 0.70 while correct ones reach 0.95**, which is consistent with today's floor of 80 (26 accepted, none wrong; 38 left for a person). Depth agrees on 87% of agreed links. Every gold link was on the shortlist (the shortlist is the whole 8-item framework). **These numbers come from a gold set the developers wrote, on a toy framework, with 64 suggestions: "0 wrong of 26" cannot rule out a wrong rate of roughly one in ten on a real programme, and kappa is high partly because every item is shown.** The disagreements were mostly the AI adding the broad parent "Scholar and Practitioner" at coverage 1 to knowledge objectives that the key maps to nothing (four of the eleven wrong suggestions), the AI adding "Analysis" where the key has no such link (five of the eleven), and a few links the AI missed (planning or presenting with a community partner, communicating respectfully); some of those are the key's debatable calls (the demo data's own hand-made mappings already disagree with the key on 2 of its 12 outcomes).
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy pass; the **whole pytest suite: 1 763 tests passed** (17 minutes; 1 648 before this slice). New: `test_eval_metrics.py` (20: a worked kappa, degenerate cases, thresholds, bulk accept, differences), `test_eval_gold.py` (33: reading and every problem row, the template's sheets and dropdowns, saving, round trip, the demo set matching the demo data), `test_ai_evaluation.py` (the run saves no link and changes no objective, earlier decisions cannot leak in, failed objectives, two prompts compared, who may use the endpoints, the dry run, the detail and list), CLI tests (4), three quality-checker tests for the HBIO101 wording
+- Frontend: lint and typecheck pass; the whole Vitest suite: **31 files, 382 tests** (12 new in `AiEvaluation.test.tsx`: the page explains how to read the figures, lists gold sets, checks a file and lists every problem with its row, saves a sound one, starts a run, says why one was refused, compares prompts and models, reworks the figures at another minimum coverage without a new run, shows progress and cancel). **On this machine under load, 12 tests in 8 older files hit Vitest's 5-second default and failed in the first full run; the 8 files passed when rerun with fewer workers and a 60-second limit (122 tests)**, so nothing failed for a reason in the code, but the full suite was not seen green in one run here. The e2e `ai-evaluation.spec.ts` opens the page with axe in both themes (**not run locally: CI runs it**)
+- Docker (`up -d --build --wait`): migration 0026 applied; the demo gold set imported with the command; the real run above; a repeat import refused; the database holds no link from the run
+- `mkdocs build --strict` passes
+
+**Not verified here**: **a gold set written by people** (the point of the slice: every figure above is from a set the developers wrote), a **model comparison** (one model was configured; changing it in the AI settings and running again adds a row, and I did not change your settings), a real framework with hundreds of items and a shortlist of 10 (kappa behaves differently), the page in a browser beyond the unit tests and CI's axe check, an Excel file made and edited in Excel itself (only files made by openpyxl were read), the mapping prompt in Afrikaans or isiXhosa.
+
+**Not in this slice**: changing any default (the evidence is yours to act on, from a real gold set), marking rewrite, classification or study-guide extraction, tuning the shortlist weights, a chart, scheduled evaluations, comparing two gold sets, a threshold that is chosen automatically.
+
+**Commit**: `feat: add the evaluation harness with gold sets, Excel import and threshold figures`

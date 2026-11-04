@@ -2,6 +2,10 @@ import { api } from './client';
 import type {
   AiConnectionTest,
   AiSettings,
+  EvalDetail,
+  EvalRun,
+  GoldPreview,
+  GoldSet,
   AiUpdate,
   AssessableObjective,
   Assessment,
@@ -735,6 +739,9 @@ export async function testAiConnection(): Promise<AiConnectionTest> {
 
 export const queryKeys = {
   aiSettings: ['ai-settings'] as const,
+  goldSets: ['ai-evaluation', 'gold-sets'] as const,
+  evalRuns: (minCoverage: number) => ['ai-evaluation', 'runs', minCoverage] as const,
+  evalRun: (id: string, minCoverage: number) => ['ai-evaluation', 'run', id, minCoverage] as const,
   frameworks: ['frameworks'] as const,
   frameworkItem: (frameworkId: string, itemId: string) =>
     ['frameworks', frameworkId, 'items', itemId] as const,
@@ -777,3 +784,70 @@ export const queryKeys = {
   nearDuplicates: (id: string) => ['curriculum-versions', id, 'near-duplicates'] as const,
   versionDiff: (id: string, base: string) => ['curriculum-versions', id, 'diff', base] as const,
 };
+
+// --- Evaluation of the AI's mapping (Slice 1.19) ---
+
+export const GOLD_TEMPLATE_URL = '/api/v1/ai/evaluation/gold-template';
+
+export function goldExportUrl(goldSetId: string): string {
+  return `/api/v1/ai/evaluation/gold-sets/${goldSetId}/export`;
+}
+
+export async function fetchGoldSets(): Promise<GoldSet[]> {
+  return (await api.get<GoldSet[]>('/ai/evaluation/gold-sets')).data;
+}
+
+/** Check a filled-in template (`dryRun`) or save it; a file with problems answers 422 with the
+ * same list, which is read here so the screen can show it. */
+export async function uploadGoldSet(input: {
+  name: string;
+  frameworkId: string;
+  description: string;
+  file: File;
+  dryRun: boolean;
+}): Promise<GoldPreview> {
+  const form = new FormData();
+  form.append('file', input.file);
+  form.append('name', input.name);
+  form.append('framework_id', input.frameworkId);
+  form.append('description', input.description);
+  form.append('dry_run', String(input.dryRun));
+  const response = await api.post<GoldPreview>('/ai/evaluation/gold-sets', form, {
+    validateStatus: (status) => status === 200 || status === 201 || status === 422,
+  });
+  return response.data;
+}
+
+export async function deleteGoldSet(id: string): Promise<void> {
+  await api.delete(`/ai/evaluation/gold-sets/${id}`);
+}
+
+export async function startEvaluation(input: {
+  goldSetId: string;
+  versionId: string;
+  topK?: number;
+}): Promise<EvalRun> {
+  return (
+    await api.post<EvalRun>('/ai/evaluation/runs', {
+      gold_set_id: input.goldSetId,
+      version_id: input.versionId,
+      ...(input.topK ? { top_k: input.topK } : {}),
+    })
+  ).data;
+}
+
+export async function fetchEvaluations(minCoverage: number): Promise<EvalRun[]> {
+  return (
+    await api.get<EvalRun[]>('/ai/evaluation/runs', { params: { min_coverage: minCoverage } })
+  ).data;
+}
+
+export async function fetchEvaluation(id: string, minCoverage: number): Promise<EvalDetail> {
+  return (
+    await api.get<EvalDetail>(`/ai/evaluation/runs/${id}`, { params: { min_coverage: minCoverage } })
+  ).data;
+}
+
+export async function cancelEvaluation(id: string): Promise<EvalRun> {
+  return (await api.post<EvalRun>(`/ai/evaluation/runs/${id}/cancel`)).data;
+}

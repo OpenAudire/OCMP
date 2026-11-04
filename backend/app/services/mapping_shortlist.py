@@ -112,8 +112,14 @@ async def shortlist(
     k: int = DEFAULT_K,
     provider: EmbeddingProvider | None = None,
     redis: Redis | None = None,
+    include_linked: bool = False,
+    use_precedent: bool = True,
 ) -> Shortlist:
-    """The ``k`` framework items most worth asking the model about for this objective."""
+    """The ``k`` framework items most worth asking the model about for this objective.
+
+    The evaluation harness (ADR 048) asks for a cold start: ``include_linked`` keeps items the
+    objective is already linked to and ``use_precedent`` turns off the boost from earlier
+    accepted links, so earlier decisions cannot leak into a measurement."""
     retrieved = await similar_framework_items(
         db,
         settings,
@@ -136,7 +142,9 @@ async def shortlist(
         if meaning
         else {}
     )
-    precedent = await _precedent(db, objective.id, framework_id) if meaning else {}
+    precedent = (
+        await _precedent(db, objective.id, framework_id) if meaning and use_precedent else {}
+    )
 
     w_meaning, w_words, w_precedent = WEIGHTS_WITH_MEANING if meaning else WEIGHTS_WORDS_ONLY
     scores: dict[uuid.UUID, float] = {}
@@ -155,14 +163,21 @@ async def shortlist(
     # Items the objective is already linked to are not asked about again, rejected ones included
     # (a rejection is a person's "no"), unless the wording changed after the rejection.
     linked: set[uuid.UUID] = set()
-    for item_id, status, first_at, second_at in await db.execute(
-        select(
-            MappingLink.framework_item_id,
-            MappingLink.status,
-            MappingLink.first_reviewed_at,
-            MappingLink.second_reviewed_at,
-        ).where(MappingLink.objective_id == objective.id, live_link())
-    ):
+    link_rows = (
+        []
+        if include_linked
+        else (
+            await db.execute(
+                select(
+                    MappingLink.framework_item_id,
+                    MappingLink.status,
+                    MappingLink.first_reviewed_at,
+                    MappingLink.second_reviewed_at,
+                ).where(MappingLink.objective_id == objective.id, live_link())
+            )
+        ).all()
+    )
+    for item_id, status, first_at, second_at in link_rows:
         decided = second_at or first_at
         changed = objective.text_changed_at
         if (

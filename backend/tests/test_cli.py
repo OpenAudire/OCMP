@@ -332,3 +332,49 @@ def test_rotate_secrets_refuses_in_production_without_its_own_key(
     assert cli.main(["rotate-secrets"]) == 1
 
     assert "SECRETS_ENCRYPTION_KEYS is not set" in capsys.readouterr().err
+
+
+def test_eval_template_writes_an_empty_workbook(
+    cli_settings: str, tmp_path: Any, capsys: pytest.CaptureFixture[str]
+) -> None:
+    out = tmp_path / "template.xlsx"
+
+    assert cli.main(["eval-template", "--out", str(out)]) == 0
+
+    from openpyxl import load_workbook
+
+    assert load_workbook(out).sheetnames[:2] == ["Gold set", "Instructions"]
+    assert "Wrote" in capsys.readouterr().out
+
+
+def test_eval_template_refuses_an_unknown_framework(
+    cli_settings: str, tmp_path: Any, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert cli.main(["eval-template", "--framework", "No such", "--out", str(tmp_path / "x")]) == 1
+    assert "no single framework" in capsys.readouterr().err
+
+
+def test_eval_import_needs_its_arguments_and_a_known_framework(
+    cli_settings: str, tmp_path: Any, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert cli.main(["eval-import"]) == 1
+    assert "give FILE" in capsys.readouterr().err
+    workbook = tmp_path / "gold.xlsx"
+    workbook.write_bytes(b"x")
+
+    assert cli.main(["eval-import", str(workbook), "--name", "N", "--framework", "No such"]) == 1
+    assert "no single framework" in capsys.readouterr().err
+
+
+def test_eval_run_and_report_say_so_when_nothing_matches(
+    cli_settings: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    missing = "00000000-0000-0000-0000-000000000000"
+
+    assert cli.main(["eval-report"]) == 0
+    assert "No evaluation runs" in capsys.readouterr().out
+    assert (
+        cli.main(["eval-run", "--gold-set", "x", "--version", missing, "--email", "a@example.org"])
+        == 1
+    )
+    assert "not found" in capsys.readouterr().err

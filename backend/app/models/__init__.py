@@ -18,6 +18,7 @@ from app.models.curriculum import (
     QualificationType,
 )
 from app.models.embedding import Embedding, ObjectiveSimilarity
+from app.models.evaluation import EvalRun, GoldCase, GoldLink, GoldSet
 from app.models.framework import (
     Crosswalk,
     CrosswalkEntry,
@@ -51,10 +52,14 @@ __all__ = [
     "CurriculumVersion",
     "Department",
     "Embedding",
+    "EvalRun",
     "Faculty",
     "Framework",
     "FrameworkCrossRef",
     "FrameworkItem",
+    "GoldCase",
+    "GoldLink",
+    "GoldSet",
     "Institution",
     "LearningEvent",
     "MappingLink",

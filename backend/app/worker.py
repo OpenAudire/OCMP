@@ -8,6 +8,7 @@ import dramatiq
 import app.core.broker
 import app.jobs.auth_emails
 import app.jobs.embeddings
+import app.jobs.evaluation
 import app.jobs.mapping
 import app.jobs.study_guides  # noqa: F401
 from app.core.config import get_settings

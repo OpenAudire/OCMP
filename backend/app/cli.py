@@ -21,25 +21,39 @@ OCMP_DEMO_OFFICE_PASSWORD is set (no account, and no password anywhere, otherwis
 import argparse
 import asyncio
 import getpass
+import json
 import os
 import sys
+import uuid
+from pathlib import Path
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.embeddings import MODEL_NAME, get_embedding_provider
-from app.ai.errors import ProviderError
+from app.ai.errors import AIError, ProviderError
 from app.core import database
 from app.core.config import get_settings
 from app.core.permissions import ScopeType
 from app.core.secrets import SecretBox, SecretUnreadableError, new_key
 from app.core.security import PasswordPolicyError
 from app.demo.loader import load_demo
-from app.models import AIProviderConfig
+from app.models import (
+    AIProviderConfig,
+    AIRun,
+    CurriculumVersion,
+    EvalRun,
+    Framework,
+    GoldSet,
+    User,
+)
 from app.models.embedding import EmbeddedType
+from app.services import eval_gold, eval_metrics, eval_run
 from app.services.ai_runs import purge_ai_call_content
 from app.services.audit import audit_operation, purge_audit_log
 from app.services.authorization import (
     ConflictError,
+    InvalidRequestError,
     ScopeRef,
     assign_role,
     get_role,
@@ -190,6 +204,211 @@ async def _load_demo() -> int:
     return 0
 
 
+# --- Evaluation harness (Slice 1.19, ADR 048) -------------------------------------------------
+
+
+def _percent(value: float | None) -> str:
+    return "  n/a" if value is None else f"{value * 100:5.1f}"
+
+
+def _number(value: float | None) -> str:
+    return "  n/a" if value is None else f"{value:5.2f}"
+
+
+async def _find_framework(db: AsyncSession, name_or_id: str) -> Framework | None:
+    try:
+        found = await db.get(Framework, uuid.UUID(name_or_id))
+        return found if found and not found.is_deleted else None
+    except ValueError:
+        pass
+    rows = list(
+        await db.scalars(
+            select(Framework).where(Framework.name == name_or_id, Framework.deleted_at.is_(None))
+        )
+    )
+    return rows[0] if len(rows) == 1 else None
+
+
+async def _find_gold_set(db: AsyncSession, name_or_id: str) -> GoldSet | None:
+    try:
+        found = await db.get(GoldSet, uuid.UUID(name_or_id))
+        return found if found and not found.is_deleted else None
+    except ValueError:
+        pass
+    return await db.scalar(
+        select(GoldSet).where(GoldSet.name == name_or_id, GoldSet.deleted_at.is_(None))
+    )
+
+
+def _print_figures(cases: list[eval_metrics.CaseResult], min_coverage: int) -> None:
+    print("Minimum coverage:  precision recall    F1  kappa  suggestions  (right / wrong / missed)")  # noqa: T201
+    for row in eval_metrics.sweep(cases):
+        c = row["counts"]
+        mark = "  <-" if row["min_coverage"] == min_coverage else ""
+        print(  # noqa: T201
+            f"  {row['min_coverage']} or more:       {_percent(row['precision'])}%"
+            f" {_percent(row['recall'])}% {_number(row['f1'])} {_number(row['kappa'])}"
+            f"  {row['suggestions']:>6}       ({c['tp']} / {c['fp']} / {c['fn']}){mark}"
+        )
+    print(f"\nBulk accept at minimum coverage {min_coverage}:")  # noqa: T201
+    print("  floor   accepted  right  wrong  precision  left for review")  # noqa: T201
+    for row in eval_metrics.bulk_sweep(cases, min_coverage=min_coverage):
+        print(  # noqa: T201
+            f"  {row['floor']:>4}%  {row['accepted']:>8}  {row['right']:>5}  {row['wrong']:>5}"
+            f"  {_percent(row['precision'])}%    {row['left_for_review']:>6}"
+        )
+
+
+async def _eval_template(framework: str | None, out: str) -> int:
+    async with database.session_scope() as db:
+        chosen = None
+        if framework:
+            chosen = await _find_framework(db, framework)
+            if chosen is None:
+                print("Error: no single framework has that name or id.", file=sys.stderr)  # noqa: T201
+                return 1
+        content = await eval_gold.build_template(db, chosen)
+    Path(out).write_bytes(content)
+    print(f"Wrote {out}.")  # noqa: T201
+    return 0
+
+
+async def _eval_import(
+    file: str | None, name: str | None, framework: str | None, dry_run: bool, demo: bool
+) -> int:
+    async with database.session_scope() as db:
+        if demo:
+            path = Path(__file__).parent / "demo" / "data" / "gold-set-demo.json"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            parsed = eval_gold.read_json(data)
+            name = name or data["name"]
+            description = data["description"]
+            framework = framework or "Demo Graduate Competencies"
+        elif file and name and framework:
+            description = ""
+            parsed = eval_gold.read_workbook(Path(file).read_bytes())
+        else:
+            print("Error: give FILE, --name and --framework (or --demo).", file=sys.stderr)  # noqa: T201
+            return 1
+        chosen = await _find_framework(db, framework)
+        if chosen is None:
+            print("Error: no single framework has that name or id.", file=sys.stderr)  # noqa: T201
+            return 1
+        await eval_gold.check_codes(db, chosen.id, parsed)
+        parsed.problems.sort(key=lambda p: p.row or 0)
+        print(  # noqa: T201
+            f"{len(parsed.cases)} objectives, {parsed.links} mappings, "
+            f"{parsed.empty_cases} objectives that map to nothing."
+        )
+        for problem in parsed.problems[: eval_gold.MAX_PROBLEMS]:
+            where = f"row {problem.row}: " if problem.row else ""
+            print(f"  {where}{problem.message}")  # noqa: T201
+        if parsed.problems:
+            print("Nothing was saved.")  # noqa: T201
+            return 1
+        if dry_run:
+            print("Dry run: nothing was saved.")  # noqa: T201
+            return 0
+        try:
+            await eval_gold.save_gold_set(
+                db,
+                actor_id=None,
+                name=name or "",
+                description=description,
+                framework=chosen,
+                parsed=parsed,
+                is_demo=demo,
+            )
+        except (ConflictError, InvalidRequestError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)  # noqa: T201
+            return 1
+    print(f"Saved the gold set {name!r}.")  # noqa: T201
+    return 0
+
+
+async def _eval_run(gold_set: str, version: str, email: str, top_k: int) -> int:
+    settings = get_settings()
+    try:
+        version_id = uuid.UUID(version)
+    except ValueError:
+        print("Error: --version must be a curriculum version id.", file=sys.stderr)  # noqa: T201
+        return 1
+    try:
+        embedder = get_embedding_provider(settings)
+    except ProviderError:
+        embedder = None
+    async with database.session_scope() as db:
+        gold = await _find_gold_set(db, gold_set)
+        chosen = await db.get(CurriculumVersion, version_id)
+        user = await db.scalar(select(User).where(User.email == email.casefold()))
+        if gold is None or chosen is None or user is None:
+            print("Error: gold set, version or user not found.", file=sys.stderr)  # noqa: T201
+            return 1
+        try:
+            evaluation, run = await eval_run.start_eval(
+                db, settings, actor_id=user.id, gold_set=gold, version=chosen, top_k=top_k
+            )
+        except (AIError, ConflictError, InvalidRequestError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)  # noqa: T201
+            return 1
+        await db.commit()
+        print(f"Running {run.prompt_version} on {run.model} ({run.total_items} objectives)...")  # noqa: T201
+        await eval_run.execute_eval(
+            db, settings, evaluation.id, embedder=embedder, after_case=db.commit
+        )
+        await db.commit()
+        await db.refresh(run)
+        await db.refresh(evaluation)
+        print(  # noqa: T201
+            f"Finished: {run.status.value}; {run.done_items} done, {run.failed_items} failed, "
+            f"{evaluation.not_found} not found in the version; cost ${run.estimated_cost}."
+        )
+        if run.error_message:
+            print(f"  {run.error_message}")  # noqa: T201
+        cases = await eval_run.case_results(db, evaluation)
+        print()  # noqa: T201
+        _print_figures(cases, 1)
+        print(f"\nEvaluation id: {evaluation.id}")  # noqa: T201
+    return 0
+
+
+async def _eval_report(gold_set: str | None, run_id: str | None, min_coverage: int) -> int:
+    async with database.session_scope() as db:
+        query = select(EvalRun).order_by(EvalRun.created_at)
+        if run_id:
+            query = query.where(EvalRun.id == uuid.UUID(run_id))
+        elif gold_set:
+            gold = await _find_gold_set(db, gold_set)
+            if gold is None:
+                print("Error: gold set not found.", file=sys.stderr)  # noqa: T201
+                return 1
+            query = query.where(EvalRun.gold_set_id == gold.id)
+        evaluations = list(await db.scalars(query))
+        if not evaluations:
+            print("No evaluation runs.")  # noqa: T201
+            return 0
+        print(  # noqa: T201
+            f"Figures at minimum coverage {min_coverage}, most specific item preferred.\n"
+            "Prompt        Model                          objectives  precision recall   F1  "
+            "kappa   cost"
+        )
+        for evaluation in evaluations:
+            run = await db.get(AIRun, evaluation.ai_run_id)
+            if run is None:
+                continue
+            cases = await eval_run.case_results(db, evaluation)
+            scores = eval_metrics.score(cases, min_coverage=min_coverage)
+            print(  # noqa: T201
+                f"{run.prompt_version:<13} {run.model:<30} {scores.objectives:>10}"
+                f"  {_percent(scores.precision)}% {_percent(scores.recall)}%"
+                f" {_number(scores.f1)} {_number(scores.kappa)}  ${run.estimated_cost}"
+            )
+        if len(evaluations) == 1 or run_id:
+            print()  # noqa: T201
+            _print_figures(await eval_run.case_results(db, evaluations[-1]), min_coverage)
+    return 0
+
+
 def _new_encryption_key() -> int:
     print(new_key())  # noqa: T201
     return 0
@@ -268,6 +487,30 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser(
         "embeddings-status", help="Show whether the embeddings server answers and what is embedded."
     )
+    template = commands.add_parser(
+        "eval-template", help="Write the empty Excel gold-set template (Slice 1.19)."
+    )
+    template.add_argument("--framework", default=None, help="Name or id: lists its item codes.")
+    template.add_argument("--out", default="gold-set-template.xlsx")
+    gold_import = commands.add_parser(
+        "eval-import", help="Import a filled-in gold-set workbook (or --demo)."
+    )
+    gold_import.add_argument("file", nargs="?", default=None)
+    gold_import.add_argument("--name", default=None)
+    gold_import.add_argument("--framework", default=None, help="Name or id.")
+    gold_import.add_argument("--dry-run", action="store_true", help="Check only.")
+    gold_import.add_argument("--demo", action="store_true", help="The fictional demo gold set.")
+    evaluate = commands.add_parser(
+        "eval-run", help="Ask the AI to map a gold set's objectives and report the figures."
+    )
+    evaluate.add_argument("--gold-set", required=True, help="Name or id.")
+    evaluate.add_argument("--version", required=True, help="Curriculum version id.")
+    evaluate.add_argument("--email", required=True, help="The person the run is made for.")
+    evaluate.add_argument("--top-k", type=int, default=10)
+    report = commands.add_parser("eval-report", help="Figures of evaluation runs.")
+    report.add_argument("--gold-set", default=None, help="Name or id.")
+    report.add_argument("--run", default=None, help="Evaluation id.")
+    report.add_argument("--min-coverage", type=int, default=1)
     commands.add_parser("setup-token", help="Show the first-run setup token.")
     commands.add_parser("load-demo", help="Load the fictional BSc Health Sciences (Demo) data.")
     orphans = commands.add_parser(
@@ -298,6 +541,16 @@ def main(argv: list[str] | None = None) -> int:
                 return await _embeddings_status()
             if args.command == "load-demo":
                 return await _load_demo()
+            if args.command == "eval-template":
+                return await _eval_template(args.framework, args.out)
+            if args.command == "eval-import":
+                return await _eval_import(
+                    args.file, args.name, args.framework, args.dry_run, args.demo
+                )
+            if args.command == "eval-run":
+                return await _eval_run(args.gold_set, args.version, args.email, args.top_k)
+            if args.command == "eval-report":
+                return await _eval_report(args.gold_set, args.run, args.min_coverage)
             if args.command == "new-encryption-key":
                 return _new_encryption_key()
             if args.command == "rotate-secrets":

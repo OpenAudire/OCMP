@@ -53,3 +53,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [045](045-ai-mapping-pipeline.md) | The AI Mapping Pipeline |
 | [046](046-ai-objective-rewrite-and-classification.md) | AI Objective Rewrite and Classification |
 | [047](047-study-guide-extraction.md) | Study-guide Extraction |
+| [048](048-evaluation-harness.md) | Evaluation Harness and Gold Sets |

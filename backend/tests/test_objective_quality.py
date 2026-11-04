@@ -237,3 +237,42 @@ class TestRulesFiles:
 
     def test_english_rules_are_versioned(self) -> None:
         assert load_rules("en").version >= 1
+
+
+class TestStudyGuideObjectives:
+    """Objectives the study-guide extraction proposed for HBIO101 (Slice 1.18): the checker must
+    still say what is wrong with wording the AI wrote, since a proposal is accepted as it stands."""
+
+    def test_appreciate_is_a_vague_verb(self) -> None:
+        result = check_objective(
+            "Appreciate the importance of communicating clearly with patients about their "
+            "heart health.",
+            FULL,
+            levels(),
+        )
+
+        vague = [f for f in result.findings if f.code == "vague_verb"]
+        assert [f.params["verbs"] for f in vague] == ["appreciate"]
+        assert result.detected_verb == "appreciate"
+
+    def test_interpret_and_recognise_are_two_verbs_in_one_objective(self) -> None:
+        result = check_objective(
+            "Interpret a normal electrocardiogram and recognise common rhythm disturbances.",
+            FULL,
+            levels(),
+        )
+
+        multiple = [f for f in result.findings if f.code == "multiple_verbs"]
+        assert len(multiple) == 1
+        # "recognise" and "recognize" are one verb, however it is spelled.
+        assert multiple[0].params["verbs"] == "interpret, recognize"
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Describe the structure of the heart and the sequence of the cardiac cycle.",
+            "Explain how arterial blood pressure is regulated in the short and long term.",
+        ],
+    )
+    def test_the_other_extracted_objectives_have_no_wording_findings(self, text: str) -> None:
+        assert codes(text) == []

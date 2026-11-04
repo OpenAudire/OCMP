@@ -1,0 +1,593 @@
+{
+  "_comment": "FICTIONAL gold set for the demo data (Slice 1.19). It was written by the developers, one person's judgement, not by a panel: it shows how the harness works and measures nothing about real quality. A real gold set is filled in by hand from the Excel template.",
+  "name": "Demo gold set (fictional)",
+  "description": "The 60 objectives of the demo programme mapped to the Demo Graduate Competencies by the developers. Illustration only.",
+  "framework_key": "demo-graduate-competencies",
+  "cases": [
+    {
+      "objective": "Explain the structure and function of the human body in health and disease.",
+      "links": [
+        {
+          "code": "DGC-1",
+          "coverage": 3,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Analyse health information and research evidence to support decisions.",
+      "links": [
+        {
+          "code": "DGC-1.1",
+          "coverage": 4,
+          "depth": "matches"
+        },
+        {
+          "code": "DGC-1.2",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Perform basic clinical and laboratory procedures safely.",
+      "links": [
+        {
+          "code": "DGC-1.3",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Communicate clearly with patients, communities and colleagues.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Act ethically and professionally in health settings.",
+      "links": [
+        {
+          "code": "DGC-2.2",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Work effectively in interprofessional teams.",
+      "links": [
+        {
+          "code": "DGC-2.3",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Use clear, respectful language when speaking with patients.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Explain common determinants of health in South African communities.",
+      "links": [
+        {
+          "code": "DGC-1.1",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Describe the organisation of cells, tissues and organ systems.",
+      "links": []
+    },
+    {
+      "objective": "Maintain the confidentiality of personal health information.",
+      "links": [
+        {
+          "code": "DGC-2.2",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Explain how the cardiovascular and respiratory systems maintain homeostasis.",
+      "links": [
+        {
+          "code": "DGC-1.1",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Appraise a published study on a community health intervention.",
+      "links": [
+        {
+          "code": "DGC-1.2",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Interpret basic physiological measurements against normal ranges.",
+      "links": [
+        {
+          "code": "DGC-1.1",
+          "coverage": 3,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Contribute constructively to interprofessional team tasks.",
+      "links": [
+        {
+          "code": "DGC-2.3",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Plan a simple health promotion activity with a community partner.",
+      "links": [
+        {
+          "code": "DGC-2.3",
+          "coverage": 3,
+          "depth": "matches"
+        },
+        {
+          "code": "DGC-2.1",
+          "coverage": 2,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Carry out laboratory safety procedures correctly.",
+      "links": [
+        {
+          "code": "DGC-1.3",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Reflect on ethical issues in community-based research.",
+      "links": [
+        {
+          "code": "DGC-2.2",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Write accurate, concise clinical notes.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Open a consultation with an introduction and a request for consent.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 3,
+          "depth": "matches"
+        },
+        {
+          "code": "DGC-2.2",
+          "coverage": 2,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Analyse how the body responds to dehydration.",
+      "links": [
+        {
+          "code": "DGC-1.1",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Describe the elements of patient-centred communication.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 3,
+          "depth": "below"
+        }
+      ]
+    },
+    {
+      "objective": "Summarise the main functions of each organ system.",
+      "links": [
+        {
+          "code": "DGC-1.1",
+          "coverage": 2,
+          "depth": "below"
+        }
+      ]
+    },
+    {
+      "objective": "Present a health promotion plan to peers and a community partner.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 4,
+          "depth": "matches"
+        },
+        {
+          "code": "DGC-2.3",
+          "coverage": 2,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Use an appraisal checklist to assess a community health study.",
+      "links": [
+        {
+          "code": "DGC-1.2",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Identify the research question, design and main findings of a study.",
+      "links": [
+        {
+          "code": "DGC-1.2",
+          "coverage": 2,
+          "depth": "below"
+        },
+        {
+          "code": "DGC-1.1",
+          "coverage": 2,
+          "depth": "below"
+        }
+      ]
+    },
+    {
+      "objective": "List the social determinants of health.",
+      "links": []
+    },
+    {
+      "objective": "Explain the principles of informed consent in community research.",
+      "links": [
+        {
+          "code": "DGC-2.2",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Set measurable goals for a health promotion activity.",
+      "links": []
+    },
+    {
+      "objective": "Identify the main cell organelles and state their functions.",
+      "links": []
+    },
+    {
+      "objective": "Reflect on feedback received during the year.",
+      "links": []
+    },
+    {
+      "objective": "Demonstrate correct use of personal protective equipment in the laboratory.",
+      "links": [
+        {
+          "code": "DGC-1.3",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Describe the roles of different health professions in a care team.",
+      "links": [
+        {
+          "code": "DGC-2.3",
+          "coverage": 3,
+          "depth": "below"
+        }
+      ]
+    },
+    {
+      "objective": "Describe the phases of the cardiac cycle.",
+      "links": []
+    },
+    {
+      "objective": "Write a structured note from a simulated consultation.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Measure blood pressure with a manual sphygmomanometer.",
+      "links": [
+        {
+          "code": "DGC-1.3",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Explain when health information may be shared with others.",
+      "links": [
+        {
+          "code": "DGC-2.2",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Describe the health services available in a local community.",
+      "links": []
+    },
+    {
+      "objective": "Explain how ventilation and perfusion affect gas exchange in the lungs.",
+      "links": [
+        {
+          "code": "DGC-1.1",
+          "coverage": 3,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Set personal learning goals for the next year.",
+      "links": []
+    },
+    {
+      "objective": "Distinguish the four basic tissue types under the microscope.",
+      "links": [
+        {
+          "code": "DGC-1.1",
+          "coverage": 2,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Explain the procedure for reporting a laboratory incident.",
+      "links": [
+        {
+          "code": "DGC-1.3",
+          "coverage": 2,
+          "depth": "below"
+        }
+      ]
+    },
+    {
+      "objective": "Relate the heart sounds to the closure of the heart valves.",
+      "links": [
+        {
+          "code": "DGC-1.1",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Compare a measured blood pressure with normal adult ranges.",
+      "links": [
+        {
+          "code": "DGC-1.1",
+          "coverage": 3,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Use a case to identify gaps in your own knowledge of respiration.",
+      "links": []
+    },
+    {
+      "objective": "Present a concept map of a feedback loop to your peers.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 3,
+          "depth": "matches"
+        },
+        {
+          "code": "DGC-1.1",
+          "coverage": 3,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Assess your own progress using practice questions.",
+      "links": []
+    },
+    {
+      "objective": "Explain how housing and income affect health outcomes.",
+      "links": [
+        {
+          "code": "DGC-1.1",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Judge whether a study's conclusions follow from its results.",
+      "links": [
+        {
+          "code": "DGC-1.2",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Summarise the strengths and weaknesses of a study in writing.",
+      "links": [
+        {
+          "code": "DGC-1.2",
+          "coverage": 4,
+          "depth": "matches"
+        },
+        {
+          "code": "DGC-2.1",
+          "coverage": 2,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Communicate respectfully with community members during a visit.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 4,
+          "depth": "matches"
+        },
+        {
+          "code": "DGC-2.2",
+          "coverage": 2,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Choose suitable communication methods for the target group.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Discuss how power imbalances can affect research participants.",
+      "links": [
+        {
+          "code": "DGC-2.2",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Give constructive feedback on a peer's plan.",
+      "links": [
+        {
+          "code": "DGC-2.3",
+          "coverage": 3,
+          "depth": "matches"
+        },
+        {
+          "code": "DGC-2.1",
+          "coverage": 2,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Recognise common barriers to effective communication.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 3,
+          "depth": "below"
+        }
+      ]
+    },
+    {
+      "objective": "Use open and closed questions appropriately.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Identify confidentiality breaches in case scenarios.",
+      "links": [
+        {
+          "code": "DGC-2.2",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Correct the errors in a sample clinical note.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 2,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Share tasks fairly within an interprofessional group.",
+      "links": [
+        {
+          "code": "DGC-2.3",
+          "coverage": 5,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Reflect in writing on your contribution to the project team.",
+      "links": [
+        {
+          "code": "DGC-2.3",
+          "coverage": 3,
+          "depth": "matches"
+        }
+      ]
+    },
+    {
+      "objective": "Explain the measurement to the person being examined.",
+      "links": [
+        {
+          "code": "DGC-2.1",
+          "coverage": 4,
+          "depth": "matches"
+        }
+      ]
+    }
+  ]
+}

@@ -118,6 +118,10 @@ All on the server, as `docker compose exec api python -m app.cli <command>`:
 | `clean-orphan-links [--apply]` | Data hygiene for installs from before 1.14b: lists (dry run, the default) or, with `--apply`, soft-deletes mapping links whose objective was already deleted. Audited as `mapping.orphan_cleanup`; safe to repeat. See [Mapping](mapping.md#deleting-objectives-and-their-links). |
 | `embed-all` | Makes the embeddings of every objective and framework item that lacks a current one, and removes vectors of deleted items; also finds near-duplicate objectives. Needs `EMBEDDINGS_LOCAL=true` and the `embeddings` service ([Embeddings](../operations/embeddings.md)). Safe to repeat. |
 | `embeddings-status` | Says whether the embeddings server answers (`off`, `ready` or `unreachable`) and how many objectives and framework items have a vector. Exits with 1 when unreachable. |
+| `eval-template [--framework <name>] [--out <file>]` | Writes the empty Excel gold-set template ([Checking the AI's mapping](ai-evaluation.md)). |
+| `eval-import <file> --name <name> --framework <name> [--dry-run]`, `eval-import --demo` | Checks and imports a filled-in gold set (every problem listed with its row; nothing saved unless the file is sound), or the fictional demo set. |
+| `eval-run --gold-set <name> --version <id> --email <address>` | Asks the AI to map a gold set's objectives (nothing is saved) and prints precision, recall, F1 and kappa at each minimum coverage and what bulk accept would do at each floor. Costs money. |
+| `eval-report [--gold-set <name>] [--run <id>] [--min-coverage N]` | Compares evaluation runs by prompt version and model, or prints the figures of one run. |
 | `purge-audit-log [--days N]` | Deletes audit log entries older than N days (default from `.env`). |
 | `purge-ai-content [--days N]` | Clears stored AI prompts and responses older than N days. |
 | `new-encryption-key` | Prints a new key for `SECRETS_ENCRYPTION_KEYS` ([AI settings](ai.md#encryption-keys-and-rotation)). |

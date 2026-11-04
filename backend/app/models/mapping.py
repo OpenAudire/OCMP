@@ -34,6 +34,7 @@ class AIRunType(StrEnum):
     QA = "qa"
     CLASSIFICATION = "classification"
     CONNECTION_TEST = "connection_test"  # the admin's "test connection" button (ADR 042)
+    EVALUATION = "evaluation"  # a run of the evaluation harness on a gold set (ADR 048)
 
 
 class AIRunStatus(StrEnum):

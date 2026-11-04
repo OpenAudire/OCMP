@@ -1231,3 +1231,107 @@ export interface AiConnectionTest {
   output_tokens: number;
   duration_ms: number;
 }
+
+// --- Evaluation of the AI's mapping (Slice 1.19, ADR 048) ---
+
+export interface GoldSet {
+  id: string;
+  name: string;
+  description: string;
+  framework_id: string;
+  framework_name: string;
+  is_demo: boolean;
+  objectives: number;
+  mappings: number;
+  without_mapping: number;
+  created_at: string;
+}
+
+export interface GoldProblem {
+  row: number | null;
+  message: string;
+}
+
+export interface GoldPreview {
+  objectives: number;
+  mappings: number;
+  without_mapping: number;
+  problems: GoldProblem[];
+  saved: GoldSet | null;
+}
+
+export interface EvalCounts {
+  tp: number;
+  fp: number;
+  fn: number;
+  tn: number;
+  total: number;
+}
+
+/** The figures for one setting. A ratio is null when it cannot be worked out. */
+export interface EvalScores {
+  counts: EvalCounts;
+  precision: number | null;
+  recall: number | null;
+  f1: number | null;
+  kappa: number | null;
+  shortlist_recall: number | null;
+  coverage_gap: number | null;
+  coverage_within_one: number | null;
+  depth_agreement: number | null;
+  objectives: number;
+  failed: number;
+  suggestions: number;
+  average_shortlist: number | null;
+}
+
+export interface EvalRun {
+  id: string;
+  gold_set_id: string;
+  gold_set_name: string;
+  version_id: string;
+  status: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'budget_exceeded';
+  prompt_version: string;
+  provider: string;
+  model: string;
+  top_k: number;
+  total_items: number;
+  done_items: number;
+  failed_items: number;
+  not_found: number;
+  input_tokens: number;
+  output_tokens: number;
+  estimated_cost: string;
+  error_message: string | null;
+  created_at: string;
+  finished_at: string | null;
+  scores: EvalScores | null;
+}
+
+export interface EvalBulkRow {
+  floor: number;
+  accepted: number;
+  right: number;
+  wrong: number;
+  precision: number | null;
+  left_for_review: number;
+  left_right: number;
+  recall: number | null;
+}
+
+export interface EvalDisagreement {
+  case_id: string;
+  objective: string;
+  agreed: string[];
+  only_ai: string[];
+  only_gold: string[];
+  not_shown: string[];
+}
+
+export interface EvalDetail extends EvalRun {
+  min_coverage: number;
+  prefer_specific: boolean;
+  by_min_coverage: (EvalScores & { min_coverage: number })[];
+  bulk_accept: EvalBulkRow[];
+  disagreements: EvalDisagreement[];
+}

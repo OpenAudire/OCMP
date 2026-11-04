@@ -172,6 +172,7 @@ To use a dedicated key, or to change it:
 |---|---|---|
 | Suggest links to a framework | Mapping page, [AI mapping](mapping.md#suggesting-links-with-ai) | One call per objective that has candidates; suggestions are never accepted automatically |
 | Rewrite an objective, suggest its domain and level | The objective dialog, [AI help with the wording](users-and-roles.md#ai-help-with-the-wording) | One call per button press; a suggestion changes nothing until it is used and saved |
+| Mark the AI's mapping against a gold set | Admin > Check the AI's mapping, [Checking the AI's mapping](ai-evaluation.md) | One call per gold objective that has candidates; nothing is saved. For administrators who choose the minimum coverage and the bulk-accept floor |
 | Read a study guide into proposed objectives | A module's page, [Study guides](users-and-roles.md#study-guides) | One call per part of the guide (about 12 000 characters each, at most 8 parts); every proposal needs a person to accept it. The uploader must confirm that the guide holds no real patient information |
 
 Meaning-based matching in the mapping shortlist uses the optional

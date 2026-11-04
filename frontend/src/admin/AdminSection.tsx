@@ -1,5 +1,5 @@
 import { Button, Group } from '@mantine/core';
-import { IconSparkles, IconTags } from '@tabler/icons-react';
+import { IconChartDots, IconSparkles, IconTags } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { Link, Route, Routes } from 'react-router';
 
@@ -7,11 +7,13 @@ import { NoAccessPage } from '../pages/StatusPages';
 import { Permission } from '../session/permissions';
 import { useSession } from '../session/useSession';
 import { Page } from '../ui/Page';
+import { AiEvaluationPage } from './AiEvaluationPage';
 import { AiSettingsPage } from './AiSettingsPage';
 import { TagListsPage } from './TagListsPage';
 
 export const TAG_LISTS_PATH = '/admin/tag-lists';
 export const AI_SETTINGS_PATH = '/admin/ai';
+export const AI_EVALUATION_PATH = '/admin/ai-evaluation';
 
 /** `/admin`: the admin screens this user may use (more arrive in later slices). */
 function AdminHome() {
@@ -45,6 +47,16 @@ function AdminHome() {
             {t('admin.aiLink')}
           </Button>
         )}
+        {canManageSettings && (
+          <Button
+            component={Link}
+            to={AI_EVALUATION_PATH}
+            variant="default"
+            leftSection={<IconChartDots size={18} aria-hidden />}
+          >
+            {t('admin.evaluationLink')}
+          </Button>
+        )}
       </Group>
     </Page>
   );
@@ -65,6 +77,10 @@ export function AdminSection() {
       <Route
         path="ai"
         element={canManageSettings ? <AiSettingsPage /> : <NoAccessPage />}
+      />
+      <Route
+        path="ai-evaluation"
+        element={canManageSettings ? <AiEvaluationPage /> : <NoAccessPage />}
       />
       <Route path="*" element={<AdminHome />} />
     </Routes>
