@@ -20,7 +20,15 @@ to a programme outcome and across to the framework?* The brief names the reports
 Both reports are builders of `ReportDoc` (ADR 051): they have a screen, an Excel export and a PDF
 export, state their method and date, and show only what the reader's roles show (ADR 027).
 
-### Redundancy report (needs a framework)
+### Taught in many sessions (the redundancy report; needs a framework)
+
+**Amended in Slice 1.24a (ADR 053).** The report is labelled **"Taught in many sessions"** (it does not say
+that repeating is wrong). The two numbers below are now institution settings (`settings["coverage"]`:
+`repeat_min_sessions`, default 4, and `repeat_spread`, default 1.5) and are printed on the report. A
+programme coordinator (`curriculum.edit` at the programme) can mark an item as an **intentional repeat
+(spiral curriculum)** with a reason: audited (`intended_repeats`, operations `reports.intended_repeat_mark`
+and `_unmark`), per programme (all versions), removed from the list and shown in its own table with the
+reason. Removing the mark lists the item again.
 
 1. **Framework items taught in unusually many sessions.** For each item of the chosen framework: the
    number of distinct **sessions** (learning events) that have an objective with an *accepted* link

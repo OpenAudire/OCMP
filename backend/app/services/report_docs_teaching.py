@@ -23,6 +23,7 @@ from app.models import (
     LearningEvent,
     MappingLink,
     Module,
+    ObjectiveLink,
     Phase,
     TagList,
     TagValue,
@@ -37,6 +38,7 @@ from app.services.mapping_live import live_link
 from app.services.objective_checks import visible_objectives
 from app.services.report_context import ReportContext, common_about
 from app.services.report_export import Column, Kind, ReportDoc, Section
+from app.services.role_balance import Resolution, resolve, split_minutes
 from app.services.tagging import item_tags
 
 NO_PHASE = "(no phase)"
@@ -399,58 +401,80 @@ async def build_role_balance(ctx: ReportContext) -> ReportDoc:
     chosen = await visible_objectives(ctx.db, ctx.visible)
     # Objectives of modules and sessions in the phases being reported on (programme outcomes
     # belong to no phase).
-    in_scope: dict[uuid.UUID, tuple[Objective, uuid.UUID]] = {}
-    for objective, module, _event in chosen:
-        if objective.level is ObjectiveLevel.PROGRAMME or module is None:
-            continue
-        if module.id in teaching.modules:
-            in_scope[objective.id] = (objective, module.id)
+    everything = {
+        o.id: (o, m) for o, m, _e in chosen if o.level is not ObjectiveLevel.PROGRAMME and m
+    }
+    in_scope = {oid: (o, m.id) for oid, (o, m) in everything.items() if m.id in teaching.modules}
     rows = await ctx.db.execute(
         select(MappingLink.objective_id, MappingLink.framework_item_id).where(
             MappingLink.status == MappingStatus.ACCEPTED,
             MappingLink.coverage >= 1,
-            MappingLink.objective_id.in_(list(in_scope) or [uuid.uuid4()]),
+            MappingLink.objective_id.in_(list(everything) or [uuid.uuid4()]),
             MappingLink.framework_item_id.in_(list(root_of) or [uuid.uuid4()]),
             live_link(),
         )
     )
-    groups_of_objective: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
+    own: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
     for objective_id, item_id in rows:
-        groups_of_objective[objective_id].add(root_of[item_id])
+        own[objective_id].add(root_of[item_id])
+    up_links: dict[uuid.UUID, list[uuid.UUID]] = defaultdict(list)
+    for child_id, parent_id in await ctx.db.execute(
+        select(ObjectiveLink.child_id, ObjectiveLink.parent_id).where(
+            ObjectiveLink.child_id.in_(list(in_scope) or [uuid.uuid4()])
+        )
+    ):
+        parent = everything.get(parent_id)
+        if parent is not None and parent[0].level is ObjectiveLevel.MODULE:
+            up_links[child_id].append(parent_id)
+    module_groups: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
+    for oid, (objective, module) in everything.items():
+        if objective.level is ObjectiveLevel.MODULE:
+            module_groups[module.id] |= own.get(oid, set())
 
-    # Objectives: per phase, how many touch each group.
+    def resolution(objective_id: uuid.UUID, module_id: uuid.UUID) -> Resolution:
+        parents = [own.get(p, set()) for p in up_links.get(objective_id, [])]
+        return resolve(own.get(objective_id, set()), parents, module_groups.get(module_id, set()))
+
+    # Objectives: per phase, how many count for each group (and how many of those are estimated).
     objectives_in_phase: dict[uuid.UUID | None, int] = defaultdict(int)
     per_group_objectives: dict[tuple[uuid.UUID | None, uuid.UUID], int] = defaultdict(int)
+    estimated_objectives: dict[tuple[uuid.UUID | None, uuid.UUID], int] = defaultdict(int)
     unmapped_objectives: dict[uuid.UUID | None, int] = defaultdict(int)
-    for objective_id, (_objective, module_id) in in_scope.items():
+    event_resolutions: dict[uuid.UUID, list[Resolution]] = defaultdict(list)
+    for objective_id, (objective, module_id) in in_scope.items():
         key = teaching.phase_key(module_id)
         objectives_in_phase[key] += 1
-        found = groups_of_objective.get(objective_id)
-        if not found:
+        if objective.level is ObjectiveLevel.LEARNING_EVENT:
+            found = resolution(objective_id, module_id)
+            if objective.learning_event_id:
+                event_resolutions[objective.learning_event_id].append(found)
+        else:
+            found = Resolution(frozenset(own.get(objective_id, set())), False)
+        if not found.groups:
             unmapped_objectives[key] += 1
-        for group_id in found or ():
+        for group_id in found.groups:
             per_group_objectives[(key, group_id)] += 1
+            if found.estimated:
+                estimated_objectives[(key, group_id)] += 1
 
-    # Teaching time: a session's contact time is shared equally between the groups its
-    # objectives are mapped to; a session with none is "not mapped".
+    # Teaching time: equal share per objective, divided among the objective's groups.
     minutes_in_phase: dict[uuid.UUID | None, float] = defaultdict(float)
     per_group_minutes: dict[tuple[uuid.UUID | None, uuid.UUID], float] = defaultdict(float)
+    estimated_minutes: dict[tuple[uuid.UUID | None, uuid.UUID], float] = defaultdict(float)
     unmapped_minutes: dict[uuid.UUID | None, float] = defaultdict(float)
-    event_groups: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
-    for objective_id, (objective, _module_id) in in_scope.items():
-        if objective.level is ObjectiveLevel.LEARNING_EVENT and objective.learning_event_id:
-            event_groups[objective.learning_event_id] |= groups_of_objective.get(
-                objective_id, set()
-            )
     for event in teaching.events:
         key = teaching.phase_key(event.module_id)
         minutes_in_phase[key] += event.contact_minutes
-        found = event_groups.get(event.id)
-        if not found:
-            unmapped_minutes[key] += event.contact_minutes
-            continue
-        for group_id in found:
-            per_group_minutes[(key, group_id)] += event.contact_minutes / len(found)
+        resolutions = event_resolutions.get(event.id) or [
+            resolve([], None, module_groups.get(event.module_id, set()))
+        ]
+        for target, minutes, estimated in split_minutes(event.contact_minutes, resolutions):
+            if target is None:
+                unmapped_minutes[key] += minutes
+                continue
+            per_group_minutes[(key, target)] += minutes
+            if estimated:
+                estimated_minutes[(key, target)] += minutes
 
     time = Section(
         "Teaching time by group and phase",
@@ -458,14 +482,17 @@ async def build_role_balance(ctx: ReportContext) -> ReportDoc:
             Column("Phase"),
             Column("Group"),
             Column("Contact hours", Kind.NUMBER),
+            Column("of which estimated", Kind.NUMBER),
             Column("Share of the phase's contact time", Kind.PERCENT),
         ],
         [],
         note=(
-            "A session's contact time is shared equally between the framework groups "
-            "its objectives "
-            "are accepted for; a session with no mapped objective is 'not mapped'. The shares of a "
-            "phase add up to 100%."
+            "Each objective of a session gets an equal share of the session's contact time, "
+            "divided among the framework groups the objective is accepted for. Where a session "
+            "objective has no accepted link of its own, its groups are estimated from the module "
+            "outcomes it links up to (or, with no upward link, from the outcomes of its module); "
+            "the estimated hours are shown apart. What is not found is 'not mapped'. The shares "
+            "of a phase add up to 100%."
         ),
     )
     count = Section(
@@ -474,12 +501,14 @@ async def build_role_balance(ctx: ReportContext) -> ReportDoc:
             Column("Phase"),
             Column("Group"),
             Column("Objectives", Kind.INTEGER),
+            Column("of which estimated", Kind.INTEGER),
             Column("Share of the phase's objectives", Kind.PERCENT),
         ],
         [],
         note=(
-            "Module outcomes and session objectives accepted for the group. An objective that maps "
-            "to two groups counts for both, so a phase's shares can add up to more than 100%."
+            "Module outcomes and session objectives counted for the group (session objectives "
+            "without a link of their own are estimated as above). An objective that maps to two "
+            "groups counts for both, so a phase's shares can add up to more than 100%."
         ),
     )
     for key in teaching.phase_order():
@@ -493,6 +522,7 @@ async def build_role_balance(ctx: ReportContext) -> ReportDoc:
                     name,
                     f"{group.code} {group.title}",
                     hours(minutes),
+                    hours(estimated_minutes.get((key, group.id), 0.0)),
                     minutes / total_minutes if total_minutes else 0.0,
                 ]
             )
@@ -502,15 +532,24 @@ async def build_role_balance(ctx: ReportContext) -> ReportDoc:
                     name,
                     f"{group.code} {group.title}",
                     n,
+                    estimated_objectives.get((key, group.id), 0),
                     n / total_objectives if total_objectives else 0.0,
                 ]
             )
         unmapped = unmapped_minutes.get(key, 0.0)
         time.rows.append(
-            [name, NOT_MAPPED, hours(unmapped), unmapped / total_minutes if total_minutes else 0.0]
+            [
+                name,
+                NOT_MAPPED,
+                hours(unmapped),
+                0.0,
+                unmapped / total_minutes if total_minutes else 0.0,
+            ]
         )
         n = unmapped_objectives.get(key, 0)
-        count.rows.append([name, NOT_MAPPED, n, n / total_objectives if total_objectives else 0.0])
+        count.rows.append(
+            [name, NOT_MAPPED, n, 0, n / total_objectives if total_objectives else 0.0]
+        )
     return ReportDoc(
         key="role-balance",
         title="Role balance report",

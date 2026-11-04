@@ -1278,8 +1278,11 @@ export interface EvalScores {
   kappa: number | null;
   shortlist_recall: number | null;
   coverage_gap: number | null;
-  /** Quadratic-weighted kappa on the coverage score, on the links both made. */
+  /** Plain (unweighted) kappa on the coverage score, on the links both made: the figure
+   * comparable with Theurich et al. 2025 (0.68). */
   coverage_kappa: number | null;
+  /** Quadratic-weighted kappa on the same links: an extra that forgives near misses. */
+  coverage_kappa_weighted: number | null;
   coverage_pairs: number;
   coverage_within_one: number | null;
   depth_agreement: number | null;
@@ -1451,6 +1454,8 @@ export interface CoverageMeta {
     multiple_match_n: number;
     subordinate_min_percent: number;
     weighted_low_percent: number;
+    repeat_min_sessions?: number;
+    repeat_spread?: number;
   };
   generated_at: string;
   /** The user sees only part of the version: the figures cover only that part. */
@@ -1563,4 +1568,18 @@ export interface ReportDocument {
   made_on: string;
   about: { label: string; value: string }[];
   sections: ReportSectionData[];
+}
+
+/** An item the programme teaches in many sessions on purpose (a spiral curriculum). */
+export interface IntendedRepeatMark {
+  id: string;
+  framework_id: string;
+  code: string;
+  title: string;
+  reason: string;
+}
+
+export interface IntendedRepeats {
+  can_edit: boolean;
+  marks: IntendedRepeatMark[];
 }

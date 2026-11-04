@@ -87,13 +87,21 @@ bulk-accept floor, without calling the AI again. Definitions:
 * Objectives the AI could not answer (invalid answer twice, provider failure) are **left out of
   the figures and counted separately**; they are not counted as wrong.
 
-**Agreement on the coverage score (Slice 1.21a).** The existing figures stay, now labelled *link*
-agreement. Beside them the harness reports the **quadratic-weighted kappa between the AI's and the
-gold set's coverage score (0 to 5) on the links both made** (the true positives), and the number of
-links it is worked out on. It is labelled as the kind of figure the study the owner follows reports
-between its two raters (0.68; Theurich et al. 2025, as the owner cited it; we did not read the paper
-and do not know its weights, so quadratic is our choice). It is `None` under two links or when both
-sides give the same single score.
+**Agreement on the coverage score (Slice 1.21a, corrected in 1.24a).** The existing figures stay,
+labelled *link* agreement. Beside them the harness reports the **plain (unweighted) Cohen's kappa
+between the AI's and the gold set's coverage score (0 to 5) on the links both made** (the true
+positives), and the number of links it is worked out on. Theurich et al. 2025 report a plain kappa
+of 0.68 between their two raters with no weighting, so this is the comparable figure. Slice 1.21a
+first reported a quadratic-weighted kappa as the headline; the owner corrected that. The
+**quadratic-weighted kappa is kept as an extra**, labelled not comparable (it forgives near misses
+and so reads higher). Both are `None` under two links or when both sides give the same single
+score.
+
+**The scale is the same for both raters.** The mapping prompt asks "how much of the item the
+objective covers: 1 up to 20% ... 5 up to 100%"; reviewers see "1 to 20% ... 81 to 100%"; the gold-set
+template (corrected in 1.24a, it said only "1 = a mention, 5 = fully") now gives the same bands and
+says "this one item, this one objective". The prompt was **not** changed to fit the developer-written
+gold set.
 
 **Kappa depends on the shortlist length**: a longer shortlist adds true negatives and raises
 kappa without the AI getting better. The figures always show the average number of items shown,

@@ -61,6 +61,12 @@ class CoveragePolicy(BaseModel):
     subordinate_min_percent: Annotated[int, Field(ge=1, le=100)] = 50
     # Weighted coverage: the gap report lists the items under this share of full coverage.
     weighted_low_percent: Annotated[int, Field(ge=1, le=100)] = 40
+    # The report on items taught in many sessions (ADR 053): an item is listed from at least
+    # this many sessions ...
+    repeat_min_sessions: Annotated[int, Field(ge=2, le=100)] = 4
+    # ... and, once five or more items are taught, from the average plus this many standard
+    # deviations of the sessions per item.
+    repeat_spread: Annotated[float, Field(ge=0, le=5)] = 1.5
 
 
 # Pairs below this similarity are never stored (ADR 044), so it is also the lowest threshold

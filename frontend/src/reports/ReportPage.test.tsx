@@ -17,6 +17,9 @@ vi.mock('../api/endpoints', async (importOriginal) => ({
   fetchFrameworkLibrary: vi.fn(),
   fetchReport: vi.fn(),
   fetchReviewCount: vi.fn(),
+  fetchIntendedRepeats: vi.fn(),
+  addIntendedRepeat: vi.fn(),
+  removeIntendedRepeat: vi.fn(),
 }));
 
 const mocked = vi.mocked(endpoints);
@@ -35,11 +38,11 @@ const programmes: ProgrammeSummary[] = [
 
 const document: ReportDocument = {
   key: 'redundancy',
-  title: 'Redundancy report',
+  title: 'Taught in many sessions',
   method: 'Sessions per framework item and near-duplicate objectives',
   made_on: '2026-11-04T09:42:00Z',
   about: [
-    { label: 'Report', value: 'Redundancy report' },
+    { label: 'Report', value: 'Taught in many sessions' },
     { label: 'Method', value: 'Sessions per framework item, from accepted mapping links.' },
     { label: 'Framework', value: 'Competencies (1.0)' },
   ],
@@ -83,13 +86,16 @@ describe('Report page', () => {
       can_manage: false,
     });
     mocked.fetchReport.mockResolvedValue(document);
+    mocked.fetchIntendedRepeats.mockResolvedValue({ can_edit: true, marks: [] });
   });
 
   it('lists every report on the reports page, without role balance outside the health profile', async () => {
     renderAt('/reports');
 
     expect(await screen.findAllByRole('link', { name: 'Open the report' })).toHaveLength(7);
-    expect(screen.getByRole('heading', { level: 2, name: 'Redundancy report' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Taught in many sessions' })
+    ).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Traceability report' })).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { level: 2, name: 'Teaching formats and contact hours' })
@@ -206,5 +212,60 @@ describe('Report page', () => {
 
     expect(await screen.findAllByRole('link', { name: 'Open the report' })).not.toHaveLength(0);
     expect(mocked.fetchReport).not.toHaveBeenCalled();
+  });
+
+  describe('intentional repeats', () => {
+    it('marks a listed item as intentional with a reason, then asks again', async () => {
+      mocked.addIntendedRepeat.mockResolvedValue({
+        can_edit: true,
+        marks: [{ id: 'm1', framework_id: 'fw1', code: 'G1.1', title: 'Skill 1', reason: 'Spiral' }],
+      });
+      renderAt('/reports/redundancy?version=v1&framework=fw1');
+
+      const reason = await screen.findByLabelText('Reason (optional)');
+      fireEvent.change(reason, { target: { value: 'Spiral' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Mark as intentional' }));
+
+      await waitFor(() =>
+        expect(mocked.addIntendedRepeat).toHaveBeenCalledWith('v1', {
+          framework_id: 'fw1',
+          code: 'G1.1',
+          reason: 'Spiral',
+        })
+      );
+      expect(await screen.findByText('G1.1 is marked as an intentional repeat.')).toBeInTheDocument();
+    });
+
+    it('lists the marks and removes one', async () => {
+      mocked.fetchIntendedRepeats.mockResolvedValue({
+        can_edit: true,
+        marks: [{ id: 'm1', framework_id: 'fw1', code: 'G2.1', title: 'Skill', reason: 'Spiral' }],
+      });
+      mocked.removeIntendedRepeat.mockResolvedValue({ can_edit: true, marks: [] });
+      renderAt('/reports/redundancy?version=v1&framework=fw1');
+
+      fireEvent.click(await screen.findByRole('button', { name: 'Remove the mark on G2.1' }));
+
+      await waitFor(() => expect(mocked.removeIntendedRepeat).toHaveBeenCalledWith('v1', 'm1'));
+    });
+
+    it('only lists the marks for someone who may not mark, and shows nothing when there are none', async () => {
+      mocked.fetchIntendedRepeats.mockResolvedValue({
+        can_edit: false,
+        marks: [{ id: 'm1', framework_id: 'fw1', code: 'G2.1', title: 'Skill', reason: '' }],
+      });
+      renderAt('/reports/redundancy?version=v1&framework=fw1');
+
+      expect(await screen.findByText('G2.1 Skill')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Mark as intentional' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Remove the mark/ })).not.toBeInTheDocument();
+    });
+
+    it('is not shown on other reports', async () => {
+      renderAt('/reports/traceability?version=v1');
+
+      await screen.findByRole('heading', { level: 2, name: 'Items taught in many sessions' });
+      expect(screen.queryByRole('heading', { name: /Intentional repeats/ })).not.toBeInTheDocument();
+    });
   });
 });

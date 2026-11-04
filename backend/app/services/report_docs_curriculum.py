@@ -27,6 +27,7 @@ from app.models import (
 )
 from app.models.curriculum import ObjectiveLevel
 from app.models.mapping import MappingStatus
+from app.services.intended_repeats import marked_items
 from app.services.mapping_live import live_link
 from app.services.objective_checks import near_duplicates_among, visible_objectives
 from app.services.report_context import ReportContext, common_about
@@ -34,7 +35,7 @@ from app.services.report_export import Column, Kind, ReportDoc, Section
 
 # An item is "taught in unusually many sessions" from at least this many, and from the average plus
 # this many standard deviations when there are enough items to say what usual is.
-REDUNDANCY_MIN_SESSIONS = 4
+REDUNDANCY_MIN_SESSIONS = 4  # the defaults of CoveragePolicy.repeat_min_sessions / repeat_spread
 REDUNDANCY_SPREAD = 1.5
 REDUNDANCY_MIN_ITEMS_FOR_SPREAD = 5
 SESSIONS_LISTED = 8
@@ -50,14 +51,18 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-def unusual_threshold(counts: list[int]) -> float:
-    """The number of sessions from which a framework item counts as taught in unusually many: at
-    least ``REDUNDANCY_MIN_SESSIONS``, and the average plus ``REDUNDANCY_SPREAD`` standard
-    deviations when there are enough items to say what the average is."""
+def unusual_threshold(
+    counts: list[int],
+    min_sessions: int = REDUNDANCY_MIN_SESSIONS,
+    spread: float = REDUNDANCY_SPREAD,
+) -> float:
+    """The number of sessions from which a framework item counts as taught in many: at least
+    ``min_sessions``, and the average plus ``spread`` standard deviations when there are enough
+    items to say what the average is (both are institution settings)."""
     if len(counts) >= REDUNDANCY_MIN_ITEMS_FOR_SPREAD:
-        spread = statistics.mean(counts) + REDUNDANCY_SPREAD * statistics.pstdev(counts)
-        return max(float(REDUNDANCY_MIN_SESSIONS), spread)
-    return float(REDUNDANCY_MIN_SESSIONS)
+        limit = statistics.mean(counts) + spread * statistics.pstdev(counts)
+        return max(float(min_sessions), limit)
+    return float(min_sessions)
 
 
 def _where(module: Module | None, event: LearningEvent | None) -> str:
@@ -94,7 +99,11 @@ async def build_redundancy(ctx: ReportContext) -> ReportDoc:
         if event is not None:
             sessions[item_id][event.id] = (module, event)
     counts = {item_id: len(found) for item_id, found in sessions.items()}
-    threshold = unusual_threshold(list(counts.values()))
+    policy = ctx.policy
+    threshold = unusual_threshold(
+        list(counts.values()), policy.repeat_min_sessions, policy.repeat_spread
+    )
+    marks = await marked_items(ctx.db, ctx.visible.programme.id)
     items = {
         i.id: i
         for i in await ctx.db.scalars(
@@ -102,7 +111,7 @@ async def build_redundancy(ctx: ReportContext) -> ReportDoc:
         )
     }
     flagged = sorted(
-        (item_id for item_id, n in counts.items() if n >= threshold),
+        (item_id for item_id, n in counts.items() if n >= threshold and item_id not in marks),
         key=lambda item_id: (-counts[item_id], items[item_id].code),
     )
     taught = Section(
@@ -117,10 +126,13 @@ async def build_redundancy(ctx: ReportContext) -> ReportDoc:
         [],
         note=(
             f"Framework items that accepted mapping links tie to at least {threshold:.1f} sessions "
-            f"(the larger of {REDUNDANCY_MIN_SESSIONS} and, with {REDUNDANCY_MIN_ITEMS_FOR_SPREAD} "
-            f"or more items taught, the average plus {REDUNDANCY_SPREAD} standard deviations). "
+            f"(the larger of {policy.repeat_min_sessions} and, with "
+            f"{REDUNDANCY_MIN_ITEMS_FOR_SPREAD} or more items taught, the average plus "
+            f"{policy.repeat_spread:g} standard deviations: the institution's settings). "
             f"{len(counts)} items are taught in at least one session. Many sessions is not "
-            "necessarily too many: it may be a thread, or it may be overlap to look at."
+            "necessarily too many: it may be a thread, or it may be overlap to look at. Items "
+            "the programme has marked as intentional (spiral curriculum) are left out and "
+            "listed below."
         ),
     )
     for item_id in flagged:
@@ -138,6 +150,35 @@ async def build_redundancy(ctx: ReportContext) -> ReportDoc:
                 counts[item_id],
                 len(modules[item_id]),
                 listed,
+            ]
+        )
+
+    intentional = Section(
+        "Marked as intentional (spiral curriculum)",
+        [
+            Column("Code"),
+            Column("Item"),
+            Column("Sessions now", Kind.INTEGER),
+            Column("Taught in many sessions now", Kind.TEXT),
+            Column("Reason"),
+        ],
+        [],
+        note=(
+            "Items of this framework that the programme's coordinators decided are taught "
+            "repeatedly on purpose. They are not listed above. Each mark is in the audit log."
+        ),
+    )
+    for item_id, row in sorted(marks.items(), key=lambda kv: kv[1].created_at):
+        item = items.get(item_id)
+        if item is None:
+            continue
+        intentional.rows.append(
+            [
+                item.code,
+                item.title,
+                counts.get(item_id, 0),
+                "Yes" if counts.get(item_id, 0) >= threshold else "No",
+                row.reason,
             ]
         )
 
@@ -189,7 +230,7 @@ async def build_redundancy(ctx: ReportContext) -> ReportDoc:
         )
 
     about = [
-        ("Report", "Redundancy report"),
+        ("Report", "Taught in many sessions"),
         (
             "Method",
             "Sessions per framework item, from accepted mapping links; and stored near-duplicate "
@@ -200,11 +241,11 @@ async def build_redundancy(ctx: ReportContext) -> ReportDoc:
     ]
     return ReportDoc(
         key="redundancy",
-        title="Redundancy report",
+        title="Taught in many sessions",
         about=about,
         method="Sessions per framework item and near-duplicate objectives",
         made_on=made,
-        sections=[taught, duplicates],
+        sections=[taught, intentional, duplicates],
     )
 
 

@@ -255,6 +255,8 @@ class TestAPI:
             "multiple_match_n": 3,
             "subordinate_min_percent": 50,
             "weighted_low_percent": 40,
+            "repeat_min_sessions": 4,
+            "repeat_spread": 1.5,
         }
 
         assert (await api_client.get("/api/v1/institution")).json()["coverage"] == defaults

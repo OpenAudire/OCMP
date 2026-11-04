@@ -22,9 +22,16 @@ one row with the objective left empty.
 
 Only where the institution has the health profile on (Administration, institution settings); otherwise it is not
 listed. Choose a framework. For each phase and each top-level group of the framework: contact hours and share of
-the phase's contact time, and the number and share of objectives. A session's time is **divided equally** between
-the groups its objectives are accepted for; a session with no accepted link is "Not mapped to this framework".
-An objective that maps to two groups counts for both, so those shares can add up to more than 100%.
+the phase's contact time, and the number and share of objectives.
+
+* Each **objective** of a session gets an equal share of the session's contact time, and that share is divided
+  among the groups the objective is accepted for. (Two objectives, 120 minutes: 60 each; if the first maps to two
+  groups, each gets 30.)
+* An objective with no accepted link of its own is **estimated**: from the module outcomes it is linked up to, or,
+  if it is linked to none, from the outcomes of its module. Estimated hours and objectives are shown in the column
+  "of which estimated". If the outcomes it links up to are not mapped either, it is "Not mapped to this framework".
+* An objective that maps to two groups counts for both in the objective counts, so those shares can add up to more
+  than 100%.
 
 ## Assessment methods
 

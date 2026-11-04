@@ -5,16 +5,24 @@ Like every report they state their method and the time they were made, can be do
 ([Coverage and gap reports](coverage-reports.md#exporting-a-report)), need the `reports.view` permission and
 show only what you may see. The design is in [ADR 052](../adr/052-redundancy-and-traceability.md).
 
-## Redundancy report
+## Taught in many sessions
+
+(The key `redundancy`; it used to be called the redundancy report. Many sessions is not wrong in itself.)
 
 Choose a version and a framework.
 
 **Items taught in many sessions.** For each framework item, how many *sessions* have an objective that is
 **accepted** for it (and in how many modules). An item is listed when that number is at least the larger of
 **4** and, once five or more items are taught, the **average plus 1.5 standard deviations**. The report prints
-the threshold it used. The two numbers are fixed starting values and have not been measured on a real
-programme. A long list is not a verdict: an item taught in many sessions can be a deliberate thread. It is
+the threshold it used. The two numbers are institution settings (`repeat_min_sessions` and `repeat_spread` in the
+`coverage` section, see [Basics](basics.md)); the starting values have not been measured on a real programme. A long list is not a verdict: an item taught in many sessions can be a deliberate thread. It is
 a list of places to look.
+
+**Marked as intentional (spiral curriculum).** A programme that returns to a competency on purpose can say so:
+below the report, choose the item, give a reason (optional) and press *Mark as intentional*. It needs the
+`curriculum.edit` permission at the programme (a programme coordinator or director). The item then leaves the
+list and appears in this table with its reason; *Remove mark* lists it again. Marks belong to the programme (all
+its versions) and are recorded in the audit log. Everyone who can see the report sees the marks.
 
 **Near-duplicate objectives in different modules.** Pairs of objectives of the same level, in different
 modules, whose wording is close (the same threshold as the objective checker, 95% unless your institution

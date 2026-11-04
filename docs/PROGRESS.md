@@ -828,6 +828,10 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.24 | **A session's contact time is shared equally** between the top-level framework groups its objectives are accepted for (unmapped sessions are "not mapped"); objective shares count an objective for every group it maps to | Sessions have no per-objective time, so something has to be assumed; stated on the report | Easy to change (one function); **not checked against a real health programme** | Decided in 1.24, to review |
 | 1.24 | The role balance report is **refused unless the institution's profile has the `role_balance_report` feature**, and the screen hides it | The brief puts it in the health profile only | Easy | Decided in 1.24, to review |
 | 1.24 | Format and assessment-method figures use the **teaching-method and assessment-method tags** already on sessions and assessments; hours are the planned minutes | No new data; tags are what the brief means by format and method | Easy | Decided in 1.24, to review |
+| 1.24a | **The comparable kappa is the plain (unweighted) Cohen's kappa on the 0 to 5 coverage score**, as Theurich et al. report (0.68, no weights); the quadratic-weighted kappa stays as a labelled extra | Owner's correction of 1.21a (I had chosen quadratic weights without reading the paper) | Easy | Decided by the owner in 1.24a |
+| 1.24a | Coverage wording: the prompt, the reviewer's screen and now the gold-set template all use the same bands (1 = 1 to 20% ... 5 = 81 to 100%) for "how much of this one item this one objective covers". **The prompt was not changed** | The template had said "1 = a mention, 5 = fully", a looser scale than the AI was given | The template text is documentation for raters | Decided in 1.24a, to review |
+| 1.24a | Role balance: each objective gets an equal share of its session's time, divided among its groups; an objective with no link of its own is **estimated** from the module outcomes it links up to, else (no upward link at all) from its module's outcomes; estimated hours and objectives have their own column | Owner's rules | One pure module (`role_balance.py`) | Decided by the owner in 1.24a |
+| 1.24a | The redundancy report is labelled **Taught in many sessions**; its two numbers are settings (`repeat_min_sessions` 4, `repeat_spread` 1.5 in `settings["coverage"]`); an item can be marked **intentional (spiral curriculum)** per programme by someone with `curriculum.edit` at the programme, audited, with a reason; marked items are shown in their own table | Owner's rules; the permission for "a coordinator" is my choice (programme director and curriculum office hold it) | A new permission is easy to add | Decided in 1.24a, to review |
 
 ---
 
@@ -1751,3 +1755,27 @@ Four more report documents (ADR 051, design in ADR 053): teaching formats and co
 **Not in this slice**: a phase filter on the screen (API only), time per objective within a session, blueprints, comparing with credits, anything from 1.25.
 
 **Commit**: `feat: add teaching formats, relationship, role balance and assessment method reports`
+
+
+### Slice 1.24a: Kappa, Contact-Time Split, Taught in Many Sessions, Estimated Role Balance
+**Status**: Complete
+
+The owner's review of 1.21a to 1.24, applied. ADR 048, 052 and 053 are amended.
+
+**Deliverables**:
+- [x] **Kappa**: `eval_metrics.score_kappa` (plain Cohen's kappa on the coverage score, 0 to 5, on the links both made) is now `coverage_kappa`, the figure to compare with Theurich et al. (0.68); `coverage_kappa_weighted` (quadratic) is an extra. The CLI table, the evaluation screen (a weighted column and line) and the docs say which is which. The gold-set template now defines coverage with the same percentage bands as the prompt and the reviewers' screen
+- [x] **Contact-time split**: `services/role_balance.py` (pure): an equal share of a session's time per objective, divided among that objective's groups
+- [x] **Estimated role balance**: an objective with no link of its own takes the groups of the module outcomes it links up to, else (no upward link at all) its module's outcomes; sessions with no objective use the module's outcomes; the estimated hours and objectives are a column of their own
+- [x] **Taught in many sessions**: the report is renamed; the threshold is a setting (`repeat_min_sessions`, `repeat_spread`); new table `intended_repeats` (migration 0027, audited) with `GET/POST/DELETE /curriculum-versions/{id}/intended-repeats` and a panel on the report (mark with a reason, list, remove); marked items leave the list and have their own table
+- [x] Docs: ADR 048/052/053, `ai-evaluation.md`, `teaching-reports.md`, `curriculum-reports.md`, `basics.md`, data inventory
+
+**On the dev database** (real data): **the plain coverage-score kappa on the existing evaluation run is -0.00 on 53 links (0.03 at a minimum coverage of 2, 0.01 at 3), against Charité's 0.68; the weighted extra is 0.28.** Exact agreement is 9 of 54 links (17%). The gold set gives 2 to 5 (mostly 4 and 5), the AI mostly 2 and 3 (and 1 for six links): the AI scores about one point lower, and plain kappa treats a one-point difference as total disagreement. If the AI's scores were raised by one, plain kappa would still only be 0.17. This is on a gold set the developers wrote and on a toy framework, so it is not a verdict on the AI, but it shows that **our AI does not yet score coverage the way a human rater does**, and that the prompt's coverage scale has not been tuned (it was deliberately not, as instructed). The role balance report on the 2026 demo: every hour is estimated (only module outcomes are mapped in the demo): Year 1 is 100% DGC-1, Year 2 is 48% / 52%.
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy pass; `test_role_balance.py` (8, no database: the resolution order, upward links with unmapped outcomes, the fallback, the split by objective with a hand-worked 90/30), `test_intended_repeats.py` (9: label, the settings and their limits, marking removes the item and shows it apart, audit and unmark and mark again, once only and unknown item, the list and a version that cannot be seen, who may not mark, the reason limit), `test_reports_teaching.py` (7, incl. an estimated objective), `test_eval_metrics.py` (4, incl. a hand-worked plain kappa of 0.8)
+- Frontend: lint and typecheck pass; `ReportPage.test.tsx` (+4: mark, remove, read-only, not on other reports) and the evaluation page tests pass
+- Docker rebuilt (migration 0027 applied), real data checked as above. **Not verified**: the Playwright journeys (CI), the new panel by eye, the mark with a non-administrator in a browser
+
+**Not in this slice**: a screen for the two new settings (API only, like the other coverage settings), a phase filter on the screen, tuning the prompt's coverage scale.
+
+**Commit**: `feat: apply the review of 1.21a-1.24 (plain kappa, per-objective time split, estimated role balance, intentional repeats)`

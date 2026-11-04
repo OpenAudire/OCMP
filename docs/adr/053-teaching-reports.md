@@ -28,11 +28,18 @@ every report. Hours are minutes divided by 60, to one decimal.
    the session and the tags of the objective. A table to filter in Excel; cut at 5 000 rows.
 3. **Role balance** (`role-balance`, framework required, health profile only). For each phase and each
    top-level group of the framework: the contact hours and the share of the phase's contact time, and the
-   number and share of the phase's objectives. A session's contact time is **shared equally** between the
-   distinct top-level groups its objectives are *accepted* for; a session with none is "Not mapped to this
-   framework". An objective that maps to two groups counts for both, so the objective shares of a phase can
-   add up to more than 100%. The report is refused (422) while the institution's profile does not include the
-   `role_balance_report` feature, and the screen hides it.
+   number and share of the phase's objectives. **Corrected in Slice 1.24a:** each *objective* of a session
+   gets an **equal share of the session's contact time** (minutes divided by the number of its objectives),
+   and that share is divided equally among the distinct top-level groups the objective is *accepted* for
+   (not an equal split per group, as first built). An objective whose own accepted links give no group is
+   **estimated**: first from the accepted links of the module outcomes it links up to (`ObjectiveLink`);
+   only if it has **no** upward link, from the accepted links of all outcomes of its module (a session with
+   no objective at all is estimated the same way). Upward links whose outcomes are unmapped leave the
+   objective "not mapped", not the module's groups. Estimated hours and objectives are shown in their own
+   column ("of which estimated"). The rules are pure functions in `services/role_balance.py`. An objective
+   that maps to two groups counts for both in the objective counts, so those shares can exceed 100%. The
+   report is refused (422) while the institution's profile does not include the `role_balance_report`
+   feature, and the screen hides it.
 4. **Assessment methods** (`assessments`, no framework). For every value of the assessment-method tag lists:
    the number of assessments, the modules they belong to, the objectives their items assess, and the modules
    and objectives tagged with the method. A second table lists the module outcomes and session objectives
@@ -42,12 +49,12 @@ every report. Hours are minutes divided by 60, to one decimal.
 ## What this does not do
 
 * Judge whether a mix of formats is good, or compare hours with credits.
-* Split a session's time by how much of it each objective takes (equal shares are a stated simplification;
-  sessions have no such figure).
+* Split a session's time by how much of it each objective actually takes (equal shares per objective are a
+  stated simplification; sessions have no such figure).
 * Count time of sessions the reader cannot see.
 * Translate the tables (ADR 051). The phase filter is in the API; the screen does not offer it yet.
 
 ## Consequences
 
 * Four builders and four registry entries; the generic report screen (Slice 1.23) shows them.
-* The equal split is an assumption the owner may want to change.
+* Equal shares per objective remain an assumption (sessions have no time per objective); estimated figures are labelled.

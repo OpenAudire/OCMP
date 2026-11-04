@@ -14,6 +14,7 @@ import { REPORT_PAGES } from './reportPages';
 import classes from './Coverage.module.css';
 import { formatMade, percent } from './coverageFormat';
 import { ExportLinksFor } from './ExportLinks';
+import { IntendedRepeatsPanel } from './IntendedRepeatsPanel';
 
 function cell(value: string | number | null, column: ReportColumn): string {
   if (value === null || value === '') return '–';
@@ -184,6 +185,13 @@ export function ReportPage() {
               )}
             </Paper>
             <Sections report={report.data} />
+            {key === 'redundancy' && frameworkId && (
+              <IntendedRepeatsPanel
+                versionId={versionId}
+                frameworkId={frameworkId}
+                report={report.data}
+              />
+            )}
           </>
         )}
       </Stack>

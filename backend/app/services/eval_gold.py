@@ -44,8 +44,9 @@ INSTRUCTIONS = (
     "  Objective text - copy the objective's wording exactly as it is in the curriculum. The "
     "same wording on several rows is one objective.",
     "  Framework item code - the code in the framework (the 'Framework items' sheet lists them).",
-    "  Coverage (0-5) - how much of the item the objective covers: 0 = no, 1 = a mention, "
-    "5 = fully. Use 0 to record 'I looked and it does not map here'.",
+    "  Coverage (0-5) - how much of this one item this one objective covers, on the scale "
+    "reviewers see: 0 = none, 1 = 1 to 20%, 2 = 21 to 40%, 3 = 41 to 60%, 4 = 61 to 80%, "
+    "5 = 81 to 100%. Use 0 to record 'I looked and it does not map here'.",
     "  Depth - below, matches, above, or not_applicable (the item has no verb or level). "
     "Leave blank if you are not sure.",
     "  Notes - anything you want to remember; never read by the program.",

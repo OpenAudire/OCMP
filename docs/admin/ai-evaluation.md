@@ -26,7 +26,7 @@ floor**. This page shows how. It needs the `settings.manage` permission (the peo
 |---|---|
 | Objective text | The objective's wording, copied exactly from the curriculum. The same wording on several rows is one objective |
 | Framework item code | A code of the framework (a dropdown lists them; the `Framework items` sheet shows their titles) |
-| Coverage (0-5) | How much of the item the objective covers. 0 = it does not map here, 1 = a mention, 5 = fully |
+| Coverage (0-5) | How much of this one item this one objective covers, on the scale reviewers and the AI use: 0 = it does not map here, 1 = 1 to 20%, 2 = 21 to 40%, 3 = 41 to 60%, 4 = 61 to 80%, 5 = 81 to 100% |
 | Depth | `below`, `matches`, `above`, or `not_applicable` (the item has no verb or level). Leave blank if unsure |
 | Notes | For yourself. The program never reads this column |
 
@@ -91,7 +91,7 @@ changing the prompt (a new release) or the model ([AI settings](ai.md)).
 | **Recall** | Of the links in the gold set, the share the AI suggested. Low recall means gaps the AI never raises |
 | **F1** | One number from the two (their harmonic mean) |
 | **Link kappa** (kappa) | Agreement between the AI and the gold set, beyond chance, on **which links exist**. 0.6 is the target for the real pilot (brief, section 8); 0 is no better than chance |
-| **Coverage-score kappa** | Agreement on the **coverage score** (0 to 5) between the AI and the gold set, on the links **both** made: quadratic-weighted kappa, so a near miss counts for little and a far miss for a lot. It is the kind of figure the study the curriculum office cited reports between its two human raters (0.68, Theurich et al. 2025), so it is the one to compare with that. It is worked out on a different set (links both made) from the link kappa and says nothing about which links exist; the page shows how many links it rests on |
+| **Coverage-score kappa** | Agreement on the **coverage score** (0 to 5) between the AI and the gold set, on the links **both** made, as plain Cohen's kappa (any difference counts the same). Theurich et al. 2025 report this kind of kappa (0.68) between their two human raters, so it is the one to compare with that. It is worked out on a different set (links both made) from the link kappa and says nothing about which links exist; the page shows how many links it rests on. Beside it, the **weighted kappa** (quadratic weights, near misses count for little) is an extra: it reads higher and is not comparable with the published figure |
 | **Shown to the AI** | The share of gold links that were on the AI's shortlist at all. Recall can never be higher than this, so a low figure points at retrieval (embeddings, shortlist size), not at the model |
 
 !!! warning "Kappa depends on the shortlist"

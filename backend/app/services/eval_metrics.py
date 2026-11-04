@@ -87,9 +87,11 @@ class Scores:
     # of gold depths (where the gold set gives one) that the AI matched.
     coverage_gap: float | None
     # Agreement on the coverage score (0 to 5) between the AI and the gold set, on the links both
-    # made: quadratic-weighted kappa and how many links it is worked out on. The study the owner
-    # wants us comparable with reports 0.68 between its two raters; this is that kind of figure.
+    # made: the plain (unweighted) kappa, the figure comparable with the 0.68 that Theurich et al.
+    # 2025 report between their two raters, and how many links it is worked out on. The
+    # quadratic-weighted kappa is an extra: it forgives near misses.
     coverage_kappa: float | None
+    coverage_kappa_weighted: float | None
     coverage_pairs: int
     coverage_within_one: float | None
     depth_agreement: float | None
@@ -102,11 +104,16 @@ class Scores:
 SCORE_LEVELS = 6  # coverage scores 0 to 5
 
 
-def weighted_kappa(pairs: Sequence[tuple[int, int]], levels: int = SCORE_LEVELS) -> float | None:
-    """Cohen's kappa for two raters' scores on an ordered scale, with quadratic weights (a
-    disagreement counts for the square of its distance, so 1 against 5 is far worse than 4
-    against 5). ``pairs`` are (first rater, second rater). ``None`` below two pairs or when the
-    raters' scores give chance nothing to explain (everything identical on both sides)."""
+def weighted_kappa(
+    pairs: Sequence[tuple[int, int]], levels: int = SCORE_LEVELS, *, quadratic: bool = True
+) -> float | None:
+    """Cohen's kappa for two raters' scores on a scale. ``pairs`` are (first rater, second rater).
+
+    With ``quadratic`` (the default) a disagreement counts for the square of its distance, so 1
+    against 5 is far worse than 4 against 5. With ``quadratic=False`` it is the plain, unweighted
+    kappa: any disagreement counts as one, however near, which is the figure Theurich et al. 2025
+    report (0.68) and the one to compare with. ``None`` below two pairs or when the raters' scores
+    give chance nothing to explain (everything identical on both sides)."""
     n = len(pairs)
     if n < 2:
         return None
@@ -122,12 +129,17 @@ def weighted_kappa(pairs: Sequence[tuple[int, int]], levels: int = SCORE_LEVELS)
     observed = expected = 0.0
     for i in range(levels):
         for j in range(levels):
-            weight = (i - j) ** 2 / scale
+            weight = (i - j) ** 2 / scale if quadratic else float(i != j)
             observed += weight * joint[i][j] / n
             expected += weight * (first[i] / n) * (second[j] / n)
     if expected == 0:
         return None
     return 1 - observed / expected
+
+
+def score_kappa(pairs: Sequence[tuple[int, int]]) -> float | None:
+    """Plain (unweighted) Cohen's kappa on the 0 to 5 coverage scores."""
+    return weighted_kappa(pairs, quadratic=False)
 
 
 def ratio(numerator: float, denominator: float) -> float | None:
@@ -232,7 +244,8 @@ def score(
         kappa=kappa_of(counts),
         shortlist_recall=ratio(shown, gold_total),
         coverage_gap=ratio(sum(gaps), len(gaps)),
-        coverage_kappa=weighted_kappa(score_pairs),
+        coverage_kappa=score_kappa(score_pairs),
+        coverage_kappa_weighted=weighted_kappa(score_pairs),
         coverage_pairs=len(score_pairs),
         coverage_within_one=ratio(sum(1 for g in gaps if g <= 1), len(gaps)),
         depth_agreement=ratio(sum(depth_pairs), len(depth_pairs)),

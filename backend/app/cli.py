@@ -243,8 +243,8 @@ async def _find_gold_set(db: AsyncSession, name_or_id: str) -> GoldSet | None:
 def _print_figures(cases: list[eval_metrics.CaseResult], min_coverage: int) -> None:
     print(  # noqa: T201
         "Agreement on which links exist (precision, recall, F1, kappa over links) and on the\n"
-        "coverage score (weighted kappa on the links both made):\n"
-        "Minimum coverage:  precision recall    F1  kappa  score-kappa  suggestions"
+        "coverage score (plain and quadratic-weighted kappa, on the links both made):\n"
+        "Minimum coverage:  precision recall    F1  kappa  score-kappa  weighted  suggestions"
         "  (right / wrong / missed)"
     )
     for row in eval_metrics.sweep(cases):
@@ -254,13 +254,15 @@ def _print_figures(cases: list[eval_metrics.CaseResult], min_coverage: int) -> N
             f"  {row['min_coverage']} or more:       {_percent(row['precision'])}%"
             f" {_percent(row['recall'])}% {_number(row['f1'])} {_number(row['kappa'])}"
             f"  {_number(row['coverage_kappa'])} (n={row['coverage_pairs']})"
+            f"  {_number(row['coverage_kappa_weighted'])}"
             f"  {row['suggestions']:>6}       ({c['tp']} / {c['fp']} / {c['fn']}){mark}"
         )
     print(  # noqa: T201
-        "\nscore-kappa: quadratic-weighted kappa between the AI's and the gold set's coverage\n"
-        "score on the links both made; the study cited by the owner reports 0.68 between its\n"
-        "two raters (Theurich et al. 2025), so this is that kind of figure. It is not worked\n"
-        "out over which links exist."
+        "\nscore-kappa: plain (unweighted) Cohen's kappa between the AI's and the gold set's\n"
+        "coverage score (0 to 5) on the links both made; Theurich et al. 2025 report 0.68\n"
+        "between their two raters, so this is the comparable figure. weighted: the same with\n"
+        "quadratic weights, which forgive near misses (an extra, not comparable). Neither is\n"
+        "worked out over which links exist."
     )
     print(f"\nBulk accept at minimum coverage {min_coverage}:")  # noqa: T201
     print("  floor   accepted  right  wrong  precision  left for review")  # noqa: T201

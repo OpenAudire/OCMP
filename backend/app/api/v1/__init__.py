@@ -17,6 +17,7 @@ from app.api.v1.curriculum_versions import router as curriculum_versions_router
 from app.api.v1.framework_packs import router as framework_packs_router
 from app.api.v1.frameworks import router as frameworks_router
 from app.api.v1.institution import router as institution_router
+from app.api.v1.intended_repeats import router as intended_repeats_router
 from app.api.v1.mapping import router as mapping_router
 from app.api.v1.mapping_review import router as mapping_review_router
 from app.api.v1.objective_checks import router as objective_checks_router
@@ -55,4 +56,5 @@ router.include_router(mapping_review_router)
 router.include_router(search_router)
 router.include_router(coverage_router)
 router.include_router(reports_router)
+router.include_router(intended_repeats_router)
 router.include_router(setup_router)

@@ -15,7 +15,7 @@ from app.models import (
     TagValue,
 )
 from app.models.tagging import TagListKind
-from app.services.curriculum import add_objective
+from app.services.curriculum import add_objective, link_objectives
 from app.services.institution_settings import get_institution
 from app.services.tagging import add_tag_value
 from tests.factories import LearningEventFactory, PhaseFactory, TagListFactory
@@ -170,6 +170,35 @@ class TestRoleBalance:
         assert time["Not mapped to this framework"][2] >= 1.0
         count = {r[1]: r for r in section(body, "Objectives")["rows"]}
         assert next(r for k, r in count.items() if k.startswith("G1 "))[2] == 1
+
+    async def test_an_objective_with_no_link_is_estimated_from_the_outcome_it_links_up_to(
+        self, api_client: AsyncClient, db_session: AsyncSession, world: World, library: Library
+    ) -> None:
+        institution = await get_institution(db_session)
+        assert institution is not None
+        institution.settings = {**institution.settings, "profiles": ["core", "health"]}
+        await db_session.flush()
+        # A module outcome of anatomy mapped to G2 (a different group from the session's own).
+        outcome = world.anatomy_outcome
+        await accept(db_session, outcome, library.other)
+        event = await session(db_session, world.anatomy, "Mixed", contact=120)
+        own = await add_objective(db_session, event, "Has its own link.")
+        estimated = await add_objective(db_session, event, "Has none of its own.")
+        await accept(db_session, own, library.one)  # G1
+        await link_objectives(db_session, estimated, outcome)  # up to the outcome (G2)
+
+        body = await get(api_client, world, "role-balance", framework_id=str(library.framework.id))
+
+        time = {r[1]: r for r in section(body, "Teaching time")["rows"]}
+        g1 = next(r for k, r in time.items() if k.startswith("G1 "))
+        g2 = next(r for k, r in time.items() if k.startswith("G2 "))
+        # 120 minutes over two objectives: 60 to G1 (its own), 60 to G2 (estimated).
+        assert g1[2] >= 1.0 and g2[2] >= 1.0
+        # G2's hours are all estimated (the world's other anatomy sessions, which have no
+        # objective, fall back to the module's outcomes and add to them).
+        assert g2[3] >= 1.0 and g2[3] == g2[2]
+        assert g1[3] == 0.0
+        assert "estimated" in section(body, "Teaching time")["note"]
 
 
 @pytest.mark.usefixtures("admin")

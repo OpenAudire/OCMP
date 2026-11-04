@@ -44,7 +44,9 @@ number to check the credits at the programme's NQF exit level).
 [coverage and gap reports](coverage-reports.md): `multiple_match_n` (default 3, from 1 to 20: the links
 that make an item covered by multiple match), `subordinate_min_percent` (50: the gap report lists the
 groups where fewer of the items below are covered) and `weighted_low_percent` (40: the gap report lists
-the items under this share of full coverage). Every report prints these numbers.
+the items under this share of full coverage). Two more numbers belong to the report
+[Taught in many sessions](curriculum-reports.md): `repeat_min_sessions` (default 4, from 2 to 100) and
+`repeat_spread` (1.5, from 0 to 5 standard deviations). Every report prints these numbers.
 
 Settings screens arrive in Phase 1. Until then, change them through the API (needs the
 platform admin role). Each section sent replaces the stored one; sections left out stay

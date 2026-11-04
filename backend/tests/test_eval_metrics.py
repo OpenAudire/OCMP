@@ -7,6 +7,7 @@ from app.services.eval_metrics import (
     GoldRow,
     Match,
     score,
+    score_kappa,
     weighted_kappa,
 )
 
@@ -39,6 +40,18 @@ class TestKappa:
 
         assert weighted_kappa(pairs) == pytest.approx(0.5)
 
+    def test_plain_kappa_counts_all_disagreements_alike_and_weighted_forgives_near_misses(
+        self,
+    ) -> None:
+        # Seven links; one differs by a single point (3 against 4). Disagreement seen: 1/7.
+        # By chance (first rater 1: 2, 3: 3, 5: 2; second 1: 2, 3: 2, 4: 1, 5: 2): 1 - 14/49 = 5/7.
+        # Plain kappa = 1 - (1/7) / (5/7) = 0.8.
+        pairs = [(3, 4), (1, 1), (5, 5), (3, 3), (1, 1), (5, 5), (3, 3)]
+
+        assert score_kappa(pairs) == pytest.approx(0.8)
+        weighted = weighted_kappa(pairs)
+        assert weighted is not None and weighted > 0.8
+
     def test_not_enough_to_say(self) -> None:
         assert weighted_kappa([]) is None
         assert weighted_kappa([(3, 3)]) is None
@@ -55,7 +68,7 @@ class TestKappa:
         result = score(cases)
 
         assert result.coverage_pairs == 3  # D is not in the gold set
-        assert result.coverage_kappa is not None
+        assert result.coverage_kappa is not None and result.coverage_kappa_weighted is not None
         one = score([case([GoldRow("A", 4)], [Match("A", 4)])])
         assert one.coverage_pairs == 1 and one.coverage_kappa is None
         assert score([]).coverage_kappa is None

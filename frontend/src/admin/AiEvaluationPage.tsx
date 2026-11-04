@@ -68,6 +68,13 @@ function Figures({ scores }: { scores: EvalScores | null }) {
             {t('admin.evaluation.detail.scoreKappaN', { n: scores.coverage_pairs })}
           </Text>
         )}
+        {scores.coverage_kappa_weighted !== null && (
+          <Text size="xs" c="dimmed">
+            {t('admin.evaluation.detail.weightedKappa', {
+              value: decimal(scores.coverage_kappa_weighted),
+            })}
+          </Text>
+        )}
       </Table.Td>
       <Table.Td>{percent(scores.shortlist_recall)}</Table.Td>
     </>
@@ -392,6 +399,9 @@ function RunDetail({ run, minCoverage }: { run: EvalRun; minCoverage: number }) 
               <Table.Th title={t('admin.evaluation.results.scoreKappaTitle')}>
                 {t('admin.evaluation.results.scoreKappa')}
               </Table.Th>
+              <Table.Th title={t('admin.evaluation.results.weightedKappaTitle')}>
+                {t('admin.evaluation.results.weightedKappa')}
+              </Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -407,6 +417,7 @@ function RunDetail({ run, minCoverage }: { run: EvalRun; minCoverage: number }) 
                   {decimal(row.coverage_kappa)}
                   {row.coverage_kappa !== null && ` (${t('admin.evaluation.detail.scoreKappaN', { n: row.coverage_pairs })})`}
                 </Table.Td>
+                <Table.Td>{decimal(row.coverage_kappa_weighted)}</Table.Td>
               </Table.Tr>
             ))}
           </Table.Tbody>

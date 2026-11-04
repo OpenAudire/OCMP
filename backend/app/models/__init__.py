@@ -30,6 +30,7 @@ from app.models.framework import (
 )
 from app.models.identity import UserIdentity
 from app.models.institution import Department, Faculty, Institution
+from app.models.intended_repeat import IntendedRepeat
 from app.models.mapping import AIRun, AIRunCall, MappingLink, ReviewAssignment
 from app.models.proposal import ObjectiveProposal, ProposalStatus
 from app.models.role import Role, RoleAssignment
@@ -61,6 +62,7 @@ __all__ = [
     "GoldLink",
     "GoldSet",
     "Institution",
+    "IntendedRepeat",
     "LearningEvent",
     "MappingLink",
     "Module",

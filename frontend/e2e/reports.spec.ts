@@ -76,7 +76,7 @@ test.describe('Reports', () => {
     await expectNoAccessibilityViolations(page);
 
     await openApp(page, '/reports/redundancy');
-    await expect(page.getByRole('heading', { level: 1, name: 'Redundancy report' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Taught in many sessions' })).toBeVisible();
     await expect(
       page.getByRole('heading', { level: 2, name: 'Items taught in many sessions' })
     ).toBeVisible();

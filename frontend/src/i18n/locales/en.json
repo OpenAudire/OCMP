@@ -1639,7 +1639,9 @@
         "progress": "{{done}} of {{total}} objectives",
         "cancel": "Cancel",
         "scoreKappa": "Coverage-score kappa",
-        "scoreKappaTitle": "Weighted kappa on the coverage score of the links both made",
+        "scoreKappaTitle": "Plain (unweighted) kappa on the coverage score of the links both made: the figure comparable with Theurich et al. 2025 (0.68)",
+        "weightedKappa": "Weighted kappa (extra)",
+        "weightedKappaTitle": "Quadratic-weighted kappa on the same links: near misses count for little. Not comparable with the published 0.68",
         "linkAgreement": "Agreement on which links exist",
         "scoreAgreement": "Agreement on the coverage score"
       },
@@ -1669,8 +1671,9 @@
         "onlyAi": "Only the AI",
         "onlyGold": "Only the gold set",
         "notShown": "never shown to the AI: {{codes}}",
-        "scoreKappaHelp": "Coverage-score kappa is worked out on the links that both the AI and the gold set made, from the two coverage scores (0 to 5), with quadratic weights so that a near miss counts for little and a far miss for a lot. It is the kind of figure the study the owner cited reports between its two raters (0.68; Theurich et al. 2025), so it is the one to compare with that. It says nothing about which links exist: the other figures do. Read it with the number of links it is based on.",
-        "scoreKappaN": "{{n}} links"
+        "scoreKappaHelp": "Coverage-score kappa is worked out on the links that both the AI and the gold set made, from the two coverage scores (0 to 5), as plain Cohen's kappa: any difference counts the same, however small. Theurich et al. 2025 report this kind of kappa (0.68) between their two raters, so it is the one to compare with that. The weighted kappa shown beside it is an extra: quadratic weights make a near miss count for little and a far miss for a lot, so it reads higher and is not comparable with the published figure. It says nothing about which links exist: the other figures do. Read it with the number of links it is based on.",
+        "scoreKappaN": "{{n}} links",
+        "weightedKappa": "weighted: {{value}}"
       }
     }
   },
@@ -1911,8 +1914,8 @@
         "description": "Framework items that are not covered, groups under the share set for subordinate match, and objectives with no mapping."
       },
       "redundancy": {
-        "title": "Redundancy report",
-        "description": "Framework items taught in unusually many sessions, and near-duplicate objectives in different modules."
+        "title": "Taught in many sessions",
+        "description": "Framework items taught in many sessions (not necessarily too many: a spiral curriculum returns to things on purpose), and near-duplicate objectives in different modules."
       },
       "traceability": {
         "title": "Traceability report",
@@ -1934,6 +1937,19 @@
         "title": "Assessment methods report",
         "description": "Assessments and assessment-method tags by method, and the objectives that no assessment or method covers."
       }
+    },
+    "intended": {
+      "title": "Intentional repeats (spiral curriculum)",
+      "intro": "An item taught in many sessions on purpose can be marked as intentional. It is then left out of the list above and shown in its own table. Each mark and removal is recorded in the audit log.",
+      "item": "Framework item",
+      "reason": "Reason (optional)",
+      "mark": "Mark as intentional",
+      "marked": "{{code}} is marked as an intentional repeat.",
+      "nothingToMark": "No item is listed above, so there is nothing to mark.",
+      "action": "Action",
+      "remove": "Remove mark",
+      "removeFor": "Remove the mark on {{code}}",
+      "failed": "That did not work. The item may already be marked, or you may not have permission."
     },
     "generic": {
       "none": "None.",

@@ -8,6 +8,7 @@ import type {
   EvalDetail,
   EvalRun,
   GapReport,
+  IntendedRepeats,
   ReportDocument,
   GoldPreview,
   GoldSet,
@@ -753,6 +754,7 @@ export const queryKeys = {
   searchFilters: (versionId: string) => ['search', versionId, 'filters'] as const,
   report: (versionId: string, key: string, params: object) =>
     ['reports', 'document', versionId, key, params] as const,
+  intendedRepeats: (versionId: string) => ['reports', 'intended-repeats', versionId] as const,
   coverage: (versionId: string, frameworkId: string, method: string) =>
     ['reports', 'coverage', versionId, frameworkId, method] as const,
   gaps: (versionId: string, frameworkId: string, method: string) =>
@@ -946,5 +948,32 @@ export async function fetchReport(
 ): Promise<ReportDocument> {
   return (
     await api.get<ReportDocument>(`/curriculum-versions/${versionId}/reports/${key}`, { params })
+  ).data;
+}
+
+// --- Intentional repeats (Slice 1.24a) ---
+
+/** The programme's items marked as taught repeatedly on purpose, and whether the user may mark. */
+export async function fetchIntendedRepeats(versionId: string): Promise<IntendedRepeats> {
+  return (await api.get<IntendedRepeats>(`/curriculum-versions/${versionId}/intended-repeats`)).data;
+}
+
+export async function addIntendedRepeat(
+  versionId: string,
+  body: { framework_id: string; code: string; reason: string }
+): Promise<IntendedRepeats> {
+  return (
+    await api.post<IntendedRepeats>(`/curriculum-versions/${versionId}/intended-repeats`, body)
+  ).data;
+}
+
+export async function removeIntendedRepeat(
+  versionId: string,
+  markId: string
+): Promise<IntendedRepeats> {
+  return (
+    await api.delete<IntendedRepeats>(
+      `/curriculum-versions/${versionId}/intended-repeats/${markId}`
+    )
   ).data;
 }
