@@ -32,7 +32,8 @@ test.describe('Search', () => {
 
     // Where do we teach this: sessions in the order they are taught, with why.
     await page.getByLabel('Domain').selectOption('');
-    await page.getByRole('radio', { name: 'Where do we teach this?' }).check({ force: true });
+    // The radio of Mantine's segmented control is hidden; its label is what a person clicks.
+    await page.getByText('Where do we teach this?', { exact: true }).click();
     await expect(page.getByRole('heading', { level: 2, name: /Sessions that teach it/ })).toBeVisible();
     await expect(page.getByText('In the order they are taught: phase, module, week.')).toBeVisible();
     await expectNoAccessibilityViolations(page);
