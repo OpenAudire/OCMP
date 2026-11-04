@@ -40,6 +40,13 @@ suggesting a parent item next to one of its children.
 `tolerance_percent` (10), `credits_per_year` (120) and `min_exit_level_credits` (off; a whole
 number to check the credits at the programme's NQF exit level).
 
+**Coverage reports.** The `coverage` section sets the numbers behind the
+[coverage and gap reports](coverage-reports.md): `multiple_match_n` (default 3, from 1 to 20: the links
+that make an item covered by multiple match), `subordinate_min_percent` (50: the share of the items below
+a group that must be covered), `below_depth_percent` (50: the share of its score a link counts for when
+its depth is below the target) and `weighted_low_percent` (40: where weighted coverage turns from partial
+to covered). Every report prints these numbers.
+
 Settings screens arrive in Phase 1. Until then, change them through the API (needs the
 platform admin role). Each section sent replaces the stored one; sections left out stay
 as they are:

@@ -3,8 +3,11 @@ import { filterParams, type SearchFilters } from '../search/searchParams';
 import type {
   AiConnectionTest,
   AiSettings,
+  CoverageMethod,
+  CoverageReport,
   EvalDetail,
   EvalRun,
+  GapReport,
   GoldPreview,
   GoldSet,
   SearchFilterOptions,
@@ -747,6 +750,10 @@ export const queryKeys = {
   search: (versionId: string, query: string, filters: object, view: string) =>
     ['search', versionId, view, query, filters] as const,
   searchFilters: (versionId: string) => ['search', versionId, 'filters'] as const,
+  coverage: (versionId: string, frameworkId: string, method: string) =>
+    ['reports', 'coverage', versionId, frameworkId, method] as const,
+  gaps: (versionId: string, frameworkId: string, method: string) =>
+    ['reports', 'gaps', versionId, frameworkId, method] as const,
   evalRuns: (minCoverage: number) => ['ai-evaluation', 'runs', minCoverage] as const,
   evalRun: (id: string, minCoverage: number) => ['ai-evaluation', 'run', id, minCoverage] as const,
   frameworks: ['frameworks'] as const,
@@ -888,4 +895,30 @@ export async function fetchWhereTaught(
 export async function fetchSearchFilters(versionId: string): Promise<SearchFilterOptions> {
   return (await api.get<SearchFilterOptions>(`/curriculum-versions/${versionId}/search-filters`))
     .data;
+}
+
+// --- Coverage and gap reports (Slice 1.21) ---
+
+export async function fetchCoverage(
+  versionId: string,
+  frameworkId: string,
+  method: CoverageMethod
+): Promise<CoverageReport> {
+  return (
+    await api.get<CoverageReport>(`/curriculum-versions/${versionId}/coverage`, {
+      params: { framework_id: frameworkId, method },
+    })
+  ).data;
+}
+
+export async function fetchGaps(
+  versionId: string,
+  frameworkId: string,
+  method: CoverageMethod
+): Promise<GapReport> {
+  return (
+    await api.get<GapReport>(`/curriculum-versions/${versionId}/coverage/gaps`, {
+      params: { framework_id: frameworkId, method },
+    })
+  ).data;
 }

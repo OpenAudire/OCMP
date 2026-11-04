@@ -50,6 +50,21 @@ class CreditPolicy(BaseModel):
     min_exit_level_credits: Annotated[int, Field(ge=0, le=10_000)] | None = None
 
 
+class CoveragePolicy(BaseModel):
+    """How coverage is worked out in the reports (``settings["coverage"]``, ADR 050)."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore", strict=True)
+
+    # Multiple match: an item is covered when it has at least this many accepted links.
+    multiple_match_n: Annotated[int, Field(ge=1, le=20)] = 3
+    # Subordinate match: a group is covered when this share of the items below it are.
+    subordinate_min_percent: Annotated[int, Field(ge=1, le=100)] = 50
+    # Weighted coverage: a link whose depth is below the target counts for this share of its score.
+    below_depth_percent: Annotated[int, Field(ge=0, le=100)] = 50
+    # Weighted coverage: an item is covered from this share of full coverage, partial below it.
+    weighted_low_percent: Annotated[int, Field(ge=1, le=100)] = 40
+
+
 # Pairs below this similarity are never stored (ADR 044), so it is also the lowest threshold
 # an admin can choose. Set from the measurements recorded in the ADR.
 NEAR_DUPLICATE_FLOOR_PERCENT = 85
@@ -119,3 +134,27 @@ async def mapping_policy_for_version(db: AsyncSession, version_id: uuid.UUID) ->
 async def mapping_policy_for(db: AsyncSession, objective: Objective) -> MappingPolicy:
     """The mapping policy of the institution an objective belongs to."""
     return await mapping_policy_for_version(db, objective.version_id)
+
+
+def parse_coverage_policy(settings: dict[str, object]) -> CoveragePolicy:
+    """Read the coverage policy from an institution's settings.
+
+    Raises:
+        InvalidRequestError: If the stored settings have the wrong shape.
+    """
+    try:
+        return CoveragePolicy.model_validate(settings.get("coverage") or {})
+    except ValidationError as exc:
+        raise InvalidRequestError(f"Invalid coverage settings: {exc}") from exc
+
+
+async def coverage_policy_for_version(db: AsyncSession, version_id: uuid.UUID) -> CoveragePolicy:
+    """The coverage policy of the institution a curriculum version belongs to."""
+    settings = await db.scalar(
+        select(Institution.settings)
+        .join(Faculty, Faculty.institution_id == Institution.id)
+        .join(Programme, Programme.faculty_id == Faculty.id)
+        .join(CurriculumVersion, CurriculumVersion.programme_id == Programme.id)
+        .where(CurriculumVersion.id == version_id)
+    )
+    return parse_coverage_policy(settings or {})

@@ -9,6 +9,7 @@ from app.api.v1.ai_settings import router as ai_settings_router
 from app.api.v1.assessments import router as assessments_router
 from app.api.v1.audit import router as audit_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.coverage import router as coverage_router
 from app.api.v1.curriculum import router as curriculum_router
 from app.api.v1.curriculum_edit import router as curriculum_edit_router
 from app.api.v1.curriculum_objectives import router as curriculum_objectives_router
@@ -51,4 +52,5 @@ router.include_router(frameworks_router)
 router.include_router(mapping_router)
 router.include_router(mapping_review_router)
 router.include_router(search_router)
+router.include_router(coverage_router)
 router.include_router(setup_router)

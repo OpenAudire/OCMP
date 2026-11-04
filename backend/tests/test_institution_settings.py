@@ -243,6 +243,37 @@ class TestAPI:
         assert cleared.json()["terminology"] == {}
         assert cleared.json()["mapping"]["four_eyes"] is True
 
+    async def test_the_coverage_numbers_default_are_changed_checked_and_cleared(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        institution: Institution,
+    ) -> None:
+        await self.sign_in(api_client, db_session, test_settings, "platform_admin")
+        defaults = {
+            "multiple_match_n": 3,
+            "subordinate_min_percent": 50,
+            "below_depth_percent": 50,
+            "weighted_low_percent": 40,
+        }
+
+        assert (await api_client.get("/api/v1/institution")).json()["coverage"] == defaults
+        changed = await api_client.patch(
+            "/api/v1/institution/settings",
+            json={"coverage": {**defaults, "multiple_match_n": 5, "below_depth_percent": 25}},
+        )
+        too_many = await api_client.patch(
+            "/api/v1/institution/settings", json={"coverage": {**defaults, "multiple_match_n": 21}}
+        )
+        cleared = await api_client.patch("/api/v1/institution/settings", json={"coverage": None})
+
+        assert changed.status_code == 200
+        assert changed.json()["coverage"]["multiple_match_n"] == 5
+        assert changed.json()["coverage"]["below_depth_percent"] == 25
+        assert too_many.status_code == 422
+        assert cleared.json()["coverage"] == defaults
+
     async def test_the_near_duplicate_threshold_defaults_to_the_measured_value_and_is_changed(
         self,
         api_client: AsyncClient,

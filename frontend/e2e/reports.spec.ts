@@ -1,0 +1,51 @@
+import { expect, test } from '@playwright/test';
+
+import { expectNoAccessibilityViolations, openApp } from './support';
+
+// The coverage and gap reports (Slice 1.21) on the demo programme as the test admin. They only
+// read: nothing is created, so nothing has to be removed afterwards (ADR 037). The demo framework
+// has no mapping that was accepted in bulk, so the journey checks that the report states what
+// it is and that its parts are there, not particular figures.
+test.describe('Reports', () => {
+  test('the coverage report states its method, shows the summary, the heatmap and the items', async ({
+    page,
+  }) => {
+    await openApp(page, '/reports');
+    await expect(page.getByRole('heading', { level: 1, name: 'Reports' })).toBeVisible();
+    await page.getByRole('link', { name: 'Open the report' }).first().click();
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Coverage report' })).toBeVisible();
+    const panel = page.getByLabel('The method and what it covers');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText('Single match');
+    await expect(panel).toContainText('Covered when at least one accepted link');
+    await expect(panel).toContainText('Made on');
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Summary of the framework' })
+    ).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: /^Heatmap/ })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Items' })).toBeVisible();
+    await expectNoAccessibilityViolations(page);
+
+    // Another method changes the definition on the page and in the address.
+    await page.getByLabel('Method', { exact: true }).selectOption('weighted');
+    await expect(page).toHaveURL(/method=weighted/);
+    await expect(panel).toContainText('Weighted content coverage');
+    await expect(panel).toContainText('add up to at most 100%');
+    await expectNoAccessibilityViolations(page);
+  });
+
+  test('the gap report lists items and objectives that are not covered', async ({ page }) => {
+    await openApp(page, '/reports/gaps');
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Gap report' })).toBeVisible();
+    await expect(page.getByLabel('The method and what it covers')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 2, name: /^Items with no or low coverage/ })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 2, name: /^Objectives with no mapping/ })
+    ).toBeVisible();
+    await expectNoAccessibilityViolations(page);
+  });
+});

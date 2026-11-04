@@ -1,0 +1,129 @@
+.card {
+  padding: 22px 24px;
+}
+
+@media (max-width: 48em) {
+  .card {
+    padding: 18px;
+  }
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.title {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.meta {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+}
+
+.meta dt {
+  font-weight: 600;
+}
+
+.meta dd {
+  margin: 0;
+}
+
+.itemCode {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* The heatmap: every cell prints its share, so colour is never the only carrier. */
+.heat {
+  border-collapse: separate;
+  border-spacing: 4px;
+  min-width: 480px;
+}
+
+.heat th {
+  text-align: left;
+  font-weight: 600;
+  padding: 6px 8px;
+  vertical-align: bottom;
+}
+
+.heat td {
+  text-align: center;
+  min-width: 84px;
+  padding: 10px 8px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+  background: var(--cic-soft);
+  color: var(--cic-ink);
+}
+
+.heat td[data-level='1'] {
+  background: var(--cic-brand-soft);
+}
+
+.heat td[data-level='2'] {
+  background: var(--cic-brand-soft);
+  box-shadow: inset 0 0 0 2px var(--cic-brand);
+  font-weight: 600;
+}
+
+.heat td[data-level='3'] {
+  background: var(--cic-brand);
+  color: var(--cic-on-brand);
+  font-weight: 600;
+}
+
+.statusNone,
+.statusPartial,
+.statusCovered {
+  font-weight: 600;
+}
+
+.statusNone {
+  color: var(--cic-warm-ink);
+}
+
+.statusPartial {
+  color: var(--cic-ink);
+}
+
+.statusCovered {
+  color: var(--cic-brand-ink);
+}
+
+.indent0 {
+  padding-left: 0;
+}
+
+.indent1 {
+  padding-left: 20px;
+}
+
+.indent2 {
+  padding-left: 40px;
+}
+
+.indent3 {
+  padding-left: 60px;
+}
+
+.objectives {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

@@ -55,3 +55,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [047](047-study-guide-extraction.md) | Study-guide Extraction |
 | [048](048-evaluation-harness.md) | Evaluation Harness and Gold Sets |
 | [049](049-search.md) | Search and Where Do We Teach X |
+| [050](050-coverage-engine.md) | Coverage Engine, Coverage Report and Gap Report |

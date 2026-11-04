@@ -1426,3 +1426,96 @@ export interface SearchFilterOptions {
   taxonomy_levels: SearchOption[];
   domains: ObjectiveDomain[];
 }
+
+// --- Coverage and gap reports (Slice 1.21, ADR 050) ---
+
+export type CoverageMethod = 'single' | 'multiple' | 'subordinate' | 'weighted';
+export type ItemStatus = 'covered' | 'partial' | 'none';
+
+export interface CoverageMeta {
+  framework: { id: string; name: string; version_label: string };
+  version: {
+    id: string;
+    academic_year: number;
+    status: VersionStatus;
+    programme_code: string;
+    programme_name: string;
+  };
+  method: CoverageMethod;
+  /** The method in words, with the institution's numbers in it. */
+  definition: string;
+  params: {
+    multiple_match_n: number;
+    subordinate_min_percent: number;
+    below_depth_percent: number;
+    weighted_low_percent: number;
+  };
+  generated_at: string;
+  /** The user sees only part of the version: the figures cover only that part. */
+  partial: boolean;
+  objectives_in_scope: number;
+}
+
+export interface CoverageItem {
+  id: string;
+  code: string;
+  title: string;
+  parent_id: string | null;
+  depth: number;
+  is_leaf: boolean;
+  leaves: number;
+  leaves_covered: number | null;
+  links: number;
+  bulk_links: number;
+  recheck_links: number;
+  waiting: number;
+  objectives: number;
+  value: number;
+  status: ItemStatus;
+  only_bulk: boolean;
+}
+
+export interface CoverageReport extends CoverageMeta {
+  summary: {
+    leaves: number;
+    methods: Record<CoverageMethod, { covered: number; partial: number; uncovered: number }>;
+    links: number;
+    bulk_links: number;
+    recheck_links: number;
+    waiting_links: number;
+  };
+  items: CoverageItem[];
+  columns: { key: string; kind: 'phase' | 'programme' | 'none'; label: string }[];
+  heatmap: { id: string; code: string; title: string; cells: Record<string, number> }[];
+}
+
+export interface GapRow {
+  id: string;
+  code: string;
+  title: string;
+  path: { id: string; code: string; title: string }[];
+  status: ItemStatus;
+  value: number;
+  links: number;
+  waiting: number;
+  reason: string;
+}
+
+export interface UnmappedObjective {
+  id: string;
+  text: string;
+  level: ObjectiveLevel;
+  module_id: string | null;
+  module_code: string | null;
+  event_id: string | null;
+  event_title: string | null;
+  waiting: number;
+}
+
+export interface GapReport extends CoverageMeta {
+  gaps: GapRow[];
+  unlinked: UnmappedObjective[];
+  only_waiting: UnmappedObjective[];
+  unlinked_total: number;
+  only_waiting_total: number;
+}

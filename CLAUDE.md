@@ -302,6 +302,14 @@ export function ModuleCount({ count }: { count: number }) {
   floor (`MEANING_FLOOR` 0.82, measured on the demo data for short queries: the mapping shortlist's 0.75 lists everything) and
   must be measured again if `MODEL_KEY` changes. A filter that cannot describe a kind leaves that kind out and says so
   (`left_out`). Sessions and modules have no vectors: they are found through their objectives
+- Coverage and gap reports (ADR 050): the arithmetic is in `services/coverage_engine.py` (pure, tested without a database: four
+  labelled methods, each with a printed definition), the reading in `services/coverage_report.py`, the router in
+  `api/v1/coverage.py` (`reports.view` at the programme, or at a module for a narrower view that is reported as `partial`).
+  Only **accepted** links with a coverage of at least 1 count, through `live_link()`, for objectives from
+  `search.visible_objective_ids`; waiting links are counted apart; links accepted in bulk (`accept_method = bulk`) and links with
+  `needs_recheck` are counted and **flagged on every item, never hidden** (a later report or export must keep that). Every report
+  prints its method, the institution's numbers (`settings["coverage"]`, `policies.CoveragePolicy`) and when it was made. Changing
+  the arithmetic of a method changes every report: change the definition text with it
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 
