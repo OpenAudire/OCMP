@@ -82,4 +82,25 @@ test.describe('Reports', () => {
     ).toBeVisible();
     await expectNoAccessibilityViolations(page);
   });
+
+  test('the teaching reports open and can be downloaded', async ({ page }) => {
+    await openApp(page, '/reports/formats');
+
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Teaching formats and contact hours' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'By teaching format' })
+    ).toBeVisible();
+    const excel = page.getByRole('link', { name: /Download as Excel/ });
+    const workbook = await page.request.get((await excel.getAttribute('href')) as string);
+    expect(workbook.status()).toBe(200);
+    await expectNoAccessibilityViolations(page);
+
+    await openApp(page, '/reports/assessments');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Assessment methods report' })
+    ).toBeVisible();
+    await expectNoAccessibilityViolations(page);
+  });
 });

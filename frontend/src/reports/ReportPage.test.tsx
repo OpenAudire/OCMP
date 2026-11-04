@@ -85,12 +85,40 @@ describe('Report page', () => {
     mocked.fetchReport.mockResolvedValue(document);
   });
 
-  it('lists every report on the reports page', async () => {
+  it('lists every report on the reports page, without role balance outside the health profile', async () => {
     renderAt('/reports');
 
-    expect(await screen.findAllByRole('link', { name: 'Open the report' })).toHaveLength(4);
+    expect(await screen.findAllByRole('link', { name: 'Open the report' })).toHaveLength(7);
     expect(screen.getByRole('heading', { level: 2, name: 'Redundancy report' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Traceability report' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Teaching formats and contact hours' })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { level: 2, name: 'Role balance report' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('lists the role balance report when the health profile is on', async () => {
+    mocked.fetchInstitution.mockResolvedValue({
+      ...testInstitution,
+      features: ['role_balance_report'],
+    });
+    renderAt('/reports');
+
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Role balance report' })
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Open the report' })).toHaveLength(8);
+  });
+
+  it('opens a report that needs no framework with only a version', async () => {
+    renderAt('/reports/formats?version=v1');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Teaching formats and contact hours' })
+    ).toBeInTheDocument();
+    expect(mocked.fetchReport).toHaveBeenCalledWith('v1', 'formats', expect.anything());
   });
 
   it('shows how the report was made and its tables with the figures formatted', async () => {

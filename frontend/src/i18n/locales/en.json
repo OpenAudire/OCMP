@@ -1917,6 +1917,22 @@
       "traceability": {
         "title": "Traceability report",
         "description": "From each programme outcome through the module outcomes and session objectives that contribute to it, to the framework items they are mapped to."
+      },
+      "formats": {
+        "title": "Teaching formats and contact hours",
+        "description": "Contact and self-study hours of the sessions by teaching format, phase and module."
+      },
+      "relationship": {
+        "title": "Curriculum relationship report",
+        "description": "Each session with its objectives and their tags, one row each, to read or filter in Excel."
+      },
+      "role-balance": {
+        "title": "Role balance report",
+        "description": "The share of teaching time and of objectives that goes to each top-level group of a framework, in each phase (health profile)."
+      },
+      "assessments": {
+        "title": "Assessment methods report",
+        "description": "Assessments and assessment-method tags by method, and the objectives that no assessment or method covers."
       }
     },
     "generic": {

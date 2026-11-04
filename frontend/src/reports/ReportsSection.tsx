@@ -1,9 +1,19 @@
 import { Button, Paper, Stack, Text, Title } from '@mantine/core';
-import { IconChartDots3, IconGrid4x4, IconListTree, IconCopy } from '@tabler/icons-react';
+import {
+  IconChartDots3,
+  IconClipboardCheck,
+  IconClock,
+  IconCopy,
+  IconGrid4x4,
+  IconListTree,
+  IconScale,
+  IconTable,
+} from '@tabler/icons-react';
 import type { TablerIcon } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { Link, Route, Routes } from 'react-router';
 
+import { useFeature } from '../institution/useInstitution';
 import { Page } from '../ui/Page';
 import { CoveragePage } from './CoveragePage';
 import { GapsPage } from './GapsPage';
@@ -19,14 +29,20 @@ const ICONS: Record<string, TablerIcon> = {
   gaps: IconChartDots3,
   redundancy: IconCopy,
   traceability: IconListTree,
+  formats: IconClock,
+  relationship: IconTable,
+  'role-balance': IconScale,
+  assessments: IconClipboardCheck,
 };
 
 function ReportsHome() {
   const { t } = useTranslation();
+  const roleBalance = useFeature('role_balance_report');
+  const reports = ALL_REPORTS.filter((key) => key !== 'role-balance' || roleBalance);
   return (
     <Page title={t('nav.reports')} description={t('reports.intro')}>
       <Stack gap="md">
-        {ALL_REPORTS.map((key) => {
+        {reports.map((key) => {
           const Icon = ICONS[key] ?? IconGrid4x4;
           return (
             <Paper

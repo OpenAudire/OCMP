@@ -58,3 +58,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [050](050-coverage-engine.md) | Coverage Engine, Coverage Report and Gap Report |
 | [051](051-report-exports.md) | Report Documents and Exports to Excel and PDF |
 | [052](052-redundancy-and-traceability.md) | Redundancy and Traceability Reports |
+| [053](053-teaching-reports.md) | Teaching Reports |

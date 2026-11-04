@@ -825,6 +825,9 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.23 | **"Unusually many sessions" is stated, not guessed**: an item is listed from the larger of 4 sessions and (once five or more items are taught) the average plus 1.5 standard deviations; the report prints the threshold and how many items are taught | The brief says "unusually many" without a number | Easy: two constants. **Not measured on a real programme** | Decided in 1.23, to review |
 | 1.23 | Redundancy counts **distinct sessions** (and modules) whose objectives are **accepted** for the item; near-duplicates are the stored pairs across **different modules**, at the objective checker's threshold | Reuses what exists (ADR 033, 044); sessions are compared through their objectives only | Easy | Decided in 1.23, to review |
 | 1.23 | Traceability follows the **upward links** from each programme outcome (module outcomes, session objectives, and session objectives linked straight to it), ending in the accepted framework items of the last objective; a second table lists what **no programme outcome reaches** | The brief's chain; an honest list of the gaps | Easy | Decided in 1.23, to review |
+| 1.24 | **A session's contact time is shared equally** between the top-level framework groups its objectives are accepted for (unmapped sessions are "not mapped"); objective shares count an objective for every group it maps to | Sessions have no per-objective time, so something has to be assumed; stated on the report | Easy to change (one function); **not checked against a real health programme** | Decided in 1.24, to review |
+| 1.24 | The role balance report is **refused unless the institution's profile has the `role_balance_report` feature**, and the screen hides it | The brief puts it in the health profile only | Easy | Decided in 1.24, to review |
+| 1.24 | Format and assessment-method figures use the **teaching-method and assessment-method tags** already on sessions and assessments; hours are the planned minutes | No new data; tags are what the brief means by format and method | Easy | Decided in 1.24, to review |
 
 ---
 
@@ -1727,3 +1730,24 @@ Two reports as report documents (ADR 051): the redundancy report (framework item
 **Not in this slice**: judging whether repetition is wrong, a diagram of the chain (the committee dashboard, 1.28), comparing with another version.
 
 **Commit**: `feat: add the redundancy and traceability reports`
+
+
+### Slice 1.24: Teaching Formats, Relationship, Role Balance and Assessment Methods Reports
+**Status**: Complete
+
+Four more report documents (ADR 051, design in ADR 053): teaching formats and contact hours, the curriculum relationship report, the role balance report (health profile) and the assessment methods report. They use the generic report screen, Excel and PDF exports and access rules of Slices 1.22 and 1.23.
+
+**Deliverables**:
+- [x] **Builders** `services/report_docs_teaching.py` (`build_formats`, `build_relationship`, `build_role_balance`, `build_assessment_methods`), registered in `report_registry.REPORTS` as `formats`, `relationship`, `role-balance`, `assessments`
+- [x] **Screen**: four more cards on the reports page (role balance only where the `role_balance_report` feature is on); `reportPages.ts`, icons and `reports.pages.*` strings
+- [x] Docs: ADR 053 (and index), `admin/teaching-reports.md`, CLAUDE.md, mkdocs nav
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy pass; `test_reports_teaching.py` (6: hours and shares by format, the phase filter, one row per session and objective, the health-profile gate, the equal split of a session's time, assessments and the list of objectives with no method) and `test_reports_api.py` pass
+- Frontend: lint and typecheck pass; `ReportPage.test.tsx` and `Coverage.test.tsx` (27 together) pass
+
+**Not verified here**: the figures on a real health programme, a programme with thousands of sessions (relationship cut at 5 000 rows), Excel and PDF of these four by eye, the tables in other languages (English for now), the Playwright journey (CI runs it).
+
+**Not in this slice**: a phase filter on the screen (API only), time per objective within a session, blueprints, comparing with credits, anything from 1.25.
+
+**Commit**: `feat: add teaching formats, relationship, role balance and assessment method reports`
