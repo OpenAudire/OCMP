@@ -16,19 +16,21 @@ test.describe('Curriculum import from Excel', () => {
     await expect(
       page.getByRole('heading', { level: 2, name: 'Curriculum from Excel' })
     ).toBeVisible();
-    const link = page.getByRole('link', { name: 'Download the Excel template', exact: true });
+    // The page also holds the mapping and tag cards, with buttons of the same names.
+    const card = page.getByRole('region', { name: 'Curriculum from Excel' });
+    const link = card.getByRole('link', { name: 'Download the Excel template', exact: true });
     const href = (await link.getAttribute('href')) as string;
     const template = await page.request.get(href);
     expect(template.status()).toBe(200);
     expect(template.headers()['content-type']).toContain('spreadsheetml');
     await expectNoAccessibilityViolations(page);
 
-    await page.locator('input[type="file"]').first().setInputFiles({
+    await card.locator('input[type="file"]').setInputFiles({
       name: 'blank-template.xlsx',
       mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       buffer: await template.body(),
     });
-    await page.getByRole('button', { name: 'Check the file' }).click();
+    await card.getByRole('button', { name: 'Check the file' }).click();
 
     await expect(page.getByText('The file cannot be imported yet')).toBeVisible();
     await expect(page.getByText('The workbook has no rows to import.')).toBeVisible();
