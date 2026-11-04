@@ -1718,5 +1718,75 @@
       "programmeOutcome": "Programme outcome",
       "moduleOutcome": "Module outcome"
     }
+  },
+  "search": {
+    "title": "Search",
+    "description": "Find objectives, sessions, modules and framework items by their words and, where it is on, by their meaning. Or ask where something is taught.",
+    "queryLabel": "Search the curriculum",
+    "headerLabel": "Quick search",
+    "headerPlaceholder": "Search the curriculum",
+    "headerSubmit": "Run quick search",
+    "versionLabel": "Version",
+    "submit": "Search",
+    "anything": "Anything",
+    "filtersOn": "Filters (on)",
+    "filters": {
+      "title": "Filters",
+      "phase": "Phase",
+      "module": "Module",
+      "format": "Teaching format",
+      "tag": "Tag",
+      "framework": "Framework",
+      "level": "Taxonomy level",
+      "domain": "Domain"
+    },
+    "viewLabel": "What to show",
+    "view": {
+      "results": "Search results",
+      "where": "Where do we teach this?"
+    },
+    "start": "Type a word or a question and press Search. A search needs at least two characters.",
+    "errorTitle": "Couldn’t search",
+    "errorBody": "Nothing was changed. Check your connection and try again.",
+    "kinds": {
+      "objective": "Objectives ({{count}})",
+      "event": "Sessions ({{count}})",
+      "module": "Modules ({{count}})",
+      "framework_item": "Framework items ({{count}})"
+    },
+    "kindsPlural": {
+      "objective": "objectives",
+      "event": "sessions",
+      "module": "modules",
+      "framework_item": "framework items"
+    },
+    "week": "week {{week}}",
+    "programmeOutcome": "Programme outcome",
+    "matchedBy": {
+      "words": "Words",
+      "meaning": "Meaning",
+      "objective": "Through an objective"
+    },
+    "more": "There are more results: use a more exact search or a filter.",
+    "notice": {
+      "embeddings_off": "Meaning-based search is off, so results match words only.",
+      "embeddings_unreachable": "The meaning-based search server is not answering, so results match words only.",
+      "not_embedded_yet": "Nothing is ready for meaning-based search yet (an administrator has to run embed-all), so results match words only."
+    },
+    "someWords": "No result had all of your words. These match some of them.",
+    "leftOut": "The filters leave out: {{kinds}}.",
+    "none": "Nothing found for “{{query}}”.",
+    "moduleLevel": "Module outcomes of {{code}}",
+    "whereNone": "Nothing found that is taught for “{{query}}”.",
+    "whereSessions": "Sessions that teach it ({{count}})",
+    "whereModules": "Module outcomes ({{count}})",
+    "whereItems": "Framework items that match",
+    "whereOrder": "In the order they are taught: phase, module, week.",
+    "why": {
+      "title": "Its title",
+      "objective": "An objective’s words",
+      "meaning": "An objective’s meaning",
+      "framework": "Framework item {{code}}"
+    }
   }
 }

@@ -1,0 +1,4 @@
+.form {
+  width: min(320px, 28vw);
+  min-width: 200px;
+}

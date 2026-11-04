@@ -21,6 +21,7 @@ from app.api.v1.mapping_review import router as mapping_review_router
 from app.api.v1.objective_checks import router as objective_checks_router
 from app.api.v1.oidc import router as oidc_router
 from app.api.v1.roles import router as roles_router
+from app.api.v1.search import router as search_router
 from app.api.v1.setup import router as setup_router
 from app.api.v1.study_guides import router as study_guides_router
 from app.api.v1.tagging import router as tagging_router
@@ -49,4 +50,5 @@ router.include_router(framework_packs_router)
 router.include_router(frameworks_router)
 router.include_router(mapping_router)
 router.include_router(mapping_review_router)
+router.include_router(search_router)
 router.include_router(setup_router)

@@ -70,6 +70,7 @@ export interface CreditPolicy {
 export type VersionStatus = 'draft' | 'published' | 'archived';
 export type PhaseKind = 'year' | 'phase' | 'block' | 'longitudinal_thread';
 export type ObjectiveDomain = 'knowledge' | 'skill' | 'attitude';
+export type ObjectiveLevel = 'programme' | 'module' | 'learning_event';
 export type ObjectiveStatus = 'draft' | 'ready_for_review' | 'approved' | 'retired';
 export type AccreditationStatus =
   'not_applicable' | 'in_progress' | 'accredited' | 'conditional' | 'withdrawn';
@@ -1334,4 +1335,94 @@ export interface EvalDetail extends EvalRun {
   by_min_coverage: (EvalScores & { min_coverage: number })[];
   bulk_accept: EvalBulkRow[];
   disagreements: EvalDisagreement[];
+}
+
+// --- Search (Slice 1.20, ADR 049) ---
+
+export type SearchKind = 'objective' | 'event' | 'module' | 'framework_item';
+export type SearchMatchedBy = 'words' | 'meaning' | 'objective';
+export type SearchNotice = 'embeddings_off' | 'embeddings_unreachable' | 'not_embedded_yet';
+
+export interface SearchHit {
+  kind: SearchKind;
+  id: string;
+  title: string;
+  detail: string;
+  score: number;
+  matched_by: string[];
+  module_id: string | null;
+  module_code: string | null;
+  module_name: string | null;
+  phase_name: string | null;
+  event_id: string | null;
+  event_title: string | null;
+  week: number | null;
+  level: ObjectiveLevel | null;
+  domain: ObjectiveDomain | null;
+  framework_id: string | null;
+  framework_name: string | null;
+  code: string | null;
+}
+
+export interface SearchGroup {
+  kind: SearchKind;
+  hits: SearchHit[];
+  more: boolean;
+}
+
+export interface SearchResponse {
+  query: string;
+  /** "some": nothing matched every word, so these match some of them. */
+  words: 'all' | 'some' | 'none';
+  mode: 'meaning' | 'keyword';
+  notice: SearchNotice | null;
+  left_out: SearchKind[];
+  groups: SearchGroup[];
+}
+
+export interface TaughtObjective {
+  id: string;
+  text: string;
+  level: ObjectiveLevel;
+  score: number;
+  via: string;
+}
+
+export interface TaughtIn {
+  event_id: string | null;
+  event_title: string | null;
+  week: number | null;
+  module_id: string;
+  module_code: string;
+  module_name: string;
+  phase_name: string | null;
+  score: number;
+  why: string[];
+  objectives: TaughtObjective[];
+}
+
+export interface WhereTaughtResponse {
+  query: string;
+  words: 'all' | 'some' | 'none';
+  mode: 'meaning' | 'keyword';
+  notice: SearchNotice | null;
+  sessions: TaughtIn[];
+  modules: TaughtIn[];
+  framework_items: SearchHit[];
+  more: boolean;
+}
+
+export interface SearchOption {
+  id: string;
+  label: string;
+}
+
+export interface SearchFilterOptions {
+  phases: SearchOption[];
+  modules: (SearchOption & { phase_id: string | null })[];
+  formats: SearchOption[];
+  tag_lists: { id: string; name: string; values: SearchOption[] }[];
+  frameworks: SearchOption[];
+  taxonomy_levels: SearchOption[];
+  domains: ObjectiveDomain[];
 }

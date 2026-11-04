@@ -71,6 +71,7 @@ nav:
       - Framework library: admin/frameworks.md
       - Mapping workspace: admin/mapping.md
       - Review queue: admin/review-queue.md
+      - Search: admin/search.md
       - AI settings: admin/ai.md
       - Checking the AI's mapping: admin/ai-evaluation.md
       - Importing frameworks: admin/framework-packs.md

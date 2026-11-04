@@ -294,6 +294,14 @@ export function ModuleCount({ count }: { count: number }) {
   version's objectives by normalised wording. Failed objectives are left out of the figures and counted, never counted as wrong.
   The demo gold set (`demo/data/gold-set-demo.json`) is fictional and written by the developers: never present its figures as
   a measure of quality (a test keeps it in step with the demo data)
+- Search (ADR 049): `services/search.py` (`search`, `where_taught`, `visible_objective_ids`), router `api/v1/search.py`
+  (any user who sees the version; 404 otherwise). **One place decides what a user may find**: `search._scope`, built on
+  `VersionView` (ADR 027); reports and anything else that counts or lists objectives of a version for a user must use
+  `visible_objective_ids`, never their own copy of the rule. Words use full-text search with the `simple` configuration on a
+  query reduced to letters and digits (nothing in it is query syntax); meaning uses the stored vectors with search's **own**
+  floor (`MEANING_FLOOR` 0.82, measured on the demo data for short queries: the mapping shortlist's 0.75 lists everything) and
+  must be measured again if `MODEL_KEY` changes. A filter that cannot describe a kind leaves that kind out and says so
+  (`left_out`). Sessions and modules have no vectors: they are found through their objectives
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 

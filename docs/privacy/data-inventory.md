@@ -108,6 +108,7 @@ vector.
 | Checked framework pack file (`pack-import:<random token>`): the file text and the id of the user who uploaded it. A pack describes frameworks and holds no personal data unless someone puts it there | Confirming an import without uploading the file again | 30 minutes, removed once imported |
 | Rate-limit counter keyed by a hash of the user id (AI "Test connection" button) | Stopping repeated test calls to a paid provider | 1 minute |
 | Rate-limit counter keyed by a hash of the user id (AI help with objective wording) | Stopping runaway paid calls | 1 minute |
+| Rate-limit counter keyed by a hash of the user id (search, 120 a minute) | Stopping runaway searches | 1 minute |
 | Rate-limit counter keyed by a hash of the user id (study-guide upload) | Stopping runaway uploads | 1 minute |
 | Password reset token (hashed) and the user id | Reset links | `PASSWORD_RESET_TOKEN_MINUTES` (default 60), single use |
 | SSO sign-in state (nonce, PKCE verifier, return path) | Completing an SSO sign-in | 10 minutes, single use |
@@ -117,7 +118,7 @@ vector.
 
 | Log | Personal information | Retention |
 |---|---|---|
-| Caddy access log | Client IP address, user agent, requested address (SSO codes redacted) | Docker log rotation: 5 files of 10 MB per service (configured in `docker-compose.yml`) |
+| Caddy access log | Client IP address, user agent, requested address (SSO codes redacted; **a search text is part of the address** of a search request, so it is in this log like any address, and nowhere else: the application neither stores nor logs it) | Docker log rotation: 5 files of 10 MB per service (configured in `docker-compose.yml`) |
 | API and worker logs | User ids (never email addresses, names, passwords or tokens) | As above |
 
 Copies of logs shipped to a central log system follow that system's retention.

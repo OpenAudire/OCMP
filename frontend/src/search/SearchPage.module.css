@@ -1,0 +1,59 @@
+.card {
+  padding: 22px 24px;
+}
+
+@media (max-width: 48em) {
+  .card {
+    padding: 18px;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 640px;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  padding-top: 20px;
+}
+
+.groupTitle {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.hits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hit {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--cic-border, var(--mantine-color-default-border));
+}
+
+.hitTitle {
+  font-weight: 600;
+  min-height: 24px;
+}
+
+.detail {
+  max-width: 70ch;
+}
+
+.objectives {
+  margin: 4px 0 0;
+  padding-left: 20px;
+}

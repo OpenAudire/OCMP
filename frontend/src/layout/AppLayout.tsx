@@ -18,6 +18,7 @@ import { Outlet, useLocation, useMatch, useNavigate } from 'react-router';
 import { fetchReviewCount, logout, queryKeys } from '../api/endpoints';
 import { VersionSwitcher } from '../curriculum/VersionSwitcher';
 import { useInstitution } from '../institution/useInstitution';
+import { HeaderSearch } from '../search/HeaderSearch';
 import { useSession } from '../session/useSession';
 import { initials } from './initials';
 import { visibleNavItems } from './navigation';
@@ -98,6 +99,7 @@ export function AppLayout() {
   const versionId = versionMatch?.params.versionId;
   // The review queue count in the menu: what waits for this person (ADR 040).
   const showsReview = items.some((item) => item.key === 'review');
+  const canSearch = items.some((item) => item.key === 'search');
   const reviewCount = useQuery({
     queryKey: queryKeys.reviewCount,
     queryFn: fetchReviewCount,
@@ -141,6 +143,11 @@ export function AppLayout() {
             )}
           </Group>
           <Group gap="sm" wrap="nowrap">
+            {canSearch && (
+              <Group visibleFrom="sm">
+                <HeaderSearch versionId={versionId} />
+              </Group>
+            )}
             <ColorSchemeToggle />
             {session && <UserMenu name={session.user.display_name} />}
           </Group>

@@ -22,6 +22,7 @@ import {
   PlaceholderPage,
 } from '../pages/StatusPages';
 import { useSession } from '../session/useSession';
+import { SearchPage } from '../search/SearchPage';
 import { SetupPage } from '../setup/SetupPage';
 
 /** Only for signed-in users; others go to the sign-in page and come back after. */
@@ -57,6 +58,7 @@ const SECTIONS: Partial<Record<string, () => ReactNode>> = {
   review: () => <ReviewSection />,
   admin: () => <AdminSection />,
   import: () => <ImportSection />,
+  search: () => <SearchPage />,
 };
 
 /** A section page, shown only to users whose permissions include it. */

@@ -1,4 +1,5 @@
 import { api } from './client';
+import { filterParams, type SearchFilters } from '../search/searchParams';
 import type {
   AiConnectionTest,
   AiSettings,
@@ -6,6 +7,9 @@ import type {
   EvalRun,
   GoldPreview,
   GoldSet,
+  SearchFilterOptions,
+  SearchResponse,
+  WhereTaughtResponse,
   AiUpdate,
   AssessableObjective,
   Assessment,
@@ -740,6 +744,9 @@ export async function testAiConnection(): Promise<AiConnectionTest> {
 export const queryKeys = {
   aiSettings: ['ai-settings'] as const,
   goldSets: ['ai-evaluation', 'gold-sets'] as const,
+  search: (versionId: string, query: string, filters: object, view: string) =>
+    ['search', versionId, view, query, filters] as const,
+  searchFilters: (versionId: string) => ['search', versionId, 'filters'] as const,
   evalRuns: (minCoverage: number) => ['ai-evaluation', 'runs', minCoverage] as const,
   evalRun: (id: string, minCoverage: number) => ['ai-evaluation', 'run', id, minCoverage] as const,
   frameworks: ['frameworks'] as const,
@@ -850,4 +857,35 @@ export async function fetchEvaluation(id: string, minCoverage: number): Promise<
 
 export async function cancelEvaluation(id: string): Promise<EvalRun> {
   return (await api.post<EvalRun>(`/ai/evaluation/runs/${id}/cancel`)).data;
+}
+
+// --- Search (Slice 1.20) ---
+
+export async function searchVersion(
+  versionId: string,
+  query: string,
+  filters: SearchFilters
+): Promise<SearchResponse> {
+  return (
+    await api.get<SearchResponse>(`/curriculum-versions/${versionId}/search`, {
+      params: { q: query, ...filterParams(filters) },
+    })
+  ).data;
+}
+
+export async function fetchWhereTaught(
+  versionId: string,
+  query: string,
+  filters: SearchFilters
+): Promise<WhereTaughtResponse> {
+  return (
+    await api.get<WhereTaughtResponse>(`/curriculum-versions/${versionId}/where-taught`, {
+      params: { q: query, ...filterParams(filters) },
+    })
+  ).data;
+}
+
+export async function fetchSearchFilters(versionId: string): Promise<SearchFilterOptions> {
+  return (await api.get<SearchFilterOptions>(`/curriculum-versions/${versionId}/search-filters`))
+    .data;
 }
