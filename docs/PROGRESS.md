@@ -835,6 +835,10 @@ approved except the three marked "Changed" below (ADR 032).**
 | 1.25 | **Rows are matched by an External ID of the institution's own** (new nullable `external_id` on phases, modules, sessions and objectives; unique per version; copy forward keeps it); a known id updates, a new id creates, **nothing is ever deleted or moved**; a module made on the screens is adopted by its code | The brief: "upsert by external ID". Modules have only `external_lms_ref`, which means something else (Phase 2) | A different matching key (for example module code only) is a small change; phases, sessions and objectives made on the screens cannot be matched | Decided in 1.25, to review |
 | 1.25 | **The preview is the dry run**: it writes nothing, shows every row as new / updated / unchanged, and a valid preview gets a 30-minute token; applying checks the file again and runs in **one transaction**; **any problem means nothing is imported** | Safer than partial imports; the same pattern as framework packs | Skipping bad rows would be a deliberate option for later | Decided in 1.25, to review |
 | 1.25 | Importing needs `curriculum.edit` **and** `objectives.edit` at the programme, draft versions only; new objectives are draft; a column that is kept and blank clears the value, an absent column is left alone, *Broader objectives* only adds links | Mirrors the screens' rules; my choice on blanks (spreadsheets cannot say "leave this") | Easy | Decided in 1.25, to review |
+| 1.26 | **A mapping import only suggests links** (source `import`, in the importer's name) and they go to the review queue; a person who may review can tick "already reviewed elsewhere", and the links are then accepted with the method `imported` and **no reviewer recorded**; a pair that is already linked is never changed | The import must not record a decision nobody made; the demo data's own links are accepted / imported, so the second route exists for earlier accreditation decisions | Easy; whether `imported` should be flagged in reports like bulk accepts is open (not done) | Decided in 1.26, to review |
+| 1.26 | **Tags: lists and values only** (matched by list key and by label, institution-wide lists, nothing deleted or deactivated); applying tags to items stays on the screens | The brief's "tags" templates; per-item tagging would need an item key for every kind of item | Applying tags by External ID is a possible later sheet | Decided in 1.26, to review |
+| 1.26 | **A framework in Excel is converted to a pack** and uses the existing pack preview and import unchanged | One import path to keep correct; cross-references, crosswalks and tag lists stay JSON-only | Easy | Decided in 1.26, to review |
+| 1.26 | The import history shows your own jobs, or everyone's with `audit.view`; counts only | No new permission; never the file or a cell | Easy | Decided in 1.26, to review |
 
 ---
 
@@ -1807,3 +1811,30 @@ Excel templates made from field definitions and an import of phases, modules, se
 **Not in this slice**: tags, frameworks and mappings (1.26), the import history screen (1.26), the full export (1.27), deleting or moving by import, assessments and users.
 
 **Commit**: `feat: add the Excel template and curriculum import with preview and upsert by external ID`
+
+
+### Slice 1.26: Excel Imports of Tags, Frameworks and Mappings, and the Import History
+**Status**: Complete
+
+Three more imports built like the curriculum import (ADR 054), and the history of applied imports. ADR 055 is the design.
+
+**Deliverables**:
+- [x] **Refactor** `services/import_common.py` (reading a workbook by sheet definitions, cleaning cells, problems, the plan) shared by every import; `import_fields.build_workbook` writes any set of sheets, with only the lists a template uses; `import_fields_data.py` holds the new field definitions
+- [x] **Tags** `services/tag_import.py`: lists by key, tags by label, applies-to, nothing deleted, kind fixed, codes unique; `taglists.manage`
+- [x] **Mappings** `services/mapping_import.py`: objective by External ID, framework by key (and version), item code, coverage 1 to 5, depth, reason; suggested by default, or accepted / `imported` when a reviewer ticks "decided"; existing links never changed; `mapping.edit` at the programme, draft versions
+- [x] **Frameworks** `services/framework_excel.py`: the workbook becomes a pack and goes through the pack preview and import; problems by sheet and row
+- [x] **API** `api/v1/excel_imports.py` (tags and mappings: template, preview with a Redis token, apply; `GET /import-jobs`) and `framework_packs.py` (`excel-template`, `preview-excel`; the pack import now writes an `ImportJob`)
+- [x] **Screen**: one generic `ExcelImportCard` for curriculum, mappings and tags; the framework card accepts .xlsx and links its template; `ImportHistoryCard`; the page shows each card to the people who may use it
+- [x] Docs: ADR 055, `admin/importing-tags-mappings-frameworks.md`, CLAUDE.md, data inventory
+
+**On the dev database** (real data, inside one transaction that was rolled back): a throwaway draft copied forward from 2027, three of its objectives given External IDs: a mapping file with a duplicate pair and an unknown objective listed exactly those two problems; the valid file planned 2 new links, applying made 2 **suggested** import links, the same file again was "unchanged"; the tag file planned 1 list and 2 tags, applied, and was then unchanged; a framework workbook with an unknown parent code was refused as "Items, row 4, Parent code: Item 'B' has an unknown parent 'NOPE'". Nothing was kept. Finding: **the demo's own import-source links are accepted with the method `imported`**, so the second route matches how the demo data already looks.
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy pass; `test_excel_imports.py` (15: each template made from its definitions, only the lists used, tags planned / made with item types and positions / unchanged again, tag problems, mappings suggested by default with an accepted link untouched, problems by row and cell, tags / mappings / framework through the API including the single-use token, the **decided** route accepting as `imported` with no reviewer, a published version refused, a framework in Excel through the pack import with its history, framework problems by sheet and row, the history for an administrator, nothing for a student); `test_curriculum_import.py` (22) still passes after the refactor, as do the framework pack tests
+- Frontend: lint and typecheck pass; `ExcelImports.test.tsx` (5: tags without a version and the history refreshed, mappings suggested by default, the decided checkbox for reviewers only, the history table, an empty history) and the curriculum and pack tests pass; the Playwright journeys (templates download, history on the page, axe) are **not run locally: CI runs them**
+
+**Not verified here**: a workbook saved by Excel itself, large files, an import by a non-administrator in a browser, the Afrikaans / isiXhosa / isiZulu wording (English for now).
+
+**Not in this slice**: applying tags to items from Excel, cross-references and crosswalks from Excel, flagging `imported` links in the reports, the full export (1.27).
+
+**Commit**: `feat: add Excel imports of tags, frameworks and mappings and the import history`

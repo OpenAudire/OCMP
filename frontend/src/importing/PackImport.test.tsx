@@ -13,6 +13,7 @@ vi.mock('../api/endpoints', async (importOriginal) => ({
   fetchMe: vi.fn(),
   fetchMyRoles: vi.fn(),
   fetchInstitution: vi.fn(),
+  fetchImportJobs: vi.fn(),
   previewFrameworkPack: vi.fn(),
   importFrameworkPack: vi.fn(),
   fetchPackTemplates: vi.fn(),
@@ -119,6 +120,7 @@ describe('framework pack import', () => {
     mocked.fetchMe.mockResolvedValue(testUser);
     mocked.fetchMyRoles.mockResolvedValue([role('curriculum_office', ['frameworks.manage'])]);
     mocked.fetchInstitution.mockResolvedValue(testInstitution);
+    mocked.fetchImportJobs.mockResolvedValue([]);
     mocked.fetchPackTemplates.mockResolvedValue(templates);
   });
 

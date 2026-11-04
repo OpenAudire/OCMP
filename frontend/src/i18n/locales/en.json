@@ -806,8 +806,8 @@
       "title": "Framework pack",
       "description": "A framework pack is a JSON file with one framework version: its items, and optionally cross-references, crosswalks from earlier versions, tag lists and taxonomy scales. Nothing is saved until you have checked the preview and confirmed.",
       "fileLabel": "Pack file",
-      "filePlaceholder": "Choose a .json file",
-      "fileHint": "JSON only. The largest file and the most items an import accepts are set by your administrator.",
+      "filePlaceholder": "Choose a .json or .xlsx file",
+      "fileHint": "A JSON pack file, or an Excel (.xlsx) file made from the template. The largest file and the most items an import accepts are set by your administrator.",
       "check": "Check file",
       "checking": "Checking {{name}} ({{size}})...",
       "checkingNote": "A big file can take a little while. Nothing is saved yet.",
@@ -883,7 +883,8 @@
         "expired": "The preview has expired or was already used. Choose the file and check it again.",
         "invalid": "The pack was changed or no longer fits what is already imported. Check the file again to see why.",
         "generic": "Something went wrong and nothing was imported. Check your connection and try again."
-      }
+      },
+      "excelTemplate": "Or download the Excel template for a framework"
     },
     "templates": {
       "title": "Blank templates",
@@ -896,11 +897,8 @@
       "empty": "No templates are installed."
     },
     "curriculum": {
-      "title": "Curriculum from Excel",
-      "intro": "Import phases, modules, sessions and objectives into a draft curriculum version from the Excel template. The file is checked first and nothing is changed until you confirm. Rows are matched by their External ID, so importing again updates instead of duplicating; an import never deletes anything.",
       "noDraft": "There is no draft curriculum version to import into. Create or copy forward a draft version first.",
       "version": "Curriculum version",
-      "template": "Download the Excel template",
       "file": "Filled-in template",
       "fileHelp": "An Excel (.xlsx) file made from the template. Do not put the names of people or patients in any cell.",
       "check": "Check the file",
@@ -922,18 +920,11 @@
       "rowsRegion": "Rows of the file and what would happen to each",
       "moreRows_one": "And {{count}} more row is not listed.",
       "moreRows_other": "And {{count}} more rows are not listed.",
-      "apply": "Import into the curriculum",
       "done": "Imported: {{created}} new and {{updated}} updated rows.",
       "action": {
         "create": "New",
         "update": "Updated",
         "unchanged": "Unchanged"
-      },
-      "sheets": {
-        "phases": "Phases",
-        "modules": "Modules",
-        "sessions": "Sessions",
-        "objectives": "Objectives"
       },
       "errors": {
         "tooLarge": "The file is larger than this installation accepts.",
@@ -942,6 +933,56 @@
         "conflict": "The curriculum changed since the check, or the version is no longer a draft. Check the file again.",
         "expired": "The check has expired. Upload the file and check it again.",
         "generic": "The import did not work. Try again."
+      }
+    },
+    "kinds": {
+      "curriculum": {
+        "title": "Curriculum from Excel",
+        "intro": "Import phases, modules, sessions and objectives into a draft curriculum version from the Excel template. The file is checked first and nothing is changed until you confirm. Rows are matched by their External ID, so importing again updates instead of duplicating; an import never deletes anything.",
+        "template": "Download the Excel template",
+        "apply": "Import into the curriculum"
+      },
+      "tags": {
+        "title": "Tags from Excel",
+        "intro": "Import tag lists (teaching methods, assessment methods, themes...) and their tags from the Excel template. Lists are matched by their key and tags by their label, so importing again updates instead of duplicating. Nothing is deleted. The file is checked first and nothing is changed until you confirm.",
+        "template": "Download the Excel template for tags",
+        "apply": "Import the tags"
+      },
+      "mappings": {
+        "title": "Mappings from Excel",
+        "intro": "Import links between the objectives of a draft version (by External ID) and framework items. By default every new link is only suggested and goes to the review queue; a pair that is already linked is left as it is. The file is checked first and nothing is changed until you confirm.",
+        "template": "Download the Excel template for mappings",
+        "apply": "Import the mappings",
+        "decided": "These links were already reviewed elsewhere: record them as accepted",
+        "decidedHelp": "They are accepted without a review in this system, marked as imported, and no reviewer is recorded. Leave this off to have them reviewed in the queue."
+      }
+    },
+    "sheets": {
+      "phases": "Phases",
+      "modules": "Modules",
+      "sessions": "Sessions",
+      "objectives": "Objectives",
+      "tag_lists": "Tag lists",
+      "tag_values": "Tag values",
+      "mappings": "Mappings"
+    },
+    "history": {
+      "title": "Import history",
+      "intro": "The imports that were applied: yours, or everyone's if you may read the audit log. It records counts only, never the file or what was in it.",
+      "none": "No import has been applied yet.",
+      "when": "When",
+      "what": "What",
+      "version": "Version",
+      "by": "By",
+      "result": "Result",
+      "counts": "{{created}} new, {{updated}} updated",
+      "errorTitle": "The history could not be loaded",
+      "errorBody": "Try again in a moment.",
+      "kinds": {
+        "curriculum": "Curriculum",
+        "tags": "Tags",
+        "mappings": "Mappings",
+        "framework": "Framework"
       }
     }
   },

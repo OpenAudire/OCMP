@@ -1614,3 +1614,15 @@ export interface CurriculumImportApplied {
   job_id: string;
 }
 
+/** One applied import (counts only; never the file or its name). */
+export interface ImportJob {
+  id: string;
+  kind: 'curriculum' | 'tags' | 'mappings' | 'framework';
+  status: string;
+  created_at: string;
+  by: string | null;
+  programme_code: string | null;
+  academic_year: number | null;
+  counts: ImportCounts;
+}
+

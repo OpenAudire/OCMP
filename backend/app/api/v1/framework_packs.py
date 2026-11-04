@@ -14,12 +14,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import FileResponse
+from redis.asyncio import Redis
 
 from app.api.deps import RedisDep, SettingsDep, require_permission, too_many_attempts
+from app.core.config import Settings
 from app.core.database import DbSession
 from app.core.permissions import Permission
 from app.jobs.embeddings import enqueue_pending
-from app.models import User
+from app.models import ImportJob, User
 from app.models.embedding import EmbeddedType
 from app.schemas.framework_packs import (
     PackCountsRead,
@@ -31,10 +33,12 @@ from app.schemas.framework_packs import (
     ProblemRead,
     SampleItemRead,
 )
-from app.services import rate_limit
+from app.services import framework_excel, rate_limit
 from app.services.audit import audit_operation
 from app.services.authorization import InvalidRequestError, has_permission
 from app.services.frameworks import activate_framework
+from app.services.import_fields import Lists, build_workbook
+from app.services.import_fields_data import FRAMEWORK_HOW, FRAMEWORK_SHEETS
 from app.services.packs import (
     FrameworkPack,
     PackProblem,
@@ -52,6 +56,7 @@ TOKEN_SECONDS = 30 * 60
 SAMPLE_ITEMS = 200
 PREVIEWS_PER_MINUTE = 20
 _SCOPE = "pack-preview"
+XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 TEMPLATES = Path(__file__).resolve().parents[2] / "pack_templates"
 
 
@@ -159,10 +164,61 @@ async def preview_pack(
     body = await _read_body(request, settings.pack_max_upload_mb * 1024 * 1024)
     text, problems = _decode(body)
     pack: FrameworkPack | None = None
-    warnings: list[str] = []
     if text is not None:
         pack, problems = _parse(text)
-    if pack is not None:
+    return await _finish_preview(db, actor, redis, settings, text, pack, problems)
+
+
+@router.get("/excel-template")
+async def excel_template(_actor: FrameworkManager) -> Response:
+    """The Excel template for a framework (Framework and Items sheets, with instructions)."""
+    return Response(
+        build_workbook(
+            Lists(),
+            sheets=FRAMEWORK_SHEETS,
+            heading="Framework: Excel template",
+            how=FRAMEWORK_HOW,
+        ),
+        media_type=XLSX,
+        headers={"Content-Disposition": 'attachment; filename="framework-template.xlsx"'},
+    )
+
+
+@router.post("/preview-excel", response_model=PackPreviewRead)
+async def preview_excel(
+    request: Request,
+    actor: FrameworkManager,
+    db: DbSession,
+    redis: RedisDep,
+    settings: SettingsDep,
+) -> PackPreviewRead:
+    """Check a framework in the Excel template (the request body) and say what importing it would
+    do. The workbook becomes a pack and goes through the same checks, preview and import as a pack
+    file (``POST /import`` with the token), so nothing differs after this point."""
+    limited = await rate_limit.check(redis, _SCOPE, str(actor.id), PREVIEWS_PER_MINUTE)
+    if not limited.allowed:
+        raise too_many_attempts(limited.retry_after_seconds)
+    await rate_limit.hit(redis, _SCOPE, str(actor.id), 60)
+
+    limit = settings.pack_max_upload_mb * 1024 * 1024
+    body = await _read_body(request, limit)
+    data, pack, problems = framework_excel.workbook_to_pack(body, limit)
+    text = json.dumps(data) if data is not None else None
+    return await _finish_preview(db, actor, redis, settings, text, pack, problems)
+
+
+async def _finish_preview(
+    db: DbSession,
+    actor: User,
+    redis: Redis,
+    settings: Settings,
+    text: str | None,
+    pack: FrameworkPack | None,
+    problems: list[PackProblem],
+) -> PackPreviewRead:
+    """The checks that need the database, the counts, and the token of a valid preview."""
+    warnings: list[str] = []
+    if pack is not None and not problems:
         problems, warnings = await _all_problems(db, actor, pack, settings.pack_max_items)
     if pack is None or text is None:
         return PackPreviewRead(valid=False, errors=_problem_reads(problems), warnings=[])
@@ -242,6 +298,15 @@ async def import_checked_pack(
         enqueue_pending(settings, EmbeddedType.FRAMEWORK_ITEM)
     summary = result.summary
     framework = result.framework
+    db.add(
+        ImportJob(
+            kind="framework",
+            status="applied",
+            summary={"items": {"create": summary.items}},
+            created_by_id=actor.id,
+        )
+    )
+    await db.flush()
     return PackImportRead(
         framework_id=framework.id,
         key=framework.key,

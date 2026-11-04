@@ -23,6 +23,9 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from app.models.curriculum import ObjectiveDomain, PhaseKind
+from app.models.framework import FrameworkProfile
+from app.models.mapping import DepthMatch
+from app.models.tagging import TagListKind
 
 MAX_ROWS_PER_SHEET = 5000
 TEMPLATE_VALIDATED_ROWS = 1000
@@ -275,11 +278,17 @@ LIST_NAMES = {
     "domain": "Domain",
     "format": "Teaching format",
     "taxonomy_level": "Taxonomy level",
+    "tag_kind": "Kind of tag list",
+    "depth": "Depth",
+    "framework_profile": "Framework profile",
 }
 FIXED_LISTS: dict[str, tuple[str, ...]] = {
     "phase_kind": tuple(k.value for k in PhaseKind),
     "objective_level": tuple(LEVEL_WORDS),
     "domain": tuple(d.value for d in ObjectiveDomain),
+    "tag_kind": tuple(k.value for k in TagListKind),
+    "depth": tuple(d.value for d in DepthMatch),
+    "framework_profile": tuple(p.value for p in FrameworkProfile),
 }
 
 
@@ -299,25 +308,26 @@ class Lists:
         return FIXED_LISTS[name]
 
 
-def instructions(lists: Lists) -> list[str]:
+CURRICULUM_HOW = (
+    "  Fill in the sheets you need; leave the others empty.",
+    "  Upload the file on the Import page, choose the version and read the preview.",
+    "  Nothing is changed until you confirm. Only draft versions can be imported into.",
+    "  Every row needs an External ID of your own. Importing the same External ID again updates "
+    "that item; a new External ID makes a new item. An import never deletes anything.",
+    "  A column you remove from a sheet is left alone. A column you keep and leave blank clears "
+    "that value (except Broader objectives, which only adds links).",
+    "  Do not put the names of people or patients in any cell.",
+)
+
+
+def instructions(
+    sheets: tuple[Sheet, ...] = SHEETS,
+    heading: str = "Curriculum structure and objectives: Excel template",
+    how: Sequence[str] = CURRICULUM_HOW,
+) -> list[str]:
     """The text of the Instructions sheet, made from the definitions."""
-    lines = [
-        "Curriculum structure and objectives: Excel template",
-        "",
-        "How this works",
-        "  Fill in the sheets you need; leave the others empty.",
-        "  Upload the file on the Import page, choose the version and read the preview.",
-        "  Nothing is changed until you confirm. Only draft versions can be imported into.",
-        "  Every row needs an External ID of your own. Importing the same External ID "
-        "again updates "
-        "that item; a new External ID makes a new item. An import never deletes anything.",
-        "  A column you remove from a sheet is left alone. A column you keep and leave "
-        "blank clears "
-        "that value (except Broader objectives, which only adds links).",
-        "  Do not put the names of people or patients in any cell.",
-        "",
-    ]
-    for sheet in SHEETS:
+    lines = [heading, "", "How this works", *how, ""]
+    for sheet in sheets:
         lines.append(f"{sheet.title}: {sheet.about}")
         for f in sheet.fields:
             required = "required" if f.required else "optional"
@@ -333,9 +343,13 @@ def _text_cell(cell: Any, value: Any) -> None:
 
 
 def build_workbook(
-    lists: Lists, rows: Mapping[str, Sequence[Sequence[Any]]] | None = None
+    lists: Lists,
+    rows: Mapping[str, Sequence[Sequence[Any]]] | None = None,
+    sheets: tuple[Sheet, ...] = SHEETS,
+    heading: str = "Curriculum structure and objectives: Excel template",
+    how: Sequence[str] = CURRICULUM_HOW,
 ) -> bytes:
-    """The template: one sheet for each of ``SHEETS`` with its headings, dropdowns and checks, an
+    """The template: one sheet for each of ``sheets`` with its headings, dropdowns and checks, an
     Instructions sheet and a Lists sheet. With ``rows`` (sheet key to rows of cell values in the
     order of the fields) the sheets are filled: the full export of Slice 1.27 uses that."""
     book = Workbook()
@@ -344,7 +358,7 @@ def build_workbook(
     book.remove(first)
 
     guide = book.create_sheet(INSTRUCTIONS_SHEET)
-    for line in instructions(lists):
+    for line in instructions(sheets, heading, how):
         guide.append([line])
     guide["A1"].font = Font(bold=True, size=14)
     guide.column_dimensions["A"].width = 130
@@ -353,7 +367,8 @@ def build_workbook(
 
     listing = book.create_sheet(LIST_SHEET)
     list_columns: dict[str, str] = {}
-    for index, name in enumerate(LIST_NAMES, start=1):
+    used = {f.choices for sheet in sheets for f in sheet.fields if f.choices}
+    for index, name in enumerate((n for n in LIST_NAMES if n in used), start=1):
         values = lists.values(name)
         letter = get_column_letter(index)
         listing.cell(row=1, column=index, value=LIST_NAMES[name]).font = Font(bold=True)
@@ -365,7 +380,7 @@ def build_workbook(
 
     required_fill = PatternFill("solid", start_color="1F6F6B")
     optional_fill = PatternFill("solid", start_color="5B8F8B")
-    for sheet in SHEETS:
+    for sheet in sheets:
         ws = book.create_sheet(sheet.title)
         ws.append([f.header for f in sheet.fields])
         for column, f in enumerate(sheet.fields, start=1):

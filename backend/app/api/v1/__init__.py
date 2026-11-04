@@ -15,6 +15,7 @@ from app.api.v1.curriculum_edit import router as curriculum_edit_router
 from app.api.v1.curriculum_import import router as curriculum_import_router
 from app.api.v1.curriculum_objectives import router as curriculum_objectives_router
 from app.api.v1.curriculum_versions import router as curriculum_versions_router
+from app.api.v1.excel_imports import router as excel_imports_router
 from app.api.v1.framework_packs import router as framework_packs_router
 from app.api.v1.frameworks import router as frameworks_router
 from app.api.v1.institution import router as institution_router
@@ -59,4 +60,5 @@ router.include_router(coverage_router)
 router.include_router(reports_router)
 router.include_router(intended_repeats_router)
 router.include_router(curriculum_import_router)
+router.include_router(excel_imports_router)
 router.include_router(setup_router)

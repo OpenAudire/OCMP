@@ -60,3 +60,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [052](052-redundancy-and-traceability.md) | Redundancy and Traceability Reports |
 | [053](053-teaching-reports.md) | Teaching Reports |
 | [054](054-curriculum-excel-import.md) | Excel Template and Import of Curriculum Structure and Objectives |
+| [055](055-excel-imports-tags-frameworks-mappings.md) | Excel Imports of Tags, Frameworks and Mappings, and the Import History |

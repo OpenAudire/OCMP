@@ -6,41 +6,48 @@ import { Permission } from '../session/permissions';
 import { useSession } from '../session/useSession';
 import { Page } from '../ui/Page';
 import { CurriculumImportCard } from './CurriculumImportCard';
+import { ImportHistoryCard } from './ImportHistoryCard';
 import { PackImportCard } from './PackImportPage';
+import { MappingImportCard, TagImportCard } from './TagAndMappingImportCards';
 import { TemplatesCard } from './TemplatesCard';
 
-function ImportHome({
-  curriculum,
-  frameworks,
-}: {
+interface Allowed {
   curriculum: boolean;
   frameworks: boolean;
-}) {
+  tags: boolean;
+  mappings: boolean;
+}
+
+function ImportHome({ allowed }: { allowed: Allowed }) {
   const { t } = useTranslation();
   return (
     <Page title={t('nav.import')} description={t('import.intro')}>
-      {curriculum && <CurriculumImportCard />}
-      {frameworks && <PackImportCard />}
-      {frameworks && <TemplatesCard />}
+      {allowed.curriculum && <CurriculumImportCard />}
+      {allowed.mappings && <MappingImportCard />}
+      {allowed.tags && <TagImportCard />}
+      {allowed.frameworks && <PackImportCard />}
+      {allowed.frameworks && <TemplatesCard />}
+      <ImportHistoryCard />
     </Page>
   );
 }
 
-/** `/import`: the Excel import of a draft curriculum version (for people who may edit the
- * curriculum) and the framework pack import (for people who manage frameworks). */
+/** `/import`: Excel imports of the curriculum, mappings and tags, the framework import (pack file
+ * or Excel) and the history of applied imports, each for the people who may do it. */
 export function ImportSection() {
   const { data: session } = useSession();
-  const canManageFrameworks = session?.permissions.has(Permission.FrameworksManage) ?? false;
-  const canImportCurriculum =
-    (session?.permissions.has(Permission.CurriculumEdit) ?? false) &&
-    (session?.permissions.has(Permission.ObjectivesEdit) ?? false);
-  if (!canManageFrameworks && !canImportCurriculum) return <PlaceholderPage titleKey="nav.import" />;
+  const has = (permission: string) =>
+    session?.permissions.has(permission as Permission) ?? false;
+  const allowed: Allowed = {
+    frameworks: has(Permission.FrameworksManage),
+    curriculum: has(Permission.CurriculumEdit) && has(Permission.ObjectivesEdit),
+    tags: has(Permission.TaglistsManage),
+    mappings: has(Permission.MappingEdit),
+  };
+  if (!Object.values(allowed).some(Boolean)) return <PlaceholderPage titleKey="nav.import" />;
   return (
     <Routes>
-      <Route
-        path="*"
-        element={<ImportHome curriculum={canImportCurriculum} frameworks={canManageFrameworks} />}
-      />
+      <Route path="*" element={<ImportHome allowed={allowed} />} />
     </Routes>
   );
 }

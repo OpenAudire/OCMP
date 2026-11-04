@@ -52,5 +52,5 @@ version that has that External ID.
 ## Limits
 
 The file may be as large as the installation's upload limit (`PACK_MAX_UPLOAD_MB`, 10 MB by default) and has
-at most 5 000 rows a sheet. The template's headings and instructions are English for now. Importing tags,
-frameworks and mappings, and the import history, arrive in the next slice.
+at most 5 000 rows a sheet. The template's headings and instructions are English for now. Tags, mappings and
+frameworks, and the import history, are in [Importing tags, mappings and frameworks](importing-tags-mappings-frameworks.md).

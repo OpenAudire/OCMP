@@ -16,7 +16,7 @@ test.describe('Curriculum import from Excel', () => {
     await expect(
       page.getByRole('heading', { level: 2, name: 'Curriculum from Excel' })
     ).toBeVisible();
-    const link = page.getByRole('link', { name: /Download the Excel template/ });
+    const link = page.getByRole('link', { name: 'Download the Excel template', exact: true });
     const href = (await link.getAttribute('href')) as string;
     const template = await page.request.get(href);
     expect(template.status()).toBe(200);
@@ -37,4 +37,24 @@ test.describe('Curriculum import from Excel', () => {
     ).toHaveCount(0);
     await expectNoAccessibilityViolations(page);
   });
+
+  test('the tag and mapping templates download, and the import history is on the page', async ({
+    page,
+  }) => {
+    await openApp(page, '/import');
+
+    for (const name of [/Download the Excel template for tags/, /Download the Excel template for mappings/]) {
+      const href = (await page.getByRole('link', { name }).getAttribute('href')) as string;
+      const template = await page.request.get(href);
+      expect(template.status()).toBe(200);
+      expect(template.headers()['content-type']).toContain('spreadsheetml');
+    }
+    const framework = await page.request.get(
+      (await page.getByRole('link', { name: /Excel template for a framework/ }).getAttribute('href')) as string
+    );
+    expect(framework.status()).toBe(200);
+    await expect(page.getByRole('heading', { level: 2, name: 'Import history' })).toBeVisible();
+    await expectNoAccessibilityViolations(page);
+  });
 });
+

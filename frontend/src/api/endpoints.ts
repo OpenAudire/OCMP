@@ -10,6 +10,7 @@ import type {
   GapReport,
   CurriculumImportApplied,
   CurriculumImportPreview,
+  ImportJob,
   IntendedRepeats,
   ReportDocument,
   GoldPreview,
@@ -527,12 +528,27 @@ export async function removeTagging(taggingId: string): Promise<void> {
 /** Check a framework pack file (JSON). Problems in the file come back in the result. */
 export async function previewFrameworkPack(file: File): Promise<PackPreview> {
   // The file is the request body, not a form: large files stream, and nothing is parsed here.
+  // An Excel file (Slice 1.26) becomes a pack on the server and is checked the same way.
+  const excel = file.name.toLowerCase().endsWith('.xlsx');
   return (
-    await api.post<PackPreview>('/framework-packs/preview', file, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 300_000,
-    })
+    await api.post<PackPreview>(
+      excel ? '/framework-packs/preview-excel' : '/framework-packs/preview',
+      file,
+      {
+        headers: {
+          'Content-Type': excel
+            ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            : 'application/json',
+        },
+        timeout: 300_000,
+      }
+    )
   ).data;
+}
+
+/** Address of the Excel template for a framework. */
+export function frameworkExcelTemplateUrl(): string {
+  return '/api/v1/framework-packs/excel-template';
 }
 
 /** Import the pack of a valid preview. */
@@ -1018,5 +1034,62 @@ export async function applyCurriculumImport(
       { timeout: 600_000 }
     )
   ).data;
+}
+
+// --- Excel imports of tags and mappings, and the import history (Slice 1.26) ---
+
+const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+export function tagImportTemplateUrl(): string {
+  return '/api/v1/imports/tags/template';
+}
+
+export async function previewTagImport(file: File): Promise<CurriculumImportPreview> {
+  return (
+    await api.post<CurriculumImportPreview>('/imports/tags/preview', file, {
+      headers: { 'Content-Type': XLSX },
+      timeout: 300_000,
+    })
+  ).data;
+}
+
+export async function applyTagImport(token: string): Promise<CurriculumImportApplied> {
+  return (await api.post<CurriculumImportApplied>('/imports/tags/apply', { token })).data;
+}
+
+export function mappingImportTemplateUrl(versionId: string): string {
+  return `/api/v1/curriculum-versions/${versionId}/import/mappings/template`;
+}
+
+export async function previewMappingImport(
+  versionId: string,
+  file: File
+): Promise<CurriculumImportPreview> {
+  return (
+    await api.post<CurriculumImportPreview>(
+      `/curriculum-versions/${versionId}/import/mappings/preview`,
+      file,
+      { headers: { 'Content-Type': XLSX }, timeout: 300_000 }
+    )
+  ).data;
+}
+
+/** `decided`: the links were already reviewed elsewhere (needs permission to review mappings). */
+export async function applyMappingImport(
+  versionId: string,
+  token: string,
+  decided: boolean
+): Promise<CurriculumImportApplied> {
+  return (
+    await api.post<CurriculumImportApplied>(
+      `/curriculum-versions/${versionId}/import/mappings/apply`,
+      { token, decided }
+    )
+  ).data;
+}
+
+/** Applied imports: yours, or everyone's with permission to read the audit log. */
+export async function fetchImportJobs(): Promise<ImportJob[]> {
+  return (await api.get<ImportJob[]>('/import-jobs')).data;
 }
 

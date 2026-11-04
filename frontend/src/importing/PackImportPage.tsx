@@ -1,11 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Checkbox, FileInput, Group, Paper, Text, Title } from '@mantine/core';
+import {
+  Alert,
+  Anchor,
+  Button,
+  Checkbox,
+  FileInput,
+  Group,
+  Paper,
+  Text,
+  Title,
+} from '@mantine/core';
 import { IconAlertTriangle, IconFileImport } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { isApiError } from '../api/client';
-import { importFrameworkPack, previewFrameworkPack } from '../api/endpoints';
+import {
+  frameworkExcelTemplateUrl,
+  importFrameworkPack,
+  previewFrameworkPack,
+} from '../api/endpoints';
 import type { PackCounts, PackImportResult, PackPreview } from '../api/types';
 import { SuccessNotice } from '../pages/SuccessNotice';
 import { LoadingState } from '../ui/States';
@@ -308,11 +322,14 @@ export function PackImportCard() {
         }}
       >
         <Text c="dimmed">{t('import.pack.description')}</Text>
+        <Anchor href={frameworkExcelTemplateUrl()} download>
+          {t('import.pack.excelTemplate')}
+        </Anchor>
         <FileInput
           label={t('import.pack.fileLabel')}
           description={t('import.pack.fileHint')}
           placeholder={t('import.pack.filePlaceholder')}
-          accept=".json,application/json"
+          accept=".json,application/json,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           value={file}
           onChange={setFile}
           leftSection={<IconFileImport size={18} aria-hidden />}

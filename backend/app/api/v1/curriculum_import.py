@@ -25,7 +25,7 @@ from app.core.database import DbSession
 from app.core.permissions import Permission, ScopeType
 from app.jobs.embeddings import enqueue_objective
 from app.models import User
-from app.services import curriculum_import, rate_limit
+from app.services import curriculum_import, import_common, rate_limit
 from app.services.audit import audit_operation
 from app.services.authorization import (
     AuthorizationError,
@@ -121,7 +121,7 @@ async def download_template(
     )
 
 
-def _preview(plan: curriculum_import.Plan, token: str | None) -> PreviewRead:
+def preview_of(plan: import_common.Plan, token: str | None) -> PreviewRead:
     return PreviewRead(
         valid=plan.valid,
         would_change=plan.changes,
@@ -192,7 +192,7 @@ async def preview_import(
             ),
             ex=TOKEN_SECONDS,
         )
-    return _preview(plan, token)
+    return preview_of(plan, token)
 
 
 @router.post("/curriculum-versions/{version_id}/import/apply", response_model=ApplyRead)

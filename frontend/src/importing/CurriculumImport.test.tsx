@@ -13,6 +13,7 @@ vi.mock('../api/endpoints', async (importOriginal) => ({
   fetchMe: vi.fn(),
   fetchMyRoles: vi.fn(),
   fetchInstitution: vi.fn(),
+  fetchImportJobs: vi.fn(),
   fetchProgrammes: vi.fn(),
   fetchReviewCount: vi.fn(),
   previewCurriculumImport: vi.fn(),
@@ -106,6 +107,7 @@ describe('curriculum import from Excel', () => {
       role('programme_director', ['curriculum.edit', 'objectives.edit']),
     ]);
     mocked.fetchInstitution.mockResolvedValue(testInstitution);
+    mocked.fetchImportJobs.mockResolvedValue([]);
     mocked.fetchReviewCount.mockResolvedValue({ waiting: 0 } as never);
     mocked.fetchProgrammes.mockResolvedValue(programmes);
   });
