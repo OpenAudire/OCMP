@@ -113,6 +113,20 @@ class TestSingleMatch:
 
         assert got["P2"].only_bulk is True and got["P1.2"].only_bulk is False
 
+    def test_imported_links_are_counted_and_flagged_like_bulk_ones(self) -> None:
+        links = [
+            Link(A, uuid.uuid4(), 4, "matches", imported=True),
+            Link(A, uuid.uuid4(), 3, "matches"),
+            Link(C, uuid.uuid4(), 3, "matches", imported=True),
+        ]
+
+        got = by_code(compute(tree(), links, Method.SINGLE))
+
+        assert (got["P1.1"].imported_links, got["P1.1"].only_imported) == (1, False)
+        assert (got["P1.3"].imported_links, got["P1.3"].only_imported) == (1, True)
+        assert got["P1.1"].bulk_links == 0
+        assert summarise(tree(), links).imported_links == 2
+
     def test_links_to_items_of_another_framework_are_ignored(self) -> None:
         got = compute(tree(), [link(uuid.uuid4())], Method.SINGLE)
 

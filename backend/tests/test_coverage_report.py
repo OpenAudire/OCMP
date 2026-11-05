@@ -231,6 +231,24 @@ class TestCoverage:
         assert got["G1.2"]["recheck_links"] == 1
         assert (body["summary"]["bulk_links"], body["summary"]["recheck_links"]) == (2, 1)
 
+    async def test_links_accepted_by_import_are_flagged_not_hidden(
+        self, api_client: AsyncClient, db_session: AsyncSession, world: World, library: Library
+    ) -> None:
+        await accept(
+            db_session, world.lecture_objective, library.one, accept_method=AcceptMethod.IMPORTED
+        )
+        await accept(db_session, world.cardio_outcome, library.two)
+
+        body = (
+            await api_client.get(url(world), params={"framework_id": str(library.framework.id)})
+        ).json()
+
+        got = rows(body)
+        assert (got["G1.1"]["imported_links"], got["G1.1"]["only_imported"]) == (1, True)
+        assert (got["G1.2"]["imported_links"], got["G1.2"]["only_imported"]) == (0, False)
+        assert got["G1.1"]["links"] == 1  # still counted
+        assert body["summary"]["imported_links"] == 1
+
     async def test_the_summary_gives_every_method_for_the_whole_framework(
         self, api_client: AsyncClient, db_session: AsyncSession, world: World, library: Library
     ) -> None:

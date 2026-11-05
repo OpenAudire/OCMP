@@ -42,6 +42,7 @@ from app.models import (
 )
 from app.models.curriculum import ObjectiveLevel
 from app.models.mapping import MappingStatus
+from app.models.tagging import TAGGING_COLUMNS, TaggableType
 from app.services import tagging
 from app.services.curriculum_import import key_of
 from app.services.curriculum_read import VisibleVersion
@@ -187,6 +188,36 @@ async def _lists_for(db: AsyncSession, visible: VisibleVersion) -> Lists:
 # --- The full round-trip workbook ---------------------------------------------------------
 
 
+async def _tag_cells(db: AsyncSession, scope: Scope) -> dict[uuid.UUID, str]:
+    """The Tags cell of each module, session and objective: its **direct** tags that an import
+    could set again (active lists and tags), each as ``list key: label``. Inherited tags are left
+    out: they follow from the direct ones."""
+    out: dict[uuid.UUID, list[str]] = defaultdict(list)
+    for kind, ids in (
+        (TaggableType.MODULE, [m.id for m in scope.modules]),
+        (TaggableType.LEARNING_EVENT, [e.id for e in scope.events]),
+        (TaggableType.OBJECTIVE, [o.id for o in scope.objectives]),
+    ):
+        column = getattr(Tagging, TAGGING_COLUMNS[kind])
+        rows = await db.execute(
+            select(column, TagList.key, TagValue.label)
+            .join(TagValue, TagValue.id == Tagging.tag_value_id)
+            .join(TagList, TagList.id == TagValue.tag_list_id)
+            .where(
+                column.in_(ids or [uuid.uuid4()]),
+                Tagging.inherited_from_id.is_(None),
+                TagList.deleted_at.is_(None),
+                TagList.is_active.is_(True),
+                TagValue.deleted_at.is_(None),
+                TagValue.is_active.is_(True),
+            )
+            .order_by(TagList.key, TagValue.label)
+        )
+        for item_id, key, label in rows:
+            out[item_id].append(f"{key}: {label}")
+    return {item_id: "; ".join(tags) for item_id, tags in out.items()}
+
+
 async def build_roundtrip(db: AsyncSession, visible: VisibleVersion) -> bytes:
     """The whole version in the sheets of the import templates (curriculum, tags, mappings)."""
     scope = await load_scope(db, visible)
@@ -201,6 +232,7 @@ async def build_roundtrip(db: AsyncSession, visible: VisibleVersion) -> bytes:
     }
     level_name = {level.id: level.name for level in await db.scalars(select(TaxonomyLevel))}
     parents = await _parent_keys(db, scope)
+    tag_cells = await _tag_cells(db, scope)
 
     rows: dict[str, list[list[Any]]] = {s.key: [] for s in (*SHEETS, *TAG_SHEETS, *MAPPING_SHEETS)}
     for p in scope.phases:
@@ -217,6 +249,7 @@ async def build_roundtrip(db: AsyncSession, visible: VisibleVersion) -> bytes:
                 m.nqf_level,
                 m.description or None,
                 m.external_lms_ref,
+                tag_cells.get(m.id),
             ]
         )
     for e in scope.events:
@@ -231,6 +264,7 @@ async def build_roundtrip(db: AsyncSession, visible: VisibleVersion) -> bytes:
                 e.week,
                 e.description or None,
                 e.external_lms_ref,
+                tag_cells.get(e.id),
             ]
         )
     for o in scope.objectives:
@@ -249,6 +283,7 @@ async def build_roundtrip(db: AsyncSession, visible: VisibleVersion) -> bytes:
                 o.domain.value if o.domain else None,
                 level_name.get(o.taxonomy_level_id) if o.taxonomy_level_id else None,
                 "; ".join(parents.get(o.id, [])) or None,
+                tag_cells.get(o.id),
             ]
         )
 

@@ -568,7 +568,7 @@ scripts.
 Collected from the slices above so nothing is lost:
 
 - **Phase 1**: curriculum CRUD API and tree editor, publishing rules, copy-forward and version diff; framework pack and Excel import, framework browser, cross-framework search (pack schema to extend for crosswalks, tag lists and cross-references); tag inheritance rules and tagging UI; AI pipeline, review queue, coverage reports; eval harness with a fictional gold set; admin screens for users, roles and settings (API only today); user guides per role, glossary, FAQ, AI provider setup guide; a command to remove the demo data; Playwright end-to-end tests; personal API tokens (`ApiToken`)
-- **Phase 2**: SAML (account service is protocol-independent), framework version migration, Brightspace connector and setup guide; move to Node 26 LTS early in Phase 2 (CI, web image, CONTRIBUTING, `@types/node`; decided at Slice 1.0)
+- **Phase 2**: external reviewers can download evidence packs (backlog, asked at the review of 1.24a-1.27: today an external reviewer reads published evidence on screen and may not export, ADR 056); SAML (account service is protocol-independent), framework version migration, Brightspace connector and setup guide; move to Node 26 LTS early in Phase 2 (CI, web image, CONTRIBUTING, `@types/node`; decided at Slice 1.0)
 - **SSO**: role mapping from claims, admin linking of existing local accounts, provider logout, multi-tenant Entra
 - **POPIA**: per-user data export and deletion, email address changes (the inventory and notice template exist since Slice 0.21)
 - **CI/CD**: first tagged release, GitHub Pages and code scanning upload (see "Before the Public Release"); multi-architecture images
@@ -900,6 +900,9 @@ Product name: **Curriculum in Context** (repository, Python package, CLI, images
 | 1.25 | Excel templates from field definitions; import engine with preview, dry run, row errors, upsert by external ID (structure and objectives) |
 | 1.26 | Excel imports for tags, frameworks and mappings; import job history |
 | 1.27 | Exports: full round trip, objectives x framework items matrix, JSON of a version |
+| 1.27a | **A new row that looks like an existing item is a warning, not a problem**: same name, code or title, or wording 90% alike (plain letters and digits, no AI), under the same parent, for an item no row of the file refers to; the warning gives the id that makes the row update it | Items made on the screens have no External ID; guessing a match could overwrite the wrong item, so the person decides | Easy; the threshold is `SIMILAR_WORDING` | Decided in 1.27a, to review |
+| 1.27a | **Links accepted by an import are flagged in the reports like bulk ones** ("accepted by import", counted on every item, in the summary and in the Excel and PDF reports) | They are accepted with no reviewer recorded, so a reader must be able to see which figures rest on them | Easy | Decided in 1.27a, to review |
+| 1.27a | **A Tags column on Modules, Sessions and Objectives** (`list key: label; ...`): direct tags only, added and never removed, not passed on, lists and tags must exist; the export writes it so a round trip stays unchanged | Same rules as broader objectives; inheritance and removal have consequences that deserve the screen's preview | A "remove tags" or "pass on" option could come later | Decided in 1.27a, to review |
 | 1.28 | Committee dashboard: KPI trends from nightly metric snapshots (seeded for the demo), traceability diagram, coverage vs last published version, mapping progress, credit table |
 | 1.29 | Student and staff explorer (phone first): published versions only, search, "what is covered in this module/assessment" |
 | 1.30 | Admin screens (users, roles, assignments, institution settings); personal API tokens; `remove-demo` command |
@@ -1866,3 +1869,26 @@ The full round-trip workbook, the objectives x framework items matrix and the JS
 **Not in this slice**: exporting frameworks, assessments to Excel, several versions at once, an importable JSON, 1.28 or later.
 
 **Commit**: `feat: add exports of a curriculum version (round-trip workbook, matrix, JSON)`
+
+
+### Slice 1.27a: Review of 1.24a-1.27 (look-alike warnings, imported-link flag, tag columns)
+**Status**: Complete
+
+The owner approved 1.24a to 1.27 and asked for three changes and one backlog item. ADR 057 is the design.
+
+**Deliverables**:
+- [x] **Look-alike warnings** `curriculum_import._warn_of_lookalikes`: after a valid check, a row that would make a phase, module, session or objective is compared with the version's items that no row refers to (same name, code or title; wording 90% alike, as plain letters and digits; same parent). The preview lists a warning with the sheet, row, how it matches and the id to use to update that item instead; at most 50, then a count. Never blocks, no AI
+- [x] **Imported links flagged** `coverage_engine.Link.imported`, `ItemResult.imported_links` / `only_imported`, `Summary.imported_links`; the coverage API, the Excel and PDF reports ("Accepted by import", the note) and the screen (summary badge, "All accepted by import" / "N accepted by import" on each item) show them, counted and never hidden
+- [x] **Tag columns** `import_fields.TAGS` on Modules, Sessions and Objectives (`list key: label; list key: label`): resolved against active lists the version's faculty may use, checked for the kind of item, set directly with `tagging.tag_item` after the item is made or updated, added never removed, not passed on; `Existing` now carries the tag lists and the direct taggings; the round-trip export writes the column (`curriculum_export._tag_cells`)
+- [x] **Backlog** for Phase 2: external reviewers can download evidence packs (added to "Deferred to later phases")
+- [x] Docs: ADR 057, `admin/importing-curriculum.md`, `admin/coverage-reports.md`, CLAUDE.md
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy pass; `test_curriculum_import.py` (30; new: look-alikes warned about, none for a row that updates the item or for the same wording under another parent, warnings through the API, tags set directly on modules / sessions / objectives and unchanged on a second run, a new tag is an update that adds and never removes, problems by cell, a sheet without the column), `test_version_export.py` (the round trip now includes direct tags and leaves out inherited ones), `test_coverage_engine.py` and `test_coverage_report.py` (imported links flagged)
+- Frontend: lint and typecheck pass; `Coverage.test.tsx` (imported badges) and the import tests pass
+
+**Not verified here**: a workbook with the Tags column filled in Excel itself, a very large file (the comparison is within one parent, so it should stay cheap), the Afrikaans / isiXhosa / isiZulu wording (English for now).
+
+**Not in this slice**: removing or passing on tags by import, tags on assessments, flagging imported links in the matrix export (it counts accepted links only and says so), evidence packs for external reviewers (Phase 2).
+
+**Commit**: `feat: warn of look-alike rows in the import, flag imported links in reports, add tag columns to the curriculum import`

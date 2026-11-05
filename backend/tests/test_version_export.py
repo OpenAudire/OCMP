@@ -58,6 +58,18 @@ class TestRoundTrip:
         )
         lecture = await tagging.add_tag_value(db_session, teaching, "Lecture", code="LEC")
         await tagging.set_teaching_format(db_session, world.lecture, lecture)
+        themes = await tagging.create_tag_list(
+            db_session,
+            key="themes",
+            name="Themes",
+            kind=TagListKind.THEME,
+            entity_types=list(TaggableType),
+        )
+        ethics = await tagging.add_tag_value(db_session, themes, "Ethics")
+        safety = await tagging.add_tag_value(db_session, themes, "Safety")
+        await tagging.apply_tag(db_session, ethics, world.cardio, inherit=True)  # passed on
+        await tagging.apply_tag(db_session, safety, world.cardio_outcome, inherit=False)
+        await tagging.apply_tag(db_session, ethics, world.cardio_outcome, inherit=False)
         world.lecture_objective.taxonomy_level_id = world.apply.id
         await accept(db_session, world.lecture_objective, library.one, coverage=4)
         await other_status(
@@ -70,6 +82,13 @@ class TestRoundTrip:
 
         modules = sheet_rows(content, "Modules")
         assert {row[1] for row in modules} == {"HSC201", "HSC101"}
+        # Only direct tags are written; the sessions got Ethics from the module and show none.
+        assert {row[1]: row[8] for row in modules} == {"HSC201": "themes: Ethics", "HSC101": None}
+        assert all(row[9] is None for row in sheet_rows(content, "Sessions"))
+        outcome = next(
+            row for row in sheet_rows(content, "Objectives") if row[3] == world.cardio_outcome.text
+        )
+        assert outcome[7] == "themes: Ethics; themes: Safety"
         assert all(len(str(row[0])) == 36 for row in modules)  # internal ids stand in
         faculty = world.programme.faculty_id
         plan = await curriculum_import.check(

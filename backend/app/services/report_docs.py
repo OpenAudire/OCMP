@@ -46,8 +46,8 @@ def coverage_about(
         (
             "What is counted",
             "Only accepted mapping links count, for the objectives you may see. Suggestions and "
-            "links waiting for review are shown apart; links accepted in bulk and links that "
-            "need a re-check are counted and flagged.",
+            "links waiting for review are shown apart; links accepted in bulk or by an import "
+            "and links that need a re-check are counted and flagged.",
         ),
     ]
     if partial:
@@ -99,6 +99,7 @@ def coverage_doc(report: Report, visible: VisibleVersion) -> ReportDoc:
             f"{report.summary.groups} groups. {report.summary.links - report.summary.group_links} "
             f"accepted links counted; {report.summary.group_links} made to groups themselves, not "
             f"counted; {report.summary.bulk_links} accepted in bulk; "
+            f"{report.summary.imported_links} accepted by import; "
             f"{report.summary.recheck_links} "
             f"need a re-check; {report.summary.waiting_links} suggestions waiting for review."
         ),
@@ -158,6 +159,7 @@ def coverage_doc(report: Report, visible: VisibleVersion) -> ReportDoc:
             Column("Accepted links"),
             Column("Made to the group itself (not counted)", Kind.INTEGER),
             Column("Accepted in bulk", Kind.INTEGER),
+            Column("Accepted by import", Kind.INTEGER),
             Column("Need a re-check", Kind.INTEGER),
             Column("Waiting for review", Kind.INTEGER),
             Column("Objectives", Kind.INTEGER),
@@ -177,6 +179,7 @@ def coverage_doc(report: Report, visible: VisibleVersion) -> ReportDoc:
                 r.links if r.is_leaf else None,
                 None if r.is_leaf else r.links,
                 r.bulk_links,
+                r.imported_links,
                 r.recheck_links,
                 r.waiting,
                 r.objectives,

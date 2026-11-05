@@ -7,7 +7,8 @@ What is counted:
   least 1, whose objective is live, not retired, and shown to the user by their roles (ADR 027);
 * links waiting for a decision (suggested, needing a second review) are counted apart, per item,
   so a gap can say "two suggestions are waiting";
-* links accepted in bulk and links that need a re-check are counted and flagged on every item.
+* links accepted in bulk or by an import and links that need a re-check are counted and flagged on
+  every item.
 
 Every figure is labelled with its method, the settings behind it, the version, the framework and
 the time it was made (brief: "every report states its method and date").
@@ -241,6 +242,7 @@ async def build_report(
                 coverage=link.coverage,
                 depth=link.depth_match.value if link.depth_match else None,
                 bulk=link.accept_method is AcceptMethod.BULK,
+                imported=link.accept_method is AcceptMethod.IMPORTED,
                 needs_recheck=link.needs_recheck,
                 column=column,
             )

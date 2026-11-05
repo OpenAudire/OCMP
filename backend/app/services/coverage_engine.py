@@ -24,7 +24,9 @@ counted twice.
 
 Only links a person has accepted count. Links waiting for review are counted separately so a gap
 can say "two suggestions are waiting". Links accepted in bulk and links that need a re-check are
-counted and flagged, never hidden (brief section 8; Slice 1.13).
+counted and flagged, never hidden (brief section 8; Slice 1.13). Links accepted by an import
+(``accept_method = imported``: decided in another tool, no reviewer recorded) are flagged the
+same way (Slice 1.27a).
 """
 
 from __future__ import annotations
@@ -106,6 +108,7 @@ class Link:
     depth: str | None = None
     bulk: bool = False
     needs_recheck: bool = False
+    imported: bool = False
     # The column of the heatmap it falls in: a phase id, "none" (a module without a phase) or
     # "programme" (a programme outcome).
     column: str = "none"
@@ -121,6 +124,7 @@ class ItemResult:
     # figure, which is built up from the items below it.
     links: int = 0
     bulk_links: int = 0
+    imported_links: int = 0
     recheck_links: int = 0
     # Links waiting for a decision (suggested, in review): not counted.
     waiting: int = 0
@@ -134,6 +138,8 @@ class ItemResult:
     status: Status = Status.NONE
     # Every link behind this item was accepted in bulk: say so next to the figure.
     only_bulk: bool = False
+    # Every link behind this item was accepted by an import.
+    only_imported: bool = False
 
 
 @dataclass
@@ -257,10 +263,12 @@ def compute(
         result = ItemResult(item=item, is_leaf=leaf, leaves=len(leaves))
         result.links = len(own)
         result.bulk_links = sum(1 for link in own if link.bulk)
+        result.imported_links = sum(1 for link in own if link.imported)
         result.recheck_links = sum(1 for link in own if link.needs_recheck)
         result.waiting = waiting.get(item.id, 0)
         result.objectives = len({link.objective_id for link in own})
         result.only_bulk = bool(own) and result.bulk_links == len(own)
+        result.only_imported = bool(own) and result.imported_links == len(own)
         if leaf:
             result.value = leaf_values[item.id]
             result.status = _leaf_status(result.value, method, params)
@@ -306,6 +314,7 @@ class Summary:
     bulk_links: int
     recheck_links: int
     waiting_links: int
+    imported_links: int = 0
 
 
 def summarise(
@@ -349,6 +358,7 @@ def summarise(
         bulk_links=sum(1 for link in known if link.bulk),
         recheck_links=sum(1 for link in known if link.needs_recheck),
         waiting_links=waiting_links,
+        imported_links=sum(1 for link in known if link.imported),
     )
 
 

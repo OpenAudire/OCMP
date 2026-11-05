@@ -136,6 +136,11 @@ function Summary({ report }: { report: CoverageReport }) {
             {t('reports.coverage.bulkLinks', { count: s.bulk_links })}
           </Badge>
         )}
+        {s.imported_links > 0 && (
+          <Badge variant="light" color="gray">
+            {t('reports.coverage.importedLinks', { count: s.imported_links })}
+          </Badge>
+        )}
         {s.recheck_links > 0 && (
           <Badge variant="light" color="ochre">
             {t('reports.coverage.recheckLinks', { count: s.recheck_links })}
@@ -259,6 +264,16 @@ function Items({ report }: { report: CoverageReport }) {
                     {!item.only_bulk && item.bulk_links > 0 && (
                       <Badge variant="light" color="gray" size="sm">
                         {t('reports.coverage.someBulk', { count: item.bulk_links })}
+                      </Badge>
+                    )}
+                    {item.only_imported && (
+                      <Badge variant="light" color="gray" size="sm">
+                        {t('reports.coverage.onlyImported')}
+                      </Badge>
+                    )}
+                    {!item.only_imported && item.imported_links > 0 && (
+                      <Badge variant="light" color="gray" size="sm">
+                        {t('reports.coverage.someImported', { count: item.imported_links })}
                       </Badge>
                     )}
                     {item.recheck_links > 0 && (

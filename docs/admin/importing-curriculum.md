@@ -41,13 +41,34 @@ version that has that External ID.
 * It **never deletes** anything, and never moves a session to another module or changes an objective's level or
   owner (it reports that as a problem; change those on the screens).
 * A column you remove from a sheet is **left alone**. A column that is there but blank **clears** the value
-  (a module with a blank Phase becomes longitudinal). *Broader objectives* only adds links.
+  (a module with a blank Phase becomes longitudinal). *Broader objectives* and *Tags* only add.
 * New objectives are saved as **draft**. Changing the wording of an existing objective follows the usual rules:
   it goes back to *ready for review* unless you may approve objectives.
 * Everything goes through the same rules as the screens (unique module codes, links to the right broader
   objectives) and every change is recorded in the audit log. Each import is also recorded as an import job
   (counts only: never the file or its name).
 * Only draft versions can be imported into.
+
+## Warnings: items that may already exist
+
+Items made on the screens have no External ID, so a file made elsewhere can describe them again. When a row
+would **make** an item and the version already has one that no row of the file refers to with the same name,
+code or title, or nearly the same wording under the same parent, the preview lists a **warning** (sheet, row,
+how it matches, and the existing item's id). A warning does not stop the import. If the row is the same item,
+put the id the warning gives in the row's External ID and check again: it then updates that item. Wording is
+compared as plain letters and digits, ignoring case and punctuation; "nearly the same" is 90% alike. No AI is
+used.
+
+## Tags in the same file
+
+Modules, Sessions and Objectives have an optional **Tags** column: tags separated by semicolons, each written
+as the **key of a tag list**, a colon and the **tag**, for example `theme: Ethics; keyword: Consent`. The list
+and tags must exist already (make them with the [tags import](importing-tags-mappings-frameworks.md) or on the
+Tag lists screen), be active, and the list must apply to that kind of item and belong to the institution or
+the programme's faculty. Anything else is a problem with the sheet, row and column. Tags are set **directly**
+on the item and are **not passed on** to sessions or linked objectives (do that on the screen, where you see
+the preview); they are **added and never removed**, and a blank cell changes nothing. A tag label cannot contain
+a semicolon. The preview shows a row as updated, with "Tags" among the changes, when it adds a tag.
 
 To get a file to start from, [export the version](exporting.md): the export is in the same sheets and imports
 back without changes.

@@ -17,9 +17,12 @@ from app.models import (
     Objective,
     ObjectiveLink,
     Phase,
+    Tagging,
+    TagValue,
 )
 from app.models.curriculum import VersionStatus
-from app.services import curriculum_import
+from app.models.tagging import TaggableType, TagListKind
+from app.services import curriculum_import, tagging
 from app.services.authorization import ConflictError
 from app.services.curriculum_versions import copy_forward
 from app.services.import_fields import (
@@ -56,12 +59,15 @@ def module(
     credits: object = None,
     nqf: object = None,
     description: str | None = None,
+    tags: str | None = None,
 ) -> list[object]:
-    return [ext, code, name, phase_ext, credits, nqf, description, None]
+    return [ext, code, name, phase_ext, credits, nqf, description, None, tags]
 
 
-def session(ext: str, module_ext: str, title: str, contact: object = 60) -> list[object]:
-    return [ext, module_ext, title, None, contact, 30, 2, None, None]
+def session(
+    ext: str, module_ext: str, title: str, contact: object = 60, tags: str | None = None
+) -> list[object]:
+    return [ext, module_ext, title, None, contact, 30, 2, None, None, tags]
 
 
 def objective(
@@ -70,8 +76,9 @@ def objective(
     owner: str | None,
     text: str,
     broader: str | None = None,
+    tags: str | None = None,
 ) -> list[object]:
-    return [ext, level, owner, text, None, None, broader]
+    return [ext, level, owner, text, None, None, broader, tags]
 
 
 SMALL = {
@@ -418,6 +425,199 @@ class TestAdoptingModules:
         plan = await run_check(db_session, world, book(modules=[module("B", "HSC201", "Clash")]))
 
         assert [p.message for p in plan.problems] == ["The code HSC201 is used twice."]
+
+
+class TestLookalikes:
+    """Rows that would make an item the version already has (Slice 1.27a): only warnings."""
+
+    async def test_a_new_row_that_matches_a_screen_made_item_is_warned_about(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        # A module with another code but the same name; a session in an existing module with
+        # the title of one that is already there (case and punctuation do not matter); an
+        # objective worded almost like an existing one, and one that is quite different.
+        cardio = str(world.cardio.id)
+        content = book(
+            modules=[module("NEWMOD", "XYZ999", world.cardio.name)],
+            sessions=[session("NS1", cardio, "cardiac CYCLE!")],
+            objectives=[
+                objective(
+                    "NO1",
+                    "module",
+                    cardio,
+                    world.cardio_outcome.text.replace("Interpret", "Interpret the"),
+                ),
+                objective("NO2", "module", cardio, "Something quite different."),
+            ],
+        )
+
+        plan = await run_check(db_session, world, content)
+
+        assert plan.valid, [p.message for p in plan.problems]
+        text = "\n".join(plan.warnings)
+        assert "Modules, row 2: the module" in text and "is the same as the existing module" in text
+        assert "Sessions, row 2: the session 'cardiac CYCLE!' is the same as the existing" in text
+        assert "Objectives, row 2: this objective is very similar to the existing objective" in text
+        assert "Objectives, row 3" not in text
+        assert f"({world.cardio_outcome.id})" in text  # the id to use instead
+        assert "no External ID yet" in text
+
+    async def test_a_row_that_updates_the_existing_item_is_not_warned_about(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        content = book(
+            modules=[module(str(world.cardio.id), "HSC201", world.cardio.name)],
+            sessions=[session(str(world.lecture.id), str(world.cardio.id), world.lecture.title)],
+        )
+
+        plan = await run_check(db_session, world, content)
+
+        assert plan.valid and plan.warnings == []
+
+    async def test_the_same_wording_under_another_parent_is_not_a_lookalike(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        content = book(
+            objectives=[
+                objective("NO1", "module", str(world.anatomy.id), world.cardio_outcome.text)
+            ],
+        )
+
+        plan = await run_check(db_session, world, content)
+
+        assert plan.valid and plan.warnings == []
+
+    async def test_warnings_come_with_the_preview_through_the_api(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        world: World,
+    ) -> None:
+        await sign_in(api_client, db_session, test_settings, "platform_admin")
+        content = book(modules=[module("NEWMOD", "XYZ999", world.cardio.name)])
+
+        response = await api_client.post(
+            f"{API}/curriculum-versions/{world.draft.id}/import/preview",
+            content=content,
+            headers={"Content-Type": "application/octet-stream"},
+        )
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["valid"]
+        assert any("is the same as the existing module" in w for w in body["warnings"])
+
+
+class TestTagColumns:
+    async def make_lists(self, db: AsyncSession) -> None:
+        themes = await tagging.create_tag_list(
+            db, key="themes", name="Themes", kind=TagListKind.THEME, entity_types=list(TaggableType)
+        )
+        await tagging.add_tag_value(db, themes, "Ethics")
+        await tagging.add_tag_value(db, themes, "Safety")
+        only_modules = await tagging.create_tag_list(
+            db,
+            key="threads",
+            name="Threads",
+            kind=TagListKind.THREAD,
+            entity_types=[TaggableType.MODULE],
+        )
+        await tagging.add_tag_value(db, only_modules, "Professionalism")
+        await db.flush()
+
+    async def test_tags_are_set_directly_on_modules_sessions_and_objectives(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        admin = await sign_in_user(db_session)
+        await self.make_lists(db_session)
+        content = book(
+            modules=[
+                module("M1", "NEW101", "New", tags="themes: Ethics; threads: Professionalism")
+            ],
+            sessions=[session("S1", "M1", "First", tags="Themes: safety")],
+            objectives=[
+                objective("O1", "programme", None, "Graduates act well.", tags="themes: Ethics"),
+            ],
+        )
+
+        plan = await run_check(db_session, world, content)
+        assert plan.valid, [p.message for p in plan.problems]
+        await run_apply(db_session, world, content, admin)
+
+        async def labels(column) -> list[str]:  # type: ignore[no-untyped-def]
+            rows = (
+                await db_session.execute(
+                    select(TagValue.label, Tagging.inherited_from_id)
+                    .join(Tagging, Tagging.tag_value_id == TagValue.id)
+                    .where(column.is_not(None))
+                )
+            ).all()
+            assert all(source is None for _, source in rows)  # direct, nothing passed on
+            return sorted(label for label, _ in rows)
+
+        assert await labels(Tagging.module_id) == ["Ethics", "Professionalism"]
+        assert await labels(Tagging.learning_event_id) == ["Safety"]
+        assert await labels(Tagging.objective_id) == ["Ethics"]
+        again = await run_check(db_session, world, content)
+        assert again.valid and not again.changes
+
+    async def test_a_new_tag_on_an_existing_item_is_an_update_that_adds_and_never_removes(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        admin = await sign_in_user(db_session)
+        await self.make_lists(db_session)
+        first = book(modules=[module("M1", "NEW101", "New", tags="themes: Ethics")])
+        await run_apply(db_session, world, first, admin)
+        second = book(modules=[module("M1", "NEW101", "New", tags="themes: Safety")])
+
+        plan = await run_check(db_session, world, second)
+
+        [row] = plan.rows
+        assert row.action == "update" and row.changes == ["Tags"]
+        await run_apply(db_session, world, second, admin)
+        found = await db_session.scalars(
+            select(TagValue.label)
+            .join(Tagging, Tagging.tag_value_id == TagValue.id)
+            .where(Tagging.module_id.is_not(None))
+        )
+        assert sorted(found) == ["Ethics", "Safety"]
+
+    async def test_problems_name_the_cell_and_the_reason(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        await self.make_lists(db_session)
+        content = book(
+            modules=[module("M1", "NEW101", "New", tags="nonsense")],
+            sessions=[
+                session("S1", "M1", "A", tags="nolist: Ethics"),
+                session("S2", "M1", "B", tags="themes: Nothing"),
+                session("S3", "M1", "C", tags="threads: Professionalism"),
+            ],
+        )
+
+        plan = await run_check(db_session, world, content)
+
+        messages = {(p.sheet, p.row): p.message for p in plan.problems}
+        assert "write it as list key: tag label" in messages[("Modules", 2)]
+        assert "No tag list you may use has the key 'nolist'" in messages[("Sessions", 2)]
+        assert "has no tag 'Nothing'" in messages[("Sessions", 3)]
+        assert "cannot be used on this kind of item" in messages[("Sessions", 4)]
+        assert {p.column for p in plan.problems} == {"Tags"}
+
+    async def test_a_sheet_without_the_tags_column_is_still_read(
+        self, db_session: AsyncSession, world: World
+    ) -> None:
+        await self.make_lists(db_session)
+        no_tags = build_workbook(
+            Lists(),
+            {"modules": [["M1", "NEW101", "New"]]},
+            sheets=(SHEET_BY_KEY["modules"],),
+        )
+
+        plan = await run_check(db_session, world, no_tags)
+
+        assert plan.valid  # the column is optional; a short row is fine
 
 
 class TestCopyForward:

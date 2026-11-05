@@ -12,12 +12,14 @@ makes a new one. An import never deletes anything and never moves an item to ano
 
 from __future__ import annotations
 
+import re
 import uuid
 from collections import Counter, defaultdict
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,11 +31,15 @@ from app.models import (
     Objective,
     ObjectiveLink,
     Phase,
+    Tagging,
+    TagList,
+    TagValue,
     TaxonomyLevel,
     TaxonomyScale,
     User,
 )
 from app.models.curriculum import ObjectiveDomain, ObjectiveLevel, PhaseKind
+from app.models.tagging import TAGGING_COLUMNS, TaggableType
 from app.services import curriculum_edit, curriculum_objectives, tagging
 from app.services.authorization import ConflictError
 from app.services.curriculum_edit import EventFields, ModuleFields
@@ -90,6 +96,11 @@ class Existing:
     format_labels: tuple[str, ...]
     levels: dict[str, list[uuid.UUID]]
     level_labels: tuple[str, ...]
+    # The tag lists an import may use (active, institution-wide or of the version's faculty) by key,
+    # each with its active tags by lower-case label.
+    tag_lists: dict[str, tuple[TagList, dict[str, TagValue]]]
+    # The tags set directly on the version's items: item id to tag value ids.
+    direct_tags: dict[uuid.UUID, set[uuid.UUID]]
 
     def lists(self) -> Lists:
         return Lists(formats=self.format_labels, taxonomy_levels=self.level_labels)
@@ -149,6 +160,38 @@ async def load_existing(
         levels[level.name.casefold()].append(level.id)
         level_labels.setdefault(level.name.casefold(), level.name)
 
+    tag_lists: dict[str, tuple[TagList, dict[str, TagValue]]] = {}
+    for tag_list in await db.scalars(
+        select(TagList).where(
+            TagList.deleted_at.is_(None),
+            TagList.is_active.is_(True),
+            or_(TagList.faculty_id.is_(None), TagList.faculty_id == faculty_id),
+        )
+    ):
+        tag_lists[tag_list.key] = (tag_list, {})
+    by_list_id = {tl.id: labels for tl, labels in tag_lists.values()}
+    for value in await db.scalars(
+        select(TagValue).where(
+            TagValue.tag_list_id.in_(list(by_list_id) or [uuid.uuid4()]),
+            TagValue.deleted_at.is_(None),
+            TagValue.is_active.is_(True),
+        )
+    ):
+        by_list_id[value.tag_list_id][value.label.casefold()] = value
+    direct: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
+    for kind, ids in (
+        (TaggableType.MODULE, [m.id for m in modules]),
+        (TaggableType.LEARNING_EVENT, [e.id for e in events]),
+        (TaggableType.OBJECTIVE, [o.id for o in objectives]),
+    ):
+        column = getattr(Tagging, TAGGING_COLUMNS[kind])
+        for item_id, value_id in await db.execute(
+            select(column, Tagging.tag_value_id).where(
+                column.in_(ids or [uuid.uuid4()]), Tagging.inherited_from_id.is_(None)
+            )
+        ):
+            direct[item_id].add(value_id)
+
     return Existing(
         version=version,
         phases={key_of(p): p for p in phases},
@@ -163,7 +206,53 @@ async def load_existing(
         format_labels=tuple(labels.values()),
         levels=dict(levels),
         level_labels=tuple(level_labels.values()),
+        tag_lists=tag_lists,
+        direct_tags=dict(direct),
     )
+
+
+def _resolve_tags(
+    plan: Plan,
+    existing: Existing,
+    sheet_title: str,
+    row: int,
+    values: dict[str, Any],
+    kind: TaggableType,
+) -> bool:
+    """Turn the Tags cell into tag values (in ``values['_tags']``); problems go into the plan.
+
+    Each entry is ``list key: tag label``. The tag lists and tags must exist already (the tags
+    import makes them) and the list must apply to this kind of item. Returns False on a problem."""
+    found: dict[uuid.UUID, TagValue] = {}
+    good = True
+    for entry in values.get("tags") or []:
+        key, colon, label = entry.partition(":")
+        key, label = key.strip().casefold(), " ".join(label.split())
+        problem: str | None = None
+        if not colon or not key or not label:
+            problem = f"'{entry[:60]}' is not a tag: write it as list key: tag label."
+        elif key not in existing.tag_lists:
+            problem = f"No tag list you may use has the key '{key}'."
+        else:
+            tag_list, labels = existing.tag_lists[key]
+            if kind.value not in tag_list.entity_types:
+                problem = f"The list '{key}' cannot be used on this kind of item."
+            elif label.casefold() not in labels:
+                problem = f"The list '{key}' has no tag '{label[:60]}'."
+            else:
+                value = labels[label.casefold()]
+                found[value.id] = value
+        if problem:
+            plan.add(sheet_title, row, "Tags", problem)
+            good = False
+    values["_tags"] = list(found.values())
+    return good
+
+
+def _new_tags(existing: Existing, found: Any, values: dict[str, Any]) -> bool:
+    """Whether the row asks for a tag the item does not carry directly yet."""
+    have = existing.direct_tags.get(found.id, set())
+    return any(value.id not in have for value in values.get("_tags", []))
 
 
 # --- Checking and planning ----------------------------------------------------------------
@@ -214,7 +303,117 @@ async def check(
     )
     if not plan.problems and not plan.rows:
         plan.add(None, None, None, "The workbook has no rows to import.")
+    if not plan.problems:
+        _warn_of_lookalikes(plan, existing)
     return plan
+
+
+# --- Warning about items that look like ones already there ---------------------------------
+
+# Wording this close (0 to 1) counts as the same objective written again.
+SIMILAR_WORDING = 0.9
+MAX_LOOKALIKE_WARNINGS = 50
+
+
+def _plain(text: str) -> str:
+    """Letters and digits in lower case, one space apart: what two wordings are compared on."""
+    return " ".join(re.sub(r"[\W_]+", " ", text.casefold()).split())
+
+
+def _alike(a: str, b: str) -> str | None:
+    """How two pieces of wording relate (a phrase for a warning), or None when they differ."""
+    pa, pb = _plain(a), _plain(b)
+    if not pa or not pb:
+        return None
+    if pa == pb:
+        return "is the same as"
+    matcher = SequenceMatcher(None, pa, pb, autojunk=False)
+    if (
+        matcher.real_quick_ratio() >= SIMILAR_WORDING
+        and matcher.quick_ratio() >= SIMILAR_WORDING
+        and matcher.ratio() >= SIMILAR_WORDING
+    ):
+        return "is very similar to"
+    return None
+
+
+def _warn_of_lookalikes(plan: Plan, existing: Existing) -> None:
+    """A row that would **make** an item, when the version already has an item that no row of the
+    file refers to with the same name, code, title or (nearly) the same wording under the same
+    parent: items made on the screens have no External ID, so a file made elsewhere would silently
+    duplicate them. These are warnings: they do not stop the import (Slice 1.27a)."""
+    addressed = {(r.sheet, r.external_id) for r in plan.rows}
+    found: list[str] = []
+
+    def note(sheet: str, row: int, what: str, how: str, other: Any, label: str) -> None:
+        shown = SHEET_BY_KEY[sheet].title
+        has = f"External ID {other.external_id}" if other.external_id else "no External ID yet"
+        found.append(
+            f"{shown}, row {row}: {what} {how} the existing {label} ({has}). Importing makes a "
+            f"second one. If it is the same item, use its External ID "
+            f"({key_of(other)}) on this row to update it instead."
+        )
+
+    events_in: dict[str, list[LearningEvent]] = defaultdict(list)
+    for event in existing.events_by_id.values():
+        module = existing.modules_by_id.get(event.module_id)
+        if module is not None:
+            events_in[key_of(module)].append(event)
+    objectives_in: dict[str | None, list[Objective]] = defaultdict(list)
+    for objective in existing.objectives.values():
+        owner: str | None = None
+        if objective.level is ObjectiveLevel.MODULE and objective.module_id:
+            m = existing.modules_by_id.get(objective.module_id)
+            owner = key_of(m) if m else None
+        elif objective.level is ObjectiveLevel.LEARNING_EVENT and objective.learning_event_id:
+            e = existing.events_by_id.get(objective.learning_event_id)
+            owner = key_of(e) if e else None
+        objectives_in[owner].append(objective)
+
+    for op in plan.ops:
+        if op.action != CREATE:
+            continue
+        v = op.values
+        if op.sheet == "phases":
+            for phase in existing.phases_by_id.values():
+                if ("phases", key_of(phase)) in addressed:
+                    continue
+                how = _alike(v["name"], phase.name)
+                if how:
+                    note(op.sheet, op.row, f"the phase '{v['name']}'", how, phase, "phase")
+        elif op.sheet == "modules":
+            for module in existing.modules_by_id.values():
+                if ("modules", key_of(module)) in addressed:
+                    continue
+                if v.get("code") and v["code"].casefold() == module.code.casefold():
+                    how = "has the same code as"
+                else:
+                    how = _alike(v["name"], module.name) or ""
+                if how:
+                    note(op.sheet, op.row, f"the module '{v['name']}'", how, module, "module")
+        elif op.sheet == "sessions":
+            for event in events_in.get(v["module"], []):
+                if ("sessions", key_of(event)) in addressed:
+                    continue
+                how = _alike(v["title"], event.title)
+                if how:
+                    note(op.sheet, op.row, f"the session '{v['title']}'", how, event, "session")
+        elif op.sheet == "objectives":
+            for objective in objectives_in.get(v.get("_owner"), []):
+                if ("objectives", key_of(objective)) in addressed:
+                    continue
+                if objective.level is not v["_level"]:
+                    continue
+                how = _alike(v["text"], objective.text)
+                if how:
+                    note(op.sheet, op.row, "this objective", how, objective, "objective")
+    found.sort()
+    for message in found[:MAX_LOOKALIKE_WARNINGS]:
+        plan.warnings.append(message)
+    if len(found) > MAX_LOOKALIKE_WARNINGS:
+        plan.warnings.append(
+            f"{len(found) - MAX_LOOKALIKE_WARNINGS} more rows look like items that already exist."
+        )
 
 
 def _plan_phases(
@@ -303,11 +502,17 @@ def _plan_modules(
                 f"No phase has the External ID '{phase_ext}'.",
             )
             continue
+        if "tags" in present and not _resolve_tags(
+            plan, existing, sheet.title, row.number, values, TaggableType.MODULE
+        ):
+            continue
         if found is None:
             plan.rows.append(RowPlan(sheet.key, row.number, ext, CREATE, values["name"]))
             plan.ops.append(Op(sheet.key, row.number, CREATE, ext, values))
             continue
         changed = differences(found, values, names)
+        if _new_tags(existing, found, values):
+            changed.append("Tags")
         if adopting:
             changed.insert(0, "External ID")
         if "phase" in present:
@@ -388,6 +593,10 @@ def _plan_sessions(
                 )
                 continue
             values["format_value_id"] = ids[0] if ids else None
+        if "tags" in present and not _resolve_tags(
+            plan, existing, sheet.title, row.number, values, TaggableType.LEARNING_EVENT
+        ):
+            continue
         for key in ("contact_minutes", "self_study_minutes"):
             if key in present and values.get(key) is None:
                 values[key] = 0
@@ -398,6 +607,8 @@ def _plan_sessions(
         changed = differences(found, values, names)
         if "format" in present and found.format_value_id != values["format_value_id"]:
             changed.append("Teaching format")
+        if _new_tags(existing, found, values):
+            changed.append("Tags")
         plan.rows.append(
             RowPlan(
                 sheet.key,
@@ -547,6 +758,10 @@ def _plan_objectives(
                 )
                 continue
             values["taxonomy_level_id"] = ids[0] if ids else None
+        if "tags" in present and not _resolve_tags(
+            plan, existing, sheet.title, row.number, values, TaggableType.OBJECTIVE
+        ):
+            continue
         values["_level"] = level
         values["_owner"] = owner
         label = values["text"][:80]
@@ -555,6 +770,8 @@ def _plan_objectives(
             plan.ops.append(Op(sheet.key, row.number, CREATE, ext, values))
             continue
         changed = differences(found, values, {"text": "Text", "domain": "Domain"})
+        if _new_tags(existing, found, values):
+            changed.append("Tags")
         if "taxonomy_level" in present and found.taxonomy_level_id != values["taxonomy_level_id"]:
             changed.append("Taxonomy level")
         have = existing.parent_links.get(found.id, set())
@@ -573,6 +790,17 @@ def _plan_objectives(
 # --- Applying -----------------------------------------------------------------------------
 
 _RANK = {ObjectiveLevel.PROGRAMME: 0, ObjectiveLevel.MODULE: 1, ObjectiveLevel.LEARNING_EVENT: 2}
+
+
+async def _tag(
+    db: AsyncSession, existing: Existing, item: Any, values: dict[str, Any], actor_id: uuid.UUID
+) -> None:
+    """Set the tags a row asks for **directly** on the item (nothing is passed on, nothing is
+    removed); the ones it carries already are left alone."""
+    have = existing.direct_tags.get(item.id, set())
+    for value in values.get("_tags", []):
+        if value.id not in have:
+            await tagging.tag_item(db, value, item, created_by_id=actor_id)
 
 
 @dataclass
@@ -649,6 +877,7 @@ async def apply(
                 )
                 module.external_id = op.external_id
                 modules[op.external_id] = module
+                await _tag(db, existing, module, v, actor_id)
             else:
                 module_changes: dict[str, Any] = {
                     k: v[k]
@@ -668,6 +897,7 @@ async def apply(
                 if v.get("_adopt"):
                     op.existing.external_id = op.external_id
                     modules[op.external_id] = op.existing
+                await _tag(db, existing, op.existing, v, actor_id)
         await db.flush()
 
         for op in by_sheet["sessions"]:
@@ -690,6 +920,7 @@ async def apply(
                 )
                 event.external_id = op.external_id
                 events[op.external_id] = event
+                await _tag(db, existing, event, v, actor_id)
             else:
                 event_changes: dict[str, Any] = {
                     k: v[k]
@@ -705,6 +936,7 @@ async def apply(
                     if k in v
                 }
                 await curriculum_edit.update_event(db, op.existing, version, event_changes)
+                await _tag(db, existing, op.existing, v, actor_id)
         await db.flush()
 
         ordered = sorted(
@@ -750,6 +982,7 @@ async def apply(
                     can_approve=can_approve,
                     created_by_id=actor_id,
                 )
+            await _tag(db, existing, objective, v, actor_id)
             touched.append(objective.id)
         await db.flush()
     except IntegrityError as exc:

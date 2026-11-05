@@ -17,6 +17,9 @@ institution's numbers in it), the framework, the version and the time it was mad
 * **Links accepted in bulk** are counted, and marked: an item says when *all* its links were accepted
   in bulk (nobody read them), and the summary gives the total. So are **links that need a re-check**
   (the objective's wording changed since).
+* **Links accepted by an import** (a mapping file marked as already reviewed: no reviewer is recorded
+  in the system) are counted and flagged the same way: an item says when *all* its links came in by
+  import, and the summary and the Excel and PDF reports give the total ("Accepted by import").
 * Only objectives you may see. If that is not the whole version, the report says so.
 
 ## The four methods
@@ -54,7 +57,7 @@ lists**: `subordinate_min_percent` (50: groups under it are listed, for subordin
    Every cell prints its percentage, because the shade alone is not enough. Single and subordinate match
    give the same heatmap (the share of items with at least one link).
 3. **Items**: the framework in tree order with each item's status, value, links, and flags (*all
-   accepted in bulk*, *needs a re-check*, *suggestions waiting*). A group shows how many of its items
+   accepted in bulk*, *all accepted by import*, *needs a re-check*, *suggestions waiting*). A group shows how many of its items
    are covered.
 
 ## The gap report

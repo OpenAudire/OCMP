@@ -80,6 +80,18 @@ EXTERNAL_ID = Field(
     max_length=128,
 )
 
+TAGS = Field(
+    "tags",
+    "Tags",
+    Kind.REFERENCES,
+    "Tags to put on this item, separated by semicolons, each written as the key of a tag list, a "
+    "colon and the tag's label: for example 'theme: Ethics; keyword: Consent'. The list and the "
+    "tag must already exist (see the Tag lists and Tag values sheets of the tags import) and the "
+    "list must apply to this kind of item. They are set directly on this item and are not passed "
+    "on to others. Tags are added, never removed; blank changes nothing.",
+    width=36,
+)
+
 PHASES = Sheet(
     "phases",
     "Phases",
@@ -147,6 +159,7 @@ MODULES = Sheet(
             "Optional reference to the module in your learning management system.",
             max_length=255,
         ),
+        TAGS,
     ),
 )
 
@@ -208,6 +221,7 @@ SESSIONS = Sheet(
             "Optional reference to the session in your learning management system.",
             max_length=255,
         ),
+        TAGS,
     ),
 )
 
@@ -262,6 +276,7 @@ OBJECTIVES = Sheet(
             "blank changes nothing.",
             width=30,
         ),
+        TAGS,
     ),
 )
 
@@ -315,7 +330,7 @@ CURRICULUM_HOW = (
     "  Every row needs an External ID of your own. Importing the same External ID again updates "
     "that item; a new External ID makes a new item. An import never deletes anything.",
     "  A column you remove from a sheet is left alone. A column you keep and leave blank clears "
-    "that value (except Broader objectives, which only adds links).",
+    "that value (except Broader objectives and Tags, which only add).",
     "  Do not put the names of people or patients in any cell.",
 )
 

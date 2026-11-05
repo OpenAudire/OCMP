@@ -1474,12 +1474,14 @@ export interface CoverageItem {
   leaves_covered: number | null;
   links: number;
   bulk_links: number;
+  imported_links: number;
   recheck_links: number;
   waiting: number;
   objectives: number;
   value: number;
   status: ItemStatus;
   only_bulk: boolean;
+  only_imported: boolean;
 }
 
 export interface CoverageReport extends CoverageMeta {
@@ -1503,6 +1505,7 @@ export interface CoverageReport extends CoverageMeta {
     /** Accepted links made directly to a group: shown apart, not counted. */
     group_links: number;
     bulk_links: number;
+    imported_links: number;
     recheck_links: number;
     waiting_links: number;
   };

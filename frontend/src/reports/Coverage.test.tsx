@@ -85,6 +85,7 @@ const report: CoverageReport = {
     links: 9,
     group_links: 2,
     bulk_links: 3,
+    imported_links: 2,
     recheck_links: 1,
     waiting_links: 2,
   },
@@ -100,12 +101,14 @@ const report: CoverageReport = {
       leaves_covered: 2,
       links: 2,
       bulk_links: 0,
+      imported_links: 0,
       recheck_links: 0,
       waiting: 0,
       objectives: 2,
       value: 0.6667,
       status: 'partial',
       only_bulk: false,
+      only_imported: false,
     },
     {
       id: 'i1',
@@ -118,12 +121,14 @@ const report: CoverageReport = {
       leaves_covered: null,
       links: 3,
       bulk_links: 3,
+      imported_links: 0,
       recheck_links: 0,
       waiting: 0,
       objectives: 3,
       value: 1,
       status: 'covered',
       only_bulk: true,
+      only_imported: false,
     },
     {
       id: 'i2',
@@ -136,12 +141,14 @@ const report: CoverageReport = {
       leaves_covered: null,
       links: 1,
       bulk_links: 0,
+      imported_links: 1,
       recheck_links: 1,
       waiting: 2,
       objectives: 1,
       value: 1,
       status: 'covered',
       only_bulk: false,
+      only_imported: true,
     },
   ],
   columns: [
@@ -297,6 +304,7 @@ describe('Coverage report', () => {
     expect(within(table).getByText(/7 accepted links counted/)).toBeInTheDocument();
     expect(within(table).getByText(/2 links made to groups themselves, not counted/)).toBeInTheDocument();
     expect(within(table).getByText(/3 links accepted in bulk/)).toBeInTheDocument();
+    expect(within(table).getByText(/2 links accepted by import/)).toBeInTheDocument();
     expect(within(table).getByText(/1 link needs a re-check/)).toBeInTheDocument();
     expect(within(table).getByText(/2 suggestions waiting for review/)).toBeInTheDocument();
   });
@@ -318,6 +326,7 @@ describe('Coverage report', () => {
     const row = (await screen.findByText('Skill 1')).closest('tr') as HTMLElement;
     expect(within(row).getByText('All accepted in bulk')).toBeInTheDocument();
     const second = screen.getByText('Skill 2').closest('tr') as HTMLElement;
+    expect(within(second).getByText('All accepted by import')).toBeInTheDocument();
     expect(within(second).getByText('1 link needs a re-check')).toBeInTheDocument();
     expect(within(second).getByText('2 suggestions waiting')).toBeInTheDocument();
     const group = screen.getByText(/Partial · 2 of 3 items covered/).closest('tr') as HTMLElement;

@@ -75,12 +75,14 @@ class ItemRow(BaseModel):
     leaves_covered: int | None
     links: int
     bulk_links: int
+    imported_links: int
     recheck_links: int
     waiting: int
     objectives: int
     value: float
     status: Status
     only_bulk: bool
+    only_imported: bool
 
 
 class MethodFigureRead(BaseModel):
@@ -103,6 +105,7 @@ class SummaryRead(BaseModel):
     # Accepted links made directly to a group: shown apart, not counted in any figure.
     group_links: int
     bulk_links: int
+    imported_links: int
     recheck_links: int
     waiting_links: int
 
@@ -210,12 +213,14 @@ def _row(result: ItemResult) -> ItemRow:
         leaves_covered=result.leaves_covered,
         links=result.links,
         bulk_links=result.bulk_links,
+        imported_links=result.imported_links,
         recheck_links=result.recheck_links,
         waiting=result.waiting,
         objectives=result.objectives,
         value=round(result.value, 4),
         status=result.status,
         only_bulk=result.only_bulk,
+        only_imported=result.only_imported,
     )
 
 
@@ -286,6 +291,7 @@ async def coverage(
             links=summary.links,
             group_links=summary.group_links,
             bulk_links=summary.bulk_links,
+            imported_links=summary.imported_links,
             recheck_links=summary.recheck_links,
             waiting_links=summary.waiting_links,
         ),
