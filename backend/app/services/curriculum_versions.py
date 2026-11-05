@@ -119,6 +119,13 @@ async def delete_draft(db: AsyncSession, version: CurriculumVersion) -> None:
     """
     if version.status != S.DRAFT or version.deleted_at is not None:
         raise ConflictError("Only draft versions can be deleted.")
+    await soft_delete_version(db, version)
+
+
+async def soft_delete_version(db: AsyncSession, version: CurriculumVersion) -> None:
+    """Soft-delete a version of any status with everything in it (its structure, objectives,
+    mapping links and assessments). ``delete_draft`` checks the status first; only the removal of
+    the demo data (``remove-demo``) deletes a published version."""
     now = datetime.now(UTC)
     module_ids = select(Module.id).where(Module.version_id == version.id)
     rows: list[Objective | LearningEvent | Module | Phase] = []

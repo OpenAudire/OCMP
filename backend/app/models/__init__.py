@@ -4,6 +4,7 @@ Every model must be imported here so Alembic autogenerate sees its table.
 """
 
 from app.models.ai_settings import AIProviderConfig, AISettings
+from app.models.api_token import ApiToken
 from app.models.assessment import Assessment, AssessmentItem, AssessmentItemObjective
 from app.models.audit import AuditLog
 from app.models.base import Base, CoreModel
@@ -44,6 +45,7 @@ __all__ = [
     "AIRun",
     "AIRunCall",
     "AISettings",
+    "ApiToken",
     "Assessment",
     "AssessmentItem",
     "AssessmentItemObjective",

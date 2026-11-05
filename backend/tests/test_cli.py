@@ -145,6 +145,29 @@ def test_load_demo(
     assert "already loaded" in capsys.readouterr().out
 
 
+def test_remove_demo_is_a_dry_run_unless_applied(
+    cli_settings: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Command wiring only; the removal itself is tested in test_demo_removal.py."""
+    from app.demo.remover import RemovalReport
+
+    seen = []
+
+    async def fake_remove(_db: object, *, apply: bool = False, **_kw: object) -> RemovalReport:
+        seen.append(apply)
+        return RemovalReport(removed=["programme BHS-DEMO"], kept=["framework X: in use"])
+
+    monkeypatch.setattr(cli, "remove_demo", fake_remove)
+
+    assert cli.main(["remove-demo"]) == 0
+    dry = capsys.readouterr().out
+    assert "Would remove (add --apply to do it):" in dry and "programme BHS-DEMO" in dry
+    assert "Kept: framework X: in use" in dry
+    assert cli.main(["remove-demo", "--apply"]) == 0
+    assert "Removed:" in capsys.readouterr().out
+    assert seen == [False, True]
+
+
 def test_snapshot_metrics_records_todays_figures(
     cli_settings: str, capsys: pytest.CaptureFixture[str]
 ) -> None:

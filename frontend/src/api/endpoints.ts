@@ -1,13 +1,23 @@
 import { api } from './client';
 import { filterParams, type SearchFilters } from '../search/searchParams';
 import type {
+  AdminUser,
+  AdminUserList,
   AiConnectionTest,
+  ApiTokenCreated,
+  ApiTokenInfo,
+  AssignmentInput,
   AiSettings,
   CoverageMethod,
   CoverageReport,
   Dashboard,
   DashboardTrace,
   ExplorerModule,
+  PermissionInfo,
+  RoleInfo,
+  RoleInput,
+  SettingsUpdate,
+  TokenScope,
   ExplorerWeek,
   EvalDetail,
   EvalRun,
@@ -157,6 +167,100 @@ export function ssoLoginUrl(next: string): string {
 
 export async function fetchInstitution(): Promise<Institution> {
   return (await api.get<Institution>('/institution')).data;
+}
+
+/** Replace some sections of the institution's settings (needs settings.manage). */
+export async function updateInstitutionSettings(changes: SettingsUpdate): Promise<Institution> {
+  return (await api.patch<Institution>('/institution/settings', changes)).data;
+}
+
+// --- Administration: people, roles, tokens (Slice 1.30) ---
+
+export async function fetchUsers(
+  search: string,
+  offset: number,
+  limit: number
+): Promise<AdminUserList> {
+  return (
+    await api.get<AdminUserList>('/users', {
+      params: { ...(search ? { search } : {}), offset, limit },
+    })
+  ).data;
+}
+
+export async function createUser(input: {
+  email: string;
+  display_name: string;
+  password: string;
+}): Promise<AdminUser> {
+  return (await api.post<AdminUser>('/users', input)).data;
+}
+
+export async function fetchUser(id: string): Promise<AdminUser> {
+  return (await api.get<AdminUser>(`/users/${id}`)).data;
+}
+
+export async function updateUser(
+  id: string,
+  changes: { display_name?: string; is_active?: boolean }
+): Promise<AdminUser> {
+  return (await api.patch<AdminUser>(`/users/${id}`, changes)).data;
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await api.delete(`/users/${id}`);
+}
+
+export async function fetchUserAssignments(id: string): Promise<RoleAssignment[]> {
+  return (await api.get<RoleAssignment[]>(`/users/${id}/role-assignments`)).data;
+}
+
+export async function fetchRoles(): Promise<RoleInfo[]> {
+  return (await api.get<RoleInfo[]>('/roles')).data;
+}
+
+export async function fetchPermissions(): Promise<PermissionInfo[]> {
+  return (await api.get<PermissionInfo[]>('/permissions')).data;
+}
+
+export async function createRole(input: RoleInput): Promise<RoleInfo> {
+  return (await api.post<RoleInfo>('/roles', input)).data;
+}
+
+export async function updateRole(key: string, input: Partial<Omit<RoleInput, 'key'>>): Promise<RoleInfo> {
+  return (await api.patch<RoleInfo>(`/roles/${key}`, input)).data;
+}
+
+export async function deleteRole(key: string): Promise<void> {
+  await api.delete(`/roles/${key}`);
+}
+
+export async function createAssignment(input: AssignmentInput): Promise<RoleAssignment> {
+  return (await api.post<RoleAssignment>('/role-assignments', input)).data;
+}
+
+export async function deleteAssignment(id: string): Promise<void> {
+  await api.delete(`/role-assignments/${id}`);
+}
+
+export async function fetchApiTokens(): Promise<ApiTokenInfo[]> {
+  return (await api.get<ApiTokenInfo[]>('/api-tokens')).data;
+}
+
+export async function createApiToken(input: {
+  name: string;
+  scopes: TokenScope[];
+  days: number;
+}): Promise<ApiTokenCreated> {
+  return (await api.post<ApiTokenCreated>('/api-tokens', input)).data;
+}
+
+export async function revokeApiToken(id: string): Promise<void> {
+  await api.delete(`/api-tokens/${id}`);
+}
+
+export async function fetchUserApiTokens(userId: string): Promise<ApiTokenInfo[]> {
+  return (await api.get<ApiTokenInfo[]>(`/users/${userId}/api-tokens`)).data;
 }
 
 /** Programmes the user may see, each with its visible versions (newest first). */
@@ -781,6 +885,13 @@ export const queryKeys = {
     ['reports', 'coverage', versionId, frameworkId, method] as const,
   gaps: (versionId: string, frameworkId: string, method: string) =>
     ['reports', 'gaps', versionId, frameworkId, method] as const,
+  adminUsers: (search: string, offset: number) => ['admin', 'users', search, offset] as const,
+  adminUser: (id: string) => ['admin', 'users', id] as const,
+  adminUserAssignments: (id: string) => ['admin', 'users', id, 'assignments'] as const,
+  adminUserTokens: (id: string) => ['admin', 'users', id, 'tokens'] as const,
+  roles: ['admin', 'roles'] as const,
+  permissions: ['admin', 'permissions'] as const,
+  apiTokens: ['account', 'api-tokens'] as const,
   explorerModule: (moduleId: string) => ['explorer', 'module', moduleId] as const,
   explorerWeek: (versionId: string, week: number) => ['explorer', 'week', versionId, week] as const,
   dashboard: (versionId: string, frameworkId: string | null) =>

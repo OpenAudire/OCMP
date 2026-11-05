@@ -14,6 +14,7 @@ import {
 import { SuccessNotice } from '../pages/SuccessNotice';
 import { useSession } from '../session/useSession';
 import { Page } from '../ui/Page';
+import { ApiTokens } from './ApiTokens';
 
 function ChangePasswordForm() {
   const { t } = useTranslation();
@@ -105,6 +106,7 @@ export function AccountPage() {
           {user.has_password ? <ChangePasswordForm /> : <Text>{t('account.ssoOnly')}</Text>}
         </Stack>
       </Paper>
+      <ApiTokens />
     </Page>
   );
 }

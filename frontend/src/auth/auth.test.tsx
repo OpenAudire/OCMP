@@ -18,6 +18,7 @@ vi.mock('../api/endpoints', async (importOriginal) => ({
   requestPasswordReset: vi.fn(),
   confirmPasswordReset: vi.fn(),
   changePassword: vi.fn(),
+  fetchApiTokens: vi.fn(),
 }));
 
 const mocked = vi.mocked(endpoints);
@@ -58,6 +59,7 @@ beforeEach(() => {
   options();
   mocked.fetchSetupStatus.mockResolvedValue({ needs_setup: false });
   mocked.fetchInstitution.mockResolvedValue(testInstitution);
+  mocked.fetchApiTokens.mockResolvedValue([]);
 });
 
 describe('sign in', () => {

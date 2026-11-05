@@ -38,6 +38,7 @@ from app.core.permissions import ScopeType
 from app.core.secrets import SecretBox, SecretUnreadableError, new_key
 from app.core.security import PasswordPolicyError
 from app.demo.loader import load_demo
+from app.demo.remover import remove_demo
 from app.models import (
     AIProviderConfig,
     AIRun,
@@ -117,6 +118,23 @@ async def _purge_audit_log(days: int) -> int:
     async with database.session_scope() as db:
         deleted = await purge_audit_log(db, older_than_days=days)
     print(f"Deleted {deleted} audit log entries older than {days} days.")  # noqa: T201
+    return 0
+
+
+async def _remove_demo(apply: bool) -> int:
+    async with database.session_scope() as db:
+        report = await remove_demo(db, apply=apply)
+    if report.nothing and not report.kept:
+        print("No demo data found.")  # noqa: T201
+        return 0
+    heading = "Removed" if apply else "Would remove (add --apply to do it)"
+    print(f"{heading}:")  # noqa: T201
+    for line in report.removed:
+        print(f"  - {line}")  # noqa: T201
+    if not report.removed:
+        print("  (nothing)")  # noqa: T201
+    for line in report.kept:
+        print(f"Kept: {line}")  # noqa: T201
     return 0
 
 
@@ -532,6 +550,11 @@ def main(argv: list[str] | None = None) -> int:
     report.add_argument("--gold-set", default=None, help="Name or id.")
     report.add_argument("--run", default=None, help="Evaluation id.")
     report.add_argument("--min-coverage", type=int, default=1)
+    demo_removal = commands.add_parser(
+        "remove-demo",
+        help="Remove the fictional demo data (dry run unless --apply).",
+    )
+    demo_removal.add_argument("--apply", action="store_true", help="Make the change.")
     commands.add_parser(
         "snapshot-metrics",
         help="Record today's key figures of every draft and published version (run it nightly).",
@@ -560,6 +583,8 @@ def main(argv: list[str] | None = None) -> int:
                 return await _sync_roles()
             if args.command == "clean-orphan-links":
                 return await _clean_orphan_links(args.apply)
+            if args.command == "remove-demo":
+                return await _remove_demo(args.apply)
             if args.command == "snapshot-metrics":
                 return await _snapshot_metrics()
             if args.command == "embed-all":

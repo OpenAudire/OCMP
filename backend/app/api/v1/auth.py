@@ -7,9 +7,9 @@ from redis.asyncio import Redis
 
 from app.api.deps import (
     ClientIP,
-    CurrentAuth,
     CurrentUser,
     RedisDep,
+    SessionAuth,
     SettingsDep,
     clear_session_cookies,
     session_ttl_seconds,
@@ -158,7 +158,7 @@ async def my_roles(user: CurrentUser, db: DbSession) -> list[RoleAssignment]:
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
 async def change_own_password(
     body: ChangePasswordRequest,
-    auth: CurrentAuth,
+    auth: SessionAuth,
     db: DbSession,
     redis: RedisDep,
     settings: SettingsDep,

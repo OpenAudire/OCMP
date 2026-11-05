@@ -6,6 +6,7 @@ from app.api.v1.ai_evaluation import router as ai_evaluation_router
 from app.api.v1.ai_mapping import router as ai_mapping_router
 from app.api.v1.ai_objectives import router as ai_objectives_router
 from app.api.v1.ai_settings import router as ai_settings_router
+from app.api.v1.api_tokens import router as api_tokens_router
 from app.api.v1.assessments import router as assessments_router
 from app.api.v1.audit import router as audit_router
 from app.api.v1.auth import router as auth_router
@@ -40,6 +41,7 @@ router.include_router(auth_router)
 router.include_router(oidc_router)
 router.include_router(roles_router)
 router.include_router(users_router)
+router.include_router(api_tokens_router)
 router.include_router(audit_router)
 router.include_router(institution_router)
 router.include_router(ai_settings_router)

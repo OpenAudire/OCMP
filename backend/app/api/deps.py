@@ -14,8 +14,8 @@ from app.core.permissions import Permission
 from app.core.proxy import TrustedProxies
 from app.core.redis import get_redis
 from app.core.security import csrf_token_for
-from app.models import User
-from app.services import sessions
+from app.models import ApiToken, User
+from app.services import api_tokens, sessions
 from app.services.audit import set_actor
 from app.services.authorization import INSTANCE, ScopeRef, has_permission
 from app.services.users import get_active_user
@@ -75,10 +75,12 @@ def clear_session_cookies(response: Response, settings: Settings) -> None:
 
 @dataclass(frozen=True)
 class AuthContext:
-    """The signed-in user and the session token they used."""
+    """The signed-in user and the session token they used (empty for a personal API token, which
+    is then in ``token``)."""
 
     user: User
     session_token: str
+    token: ApiToken | None = None
 
 
 _NOT_AUTHENTICATED = HTTPException(
@@ -101,6 +103,9 @@ async def get_auth_context(
     """
     token = request.cookies.get(settings.session_cookie_name)
     if not token:
+        bearer = _bearer(request)
+        if bearer:
+            return await _token_context(request, db, bearer)
         raise _NOT_AUTHENTICATED
 
     ttl = session_ttl_seconds(settings)
@@ -119,7 +124,46 @@ async def get_auth_context(
     return AuthContext(user=user, session_token=token)
 
 
+def _bearer(request: Request) -> str | None:
+    """The token of an ``Authorization: Bearer`` header, if any."""
+    scheme, _, value = request.headers.get("Authorization", "").partition(" ")
+    return value.strip() or None if scheme.lower() == "bearer" else None
+
+
+async def _token_context(request: Request, db: AsyncSession, bearer: str) -> AuthContext:
+    """Resolve a personal API token (ADR 060). It carries its owner's permissions, narrowed by its
+    scope; no cookie is set and no CSRF token is needed (nothing here is sent by the browser on its
+    own)."""
+    found = await api_tokens.authenticate(db, bearer)
+    if found is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user, token = found
+    if not api_tokens.allows(token, request.method):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="This token can only read."
+        )
+    set_actor(user.id)
+    return AuthContext(user=user, session_token="", token=token)
+
+
 CurrentAuth = Annotated[AuthContext, Depends(get_auth_context)]
+
+
+async def get_session_auth(auth: CurrentAuth) -> AuthContext:
+    """For what a token must never do (change a password, make tokens): a browser session only."""
+    if auth.token is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Sign in to the web app to do this; an API token cannot.",
+        )
+    return auth
+
+
+SessionAuth = Annotated[AuthContext, Depends(get_session_auth)]
 
 
 async def get_current_user(auth: CurrentAuth) -> User:

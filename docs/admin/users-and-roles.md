@@ -25,6 +25,30 @@ to assign roles at that scope **and** every permission of the role there, so nob
 give more access than they have. The last active platform admin cannot be removed or
 deactivated.
 
+## The administration screens
+
+**Admin** in the menu has three screens for people who may use them (permissions `users.manage`,
+`roles.manage` and `settings.manage`). They follow the API's rules; they add none.
+
+* **People**: search and page everyone with an account. *Add a person* makes a local account (email, name and a
+  first password; people who use single sign-on get an account the first time they sign in). Open a person to
+  rename them, **deactivate** them (they are signed out everywhere, their API tokens are revoked and they
+  cannot sign in until you reactivate), or **delete** the account (name and email are removed; what they made
+  stays without their name). You cannot deactivate or delete your own account, and the last platform admin is
+  protected. The person's page also lists their **roles by place** and lets you give a role at the whole
+  institution, a faculty or a programme (only roles that fit that place are offered; some need an end date) or
+  remove one. Roles for a single module or session are given on the curriculum screens. Their API tokens are
+  listed there too, so you can revoke one.
+* **Roles**: the built-in roles can be read but not changed. *Make a role* names the permissions, where the role can
+  be held and whether every assignment needs an end date. A role someone still holds cannot be deleted.
+* **Institution settings**: your own words for curriculum things (for example Course for Module), the health
+  profile, the default taxonomy scale and the numbers behind mapping, credits, quality checks and coverage. Each
+  block has its own **Save**; the server checks the ranges and says why if it refuses; every change is in the
+  audit log. See also [Basics](basics.md) for the settings that live in the server's configuration instead.
+
+Listing people is recorded in the audit log (who saw whose details), because names and email addresses are
+personal information.
+
 ## Who sees which curriculum
 
 The **Curriculum** section (the curriculum builder) and the curriculum API show each

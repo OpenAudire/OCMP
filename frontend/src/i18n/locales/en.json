@@ -179,7 +179,45 @@
     "save": "Change password",
     "changed": "Your password has been changed. Your other sessions were signed out.",
     "wrongCurrent": "The current password is not correct.",
-    "ssoOnly": "You sign in through your organisation, so your password is managed there."
+    "ssoOnly": "You sign in through your organisation, so your password is managed there.",
+    "tokens": {
+      "title": "API tokens",
+      "help": "A token lets a script use the API as you, with no more than you may do. Make one only for something you trust, give it the least it needs and revoke it when you are done.",
+      "new": "Make a token",
+      "name": "Name",
+      "nameHelp": "What it is for, for example Nightly export.",
+      "scopes": "What it may do",
+      "scope": {
+        "read": "Read",
+        "write": "Write"
+      },
+      "scopeHelp": {
+        "read": "Look at things only.",
+        "write": "Also change things, as you could."
+      },
+      "lifetime": "Lasts",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "make": "Make token",
+      "createdTitle": "Your new token",
+      "copyNow": "Copy it now. It is shown only this once and cannot be read again; if you lose it, revoke it and make another.",
+      "howToUse": "Send it in a header: Authorization: Bearer followed by the token. It cannot be used to sign in to the web app, change your password or make more tokens.",
+      "copy": "Copy",
+      "done": "I have copied it",
+      "none": "You have no tokens.",
+      "error": "Your tokens could not be loaded.",
+      "status": "Status",
+      "expiresOn": "Until {{date}}",
+      "lastUsed": "Last used {{date}}",
+      "neverUsed": "Never used",
+      "state": {
+        "expired": "Expired",
+        "revoked": "Revoked"
+      },
+      "revoke": "Revoke",
+      "revokeNamed": "Revoke the token {{name}}",
+      "revokeBody": "The token {{name}} stops working at once."
+    }
   },
   "curriculum": {
     "title": "Curriculum builder",
@@ -1777,6 +1815,223 @@
         "scoreKappaN": "{{n}} links",
         "weightedKappa": "weighted: {{value}}"
       }
+    },
+    "usersLink": "People",
+    "rolesLink": "Roles",
+    "settingsLink": "Institution settings",
+    "scope": {
+      "instance": "Whole institution",
+      "faculty": "Faculty: {{name}}",
+      "programme": "Programme: {{name}}",
+      "module": "A module ({{id}})",
+      "learning_event": "A session ({{id}})",
+      "type": {
+        "instance": "Whole institution",
+        "faculty": "A faculty",
+        "programme": "A programme",
+        "module": "A module",
+        "learning_event": "A session"
+      }
+    },
+    "users": {
+      "title": "People",
+      "description": "Everyone with an account: who they are, whether they can sign in, and the roles they hold and where.",
+      "loading": "Loading people",
+      "error": "The list of people could not be loaded.",
+      "errorBody": "Nothing was changed. Try again in a moment.",
+      "searchLabel": "Search people",
+      "searchPlaceholder": "Name or email",
+      "search": "Search",
+      "add": "Add a person",
+      "addHelp": "This makes an account that signs in with an email and a password. Give the person a role afterwards. People who sign in through your single sign-on get an account the first time they do.",
+      "addSubmit": "Add person",
+      "name": "Name",
+      "email": "Email address",
+      "password": "Password",
+      "passwordHelp": "At least as long as the sign-in rules ask. Tell the person to change it after signing in.",
+      "status": "Status",
+      "active": "Can sign in",
+      "inactive": "Cannot sign in",
+      "ssoOnly": "Single sign-on only",
+      "lastSignIn": "Last signed in",
+      "never": "Never",
+      "range": "{{from}} to {{to}} of {{total}}",
+      "previous": "Earlier",
+      "next": "Later",
+      "none": {
+        "title": "No people found",
+        "body": "Add the first person to give them a role.",
+        "search": "Nobody matches that search."
+      },
+      "details": "Details",
+      "signIn": "Signs in with",
+      "created": "Account made",
+      "saved": "Saved.",
+      "deactivate": "Deactivate",
+      "deactivateBody": "{{name}} will be signed out everywhere and cannot sign in until you reactivate the account. Their roles and anything they made stay.",
+      "reactivate": "Reactivate",
+      "delete": "Delete account",
+      "deleteBody": "{{name}}'s name and email are removed and their roles and sign-ins end. What they made, and the record of what they did, stays without their name. This cannot be undone.",
+      "notYourself": "You cannot do this to your own account.",
+      "roles": "Roles",
+      "rolesHelp": "A role gives permissions at a place: the whole institution, a faculty or a programme. Roles for one module or session are given on the curriculum screens.",
+      "noRoles": "This person holds no roles, so they can see nothing yet.",
+      "where": "Where",
+      "expires": "Ends",
+      "noExpiry": "No end date",
+      "actions": "Actions",
+      "remove": "Remove",
+      "removeRole": "Remove the role {{role}}",
+      "removeBody": "{{name}} will lose this role at once.",
+      "giveRole": "Give a role",
+      "chooseRole": "Choose a role",
+      "expiresOptional": "Ends on (optional)",
+      "expiresRequired": "Ends on (required for this role)",
+      "assign": "Give the role",
+      "tokens": "API tokens",
+      "tokensHelp": "Tokens this person made to use the API. Revoke one if it may be lost; deactivating the account revokes them all.",
+      "noTokens": "No active tokens.",
+      "back": "All people",
+      "missing": {
+        "title": "This person was not found",
+        "body": "The account may have been deleted."
+      },
+      "errors": {
+        "exists": "An account with this email address already exists."
+      }
+    },
+    "roles": {
+      "title": "Roles",
+      "description": "A role is a named set of permissions. The built-in roles cannot be changed; make your own for anything else.",
+      "loading": "Loading roles",
+      "error": "The roles could not be loaded.",
+      "role": "Role",
+      "create": "Make a role",
+      "edit": "Change role",
+      "editShort": "Change",
+      "view": "View",
+      "viewNamed": "View the role {{name}}",
+      "editNamed": "Change the role {{name}}",
+      "delete": "Delete",
+      "deleteNamed": "Delete the role {{name}}",
+      "deleteBody": "The role {{name}} will be deleted. A role that someone still holds cannot be deleted: remove it from them first.",
+      "system": "Built in",
+      "custom": "Your own",
+      "key": "Key",
+      "keyHelp": "A short code with letters, digits, hyphens and underscores. It cannot be changed later.",
+      "name": "Name",
+      "fieldDescription": "Description",
+      "heldAt": "Can be held at",
+      "requiresExpiry": "Every assignment needs an end date",
+      "requiresExpiryHelp": "For roles meant to be temporary, such as an external reviewer.",
+      "permissions": "Permissions",
+      "permissionCount_one": "{{count}} permission",
+      "permissionCount_other": "{{count}} permissions",
+      "implies": "Also gives: {{list}}",
+      "systemNote": "This is a built-in role. You can read it but not change it."
+    },
+    "settings": {
+      "title": "Institution settings",
+      "description": "How {{name}} words things, which profiles are on, and the numbers behind mapping, credits, quality checks and coverage. Each block saves by itself and is recorded in the audit log.",
+      "loading": "Loading the settings",
+      "save": "Save",
+      "saved": "Saved.",
+      "saveFailed": "The settings were not saved: {{detail}}",
+      "terminology": {
+        "title": "Words for curriculum things",
+        "help": "Use your own words (for example Course for Module). Leave a pair empty to keep the standard wording. Both the singular and the plural are needed.",
+        "singular": "Singular",
+        "plural": "Plural",
+        "incomplete": "Fill in both the singular and the plural, or leave both empty."
+      },
+      "profiles": {
+        "title": "Profile and taxonomy",
+        "help": "Profiles switch on features that suit a kind of programme. The default taxonomy scale is the one used when an import names a level.",
+        "health": "Health sciences profile",
+        "healthHelp": "Adds the role balance report and the layout for professional council reviews.",
+        "scale": "Default taxonomy scale (key)",
+        "scaleHelp": "For example bloom. Leave empty for none."
+      },
+      "mapping": {
+        "title": "Mapping and review",
+        "help": "How suggested and entered links become accepted, and how AI suggestions are filtered.",
+        "four_eyes": {
+          "label": "Second review for accepted links",
+          "help": "A link is accepted only after a second, different reviewer agrees."
+        },
+        "second_review_for_rejects": {
+          "label": "Second review for rejections",
+          "help": "A first rejection is also checked by a second reviewer."
+        },
+        "bulk_accept_min_percent": {
+          "label": "Lowest confidence for Accept all (percent)",
+          "help": "From 50 to 100. Accept all never goes below this."
+        },
+        "bulk_accept_max_links": {
+          "label": "Most links in one Accept all",
+          "help": "From 1 to 1000."
+        },
+        "ai_min_coverage": {
+          "label": "Lowest coverage the AI may suggest (1 to 5)",
+          "help": "Suggestions covering less than this are dropped."
+        },
+        "ai_prefer_specific_item": {
+          "label": "Prefer the more specific item",
+          "help": "When an item and the group above it are both suggested, keep the item."
+        }
+      },
+      "credits": {
+        "title": "Credits and notional hours",
+        "help": "The advice the credit check gives. It never stops anyone saving.",
+        "hours_per_credit": {
+          "label": "Notional hours in one credit",
+          "help": "From 1 to 100."
+        },
+        "tolerance_percent": {
+          "label": "Tolerance (percent)",
+          "help": "How far planned hours may be from credits times hours before a module is flagged."
+        },
+        "credits_per_year": {
+          "label": "Credits in a typical year",
+          "help": "Used to check years and phases of kind year."
+        },
+        "min_exit_level_credits": {
+          "label": "Credits wanted at the exit level",
+          "help": "Leave empty to not check this."
+        }
+      },
+      "quality": {
+        "title": "Objective quality checks",
+        "help": "Wording checks are advice. This sets when two objectives count as near-duplicates.",
+        "near_duplicate_min_percent": {
+          "label": "Near-duplicate similarity (percent)",
+          "help": "From 85 to 100. Needs the embeddings server."
+        }
+      },
+      "coverage": {
+        "title": "Coverage reports",
+        "help": "The numbers the coverage and gap reports use. Changing them changes every report.",
+        "multiple_match_n": {
+          "label": "Multiple match: at least this many links",
+          "help": "From 1 to 20."
+        },
+        "subordinate_min_percent": {
+          "label": "Subordinate match: share of items covered (percent)",
+          "help": "Groups under this are listed as gaps."
+        },
+        "weighted_low_percent": {
+          "label": "Weighted coverage counted as low (percent)",
+          "help": "Items and groups under this are listed and marked low."
+        },
+        "repeat_min_sessions": {
+          "label": "Repeated items: at least this many sessions",
+          "help": "From 2 to 100."
+        },
+        "repeat_spread": {
+          "label": "Repeated items: standard deviations above the average",
+          "help": "From 0 to 5, used once five or more items are taught."
+        }
+      }
     }
   },
   "tags": {
@@ -1905,7 +2160,7 @@
     "description": "{{programme}}, {{year}} {{status}}. Figures are worked out from the accepted mapping and the credit check; trends come from the daily snapshots of the last eight weeks.",
     "loading": "Loading the dashboard",
     "error": "The dashboard could not be loaded.",
-  "errorBody": "Nothing was changed. Try again in a moment; if it keeps happening, tell an administrator.",
+    "errorBody": "Nothing was changed. Try again in a moment; if it keeps happening, tell an administrator.",
     "empty": {
       "title": "No curriculum version to show",
       "body": "Make a curriculum version first. The dashboard summarises one version at a time."
@@ -1978,7 +2233,7 @@
       "choose": "Programme outcome",
       "none": "There are no programme outcomes to follow.",
       "error": "The traceability could not be loaded.",
-    "errorBody": "The rest of the dashboard is not affected. Try again in a moment.",
+      "errorBody": "The rest of the dashboard is not affected. Try again in a moment.",
       "outcome": "Programme outcome",
       "moduleOutcomes": "Module outcomes",
       "moduleOutcome": "Module outcome",

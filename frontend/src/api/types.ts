@@ -54,9 +54,40 @@ export interface Institution {
   profiles: string[];
   features: Feature[];
   default_taxonomy_scale: string | null;
-  mapping: { four_eyes: boolean; second_review_for_rejects: boolean };
+  mapping: MappingPolicy;
   credits?: CreditPolicy;
   quality?: { near_duplicate_min_percent: number };
+  coverage?: CoveragePolicy;
+}
+
+/** How mapping decisions are reviewed and how AI suggestions are filtered. */
+export interface MappingPolicy {
+  four_eyes: boolean;
+  second_review_for_rejects: boolean;
+  bulk_accept_min_percent?: number;
+  bulk_accept_max_links?: number;
+  ai_min_coverage?: number;
+  ai_prefer_specific_item?: boolean;
+}
+
+/** How coverage is worked out in the reports (ADR 050, 053). */
+export interface CoveragePolicy {
+  multiple_match_n: number;
+  subordinate_min_percent: number;
+  weighted_low_percent: number;
+  repeat_min_sessions: number;
+  repeat_spread: number;
+}
+
+/** The sections of the institution's settings that can be replaced (others stay as they are). */
+export interface SettingsUpdate {
+  terminology?: Partial<Record<Term, TermOverride>>;
+  profiles?: string[];
+  default_taxonomy_scale?: string | null;
+  mapping?: MappingPolicy;
+  credits?: CreditPolicy;
+  quality?: { near_duplicate_min_percent: number };
+  coverage?: CoveragePolicy;
 }
 
 /** Credits and notional hours settings (advice only; ADR 035). */
@@ -1792,3 +1823,71 @@ export interface ExplorerWeek {
   sessions: ExplorerSession[];
 }
 
+// --- Administration: people, roles, tokens (Slice 1.30) ---
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  display_name: string;
+  is_active: boolean;
+  last_login_at: string | null;
+  created_at: string;
+  has_password: boolean;
+}
+
+export interface AdminUserList {
+  items: AdminUser[];
+  total: number;
+}
+
+export interface RoleInfo {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  is_system: boolean;
+  permissions: string[];
+  scope_types: ScopeType[];
+  requires_expiry: boolean;
+}
+
+export interface RoleInput {
+  key: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  scope_types: ScopeType[];
+  requires_expiry: boolean;
+}
+
+export interface PermissionInfo {
+  key: string;
+  implies: string[];
+}
+
+export interface AssignmentInput {
+  user_id: string;
+  role_key: string;
+  scope_type: ScopeType;
+  scope_id: string | null;
+  expires_at: string | null;
+}
+
+export type TokenScope = 'read' | 'write';
+
+export interface ApiTokenInfo {
+  id: string;
+  name: string;
+  token_prefix: string;
+  scopes: TokenScope[];
+  created_at: string;
+  expires_at: string;
+  last_used_at: string | null;
+  revoked_at: string | null;
+  state: 'active' | 'expired' | 'revoked';
+}
+
+export interface ApiTokenCreated extends ApiTokenInfo {
+  /** The token itself: shown once, never again. */
+  token: string;
+}

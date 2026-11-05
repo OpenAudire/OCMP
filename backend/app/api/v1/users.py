@@ -13,7 +13,7 @@ from app.core.security import PasswordPolicyError
 from app.models import RoleAssignment, User
 from app.schemas.roles import AssignmentRead
 from app.schemas.users import UserAdminRead, UserCreate, UserList, UserUpdate
-from app.services import sessions
+from app.services import api_tokens, sessions
 from app.services.audit import audit_operation, record_event
 from app.services.authorization import (
     ConflictError,
@@ -111,6 +111,7 @@ async def update_user(
             raise ConflictError("This is the last platform admin; assign another one first.")
         user.is_active = False
         await sessions.revoke_user_sessions(redis, user.id)
+        await api_tokens.revoke_all(db, user.id)
         logger.info("user_deactivated", user_id=str(user.id), actor_id=str(actor.id))
     elif body.is_active is True and not user.is_active:
         user.is_active = True
@@ -133,6 +134,7 @@ async def delete_user_account(
     with audit_operation("user.delete", actor_id=actor.id):
         await delete_user(db, user)
     await sessions.revoke_user_sessions(redis, user.id)
+    await api_tokens.revoke_all(db, user.id)
     logger.info("user_deleted", user_id=str(user.id), actor_id=str(actor.id))
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

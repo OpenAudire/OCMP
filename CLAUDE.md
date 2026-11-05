@@ -333,6 +333,13 @@ export function ModuleCount({ count }: { count: number }) {
   `explorer/`. **Published versions only**, for staff too (drafts are the builder's); it uses `visible_version` / `VersionView`
   and shows **no framework items or mapping links** (a test checks the answer holds none), no retired objectives. "This week" is
   a week number (no calendar). Search hits open the explorer for people without `curriculum.view` (`search/hitPath.ts`)
+- Admin screens, API tokens and `remove-demo` (ADR 060): the People, Roles and Institution settings screens
+  (`frontend/src/admin/`) only front the existing API and add no rule. Personal API tokens: `models/api_token.py`,
+  `services/api_tokens.py`, `api/v1/api_tokens.py`; only a hash is stored (the token is shown once), a token
+  carries its owner's permissions **narrowed** by its scope (`read` = safe methods) and is a bearer header in
+  `api/deps.get_auth_context`; what a token must never do (change a password, make tokens) depends on `SessionAuth`;
+  deactivating or deleting an account revokes its tokens. `app/demo/remover.py` removes only what the demo made, found by
+  the demo's own codes, inside a savepoint that is rolled back for the dry run
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 
