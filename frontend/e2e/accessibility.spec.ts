@@ -29,7 +29,7 @@ test.describe('signed-out pages', () => {
 
 test.describe('signed-in pages', () => {
   for (const [path, heading] of [
-    ['/dashboard', 'Dashboard'],
+    ['/dashboard', 'Programme committee overview'],
     ['/mapping/review', 'Review queue'],
     ['/account', 'Your account'],
     ['/no-such-page', 'Page not found'],

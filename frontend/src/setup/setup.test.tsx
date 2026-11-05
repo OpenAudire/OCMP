@@ -101,7 +101,9 @@ describe('first-run setup', () => {
     expect(await screen.findByText('DEMO-HS')).toBeInTheDocument(); // summary
     click('Create and sign in');
 
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Programme committee overview' })
+    ).toBeInTheDocument();
     expect(mocked.runSetup).toHaveBeenCalledWith({
       token: 'abcd-efgh-ijkl-mnop',
       institution_name: 'Demo University',

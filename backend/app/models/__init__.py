@@ -33,6 +33,7 @@ from app.models.import_job import ImportJob
 from app.models.institution import Department, Faculty, Institution
 from app.models.intended_repeat import IntendedRepeat
 from app.models.mapping import AIRun, AIRunCall, MappingLink, ReviewAssignment
+from app.models.metrics import MetricSnapshot
 from app.models.proposal import ObjectiveProposal, ProposalStatus
 from app.models.role import Role, RoleAssignment
 from app.models.tagging import Tagging, TagList, TagValue
@@ -67,6 +68,7 @@ __all__ = [
     "IntendedRepeat",
     "LearningEvent",
     "MappingLink",
+    "MetricSnapshot",
     "Module",
     "Objective",
     "ObjectiveLink",

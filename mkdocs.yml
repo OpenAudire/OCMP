@@ -72,6 +72,7 @@ nav:
       - Mapping workspace: admin/mapping.md
       - Review queue: admin/review-queue.md
       - Search: admin/search.md
+      - Committee dashboard: admin/committee-dashboard.md
       - Coverage and gap reports: admin/coverage-reports.md
       - Redundancy and traceability: admin/curriculum-reports.md
       - Teaching reports: admin/teaching-reports.md

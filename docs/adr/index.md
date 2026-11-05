@@ -63,3 +63,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [055](055-excel-imports-tags-frameworks-mappings.md) | Excel Imports of Tags, Frameworks and Mappings, and the Import History |
 | [056](056-version-exports.md) | Exports of a Curriculum Version |
 | [057](057-import-lookalikes-imported-flag-tag-columns.md) | Look-alike Warnings, the "Accepted by Import" Flag and Tag Columns |
+| [058](058-committee-dashboard.md) | The Committee Dashboard and Its Daily Snapshots |

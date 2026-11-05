@@ -35,7 +35,8 @@ export const NAV_ITEMS: NavItem[] = [
     key: 'dashboard',
     path: '/dashboard',
     icon: IconLayoutDashboard,
-    isVisible: (p) => hasAny(p, Permission.CurriculumView),
+    // The committee overview is a report of the whole curriculum.
+    isVisible: (p) => p.has(Permission.ReportsView) && p.has(Permission.CurriculumView),
   },
   {
     key: 'curriculum',

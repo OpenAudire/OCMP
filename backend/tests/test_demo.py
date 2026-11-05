@@ -19,6 +19,7 @@ from app.models import (
     Institution,
     LearningEvent,
     MappingLink,
+    MetricSnapshot,
     Module,
     Objective,
     ObjectiveLink,
@@ -158,6 +159,19 @@ class TestLoad:
         assert "The nervous system" in titles
         assert "Portfolio reflection" not in titles
         assert await count(db_session, MappingLink, accepted) == 26
+
+        # A fictional eight-week history for both versions, ending with today's real figures.
+        for shown in (version, draft):
+            days = list(
+                await db_session.execute(
+                    select(MetricSnapshot.taken_on, MetricSnapshot.metrics)
+                    .where(MetricSnapshot.version_id == shown.id)
+                    .order_by(MetricSnapshot.taken_on)
+                )
+            )
+            assert len(days) == 8
+            mapped = [m["objectives"]["mapped"] for _, m in days]
+            assert mapped == sorted(mapped) and mapped[0] < mapped[-1]
         copied = Assessment.module_id.in_(draft_modules)
         assert await count(db_session, Assessment, copied, Assessment.based_on_id.is_not(None)) == 6
         diff = await diff_versions(db_session, version, draft)

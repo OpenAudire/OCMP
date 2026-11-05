@@ -1629,3 +1629,100 @@ export interface ImportJob {
   counts: ImportCounts;
 }
 
+// --- Committee dashboard (Slice 1.28) ---
+
+export interface DashboardFramework {
+  id: string;
+  name: string;
+  version_label: string;
+}
+
+export type DashboardKpiKey = 'mapped' | 'coverage' | 'gaps' | 'credits';
+
+export interface DashboardKpi {
+  key: DashboardKpiKey;
+  /** "percent": value from 0 to 1; "count": a whole number. */
+  unit: 'percent' | 'count';
+  value: number | null;
+  numerator: number | null;
+  denominator: number | null;
+  /** One point for each snapshot of the last eight weeks, oldest first. */
+  series: { date: string; value: number }[];
+}
+
+export interface DashboardProgress {
+  module_id: string;
+  code: string;
+  name: string;
+  objectives: number;
+  mapped: number;
+  waiting: number;
+}
+
+export interface DashboardGroupCompare {
+  id: string;
+  code: string;
+  title: string;
+  now: number;
+  before: number | null;
+}
+
+export interface DashboardCreditRow {
+  module_id: string;
+  code: string;
+  name: string;
+  credits: number | null;
+  expected_hours: number | null;
+  planned_hours: number;
+  difference_percent: number | null;
+  status: HoursStatus;
+}
+
+export interface Dashboard {
+  version: {
+    id: string;
+    academic_year: number;
+    status: CurriculumVersion['status'];
+    programme_code: string;
+    programme_name: string;
+  };
+  partial: boolean;
+  framework: DashboardFramework | null;
+  frameworks: DashboardFramework[];
+  kpis: DashboardKpi[];
+  snapshot_on: string | null;
+  progress: DashboardProgress[];
+  low_percent: number;
+  comparison: {
+    version_id: string;
+    academic_year: number;
+    status: CurriculumVersion['status'];
+    groups: DashboardGroupCompare[];
+  } | null;
+  credits: {
+    hours_per_credit: number;
+    tolerance_percent: number;
+    credits_per_year: number;
+    years: { name: string; credits: number; expected_credits: number | null; status: string }[];
+    modules: DashboardCreditRow[];
+  };
+  generated_at: string;
+}
+
+export interface DashboardTrace {
+  framework: DashboardFramework | null;
+  partial: boolean;
+  outcomes: { id: string; text: string }[];
+  outcome: { id: string; text: string } | null;
+  module_outcomes: { id: string; text: string; module_code: string | null }[];
+  /** The session objectives under each module outcome (same order), then, when there are any
+   * under no module outcome, the ones linked straight to the programme outcome. */
+  groups: { module_outcome_id: string | null; objectives: number; sessions: number }[];
+  items: { id: string; code: string; title: string; coverage: number; objectives: number }[];
+  items_total: number;
+  reaches: { group: number; item_id: string }[];
+  module_count: number;
+  session_objectives: number;
+  sessions: number;
+}
+

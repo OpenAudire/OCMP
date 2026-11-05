@@ -21,7 +21,6 @@ describe('navigation by permission', () => {
   it('shows lecturers the staff curriculum views without the explorer', () => {
     // curriculum.view implies view_published, as on the server.
     expect(navFor(Permission.CurriculumView, Permission.ObjectivesEdit)).toEqual([
-      'dashboard',
       'curriculum',
       'frameworks',
       'search',

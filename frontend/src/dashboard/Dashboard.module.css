@@ -1,0 +1,239 @@
+.card {
+  padding: 22px 24px;
+}
+
+@media (max-width: 48em) {
+  .card {
+    padding: 18px;
+  }
+}
+
+.title {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+}
+
+.kpiLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cic-muted);
+}
+
+.kpiRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kpiValue {
+  font-size: 34px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.kpiNote {
+  font-size: 13px;
+  color: var(--cic-muted);
+}
+
+.kpiChange {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cic-ink);
+}
+
+.kpiChange[data-good='true'] {
+  color: var(--cic-ok);
+}
+
+.kpiChange[data-good='false'] {
+  color: var(--cic-warm-ink);
+}
+
+.two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(120px, 220px) 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.barRowHead {
+  min-width: 0;
+}
+
+.barTrack {
+  position: relative;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--cic-soft);
+  overflow: hidden;
+}
+
+.barBefore {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--cic-line);
+}
+
+.barNow {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--cic-brand);
+  height: 8px;
+  top: 3px;
+  border-radius: 4px;
+}
+
+.barNow[data-low='true'] {
+  background: var(--cic-warm);
+}
+
+.barValue {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  min-width: 3.5em;
+  text-align: right;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--cic-muted);
+  margin-top: 8px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+
+.code {
+  font-family: var(--cic-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  margin-right: 6px;
+}
+
+.statusOk {
+  font-weight: 600;
+  color: var(--cic-brand-ink);
+}
+
+.statusIssue {
+  font-weight: 600;
+  color: var(--cic-warm-ink);
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The traceability diagram: nodes are text on a grid; the curves are decoration. */
+.traceScroll {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.trace {
+  position: relative;
+  min-width: 860px;
+}
+
+.traceLines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.traceLine {
+  fill: none;
+  stroke: var(--cic-field-line);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.traceColumn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.traceNode {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--cic-line);
+  border-radius: 10px;
+  background: var(--cic-surface);
+  font-size: 13px;
+  overflow: hidden;
+}
+
+.traceNode strong {
+  font-size: 13px;
+}
+
+.traceNode span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--cic-muted);
+}
+
+.traceNode[data-low='true'] {
+  background: var(--cic-warm-soft);
+  border-color: var(--cic-warm-line);
+}

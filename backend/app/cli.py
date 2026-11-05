@@ -48,7 +48,7 @@ from app.models import (
     User,
 )
 from app.models.embedding import EmbeddedType
-from app.services import eval_gold, eval_metrics, eval_run
+from app.services import dashboard_metrics, eval_gold, eval_metrics, eval_run
 from app.services.ai_runs import purge_ai_call_content
 from app.services.audit import audit_operation, purge_audit_log
 from app.services.authorization import (
@@ -117,6 +117,13 @@ async def _purge_audit_log(days: int) -> int:
     async with database.session_scope() as db:
         deleted = await purge_audit_log(db, older_than_days=days)
     print(f"Deleted {deleted} audit log entries older than {days} days.")  # noqa: T201
+    return 0
+
+
+async def _snapshot_metrics() -> int:
+    async with database.session_scope() as db:
+        taken = await dashboard_metrics.take_all_snapshots(db)
+    print(f"Recorded today's figures for {taken} curriculum versions.")  # noqa: T201
     return 0
 
 
@@ -525,6 +532,10 @@ def main(argv: list[str] | None = None) -> int:
     report.add_argument("--gold-set", default=None, help="Name or id.")
     report.add_argument("--run", default=None, help="Evaluation id.")
     report.add_argument("--min-coverage", type=int, default=1)
+    commands.add_parser(
+        "snapshot-metrics",
+        help="Record today's key figures of every draft and published version (run it nightly).",
+    )
     commands.add_parser("setup-token", help="Show the first-run setup token.")
     commands.add_parser("load-demo", help="Load the fictional BSc Health Sciences (Demo) data.")
     orphans = commands.add_parser(
@@ -549,6 +560,8 @@ def main(argv: list[str] | None = None) -> int:
                 return await _sync_roles()
             if args.command == "clean-orphan-links":
                 return await _clean_orphan_links(args.apply)
+            if args.command == "snapshot-metrics":
+                return await _snapshot_metrics()
             if args.command == "embed-all":
                 return await _embed_all()
             if args.command == "embeddings-status":

@@ -59,6 +59,7 @@ from app.models.curriculum import (
 from app.models.framework import FrameworkStatus
 from app.models.mapping import DepthMatch, MappingSource
 from app.models.tagging import TagListKind
+from app.services import dashboard_metrics
 from app.services.audit import audit_operation
 from app.services.authorization import (
     ConflictError,
@@ -726,6 +727,8 @@ async def load_demo(
             await loader.framework()
             await loader.tag_lists(faculty)
             draft = await loader.next_year(versions[0]) if needs_draft else None
+            if draft is not None:
+                await dashboard_metrics.seed_history(db, draft, existing)
             added = await _add_office(loader, settings, faculty, office_password)
         if not needs_draft and not added and not loader.new_lists:
             raise ConflictError(f"The demo programme {data.programme.code} is already loaded.")
@@ -750,6 +753,8 @@ async def load_demo(
         await loader.tag_lists(faculty)
         programme, published, modules, events = await loader.curriculum(faculty)
         draft = await loader.next_year(published)
+        await dashboard_metrics.seed_history(db, published, programme)
+        await dashboard_metrics.seed_history(db, draft, programme)
         added = await _add_office(loader, settings, faculty, office_password)
     return DemoSummary(
         programme=programme,

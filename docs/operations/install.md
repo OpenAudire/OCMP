@@ -149,7 +149,8 @@ all services are healthy. Check the result:
 docker compose ps -a
 ```
 
-`db`, `redis`, `api` and `web` should be `Up (healthy)`, `worker` and `caddy` `Up`, and
+`db`, `redis`, `api`, `web` and `scheduler` (which records the daily figures for the committee
+dashboard) should be `Up (healthy)`, `worker` and `caddy` `Up`, and
 `migrate` `Exited (0)`: it updates the database schema on every start and then stops.
 
 Check the site from the server and from your own computer:

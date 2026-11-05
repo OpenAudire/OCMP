@@ -145,6 +145,16 @@ def test_load_demo(
     assert "already loaded" in capsys.readouterr().out
 
 
+def test_snapshot_metrics_records_todays_figures(
+    cli_settings: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert cli.main(["snapshot-metrics"]) == 0
+
+    assert "Recorded today's figures for" in capsys.readouterr().out
+    # Once more the same day: replaced, not doubled.
+    assert cli.main(["snapshot-metrics"]) == 0
+
+
 def test_clean_orphan_links_is_a_dry_run_unless_applied(
     cli_settings: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

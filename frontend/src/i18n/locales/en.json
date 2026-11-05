@@ -1900,6 +1900,101 @@
       "framework": "Framework item {{code}}"
     }
   },
+  "dashboard": {
+    "title": "Programme committee overview",
+    "description": "{{programme}}, {{year}} {{status}}. Figures are worked out from the accepted mapping and the credit check; trends come from the daily snapshots of the last eight weeks.",
+    "loading": "Loading the dashboard",
+    "error": "The dashboard could not be loaded.",
+  "errorBody": "Nothing was changed. Try again in a moment; if it keeps happening, tell an administrator.",
+    "empty": {
+      "title": "No curriculum version to show",
+      "body": "Make a curriculum version first. The dashboard summarises one version at a time."
+    },
+    "partial": "You see only part of this version, so the figures cover only that part and there are no trend lines.",
+    "snapshotOn": "Trends use the daily snapshots up to {{date}}.",
+    "noSnapshots": "There are no daily snapshots yet, so no trend lines. An administrator can record them with the snapshot-metrics command.",
+    "madeOn": "Figures made {{when}}.",
+    "kpi": {
+      "section": "Key indicators",
+      "mapped": "Objectives mapped",
+      "coverage": "Weighted coverage",
+      "gaps": "Framework items with no link",
+      "credits": "Modules outside the credit tolerance",
+      "mappedNote": "{{mapped}} of {{total}} objectives have an accepted link",
+      "coverageNote": "of {{framework}}, weighted by coverage and depth",
+      "noFramework": "No framework has links from this version yet.",
+      "gapsNote": "of {{total}} items with nothing below them",
+      "creditsNote": "of {{total}} modules, tolerance {{tolerance}}%",
+      "trendLabel": "{{kpi}}: trend from {{from}} to {{to}} over the last eight weeks",
+      "same": "Unchanged since {{date}}",
+      "up_points_one": "Up {{count}} point since {{date}}",
+      "up_points_other": "Up {{count}} points since {{date}}",
+      "down_points_one": "Down {{count}} point since {{date}}",
+      "down_points_other": "Down {{count}} points since {{date}}",
+      "up_count_one": "Up {{count}} since {{date}}",
+      "up_count_other": "Up {{count}} since {{date}}",
+      "down_count_one": "Down {{count}} since {{date}}",
+      "down_count_other": "Down {{count}} since {{date}}"
+    },
+    "compare": {
+      "title": "Weighted coverage by competency group",
+      "help": "{{framework}}, this version compared with the last published version ({{year}}). A group under {{low}}% is marked as low. The percentage is the figure; the bar only helps the eye.",
+      "none": "There is no other published version to compare with.",
+      "aria": "{{group}}: {{now}} now, {{before}} in the {{year}} version",
+      "low": "low",
+      "thisVersion": "This version",
+      "before": "Published {{year}}",
+      "belowLow": "Below {{low}}%"
+    },
+    "progress": {
+      "title": "Mapping progress by module",
+      "help": "The share of a module's outcomes and session objectives that have an accepted link. Suggestions waiting for a decision are shown apart.",
+      "none": "There are no modules to show.",
+      "aria": "{{module}}: {{mapped}} of {{total}} objectives mapped",
+      "waiting_one": "{{count}} waiting",
+      "waiting_other": "{{count}} waiting"
+    },
+    "credits": {
+      "title": "Credits and notional hours",
+      "help": "One credit is {{hours}} notional hours, with a tolerance of {{tolerance}}%. This is advice and never blocks saving.",
+      "onlyIssues": "Only modules outside the tolerance",
+      "module": "Module",
+      "credits": "Credits",
+      "expected": "Expected",
+      "planned": "Planned",
+      "difference": "Difference",
+      "status": "Status",
+      "noRows": "No module to show.",
+      "statuses": {
+        "ok": "Within tolerance",
+        "under": "Under",
+        "over": "Over",
+        "no_credits": "No credits set"
+      }
+    },
+    "trace": {
+      "title": "Traceability: from programme outcome to framework",
+      "help": "How one programme outcome is taught, module by module and session by session, and which framework items it reaches through accepted links.",
+      "choose": "Programme outcome",
+      "none": "There are no programme outcomes to follow.",
+      "error": "The traceability could not be loaded.",
+    "errorBody": "The rest of the dashboard is not affected. Try again in a moment.",
+      "outcome": "Programme outcome",
+      "moduleOutcomes": "Module outcomes",
+      "moduleOutcome": "Module outcome",
+      "sessionObjectives": "Session objectives",
+      "items": "Framework items",
+      "objectives_one": "{{count}} objective",
+      "objectives_other": "{{count}} objectives",
+      "sessions_one": "{{count}} session",
+      "sessions_other": "{{count}} sessions",
+      "direct": "linked straight to the outcome",
+      "coverageOf": "{{n}} of 5",
+      "summary": "This outcome reaches {{objectives}} session objectives in {{sessions}} sessions through {{modules}} modules, and {{items}} framework items.",
+      "moreItems": "The {{shown}} items with the most objectives are shown.",
+      "noFramework": "Choose a framework by mapping some objectives to it to see the items."
+    }
+  },
   "reports": {
     "intro": "Coverage and gaps, worked out from the mapping people have accepted. Every report states its method and when it was made.",
     "open": "Open the report",

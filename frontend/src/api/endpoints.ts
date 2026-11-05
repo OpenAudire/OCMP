@@ -5,6 +5,8 @@ import type {
   AiSettings,
   CoverageMethod,
   CoverageReport,
+  Dashboard,
+  DashboardTrace,
   EvalDetail,
   EvalRun,
   GapReport,
@@ -777,6 +779,10 @@ export const queryKeys = {
     ['reports', 'coverage', versionId, frameworkId, method] as const,
   gaps: (versionId: string, frameworkId: string, method: string) =>
     ['reports', 'gaps', versionId, frameworkId, method] as const,
+  dashboard: (versionId: string, frameworkId: string | null) =>
+    ['dashboard', versionId, frameworkId] as const,
+  dashboardTrace: (versionId: string, frameworkId: string | null, outcomeId: string | null) =>
+    ['dashboard', versionId, 'trace', frameworkId, outcomeId] as const,
   evalRuns: (minCoverage: number) => ['ai-evaluation', 'runs', minCoverage] as const,
   evalRun: (id: string, minCoverage: number) => ['ai-evaluation', 'run', id, minCoverage] as const,
   frameworks: ['frameworks'] as const,
@@ -918,6 +924,34 @@ export async function fetchWhereTaught(
 export async function fetchSearchFilters(versionId: string): Promise<SearchFilterOptions> {
   return (await api.get<SearchFilterOptions>(`/curriculum-versions/${versionId}/search-filters`))
     .data;
+}
+
+// --- Committee dashboard (Slice 1.28) ---
+
+export async function fetchDashboard(
+  versionId: string,
+  frameworkId: string | null
+): Promise<Dashboard> {
+  return (
+    await api.get<Dashboard>(`/curriculum-versions/${versionId}/dashboard`, {
+      params: frameworkId ? { framework_id: frameworkId } : {},
+    })
+  ).data;
+}
+
+export async function fetchDashboardTrace(
+  versionId: string,
+  frameworkId: string | null,
+  outcomeId: string | null
+): Promise<DashboardTrace> {
+  const params: Record<string, string> = {};
+  if (frameworkId) params.framework_id = frameworkId;
+  if (outcomeId) params.outcome_id = outcomeId;
+  return (
+    await api.get<DashboardTrace>(`/curriculum-versions/${versionId}/dashboard/traceability`, {
+      params,
+    })
+  ).data;
 }
 
 // --- Coverage and gap reports (Slice 1.21) ---
