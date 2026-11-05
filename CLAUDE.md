@@ -329,6 +329,10 @@ export function ModuleCount({ count }: { count: number }) {
   (`reports.view`). It reuses `search.visible_objective_ids`, `coverage_report.build_report` and `credit_check`, never its own
   rules. Trend lines come only from snapshots of the whole version: a partial viewer gets no trend. `snapshot-metrics` (CLI) is
   run by the Compose `scheduler` service; `load-demo` seeds a **fictional** eight-week history (`seed_history`), never for real data
+- Curriculum explorer (ADR 059): `services/explorer.py` (`module_view`, `week_view`), router `api/v1/explorer.py`, frontend
+  `explorer/`. **Published versions only**, for staff too (drafts are the builder's); it uses `visible_version` / `VersionView`
+  and shows **no framework items or mapping links** (a test checks the answer holds none), no retired objectives. "This week" is
+  a week number (no calendar). Search hits open the explorer for people without `curriculum.view` (`search/hitPath.ts`)
 - Assessments (ADR 035): `app/services/assessments.py` (module scope, `curriculum.edit`; items assess objectives of the module and its sessions only); copy and copy forward carry them in `curriculum_copy.py` with `based_on_id`; the diff has an `assessment` kind
 - Credits and notional hours (ADR 035): pure rules in `app/services/credit_check.py`, figures in `settings["credits"]` (`CreditPolicy`); findings are advice and never block saving; texts are i18n keys `curriculum.credits.*`
 

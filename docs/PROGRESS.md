@@ -908,6 +908,9 @@ Product name: **Curriculum in Context** (repository, Python package, CLI, images
 | 1.28 | The four indicators are **objectives mapped, weighted coverage, framework items with no link and modules outside the credit tolerance**; the framework is the one with most links unless chosen. "Reviewed" in the brief is read as "has an accepted link"; suggestions waiting are shown apart | The brief names mapping progress, coverage summary, top gaps and credit warnings | Easy to change the set | Decided in 1.28, to review |
 | 1.28 | The dashboard needs `reports.view` **and** `curriculum.view` to appear in the menu (it is a report of the whole curriculum), so a lecturer without report rights now starts on Curriculum | A lecturer without report rights would have landed on a page that answers 403 | Easy | Decided in 1.28, to review |
 | 1.28 | Committee dashboard: KPI trends from nightly metric snapshots (seeded for the demo), traceability diagram, coverage vs last published version, mapping progress, credit table |
+| 1.29 | **The explorer shows published versions only, for staff too**, and **never framework items or mapping links** (the answer is the curriculum's own words: outcomes, sessions, objectives, tags, assessments) | Students read published content only; an unreviewed or bulk-accepted link could be read as a promise; the explorer then needs only `curriculum.view_published` | "Where each competency is built" for students would need published accepted links shown, an institution decision | Decided in 1.29, to review |
+| 1.29 | **"This week" is a week number the person steps through**, not a date; the week last viewed is kept in the browser | There is no academic calendar or session date in Phase 1 (decision 2); "upcoming block test" is not offered because an assessment's timing is free text | A calendar is Phase 2 | Decided in 1.29, to review |
+| 1.29 | **Explorer is in the menu for everyone who may read published curriculum** (it was students only); search hits and "where do we teach this" rows open the explorer for people without `curriculum.view` | One place to read the published curriculum for every role | Easy | Decided in 1.29, to review |
 | 1.29 | Student and staff explorer (phone first): published versions only, search, "what is covered in this module/assessment" |
 | 1.30 | Admin screens (users, roles, assignments, institution settings); personal API tokens; `remove-demo` command |
 | 1.31 | End-to-end journeys complete; user guides per role, glossary, FAQ, AI provider setup guide; Phase 1 definition-of-done review |
@@ -1921,3 +1924,27 @@ One page for a programme committee: four indicators with eight-week trends, the 
 **Not in this slice**: declared versus delivered and the evidence-pack button (Phase 2), trends across academic years and version differences, alerts when an indicator moves.
 
 **Commit**: `feat: add the committee dashboard with daily metric snapshots, traceability and credits`
+
+
+### Slice 1.29: Curriculum Explorer
+**Status**: Complete
+
+A phone-first, read-only view of the published curriculum for students and staff: sessions week by week, the modules, and for one module what it covers, its sessions and what each assessment covers. ADR 059 is the design.
+
+**Deliverables**:
+- [x] **API** `services/explorer.py` and `api/v1/explorer.py`: `GET /modules/{id}/explorer` (outcomes, sessions by week with their objectives, assessments with the objectives each item assesses and, once each, what the assessment covers, tags, totals) and `GET /curriculum-versions/{id}/explorer/week?week=N` (the sessions of one week across the modules, the weeks that have sessions); published versions only, what the person's roles show (ADR 027), retired objectives left out, no framework items or mappings; 404 for anything else
+- [x] **Screen** `frontend/src/explorer/`: By week (a stepper between the weeks that have sessions, remembered), Modules (by phase, context-only modules left out), a module page (what it covers, sessions grouped by week with the searched session marked, assessments with an expandable list of questions), a search button; one column, controls of at least 44px, empty, loading and error states
+- [x] **Menu and search**: *Explorer* shows for everyone with `curriculum.view_published`; search hits and where-taught rows open the explorer for people without `curriculum.view`
+- [x] Docs: ADR 059, `admin/explorer.md`, CLAUDE.md
+
+**On the dev database** (real data, after rebuilding and restarting the stack): the published 2026 version's three modules read 4 outcomes each with 7, 7 and 6 sessions in weeks 1 to 8 and 1 to 12 and tags such as *Multiple-choice questions* and *OSCE*; week 1 listed four sessions in three modules with two objectives each, week 2 two, week 3 three; a module of the 2027 draft was refused (hidden). The dev data was loaded before assessments existed in the demo, so its modules show no assessments; those are covered by the tests.
+
+**Verification**:
+- Backend: ruff check, ruff format --check and mypy pass; `test_explorer.py` (11: a student sees outcomes, sessions by week and what is assessed, retired objectives left out, **no mapping words in the answer** even with an accepted link, a module of an unpublished version is 404, an unknown module, a week in order across modules, an empty week, a draft version 404, a bad week 422, a role in one module sees only its sessions, signed-out refused)
+- Frontend: lint and typecheck pass; `Explorer.test.tsx` (10: a week with module, format, time and objectives, stepping and remembering the week, an empty week, no published version, the module list without context-only modules, switching views, a module page, the searched session marked, a missing module, grouping by week) and the navigation and search tests; the Playwright journey (`explorer.spec.ts`: week, modules, one module at 390 px, no sideways scroll, no framework text, axe in both themes) is **not run locally: CI runs it**
+
+**Not verified here**: the explorer on a real phone or with a screen reader, a module with hundreds of sessions, the Afrikaans / isiXhosa / isiZulu wording (English for now), the student role in a browser against the demo data (the student demo account is not part of the demo data).
+
+**Not in this slice**: "where Year 2 builds each competency" (needs mapping links, see the decision above), an upcoming-test date (assessments have free-text timing), a calendar, anything personal to the student.
+
+**Commit**: `feat: add the phone-first curriculum explorer for published versions`

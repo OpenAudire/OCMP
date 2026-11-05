@@ -1726,3 +1726,69 @@ export interface DashboardTrace {
   sessions: number;
 }
 
+// --- Curriculum explorer (Slice 1.29) ---
+
+export interface ExplorerObjective {
+  id: string;
+  text: string;
+}
+
+export interface ExplorerSession {
+  id: string;
+  title: string;
+  week: number | null;
+  format: string | null;
+  contact_minutes: number;
+  self_study_minutes: number;
+  description: string;
+  objectives: ExplorerObjective[];
+  module_id: string;
+  module_code: string;
+  module_name: string;
+}
+
+export interface ExplorerAssessmentItem {
+  id: string;
+  label: string;
+  marks: number | null;
+  objectives: ExplorerObjective[];
+}
+
+export interface ExplorerAssessment {
+  id: string;
+  name: string;
+  method: string | null;
+  weight: number | null;
+  timing: string;
+  time_minutes: number;
+  items: ExplorerAssessmentItem[];
+  /** Every objective the items assess, once each. */
+  covered: ExplorerObjective[];
+}
+
+export interface ExplorerModule {
+  id: string;
+  version_id: string;
+  code: string;
+  name: string;
+  credits: number | null;
+  nqf_level: number | null;
+  description: string;
+  contact_minutes: number;
+  self_study_minutes: number;
+  outcomes: ExplorerObjective[];
+  sessions: ExplorerSession[];
+  assessments: ExplorerAssessment[];
+  tags: { list_name: string; label: string }[];
+}
+
+export interface ExplorerWeek {
+  version_id: string;
+  programme_code: string;
+  academic_year: number;
+  week: number;
+  /** The weeks that have sessions, in order. */
+  weeks: number[];
+  sessions: ExplorerSession[];
+}
+

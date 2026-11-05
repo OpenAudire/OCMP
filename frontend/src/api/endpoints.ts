@@ -7,6 +7,8 @@ import type {
   CoverageReport,
   Dashboard,
   DashboardTrace,
+  ExplorerModule,
+  ExplorerWeek,
   EvalDetail,
   EvalRun,
   GapReport,
@@ -779,6 +781,8 @@ export const queryKeys = {
     ['reports', 'coverage', versionId, frameworkId, method] as const,
   gaps: (versionId: string, frameworkId: string, method: string) =>
     ['reports', 'gaps', versionId, frameworkId, method] as const,
+  explorerModule: (moduleId: string) => ['explorer', 'module', moduleId] as const,
+  explorerWeek: (versionId: string, week: number) => ['explorer', 'week', versionId, week] as const,
   dashboard: (versionId: string, frameworkId: string | null) =>
     ['dashboard', versionId, frameworkId] as const,
   dashboardTrace: (versionId: string, frameworkId: string | null, outcomeId: string | null) =>
@@ -924,6 +928,20 @@ export async function fetchWhereTaught(
 export async function fetchSearchFilters(versionId: string): Promise<SearchFilterOptions> {
   return (await api.get<SearchFilterOptions>(`/curriculum-versions/${versionId}/search-filters`))
     .data;
+}
+
+// --- Curriculum explorer (Slice 1.29) ---
+
+export async function fetchExplorerModule(moduleId: string): Promise<ExplorerModule> {
+  return (await api.get<ExplorerModule>(`/modules/${moduleId}/explorer`)).data;
+}
+
+export async function fetchExplorerWeek(versionId: string, week: number): Promise<ExplorerWeek> {
+  return (
+    await api.get<ExplorerWeek>(`/curriculum-versions/${versionId}/explorer/week`, {
+      params: { week },
+    })
+  ).data;
 }
 
 // --- Committee dashboard (Slice 1.28) ---

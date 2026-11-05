@@ -31,6 +31,8 @@ import type {
 import { defaultVersionId, rememberedVersion, rememberVersion, useProgrammes } from '../curriculum/currentVersion';
 import { versionPath } from '../curriculum/paths';
 import { versionLabel } from '../curriculum/versions';
+import { Permission } from '../session/permissions';
+import { useSession } from '../session/useSession';
 import { Page } from '../ui/Page';
 import { ErrorState, LoadingState } from '../ui/States';
 import { hitPath } from './hitPath';
@@ -69,10 +71,13 @@ function MatchedBy({ by }: { by: string[] }) {
 
 function HitItem({ versionId, hit }: { versionId: string; hit: SearchHit }) {
   const { t } = useTranslation();
+  const { data: session } = useSession();
   const place = placeOf(t, hit);
+  // Staff who read drafts open the builder; everyone else opens the explorer.
+  const explorer = !session?.permissions.has(Permission.CurriculumView);
   return (
     <li className={classes.hit}>
-      <Link to={hitPath(versionId, hit)} className={classes.hitTitle}>
+      <Link to={hitPath(versionId, hit, explorer)} className={classes.hitTitle}>
         {hit.title}
       </Link>
       {place && (
@@ -145,9 +150,16 @@ function Notices({ result }: { result: Pick<SearchResponse, 'notice' | 'words' |
 
 function SessionRow({ versionId, row }: { versionId: string; row: TaughtIn }) {
   const { t } = useTranslation();
-  const target = row.event_id
-    ? versionPath(versionId, `event:${row.event_id}`)
-    : versionPath(versionId, `module:${row.module_id}`);
+  const { data: session } = useSession();
+  const explorer = !session?.permissions.has(Permission.CurriculumView);
+  let target: string;
+  if (explorer) {
+    target = `/explorer/modules/${row.module_id}${row.event_id ? `?session=${row.event_id}` : ''}`;
+  } else {
+    target = row.event_id
+      ? versionPath(versionId, `event:${row.event_id}`)
+      : versionPath(versionId, `module:${row.module_id}`);
+  }
   const place = [
     row.phase_name,
     `${row.module_code} ${row.module_name}`,

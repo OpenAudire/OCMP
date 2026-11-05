@@ -8,6 +8,7 @@ import { LoginPage } from '../auth/LoginPage';
 import { ResetPasswordPage } from '../auth/ResetPasswordPage';
 import { CurriculumSection } from '../curriculum/CurriculumPage';
 import { DashboardPage } from '../dashboard/DashboardPage';
+import { ExplorerSection } from '../explorer/ExplorerSection';
 import { FrameworksSection } from '../frameworks/FrameworksSection';
 import { MappingSection } from '../mapping/MappingPage';
 import { ReviewSection } from '../review/ReviewPage';
@@ -55,6 +56,7 @@ function StartPage() {
 /** Sections that are built; the others show a placeholder. */
 const SECTIONS: Partial<Record<string, () => ReactNode>> = {
   dashboard: () => <DashboardPage />,
+  explorer: () => <ExplorerSection />,
   curriculum: () => <CurriculumSection />,
   frameworks: () => <FrameworksSection />,
   mapping: () => <MappingSection />,

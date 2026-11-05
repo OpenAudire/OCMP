@@ -1,0 +1,131 @@
+/* Phone first: one column, large touch targets (at least 44px), no horizontal scrolling. */
+.controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+@media (min-width: 48em) {
+  .controls {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+.searchButton {
+  min-height: 44px;
+}
+
+.stepper button {
+  min-height: 44px;
+}
+
+.weekTitle {
+  font-size: 22px;
+  text-align: center;
+  flex: 1;
+}
+
+.session {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.session[data-highlighted='true'] {
+  border-color: var(--cic-brand);
+  box-shadow: 0 0 0 2px var(--cic-brand);
+}
+
+.sessionTitle {
+  font-size: 18px;
+}
+
+.moduleLine a {
+  color: var(--cic-brand-ink);
+  font-weight: 600;
+}
+
+.code {
+  font-family: var(--cic-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  margin-right: 4px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.listLabel {
+  margin-top: 4px;
+}
+
+.objectives {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.phaseTitle {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.weekHeading {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: var(--cic-muted);
+}
+
+.moduleList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.moduleCard {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.moduleLink {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  padding: 14px 16px 4px;
+  min-height: 44px;
+  color: var(--cic-ink);
+  text-decoration: none;
+}
+
+.moduleCard > :last-child {
+  padding: 0 16px 14px;
+}
+
+.moduleName {
+  font-weight: 600;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  color: var(--cic-brand-ink);
+}
+
+.items {
+  margin-top: 6px;
+}

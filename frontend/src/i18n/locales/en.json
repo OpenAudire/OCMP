@@ -1995,6 +1995,70 @@
       "noFramework": "Choose a framework by mapping some objectives to it to see the items."
     }
   },
+  "explorer": {
+    "title": "Explorer",
+    "description": "What is taught and assessed in the published curriculum, week by week and module by module.",
+    "loading": "Loading the curriculum",
+    "error": "The curriculum could not be loaded.",
+    "errorBody": "Nothing was changed. Try again in a moment.",
+    "version": "Curriculum version",
+    "search": "Search the curriculum",
+    "viewLabel": "How to look at the curriculum",
+    "thisWeek": "By week",
+    "modules": "Modules",
+    "week": "Week {{n}}",
+    "noWeek": "No week set",
+    "previousWeek": "Earlier",
+    "nextWeek": "Later",
+    "emptyWeek": {
+      "title": "Nothing is planned for week {{n}}",
+      "withWeeks": "Weeks with sessions: {{weeks}}.",
+      "noWeeks": "No session has a week number yet."
+    },
+    "none": {
+      "title": "No published curriculum yet",
+      "body": "The explorer shows published curriculum versions only. Ask the curriculum office when this year's version will be published."
+    },
+    "noModules": {
+      "title": "No modules to show",
+      "body": "This version has no modules you can see yet."
+    },
+    "moduleMissing": {
+      "title": "This module is not available",
+      "body": "It may not be published, or you may not have access to it."
+    },
+    "backToExplorer": "Back to the explorer",
+    "backToModules": "All modules",
+    "partial": "You see only part of this curriculum version.",
+    "longitudinal": "Across the years",
+    "objectives": "By the end of this session you should be able to",
+    "noObjectives": "No objectives are written for this session yet.",
+    "contactMinutes_one": "{{count}} minute with the teacher",
+    "contactMinutes_other": "{{count}} minutes with the teacher",
+    "selfStudyMinutes_one": "{{count}} minute of self-study",
+    "selfStudyMinutes_other": "{{count}} minutes of self-study",
+    "credits_one": "{{count}} credit",
+    "credits_other": "{{count}} credits",
+    "nqf": "NQF level {{n}}",
+    "sessionCount_one": "{{count}} session",
+    "sessionCount_other": "{{count}} sessions",
+    "tags": "Themes and tags",
+    "moduleCovers": "What this module covers",
+    "noOutcomes": "No outcomes are written for this module yet.",
+    "sessionsByWeek": "Sessions, week by week",
+    "noSessions": "This module has no sessions yet.",
+    "assessments": "Assessments",
+    "noAssessments": "No assessments are planned for this module.",
+    "assessmentCovers": "What it covers",
+    "assessmentNothing": "No outcomes are linked to this assessment yet.",
+    "itemsOf_one": "{{count}} question or part",
+    "itemsOf_other": "{{count}} questions or parts",
+    "marks_one": "{{count}} mark",
+    "marks_other": "{{count}} marks",
+    "weight": "{{n}}% of the module mark",
+    "timeMinutes_one": "{{count}} minute",
+    "timeMinutes_other": "{{count}} minutes"
+  },
   "reports": {
     "intro": "Coverage and gaps, worked out from the mapping people have accepted. Every report states its method and when it was made.",
     "open": "Open the report",

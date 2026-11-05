@@ -89,8 +89,8 @@ export const NAV_ITEMS: NavItem[] = [
     key: 'explorer',
     path: '/explorer',
     icon: IconCompass,
-    isVisible: (p) =>
-      hasAny(p, Permission.CurriculumViewPublished) && !hasAny(p, Permission.CurriculumView),
+    // Everyone who may read published curriculum: staff too (the builder is for drafts).
+    isVisible: (p) => hasAny(p, Permission.CurriculumViewPublished),
   },
   {
     key: 'search',

@@ -64,3 +64,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [056](056-version-exports.md) | Exports of a Curriculum Version |
 | [057](057-import-lookalikes-imported-flag-tag-columns.md) | Look-alike Warnings, the "Accepted by Import" Flag and Tag Columns |
 | [058](058-committee-dashboard.md) | The Committee Dashboard and Its Daily Snapshots |
+| [059](059-curriculum-explorer.md) | The Curriculum Explorer |

@@ -16,6 +16,7 @@ test('the start page is the first section, in the shared layout', async ({ page 
     'Frameworks',
     'Reports',
     'Import and export',
+    'Explorer',
     'Search',
     'Admin',
   ]);

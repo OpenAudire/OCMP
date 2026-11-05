@@ -18,11 +18,12 @@ describe('navigation by permission', () => {
     ).toEqual(['reports', 'explorer', 'search']);
   });
 
-  it('shows lecturers the staff curriculum views without the explorer', () => {
+  it('shows lecturers the staff curriculum views and the explorer', () => {
     // curriculum.view implies view_published, as on the server.
     expect(navFor(Permission.CurriculumView, Permission.ObjectivesEdit)).toEqual([
       'curriculum',
       'frameworks',
+      'explorer',
       'search',
     ]);
   });
@@ -44,7 +45,7 @@ describe('navigation by permission', () => {
     expect(navFor(Permission.CurriculumView)).not.toContain('import');
   });
 
-  it('shows administrators everything except the student explorer, in sidebar order', () => {
+  it('shows administrators everything, in sidebar order', () => {
     expect(navFor(...Object.values(Permission))).toEqual([
       'dashboard',
       'curriculum',
@@ -53,6 +54,7 @@ describe('navigation by permission', () => {
       'frameworks',
       'reports',
       'import',
+      'explorer',
       'search',
       'admin',
     ]);
