@@ -160,8 +160,7 @@ function TokenRow({ token, onRevoke }: { token: ApiTokenInfo; onRevoke: (token: 
         {token.state === 'active' && (
           <Button
             size="xs"
-            variant="subtle"
-            color="red"
+            variant="default"
             onClick={() => onRevoke(token)}
             aria-label={t('account.tokens.revokeNamed', { name: token.name })}
           >

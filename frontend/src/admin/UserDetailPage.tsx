@@ -82,7 +82,7 @@ function Details({ user }: { user: AdminUser }) {
           <Title order={2} id="user-details" className={classes.sectionTitle}>
             {t('admin.users.details')}
           </Title>
-          <Badge variant="light" color={user.is_active ? 'teal' : 'gray'}>
+          <Badge variant={user.is_active ? 'light' : 'outline'} color="gray">
             {t(user.is_active ? 'admin.users.active' : 'admin.users.inactive')}
           </Badge>
         </Group>
@@ -143,8 +143,7 @@ function Details({ user }: { user: AdminUser }) {
             </Button>
           )}
           <Button
-            color="red"
-            variant="light"
+            variant="default"
             disabled={self}
             onClick={() => setConfirm('delete')}
             title={self ? t('admin.users.notYourself') : undefined}
@@ -291,8 +290,7 @@ function Assignments({ user }: { user: AdminUser }) {
                     <Table.Td>
                       <Button
                         size="xs"
-                        variant="subtle"
-                        color="red"
+                        variant="default"
                         onClick={() => setRemoving(a.id)}
                         aria-label={t('admin.users.removeRole', { role: a.role.name })}
                       >
@@ -405,7 +403,7 @@ function Tokens({ user }: { user: AdminUser }) {
         <Text size="sm" c="dimmed">
           {t('admin.users.tokensHelp')}
         </Text>
-        {tokens.isError && <Text c="red">{t('admin.users.error')}</Text>}
+        {tokens.isError && <Text>{t('admin.users.error')}</Text>}
         {tokens.data && active.length === 0 && <Text c="dimmed">{t('admin.users.noTokens')}</Text>}
         {active.length > 0 && (
           <Table.ScrollContainer minWidth={520}>
@@ -423,8 +421,7 @@ function Tokens({ user }: { user: AdminUser }) {
                     <Table.Td>
                       <Button
                         size="xs"
-                        variant="subtle"
-                        color="red"
+                        variant="default"
                         loading={revoke.isPending}
                         onClick={() => revoke.mutate(token.id)}
                         aria-label={t('account.tokens.revokeNamed', { name: token.name })}

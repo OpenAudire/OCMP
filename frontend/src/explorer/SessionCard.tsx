@@ -39,7 +39,7 @@ export function SessionCard({
       </Title>
       <div className={classes.chips}>
         {session.format && (
-          <Badge variant="light" color="teal" size="md">
+          <Badge variant="light" color="gray" size="md">
             {session.format}
           </Badge>
         )}

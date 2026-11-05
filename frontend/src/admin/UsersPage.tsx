@@ -179,7 +179,7 @@ export function UsersPage() {
                     </Table.Td>
                     <Table.Td>{user.email}</Table.Td>
                     <Table.Td>
-                      <Badge variant="light" color={user.is_active ? 'teal' : 'gray'}>
+                      <Badge variant={user.is_active ? 'light' : 'outline'} color="gray">
                         {t(user.is_active ? 'admin.users.active' : 'admin.users.inactive')}
                       </Badge>
                       {!user.has_password && (

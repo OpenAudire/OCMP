@@ -247,7 +247,7 @@ export function RolesPage() {
                   <Table.Tr key={role.id}>
                     <Table.Td>
                       <strong>{role.name}</strong>{' '}
-                      <Badge variant="light" color={role.is_system ? 'gray' : 'teal'}>
+                      <Badge variant={role.is_system ? 'light' : 'outline'} color="gray">
                         {t(role.is_system ? 'admin.roles.system' : 'admin.roles.custom')}
                       </Badge>
                       <Text size="sm" c="dimmed">
@@ -271,8 +271,7 @@ export function RolesPage() {
                         {!role.is_system && (
                           <Button
                             size="xs"
-                            variant="subtle"
-                            color="red"
+                            variant="default"
                             onClick={() => setDeleting(role)}
                             aria-label={t('admin.roles.deleteNamed', { name: role.name })}
                           >
