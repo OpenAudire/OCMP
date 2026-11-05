@@ -22,7 +22,7 @@ test.describe('Administration', () => {
     await expectNoAccessibilityViolations(page);
 
     await page.getByRole('textbox', { name: 'Search people' }).fill('example.org');
-    await page.getByRole('button', { name: 'Search' }).click();
+    await page.locator('#main-content').getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByRole('table')).toBeVisible();
 
     await page.getByRole('table').getByRole('link').first().click();
