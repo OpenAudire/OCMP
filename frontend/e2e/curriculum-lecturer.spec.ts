@@ -7,6 +7,7 @@ import {
   LECTURER_STATE,
   openApp,
   SIGNED_IN_STATE,
+  tick,
 } from './support';
 
 // A lecturer who holds only a role on one session. The test admin (saved session) makes a
@@ -137,8 +138,8 @@ test('a lecturer with only a session role links a session objective upward', asy
     });
     await expect(programmeOutcome).toBeVisible();
     await expect(moduleOutcome).toBeVisible();
-    await programmeOutcome.check();
-    await moduleOutcome.check();
+    await tick(programmeOutcome);
+    await tick(moduleOutcome);
 
     // Only draft and ready for review can be set; approving is for coordinators.
     const status = dialog.getByRole('combobox', { name: 'Status' });

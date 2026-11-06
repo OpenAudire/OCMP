@@ -1,6 +1,6 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 
-import { demoDraft, expectNoAccessibilityViolations, openApp } from './support';
+import { demoDraft, expectNoAccessibilityViolations, openApp, tick } from './support';
 
 // Runs against the demo programme (load-demo) as the test admin. Each journey makes its
 // own uniquely named phase, module, session and programme outcome through the API, works
@@ -125,7 +125,7 @@ test.describe('objective editor', () => {
     const level = dialog.getByRole('combobox', { name: 'Taxonomy level' });
     await expect(level.getByRole('option')).not.toHaveCount(1);
     await level.selectOption({ index: 1 });
-    await dialog.getByRole('checkbox', { name: new RegExp(fixture.outcomeText) }).check();
+    await tick(dialog.getByRole('checkbox', { name: new RegExp(fixture.outcomeText) }));
     await expectNoAccessibilityViolations(page);
     await dialog.getByRole('button', { name: 'Add objective' }).click();
     await expect(notice).toHaveText('The objective was added.');
@@ -174,7 +174,7 @@ test.describe('objective editor', () => {
     await page.getByRole('button', { name: 'Add outcome' }).click();
     const dialog = page.getByRole('dialog', { name: 'Add outcome' });
     await dialog.getByRole('textbox', { name: /Wording/ }).fill('Explain the module aims.');
-    await dialog.getByRole('checkbox', { name: new RegExp(fixture.outcomeText) }).check();
+    await tick(dialog.getByRole('checkbox', { name: new RegExp(fixture.outcomeText) }));
     await expectNoAccessibilityViolations(page);
     await dialog.getByRole('button', { name: 'Add outcome' }).click();
     await expect(notice).toHaveText('The outcome was added.');

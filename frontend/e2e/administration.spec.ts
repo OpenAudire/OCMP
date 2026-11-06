@@ -51,10 +51,11 @@ test.describe('Administration', () => {
       'Credits and notional hours',
       'Objective quality checks',
       'Coverage reports',
+      'Student explorer',
     ]) {
       await expect(page.getByRole('heading', { level: 2, name })).toBeVisible();
     }
-    await expect(page.getByRole('button', { name: 'Save' })).toHaveCount(6);
+    await expect(page.getByRole('button', { name: 'Save' })).toHaveCount(7);
     await expectNoAccessibilityViolations(page);
   });
 

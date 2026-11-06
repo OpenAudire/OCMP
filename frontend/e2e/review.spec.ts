@@ -103,7 +103,7 @@ async function makeFixture(page: Page, project: string, fixture: Fixture): Promi
   const { token } = (await preview.json()) as { token: string };
   const imported = await api.post(`${API}/framework-packs/import`, {
     headers,
-    data: { token, activate: false },
+    data: { token, activate: true },
   });
   expect(imported.ok(), await imported.text()).toBe(true);
   const { framework_id: frameworkId } = (await imported.json()) as { framework_id: string };

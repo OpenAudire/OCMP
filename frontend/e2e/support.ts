@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /** Session cookies saved by auth.setup.ts (git-ignored). */
 export const SIGNED_IN_STATE = 'e2e/.auth/signed-in.json';
@@ -50,6 +50,16 @@ export async function removeTagListByKey(page: Page, key: string): Promise<void>
       headers: { 'X-CSRF-Token': csrf.value },
     });
   }
+}
+
+/**
+ * Ticks a checkbox the way a person does, by its label, and checks it took. Playwright's own
+ * `check()` clicks the visually hidden input, which WebKit does not toggle for Mantine's checkboxes.
+ */
+export async function tick(box: Locator): Promise<void> {
+  const id = await box.getAttribute('id');
+  await box.page().locator(`label[for="${id}"]`).click();
+  await expect(box).toBeChecked();
 }
 
 /** For tests of the signed-out pages. */
