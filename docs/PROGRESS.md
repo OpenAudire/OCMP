@@ -2,7 +2,7 @@
 
 This file tracks progress through the development phases.
 
-## Current Phase: Phase 1 - Core Mapping (Phase 0 approved 2026-10-25)
+## Current Phase: Phase 1 - Core Mapping, approved 2026-11-06 (Phase 0 approved 2026-10-25). Phase 2 has not been started
 
 ### Slice 0.1: Project Scaffold
 **Status**: Complete
@@ -917,10 +917,10 @@ Product name: **Curriculum in Context** (repository, Python package, CLI, images
 | 1.30 | **`remove-demo` is a dry run unless `--apply`** and removes only what the demo made, found by its own codes and keys; the institution and taxonomy scales stay; the framework and tag lists go only if nothing else uses them | A real installation shares the institution and may have built on the demo's framework or lists | A flag to keep the framework | Approved 2026-11-06 |
 | 1.30 | Admin screens (users, roles, assignments, institution settings); personal API tokens; `remove-demo` command |
 | 1.31 | **The scheduler runs on `TIMEZONE` (default Africa/Johannesburg), daily at 23:55**; a snapshot's "day" is the local day (`dashboard_metrics.today()`) | Owner review of 1.28: South African time, configurable. Late evening, so the day's figures are close to the end of that day | Easy: one setting and `scheduling.RUN_AT` | Owner decision 2026-11-06 |
-| 1.31 | **Student competency view** (`settings["explorer"].show_competency_view`, off by default): published versions only, accepted links only, competency groups only (a group is a top-level framework item with items below it), no scores (ADR 061) | Owner review of 1.29. My readings: a link that **needs a re-check** is left out; links accepted **in bulk or by import** count (they are accepted); a link made to the group itself places nothing (as in the coverage reports); programme outcomes belong to no module and place nothing; a group with nothing linked is listed with a neutral sentence | Easy: one service and one switch | Owner decision 2026-11-06; the readings need a look |
-| 1.31 | **Firefox and WebKit run the Playwright suite in CI in the light theme only**, Chromium in both themes | The dark theme is the same CSS in every engine; each extra project is a full pass over the stack and the journeys share one database | Easy: two projects in `playwright.config.ts` | Decided in 1.31, to review |
-| 1.31 | **Faculty and department codes are unique among live rows** (migration 0031), like every other soft-deletable table | Found by the demo refresh: after `remove-demo --apply` the demo could not be loaded again because the deleted faculty kept its code | Easy | Decided in 1.31, to review |
-| 1.31 | **The credits and notional hours check is a report** (`credits`) with Excel and PDF export; it needs the whole version (404/422 otherwise) | The brief lists it among the Phase 1 reports "each viewable on screen and exportable"; it was on screen only | Easy | Decided in 1.31, to review |
+| 1.31 | **Student competency view** (`settings["explorer"].show_competency_view`, off by default): published versions only, accepted links only, competency groups only (a group is a top-level framework item with items below it), no scores (ADR 061) | Owner review of 1.29. My readings: a link that **needs a re-check** is left out; links accepted **in bulk or by import** count (they are accepted); a link made to the group itself places nothing (as in the coverage reports); programme outcomes belong to no module and place nothing; a group with nothing linked is listed with a neutral sentence | Easy: one service and one switch | Owner decision 2026-11-06; the readings approved with Phase 1 |
+| 1.31 | **Firefox and WebKit run the Playwright suite in CI in the light theme only**, Chromium in both themes | The dark theme is the same CSS in every engine; each extra project is a full pass over the stack and the journeys share one database | Easy: two projects in `playwright.config.ts` | Approved 2026-11-06 (Phase 1 approval) |
+| 1.31 | **Faculty and department codes are unique among live rows** (migration 0031), like every other soft-deletable table | Found by the demo refresh: after `remove-demo --apply` the demo could not be loaded again because the deleted faculty kept its code | Easy | Approved 2026-11-06 (Phase 1 approval) |
+| 1.31 | **The credits and notional hours check is a report** (`credits`) with Excel and PDF export; it needs the whole version (404/422 otherwise) | The brief lists it among the Phase 1 reports "each viewable on screen and exportable"; it was on screen only | Easy | Approved 2026-11-06 (Phase 1 approval) |
 | 1.31 | End-to-end journeys complete; user guides per role, glossary, FAQ, AI provider setup guide; Phase 1 definition-of-done review |
 
 Each slice: its screen states, tests, docs, PROGRESS.md entry and one Conventional Commit; Playwright journeys are added as screens arrive.
@@ -1984,7 +1984,7 @@ Screens for people, roles and the institution's settings, personal API tokens, a
 
 
 ### Slice 1.31: Owner Review Changes, Cross-browser CI, Guides and the Phase 1 Review
-**Status**: Complete, waiting for the owner's Phase 1 review
+**Status**: Complete; Phase 1 approved by the owner on 2026-11-06
 
 The owner approved 1.27a to 1.30 on 2026-11-06 with two changes, and asked for the closing slice of Phase 1.
 
@@ -2020,29 +2020,44 @@ From the brief (section 10, Phase 1). Reviewed at the end of Slice 1.31 for the 
 
 ### The five criteria
 
-- [~] **The demo programme can be fully mapped using AI suggestions and the review queue.** Built and tested: the AI mapping pipeline (1.16), the review queue with four-eyes mode and bulk accept (1.13), the manual workspace (1.12). The evaluation run of 1.19 asked the AI about all 60 demo objectives with a real provider (64 suggestions, none invalid, $0.345) but saves nothing by design. **Not done: an actual pass that maps the demo with AI and clears the queue.** The dev data holds 13 hand-made mappings (12 of the 60 objectives of the published year). Doing the pass is a decision for the owner because it spends money and changes the demo (see the list below)
+- [x] **The demo programme can be fully mapped using AI suggestions and the review queue.** Done on 2026-11-06 on the 2027 draft of the demo (only drafts can be mapped), against the demo framework: the AI mapping run (`mapping:2`, `claude-sonnet-5-5`) asked about 59 objectives and made **21 suggestions** for 20 objectives (31 calls including two retries after an answer that did not parse, none failed, 18 408 tokens in and 5 174 out, **$0.118**); nothing was accepted by the software; the owner then worked through the review queue, found it very responsive, and **accepted all 21** (individually, none in bulk). The draft now has 31 objectives with an accepted link. **This shows the pipeline and the queue work together end to end. It is not a measure of quality**: the review was not blind (the reviewer saw the AI's reasons and confidence), so accepting all 21 says nothing about how often the AI is right. The measure of quality is the gold set (next item), against people's independent mapping
+  - **Why 39 of the 59 objectives got no suggestion** (20 objectives got the 21 suggestions; checked against the run's calls and by running the shortlist step again, which calls no AI): **30 were never sent to the AI** and **9 were sent and nothing came back**
+    - *Never sent, no shortlist match (27)*: 22 session objectives and 5 module outcomes have no framework item that the shortlist found for them. The shortlist ran on **words only** (the notice was "not embedded yet"): the 2027 draft was made by copying 2026 forward and its objectives have no vectors, so only an objective that shares words with an item of the 8-item demo framework was asked about. Running `embed-all` and asking again would give meaning-based shortlists and probably more candidates. This is a finding about the setup, not a fault of the model
+    - *Never sent, everything already mapped (3)*: module outcomes whose only shortlisted item was one they were already linked to (copied forward from 2026)
+    - *Sent, the AI found no match (8)*: it answered "no candidates" (six session objectives and two module outcomes, for example "List the social determinants of health" and "Write a structured note from a simulated consultation"). Two of them first returned an answer that did not parse and were asked again, as designed
+    - *Sent, dropped by the rules (1)*: "Contribute constructively to interprofessional..." matched the group DGC-2 at coverage 2, but the objective already had the more specific DGC-2.3 (accepted, copied forward) and the most-specific rule drops the parent
+    - *Below the minimum coverage*: none. The minimum is 1 (the default), so no suggestion was dropped for being too weak
 - [x] **All Phase 1 reports render and export** (screen, Excel, PDF; each states its method and date): coverage, gaps, redundancy ("taught in many sessions"), traceability, teaching formats and contact hours, curriculum relationship, role balance (health profile), assessment methods and, since 1.31, the credit and notional hours check. Also the full round-trip Excel export, the objectives x framework matrix and the JSON of a version (1.27). Read back in tests; not opened in Excel or Acrobat
-- [x] **The evaluation harness runs against a fictional gold set and reports Cohen's kappa** (1.19): on the demo gold set, kappa 0.84 at a minimum coverage of 1 (precision 82.8%, recall 89.8%). The gold set is the developers', on a toy framework with every item on the shortlist: **it says the machinery works, not how good the mapping is.** The pilot target (kappa 0.6 or more against people) is not tested
+- [x] **The evaluation harness runs against a fictional gold set and reports Cohen's kappa** (1.19; the gold set, not the review above, is the measure of the AI's quality): on the demo gold set, kappa 0.84 at a minimum coverage of 1 (precision 82.8%, recall 89.8%). The gold set is the developers', on a toy framework with every item on the shortlist: **it says the machinery works, not how good the mapping is.** The pilot target (kappa 0.6 or more against people) is not tested
 - [x] **End-to-end tests cover build, map, review, report**: `curriculum-editing` (build in the browser), `mapping` (manual links), `review` (decisions by keyboard, second review, re-check, ending with the coverage report of the version), `reports`, plus journeys for every other screen, each with axe checks. Run in Chromium (light and dark), Firefox and WebKit (light) in CI
 - [x] **Documentation covers each role's main tasks**: `docs/guides/` (a guide for each of the eight roles, a glossary, a FAQ), `admin/` (each screen), `operations/` (install, configuration, upgrade, backup, embeddings)
 
-### What else the brief promised for Phase 1 and is not as written
+### Accepted as Phase 1 scope (owner, 2026-11-06)
 
-- **Framework packs are read as JSON only**, the brief says YAML or JSON (decided in 1.10)
-- **Manual linking has no drag**: select an objective, select an item, Link (a keyboard and single-pointer path; approved in 1.12)
-- **No programme sheet** in the Excel templates (phases, modules, sessions, objectives, tags, frameworks and mappings have them); programmes are made on screen or by the setup
-- **Meaning-based search and near-duplicate checks need the optional embeddings server**; without it they fall back to words with a notice
-- **The interface is English only**; Afrikaans, isiXhosa and isiZulu are not translated (the brief lists them as later, by community translation)
-- **Phase 0 leftover**: the install on a real server with public DNS and Let's Encrypt has not been done
+The brief promised more than Phase 1 delivers in these four places; the owner accepted them as the scope of Phase 1:
 
-### Only the owner can do these
+- **Framework packs are JSON only** (the brief says YAML or JSON)
+- **No drag mapping**: select an objective, select an item, Link (a keyboard and single-pointer path)
+- **No programme sheet** in the Excel templates (phases, modules, sessions, objectives, tags, frameworks and mappings have them)
+- **English-only interface**; Afrikaans, isiXhosa and isiZulu translations are **Phase 3**
+
+By design, not a gap: meaning-based search and near-duplicate checks need the optional embeddings server and fall back to words with a notice.
+
+## Before the pilot
+
+What only the owner can do before real users are on it (carried over from the Phase 1 review, 2026-11-06). None of it blocks Phase 2 work.
 
 | Item | What is needed | Why it cannot be done here |
 |---|---|---|
-| **A real gold set** | Experts map a real programme's objectives to the real framework (Excel template: `eval-template`), import it, run `eval-run` and read kappa against the pilot target of 0.6 | The demo gold set is fictional and the developers' own |
-| **Native-speaker review** | Afrikaans and isiZulu wording in the privacy guard's title patterns ("Mnr", "Mnu" and the like) and the objective wording rules, which are English only; and a decision whether to commission translations at all (there are no Afrikaans, isiXhosa or isiZulu files yet) | Nobody on the project can judge the wording |
+| **A real gold set** | Experts map a real programme's objectives to the real framework independently of the AI (Excel template: `eval-template`), import it, run `eval-run` and read kappa against the pilot target of 0.6. This, not a review of the AI's suggestions, is the measure of quality | The demo gold set is fictional and the developers' own |
+| **Embeddings on for the pilot data** | Start the embeddings service, set `EMBEDDINGS_LOCAL=true` and run `embed-all` before the first AI run, so the shortlist is by meaning and not by words (see the 39 objectives above) | A decision about the pilot server's resources |
+| **Native-speaker review** | Afrikaans and isiZulu wording in the privacy guard's title patterns ("Mnr", "Mnu" and the like) and the objective wording rules, which are English only. (Translations of the interface are Phase 3.) | Nobody on the project can judge the wording |
 | **QA office credit figures** | The 120 credits a year, the HEQSF minimum credits at each exit level and the NQF level rules, checked against the current CHE and HEQSF documents | The figures were entered as given; the Stellenbosch source could not be fetched (1.10a) |
 | **HPCSA pack** | The real HPCSA core competencies as a framework pack from the authoritative source, with the right to use the text | Templates hold structure only; no official text could be verified or licensed |
 | **Screen reader check** | NVDA or JAWS on Windows and VoiceOver on a phone: the review queue (shortcuts and live messages), the explorer, the mapping dialogs, the dashboard diagram | axe checks find rules that can be tested by machine, not whether a screen reader reads a screen sensibly |
-| **Pilot** | A pilot server with public DNS and a Let's Encrypt certificate (the Phase 0 leftover), a pilot programme, real users in each role, and the real AI provider choice, key and budget | Needs a server, people and decisions outside the repository |
-| **A decision on the AI pass over the demo** | Whether to run AI mapping over the demo year and clear its queue (about $0.35 for the suggestions, then reviewing) to close the first criterion | It spends money and changes the demo data |
+| **Safari and iOS check** | Open the objective dialog (add an outcome, add a session objective) in Safari on a Mac and on an iPhone and tick the *upward links* checkboxes. In CI's WebKit the hidden input did not toggle when Playwright clicked it; the journeys now click the label and pass, but whether it is only a Playwright quirk is not known | No Apple device is available to the owner or to the developers |
+| **Pilot server** | A server with public DNS and a Let's Encrypt certificate (the Phase 0 leftover), a pilot programme, real users in each role, and the real AI provider choice, key and budget | Needs a server, people and decisions outside the repository |
+
+## Phase 1 approval
+
+**Phase 1 (core mapping) was approved by the product owner on 2026-11-06**, after the review of Slice 1.31: the five criteria above are met (the first by the AI pass and review of the same day), the four differences from the brief are accepted as Phase 1 scope, and what remains for the owner is the "Before the pilot" list. Phase 2 (integrate and accredit) has **not** been started and waits for its own go-ahead.
