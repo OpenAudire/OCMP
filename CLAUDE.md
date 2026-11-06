@@ -328,7 +328,11 @@ export function ModuleCount({ count }: { count: number }) {
   may see, `take_snapshot` for the **whole** version once a day in `metric_snapshots`, counts only), router `api/v1/dashboard.py`
   (`reports.view`). It reuses `search.visible_objective_ids`, `coverage_report.build_report` and `credit_check`, never its own
   rules. Trend lines come only from snapshots of the whole version: a partial viewer gets no trend. `snapshot-metrics` (CLI) is
-  run by the Compose `scheduler` service; `load-demo` seeds a **fictional** eight-week history (`seed_history`), never for real data
+  run by the Compose `scheduler` service (`run-scheduler`, daily 23:55 in `TIMEZONE`, default Africa/Johannesburg: use
+  `dashboard_metrics.today()`, never `date.today()` or UTC, for a "day"); `load-demo` seeds a **fictional** eight-week history (`seed_history`), never for real data
+- Student competency view (ADR 061): `services/explorer_competencies.py`, `GET /curriculum-versions/{id}/explorer/competencies`, switch
+  `settings["explorer"].show_competency_view` (off by default; 404 while off). Published versions only, accepted links only (not
+  `needs_recheck`), top-level competency groups only, **no scores or item words** (a test checks the answer holds none); keep it thin
 - Curriculum explorer (ADR 059): `services/explorer.py` (`module_view`, `week_view`), router `api/v1/explorer.py`, frontend
   `explorer/`. **Published versions only**, for staff too (drafts are the builder's); it uses `visible_version` / `VersionView`
   and shows **no framework items or mapping links** (a test checks the answer holds none), no retired objectives. "This week" is

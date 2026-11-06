@@ -3,6 +3,7 @@
 import base64
 from functools import lru_cache
 from typing import Annotated, Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import Field, PostgresDsn, RedisDsn, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -34,6 +35,17 @@ class Settings(BaseSettings):
     # development falls back to a key derived from SECRET_KEY (ADR 041).
     environment: Literal["production", "development"] = "production"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    # IANA time zone that decides which "day" a daily figure belongs to and when the scheduler runs.
+    timezone: str = "Africa/Johannesburg"
+
+    @field_validator("timezone", mode="after")
+    @classmethod
+    def timezone_is_known(cls, v: str) -> str:
+        try:
+            ZoneInfo(v)
+        except (ZoneInfoNotFoundError, ValueError):
+            raise ValueError("TIMEZONE must be an IANA name such as Africa/Johannesburg") from None
+        return v
 
     # Security
     secret_key: str = Field(..., min_length=32)

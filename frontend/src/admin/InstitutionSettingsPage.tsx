@@ -13,7 +13,7 @@ import { Page } from '../ui/Page';
 import { LoadingState } from '../ui/States';
 import classes from './Admin.module.css';
 
-type PolicySection = 'mapping' | 'credits' | 'quality' | 'coverage';
+type PolicySection = 'mapping' | 'credits' | 'quality' | 'coverage' | 'explorer';
 
 interface FieldDef {
   key: string;
@@ -57,6 +57,7 @@ const SECTIONS: { key: PolicySection; fields: FieldDef[] }[] = [
       { key: 'repeat_spread', kind: 'float', min: 0, max: 5 },
     ],
   },
+  { key: 'explorer', fields: [{ key: 'show_competency_view', kind: 'bool' }] },
 ];
 
 const TERMS: Term[] = [

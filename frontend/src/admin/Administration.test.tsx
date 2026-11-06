@@ -395,6 +395,22 @@ describe('Admin: institution settings', () => {
     expect(await within(section).findByText('Saved.')).toBeInTheDocument();
   });
 
+  it('has the student competency view off until it is switched on', async () => {
+    renderAt('/admin/settings');
+    const section = (await screen.findByRole('heading', { level: 2, name: 'Student explorer' })).closest('section') as HTMLElement;
+    const toggle = within(section).getByRole('switch', { name: /where this year builds each competency/ });
+    expect(toggle).not.toBeChecked();
+
+    fireEvent.click(toggle);
+    fireEvent.click(within(section).getByRole('button', { name: 'Save' }));
+
+    await waitFor(() =>
+      expect(mocked.updateInstitutionSettings).toHaveBeenCalledWith({
+        explorer: { show_competency_view: true },
+      })
+    );
+  });
+
   it('keeps a switch in the block it belongs to', async () => {
     renderAt('/admin/settings');
     const section = (await screen.findByRole('heading', { level: 2, name: 'Mapping and review' })).closest('section') as HTMLElement;

@@ -66,3 +66,4 @@ ADR; an ADR that no longer holds is revised or superseded, not deleted.
 | [058](058-committee-dashboard.md) | The Committee Dashboard and Its Daily Snapshots |
 | [059](059-curriculum-explorer.md) | The Curriculum Explorer |
 | [060](060-admin-screens-api-tokens-remove-demo.md) | Administration Screens, Personal API Tokens and Removing the Demo Data |
+| [061](061-student-competency-view.md) | Showing Students Where a Year Builds Each Competency |

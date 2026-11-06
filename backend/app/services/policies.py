@@ -69,6 +69,17 @@ class CoveragePolicy(BaseModel):
     repeat_spread: Annotated[float, Field(ge=0, le=5)] = 1.5
 
 
+class ExplorerPolicy(BaseModel):
+    """What the student explorer may show (``settings["explorer"]``, ADR 061)."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore", strict=True)
+
+    # Show "where this year builds each competency": the modules and sessions of a published
+    # version linked (accepted links only) to the groups of a framework. Off until the
+    # institution decides to show students its mapping.
+    show_competency_view: bool = False
+
+
 # Pairs below this similarity are never stored (ADR 044), so it is also the lowest threshold
 # an admin can choose. Set from the measurements recorded in the ADR.
 NEAR_DUPLICATE_FLOOR_PERCENT = 85
@@ -138,6 +149,30 @@ async def mapping_policy_for_version(db: AsyncSession, version_id: uuid.UUID) ->
 async def mapping_policy_for(db: AsyncSession, objective: Objective) -> MappingPolicy:
     """The mapping policy of the institution an objective belongs to."""
     return await mapping_policy_for_version(db, objective.version_id)
+
+
+def parse_explorer_policy(settings: dict[str, object]) -> ExplorerPolicy:
+    """Read the explorer policy from an institution's settings.
+
+    Raises:
+        InvalidRequestError: If the stored settings have the wrong shape.
+    """
+    try:
+        return ExplorerPolicy.model_validate(settings.get("explorer") or {})
+    except ValidationError as exc:
+        raise InvalidRequestError(f"Invalid explorer settings: {exc}") from exc
+
+
+async def explorer_policy_for_version(db: AsyncSession, version_id: uuid.UUID) -> ExplorerPolicy:
+    """The explorer policy of the institution a curriculum version belongs to."""
+    settings = await db.scalar(
+        select(Institution.settings)
+        .join(Faculty, Faculty.institution_id == Institution.id)
+        .join(Programme, Programme.faculty_id == Faculty.id)
+        .join(CurriculumVersion, CurriculumVersion.programme_id == Programme.id)
+        .where(CurriculumVersion.id == version_id)
+    )
+    return parse_explorer_policy(settings or {})
 
 
 def parse_coverage_policy(settings: dict[str, object]) -> CoveragePolicy:

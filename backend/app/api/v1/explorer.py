@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from app.api.v1.curriculum import Access
 from app.core.database import DbSession
-from app.services import explorer
+from app.services import explorer, explorer_competencies
 from app.services.explorer import ExplorerAssessment, ExplorerModule, ExplorerSession
 
 router = APIRouter(tags=["explorer"])
@@ -140,6 +140,84 @@ def _module(found: ExplorerModule) -> ExplorerModuleRead:
         sessions=[_session(s) for s in found.sessions],
         assessments=[_assessment(a) for a in found.assessments],
         tags=[TagRead(list_name=t.list_name, label=t.label) for t in found.tags],
+    )
+
+
+class BuiltSessionRead(BaseModel):
+    id: uuid.UUID
+    title: str
+    week: int | None
+
+
+class BuiltModuleRead(BaseModel):
+    id: uuid.UUID
+    code: str
+    name: str
+    sessions: list[BuiltSessionRead]
+
+
+class CompetencyGroupRead(BaseModel):
+    id: uuid.UUID
+    code: str
+    title: str
+    modules: list[BuiltModuleRead]
+
+
+class FrameworkGroupsRead(BaseModel):
+    name: str
+    version_label: str
+    groups: list[CompetencyGroupRead]
+
+
+class CompetenciesRead(BaseModel):
+    version_id: uuid.UUID
+    programme_code: str
+    academic_year: int
+    frameworks: list[FrameworkGroupsRead]
+
+
+@router.get(
+    "/curriculum-versions/{version_id}/explorer/competencies", response_model=CompetenciesRead
+)
+async def explore_competencies(
+    version_id: uuid.UUID, access: Access, db: DbSession
+) -> CompetenciesRead:
+    """Where a published year builds each competency group (ADR 061). A 404 while the
+    institution has the view switched off, as for a version the person cannot see."""
+    found = await explorer_competencies.competency_view(db, access, version_id)
+    if found is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Curriculum version not found.")
+    return CompetenciesRead(
+        version_id=found.version.version.id,
+        programme_code=found.version.programme.code,
+        academic_year=found.version.version.academic_year,
+        frameworks=[
+            FrameworkGroupsRead(
+                name=f.name,
+                version_label=f.version_label,
+                groups=[
+                    CompetencyGroupRead(
+                        id=g.id,
+                        code=g.code,
+                        title=g.title,
+                        modules=[
+                            BuiltModuleRead(
+                                id=m.id,
+                                code=m.code,
+                                name=m.name,
+                                sessions=[
+                                    BuiltSessionRead(id=s.id, title=s.title, week=s.week)
+                                    for s in m.sessions
+                                ],
+                            )
+                            for m in g.modules
+                        ],
+                    )
+                    for g in f.groups
+                ],
+            )
+            for f in found.frameworks
+        ],
     )
 
 

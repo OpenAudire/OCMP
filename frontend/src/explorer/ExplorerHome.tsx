@@ -5,9 +5,10 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
 
-import { fetchExplorerWeek, fetchVersionStructure, queryKeys } from '../api/endpoints';
+import { fetchExplorerCompetencies, fetchExplorerWeek, fetchVersionStructure, queryKeys } from '../api/endpoints';
 import type { StructureModule } from '../api/types';
 import { defaultVersionId, rememberedVersion, useProgrammes } from '../curriculum/currentVersion';
+import { useInstitution } from '../institution/useInstitution';
 import { versionLabel } from '../curriculum/versions';
 import { Page } from '../ui/Page';
 import { EmptyState, ErrorState, LoadingState } from '../ui/States';
@@ -15,7 +16,7 @@ import classes from './Explorer.module.css';
 import { rememberedWeek, rememberWeek } from './explorer';
 import { SessionCard } from './SessionCard';
 
-type View = 'week' | 'browse';
+type View = 'week' | 'browse' | 'built';
 
 function WeekView({ versionId }: { versionId: string }) {
   const { t } = useTranslation();
@@ -163,6 +164,79 @@ function BrowseView({ versionId }: { versionId: string }) {
   );
 }
 
+/** Where this year builds each competency group (only when the institution switches it on). No
+ * scores, no individual framework items: the modules and sessions that carry each group. */
+function BuiltView({ versionId }: { versionId: string }) {
+  const { t } = useTranslation();
+  const data = useQuery({
+    queryKey: queryKeys.explorerCompetencies(versionId),
+    queryFn: () => fetchExplorerCompetencies(versionId),
+  });
+  if (data.isPending) return <LoadingState title={t('explorer.loading')} skeletons={2} />;
+  if (data.isError) return <ErrorState title={t('explorer.error')} body={t('explorer.errorBody')} />;
+  if (data.data.frameworks.length === 0) {
+    return (
+      <EmptyState
+        icon={IconCalendarOff}
+        title={t('explorer.builtEmpty.title')}
+        body={t('explorer.builtEmpty.body')}
+      />
+    );
+  }
+  return (
+    <Stack gap="lg">
+      <Text size="sm">{t('explorer.builtIntro')}</Text>
+      {data.data.frameworks.map((framework) => (
+        <Stack key={`${framework.name}-${framework.version_label}`} gap="md">
+          <Text fw={600}>
+            {t('explorer.builtFramework', { name: framework.name, version: framework.version_label })}
+          </Text>
+          {framework.groups.map((group) => (
+            <section key={group.id} aria-labelledby={`group-${group.id}`}>
+              <Title order={2} id={`group-${group.id}`} className={classes.phaseTitle}>
+                <span className={classes.code}>{group.code}</span> {group.title}
+              </Title>
+              {group.modules.length === 0 ? (
+                <Text size="sm" c="dimmed">
+                  {t('explorer.builtNone')}
+                </Text>
+              ) : (
+                <ul className={classes.moduleList}>
+                  {group.modules.map((module) => (
+                    <Paper withBorder className={classes.moduleCard} component="li" key={module.id}>
+                      <Link to={`/explorer/modules/${module.id}`} className={classes.moduleLink}>
+                        <span className={classes.code}>{module.code}</span>{' '}
+                        <span className={classes.moduleName}>{module.name}</span>
+                      </Link>
+                      {module.sessions.length === 0 ? (
+                        <Text size="sm" c="dimmed">
+                          {t('explorer.builtModuleOnly')}
+                        </Text>
+                      ) : (
+                        <ul className={classes.moduleList} aria-label={t('explorer.builtSessions')}>
+                          {module.sessions.map((session) => (
+                            <li key={session.id}>
+                              <Link to={`/explorer/modules/${module.id}?session=${session.id}`} className={classes.builtSession}>
+                                {session.week !== null
+                                  ? `${t('explorer.week', { n: session.week })}: ${session.title}`
+                                  : session.title}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </Paper>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ))}
+        </Stack>
+      ))}
+    </Stack>
+  );
+}
+
 export function ExplorerHome() {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
@@ -174,7 +248,9 @@ export function ExplorerHome() {
     params.get('version') && published.some((p) => p.versions.some((v) => v.id === params.get('version')))
       ? (params.get('version') as string)
       : defaultVersionId(published, rememberedVersion());
-  const view: View = params.get('view') === 'browse' ? 'browse' : 'week';
+  const showBuilt = Boolean(useInstitution()?.explorer?.show_competency_view);
+  const asked = params.get('view');
+  const view: View = asked === 'browse' ? 'browse' : asked === 'built' && showBuilt ? 'built' : 'week';
 
   const set = (changes: Record<string, string>) => {
     const copy = new URLSearchParams(params);
@@ -240,13 +316,16 @@ export function ExplorerHome() {
         size="md"
         aria-label={t('explorer.viewLabel')}
         value={view}
-        onChange={(value) => set({ view: value === 'browse' ? 'browse' : '' })}
+        onChange={(value) => set({ view: value === 'browse' || value === 'built' ? value : '' })}
         data={[
           { value: 'week', label: t('explorer.thisWeek') },
           { value: 'browse', label: t('explorer.modules') },
+          ...(showBuilt ? [{ value: 'built', label: t('explorer.built') }] : []),
         ]}
       />
-      {view === 'week' ? <WeekView versionId={versionId} /> : <BrowseView versionId={versionId} />}
+      {view === 'week' && <WeekView versionId={versionId} />}
+      {view === 'browse' && <BrowseView versionId={versionId} />}
+      {view === 'built' && <BuiltView versionId={versionId} />}
     </Page>
   );
 }

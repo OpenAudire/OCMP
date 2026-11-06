@@ -50,7 +50,8 @@ check is advice and never blocks saving.
 
 The trend lines come from a daily record of the key figures of every draft and published version
 (`metric_snapshots`: counts and shares only). The Docker Compose installation has a **`scheduler`** service that
-records them when it starts and every 24 hours. To use another scheduler (cron, a systemd timer), run
+records them when it starts and then every day at 23:55 in the installation's time zone (`TIMEZONE`, South
+African time by default), so a "day" is a local day. To use another scheduler (cron, a systemd timer), run
 
 ```
 docker compose exec api python -m app.cli snapshot-metrics

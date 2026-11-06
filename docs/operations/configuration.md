@@ -28,6 +28,7 @@ review policy) are not in `.env`; see [Admin basics](../admin/basics.md).
 | `PUBLIC_URL` | `https://<DOMAIN>` | Address users type, used in email links and the single sign-on redirect address. |
 | `ENVIRONMENT` | `production` | `production` or `development`. In production, saving an AI provider key needs `SECRETS_ENCRYPTION_KEYS` (below). Leave it at `production` on a server; a developer's `.env` sets `development`. |
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING` or `ERROR`. |
+| `TIMEZONE` | `Africa/Johannesburg` | IANA time zone name. Decides which day the committee dashboard's daily figures belong to, and the `scheduler` service records them at 23:55 in this zone. An unknown name stops the application at start. |
 | `TRUSTED_PROXIES` | `caddy` | Proxies whose `X-Forwarded-For` header is believed (IPs, CIDR networks or hostnames, comma-separated). Only change it if another proxy or load balancer sits in front of Caddy. |
 
 ## Sign-in and sessions

@@ -42,7 +42,7 @@ deactivated.
 * **Roles**: the built-in roles can be read but not changed. *Make a role* names the permissions, where the role can
   be held and whether every assignment needs an end date. A role someone still holds cannot be deleted.
 * **Institution settings**: your own words for curriculum things (for example Course for Module), the health
-  profile, the default taxonomy scale and the numbers behind mapping, credits, quality checks and coverage. Each
+  profile, the default taxonomy scale and the numbers behind mapping, credits, quality checks and coverage, and what the student explorer may show. Each
   block has its own **Save**; the server checks the ranges and says why if it refuses; every change is in the
   audit log. See also [Basics](basics.md) for the settings that live in the server's configuration instead.
 

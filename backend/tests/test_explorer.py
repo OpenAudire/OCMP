@@ -9,10 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.core.permissions import ScopeType
+from app.models import Faculty, Institution
 from app.models.curriculum import ObjectiveStatus, VersionStatus
+from app.models.mapping import AcceptMethod, MappingStatus
 from app.services import assessments
 from app.services.authorization import ScopeRef
-from tests.test_coverage_report import Library, accept
+from tests.test_coverage_report import Library, accept, other_status
 from tests.test_coverage_report import library as library  # fixture
 from tests.test_curriculum_edit_api import sign_in
 from tests.test_curriculum_objectives_api import World
@@ -226,3 +228,130 @@ class TestAccess:
         response = await api_client.get(f"{API}/modules/{published.cardio.id}/explorer")
 
         assert response.status_code in (401, 403)
+
+
+async def switch_on(db: AsyncSession, world: World) -> None:
+    faculty = await db.get(Faculty, world.programme.faculty_id)
+    institution = await db.get(Institution, faculty.institution_id)  # type: ignore[union-attr]
+    institution.settings = {  # type: ignore[union-attr]
+        **institution.settings,  # type: ignore[union-attr]
+        "explorer": {"show_competency_view": True},
+    }
+    await db.flush()
+
+
+def competencies_url(world: World) -> str:
+    return f"{API}/curriculum-versions/{world.draft.id}/explorer/competencies"
+
+
+@pytest.mark.usefixtures("student")
+class TestCompetencies:
+    """Where a published year builds each competency group (ADR 061)."""
+
+    async def test_it_is_off_until_the_institution_switches_it_on(
+        self, api_client: AsyncClient, db_session: AsyncSession, published: World, library: Library
+    ) -> None:
+        await accept(db_session, published.lecture_objective, library.one)
+
+        assert (await api_client.get(competencies_url(published))).status_code == 404
+
+        await switch_on(db_session, published)
+        assert (await api_client.get(competencies_url(published))).status_code == 200
+
+    async def test_a_group_shows_the_modules_and_sessions_that_build_it(
+        self, api_client: AsyncClient, db_session: AsyncSession, published: World, library: Library
+    ) -> None:
+        await switch_on(db_session, published)
+        await accept(db_session, published.lecture_objective, library.one)  # a session, G1.1
+        await accept(db_session, published.anatomy_outcome, library.two)  # a module outcome, G1.2
+
+        body = (await api_client.get(competencies_url(published))).json()
+
+        [framework] = body["frameworks"]
+        [group] = framework["groups"]
+        assert (group["code"], group["title"]) == ("G1", "Clinical")
+        modules = {m["code"]: m for m in group["modules"]}
+        assert set(modules) == {"HSC201", published.anatomy.code}
+        assert [(s["title"], s["week"]) for s in modules["HSC201"]["sessions"]] == [
+            ("Cardiac cycle", 1)
+        ]
+        assert modules[published.anatomy.code]["sessions"] == []
+
+    async def test_only_the_group_level_scores_and_item_words_are_never_returned(
+        self, api_client: AsyncClient, db_session: AsyncSession, published: World, library: Library
+    ) -> None:
+        await switch_on(db_session, published)
+        await accept(db_session, published.lecture_objective, library.one, coverage=5)
+
+        response = await api_client.get(competencies_url(published))
+
+        text = response.text
+        assert "G1.1" not in text and "Skill 1" not in text  # nothing below the group
+        for word in ("coverage", "depth", "confidence", "status", "score", "percent", "links"):
+            assert word not in text.lower()
+
+    async def test_only_accepted_links_with_coverage_count(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        published: World,
+        library: Library,
+    ) -> None:
+        await switch_on(db_session, published)
+        await other_status(
+            db_session, published.lecture_objective, library.one, MappingStatus.SUGGESTED
+        )
+        await other_status(
+            db_session, published.cardio_outcome, library.two, MappingStatus.NEEDS_SECOND_REVIEW
+        )
+        await other_status(
+            db_session, published.anatomy_outcome, library.three, MappingStatus.REJECTED
+        )
+        await accept(db_session, published.cardio_outcome, library.three, coverage=0)
+        await accept(db_session, published.lecture_objective, library.two, needs_recheck=True)
+
+        body = (await api_client.get(competencies_url(published))).json()
+
+        assert body["frameworks"] == []
+
+    async def test_a_link_made_to_the_group_itself_places_nothing(
+        self, api_client: AsyncClient, db_session: AsyncSession, published: World, library: Library
+    ) -> None:
+        await switch_on(db_session, published)
+        await accept(db_session, published.lecture_objective, library.group)
+
+        body = (await api_client.get(competencies_url(published))).json()
+
+        assert body["frameworks"] == []
+
+    async def test_links_accepted_in_bulk_or_by_import_are_accepted_links(
+        self, api_client: AsyncClient, db_session: AsyncSession, published: World, library: Library
+    ) -> None:
+        await switch_on(db_session, published)
+        await accept(
+            db_session, published.lecture_objective, library.one, accept_method=AcceptMethod.BULK
+        )
+
+        body = (await api_client.get(competencies_url(published))).json()
+
+        assert [g["code"] for g in body["frameworks"][0]["groups"]] == ["G1"]
+
+    async def test_a_draft_version_is_a_404_even_when_switched_on(
+        self, api_client: AsyncClient, db_session: AsyncSession, published: World, library: Library
+    ) -> None:
+        await switch_on(db_session, published)
+        await accept(db_session, published.lecture_objective, library.one)
+        published.draft.status = VersionStatus.DRAFT
+        await db_session.flush()
+
+        assert (await api_client.get(competencies_url(published))).status_code == 404
+
+    async def test_a_retired_objective_places_nothing(
+        self, api_client: AsyncClient, db_session: AsyncSession, published: World, library: Library
+    ) -> None:
+        await switch_on(db_session, published)
+        await accept(db_session, published.lecture_objective, library.one)
+        published.lecture_objective.status = ObjectiveStatus.RETIRED
+        await db_session.flush()
+
+        assert (await api_client.get(competencies_url(published))).json()["frameworks"] == []

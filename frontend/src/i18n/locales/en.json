@@ -2031,6 +2031,14 @@
           "label": "Repeated items: standard deviations above the average",
           "help": "From 0 to 5, used once five or more items are taught."
         }
+      },
+      "explorer": {
+        "title": "Student explorer",
+        "help": "What students may see in the explorer beyond the curriculum's own words.",
+        "show_competency_view": {
+          "label": "Show students where this year builds each competency",
+          "help": "Off by default. Shows, for each competency group of a framework, the modules and sessions of the published year whose objectives have an accepted link to it. Published versions only, accepted links only, groups only (no individual framework items) and no scores."
+        }
       }
     }
   },
@@ -2261,6 +2269,16 @@
     "viewLabel": "How to look at the curriculum",
     "thisWeek": "By week",
     "modules": "Modules",
+    "built": "Competencies",
+    "builtIntro": "For each competency group, the modules and sessions of this year that help you build it. This shows where the curriculum teaches it, not how well, and it does not change with your marks.",
+    "builtFramework": "{{name}} ({{version}})",
+    "builtNone": "Nothing in this year is linked to this group yet.",
+    "builtEmpty": {
+      "title": "Nothing to show yet",
+      "body": "No module or session of this year has been linked to a competency group yet."
+    },
+    "builtSessions": "Sessions",
+    "builtModuleOnly": "The module as a whole",
     "week": "Week {{n}}",
     "noWeek": "No week set",
     "previousWeek": "Earlier",

@@ -12,6 +12,7 @@ import type {
   CoverageReport,
   Dashboard,
   DashboardTrace,
+  ExplorerCompetencies,
   ExplorerModule,
   PermissionInfo,
   RoleInfo,
@@ -893,6 +894,7 @@ export const queryKeys = {
   permissions: ['admin', 'permissions'] as const,
   apiTokens: ['account', 'api-tokens'] as const,
   explorerModule: (moduleId: string) => ['explorer', 'module', moduleId] as const,
+  explorerCompetencies: (versionId: string) => ['explorer', 'competencies', versionId] as const,
   explorerWeek: (versionId: string, week: number) => ['explorer', 'week', versionId, week] as const,
   dashboard: (versionId: string, frameworkId: string | null) =>
     ['dashboard', versionId, frameworkId] as const,
@@ -1045,6 +1047,11 @@ export async function fetchSearchFilters(versionId: string): Promise<SearchFilte
 
 export async function fetchExplorerModule(moduleId: string): Promise<ExplorerModule> {
   return (await api.get<ExplorerModule>(`/modules/${moduleId}/explorer`)).data;
+}
+
+export async function fetchExplorerCompetencies(versionId: string): Promise<ExplorerCompetencies> {
+  return (await api.get<ExplorerCompetencies>(`/curriculum-versions/${versionId}/explorer/competencies`))
+    .data;
 }
 
 export async function fetchExplorerWeek(versionId: string, week: number): Promise<ExplorerWeek> {

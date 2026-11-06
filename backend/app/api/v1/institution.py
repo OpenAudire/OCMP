@@ -18,7 +18,13 @@ from app.services.institution_settings import (
     parse_settings,
     update_settings,
 )
-from app.services.policies import CoveragePolicy, CreditPolicy, MappingPolicy, QualityPolicy
+from app.services.policies import (
+    CoveragePolicy,
+    CreditPolicy,
+    ExplorerPolicy,
+    MappingPolicy,
+    QualityPolicy,
+)
 
 router = APIRouter(prefix="/institution", tags=["institution"])
 
@@ -41,6 +47,7 @@ class InstitutionRead(BaseModel):
     credits: CreditPolicy
     quality: QualityPolicy
     coverage: CoveragePolicy
+    explorer: ExplorerPolicy
 
 
 class SettingsUpdate(BaseModel):
@@ -55,6 +62,7 @@ class SettingsUpdate(BaseModel):
     credits: CreditPolicy | None = None
     quality: QualityPolicy | None = None
     coverage: CoveragePolicy | None = None
+    explorer: ExplorerPolicy | None = None
 
 
 def _read(institution: Institution, settings: InstitutionSettings) -> InstitutionRead:
@@ -71,6 +79,7 @@ def _read(institution: Institution, settings: InstitutionSettings) -> Institutio
         credits=settings.credits,
         quality=settings.quality,
         coverage=settings.coverage,
+        explorer=settings.explorer,
     )
 
 

@@ -33,7 +33,8 @@ The framework is the one with the most links from this version unless the person
 **Daily snapshots.** `metric_snapshots` holds one row for each version and day with the same figures for the
 **whole** version (counts and shares only: no text, no names). `snapshot-metrics` (CLI) writes today's row for
 every draft and published version; the same day again replaces it. The Docker Compose file has a `scheduler`
-service that runs it at start and then every 24 hours, so installs get snapshots with no cron; any other
+service (`run-scheduler`) that runs it at start and then daily at 23:55 in `TIMEZONE` (default
+Africa/Johannesburg, set by the owner in Slice 1.31; a "day" is a local day), so installs get snapshots with no cron; any other
 scheduler can run the same command. Snapshots are derived data: not audited, not exported, and they go with
 the version.
 

@@ -14,7 +14,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.profiles import Feature, Profile, Term, features_for
 from app.models import Institution, TaxonomyScale
 from app.services.authorization import InvalidRequestError
-from app.services.policies import CoveragePolicy, CreditPolicy, MappingPolicy, QualityPolicy
+from app.services.policies import (
+    CoveragePolicy,
+    CreditPolicy,
+    ExplorerPolicy,
+    MappingPolicy,
+    QualityPolicy,
+)
 
 Word = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)]
 
@@ -40,6 +46,7 @@ class InstitutionSettings(BaseModel):
     credits: CreditPolicy = CreditPolicy()
     quality: QualityPolicy = QualityPolicy()
     coverage: CoveragePolicy = CoveragePolicy()
+    explorer: ExplorerPolicy = ExplorerPolicy()
 
     @field_validator("profiles", mode="after")
     @classmethod
@@ -70,6 +77,7 @@ SECTIONS = (
     "credits",
     "quality",
     "coverage",
+    "explorer",
 )
 
 

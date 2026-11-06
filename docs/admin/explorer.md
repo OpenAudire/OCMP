@@ -26,6 +26,16 @@ The **Modules** view lists the modules by year or phase. Open one to see:
   questions assess, each once) and, opened with *questions or parts*, what each question assesses. This is how a
   student answers "what is in the test".
 
+## Competencies (optional)
+
+When the institution has switched on **Show students where this year builds each competency** (Admin > Institution
+settings > Student explorer; off by default, [ADR 061](../adr/061-student-competency-view.md)), a third view,
+**Competencies**, lists each competency group of the framework and the modules and sessions of this published year
+that build it. It shows where the curriculum teaches a group, not how well, so there are no scores, percentages or
+individual framework items. It uses **accepted links only** (suggested, second-review, rejected and re-check links are
+not used), published versions only, and only what the student's roles show. Turn it on only when the year's mapping
+has been reviewed.
+
 ## Search
 
 The **Search the curriculum** button opens [Search](search.md) for the same version. Results open in the explorer for
@@ -36,9 +46,8 @@ people who cannot read drafts.
 * Only **published** versions. A module of a draft or archived version is not found.
 * Only what your roles let you see: someone with a role in one module sees that module's sessions.
 * Retired objectives are left out. The words are the curriculum's own.
-* **No framework mappings.** Which competencies an objective is mapped to is working material for the curriculum
-  office and the reports. An institution that wants students to see "where each competency is built" needs to decide
-  that first; it is not offered.
+* **No framework mappings**, unless the institution switches on the Competencies view above, which shows only competency
+  groups, with no scores. The links behind it are working material for the curriculum office and the reports.
 * No personal information about students: it shows the same to everyone.
 
 If a student sees nothing, check that the version is **published** (Curriculum, version menu) and that the student has

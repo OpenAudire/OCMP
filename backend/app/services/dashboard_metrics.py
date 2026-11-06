@@ -11,12 +11,14 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.models import (
     CurriculumVersion,
     Framework,
@@ -45,8 +47,10 @@ def full_view(version: CurriculumVersion, programme: Programme) -> VisibleVersio
     return VisibleVersion(version, programme, VersionView(full=True), CurriculumAccess())
 
 
-def today() -> date:
-    return datetime.now(UTC).date()
+def today(timezone: str | None = None) -> date:
+    """Today's date in the installation's time zone (``TIMEZONE``), not the server's."""
+    zone = ZoneInfo(timezone or get_settings().timezone)
+    return datetime.now(zone).date()
 
 
 @dataclass(frozen=True)

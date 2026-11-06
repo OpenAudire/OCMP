@@ -58,6 +58,12 @@ export interface Institution {
   credits?: CreditPolicy;
   quality?: { near_duplicate_min_percent: number };
   coverage?: CoveragePolicy;
+  explorer?: ExplorerPolicy;
+}
+
+/** What the student explorer may show (ADR 061). */
+export interface ExplorerPolicy {
+  show_competency_view: boolean;
 }
 
 /** How mapping decisions are reviewed and how AI suggestions are filtered. */
@@ -88,6 +94,7 @@ export interface SettingsUpdate {
   credits?: CreditPolicy;
   quality?: { near_duplicate_min_percent: number };
   coverage?: CoveragePolicy;
+  explorer?: ExplorerPolicy;
 }
 
 /** Credits and notional hours settings (advice only; ADR 035). */
@@ -1821,6 +1828,28 @@ export interface ExplorerWeek {
   /** The weeks that have sessions, in order. */
   weeks: number[];
   sessions: ExplorerSession[];
+}
+
+/** Where a published year builds each competency group (Slice 1.31, ADR 061): no scores. */
+export interface ExplorerCompetencies {
+  version_id: string;
+  programme_code: string;
+  academic_year: number;
+  frameworks: {
+    name: string;
+    version_label: string;
+    groups: {
+      id: string;
+      code: string;
+      title: string;
+      modules: {
+        id: string;
+        code: string;
+        name: string;
+        sessions: { id: string; title: string; week: number | null }[];
+      }[];
+    }[];
+  }[];
 }
 
 // --- Administration: people, roles, tokens (Slice 1.30) ---

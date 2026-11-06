@@ -25,6 +25,7 @@ import json
 import os
 import sys
 import uuid
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy import select
@@ -49,7 +50,7 @@ from app.models import (
     User,
 )
 from app.models.embedding import EmbeddedType
-from app.services import dashboard_metrics, eval_gold, eval_metrics, eval_run
+from app.services import dashboard_metrics, eval_gold, eval_metrics, eval_run, scheduling
 from app.services.ai_runs import purge_ai_call_content
 from app.services.audit import audit_operation, purge_audit_log
 from app.services.authorization import (
@@ -143,6 +144,17 @@ async def _snapshot_metrics() -> int:
         taken = await dashboard_metrics.take_all_snapshots(db)
     print(f"Recorded today's figures for {taken} curriculum versions.")  # noqa: T201
     return 0
+
+
+async def _run_scheduler() -> int:
+    """Record the figures now, then every day at 23:55 in ``TIMEZONE`` (until stopped)."""
+    zone = get_settings().timezone
+    while True:
+        await _snapshot_metrics()
+        wait = scheduling.seconds_until_next_run(datetime.now(UTC), zone)
+        print(f"Next run in {int(wait)} seconds ({zone}).")  # noqa: T201
+        sys.stdout.flush()
+        await asyncio.sleep(wait)
 
 
 async def _clean_orphan_links(apply: bool) -> int:
@@ -559,6 +571,10 @@ def main(argv: list[str] | None = None) -> int:
         "snapshot-metrics",
         help="Record today's key figures of every draft and published version (run it nightly).",
     )
+    commands.add_parser(
+        "run-scheduler",
+        help="Run snapshot-metrics now and then every day at 23:55 in TIMEZONE (keeps running).",
+    )
     commands.add_parser("setup-token", help="Show the first-run setup token.")
     commands.add_parser("load-demo", help="Load the fictional BSc Health Sciences (Demo) data.")
     orphans = commands.add_parser(
@@ -587,6 +603,8 @@ def main(argv: list[str] | None = None) -> int:
                 return await _remove_demo(args.apply)
             if args.command == "snapshot-metrics":
                 return await _snapshot_metrics()
+            if args.command == "run-scheduler":
+                return await _run_scheduler()
             if args.command == "embed-all":
                 return await _embed_all()
             if args.command == "embeddings-status":

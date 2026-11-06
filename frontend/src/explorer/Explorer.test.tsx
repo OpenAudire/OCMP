@@ -22,6 +22,7 @@ vi.mock('../api/endpoints', async (importOriginal) => ({
   fetchVersionStructure: vi.fn(),
   fetchExplorerWeek: vi.fn(),
   fetchExplorerModule: vi.fn(),
+  fetchExplorerCompetencies: vi.fn(),
   fetchReviewCount: vi.fn(),
 }));
 
@@ -315,5 +316,73 @@ describe('byWeek', () => {
       [3, ['b', 'd']],
       [null, ['a']],
     ]);
+  });
+});
+
+describe('Explorer: where this year builds each competency', () => {
+  const built = {
+    version_id: 'v1',
+    programme_code: 'BHS',
+    academic_year: 2026,
+    frameworks: [
+      {
+        name: 'Graduate competencies',
+        version_label: '1.0',
+        groups: [
+          {
+            id: 'g1',
+            code: 'DGC-1',
+            title: 'Scholar and Practitioner',
+            modules: [
+              {
+                id: 'm1',
+                code: 'HSC201',
+                name: 'Cardiovascular Health',
+                sessions: [{ id: 's1', title: 'Cardiac cycle', week: 1 }],
+              },
+            ],
+          },
+          { id: 'g2', code: 'DGC-2', title: 'Communicator', modules: [] },
+        ],
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    mocked.fetchProgrammes.mockResolvedValue(programmes);
+    mocked.fetchExplorerWeek.mockResolvedValue(week);
+  });
+
+  it('is not offered while the institution has it switched off', async () => {
+    mocked.fetchInstitution.mockResolvedValue(testInstitution);
+    renderAt('/explorer?view=built');
+
+    await screen.findByRole('heading', { level: 2, name: 'Week 1' });
+    expect(screen.queryByRole('radio', { name: 'Competencies' })).not.toBeInTheDocument();
+    expect(mocked.fetchExplorerCompetencies).not.toHaveBeenCalled();
+  });
+
+  it('lists the modules and sessions of each group, with no scores', async () => {
+    mocked.fetchInstitution.mockResolvedValue({
+      ...testInstitution,
+      explorer: { show_competency_view: true },
+    });
+    mocked.fetchExplorerCompetencies.mockResolvedValue(built);
+    renderAt('/explorer?view=built');
+
+    const group = (await screen.findByRole('heading', { level: 2, name: /Scholar and Practitioner/ })).closest(
+      'section'
+    ) as HTMLElement;
+    expect(within(group).getByRole('link', { name: /Cardiovascular Health/ })).toHaveAttribute(
+      'href',
+      '/explorer/modules/m1'
+    );
+    expect(within(group).getByRole('link', { name: 'Week 1: Cardiac cycle' })).toHaveAttribute(
+      'href',
+      '/explorer/modules/m1?session=s1'
+    );
+    const empty = screen.getByRole('heading', { level: 2, name: /Communicator/ }).closest('section') as HTMLElement;
+    expect(within(empty).getByText(/Nothing in this year is linked to this group yet/)).toBeInTheDocument();
+    expect(screen.queryByText(/%|score|coverage|depth/i)).not.toBeInTheDocument();
   });
 });

@@ -129,3 +129,10 @@
 .items {
   margin-top: 6px;
 }
+
+/* A session link under a competency group: a full-size touch target. */
+.builtSession {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
