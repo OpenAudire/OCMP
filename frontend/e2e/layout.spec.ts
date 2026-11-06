@@ -5,7 +5,8 @@ import { openApp } from './support';
 test('the start page is the first section, in the shared layout', async ({ page }) => {
   await openApp(page, '/');
 
-  await expect(page).toHaveURL(/\/dashboard$/);
+  // The dashboard writes the version it shows into the address, so allow a query string.
+  await expect(page).toHaveURL(/\/dashboard(\?.*)?$/);
   await expect(page).toHaveTitle('Curriculum in Context');
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
   await expect(nav.getByRole('link')).toHaveText([

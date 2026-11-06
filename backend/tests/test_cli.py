@@ -411,3 +411,35 @@ def test_eval_run_and_report_say_so_when_nothing_matches(
         == 1
     )
     assert "not found" in capsys.readouterr().err
+
+
+def test_load_demo_queues_the_embedding_of_the_objectives_it_made(
+    cli_settings: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The demo is loaded from the command line, not a screen, so nothing saved its objectives."""
+    from types import SimpleNamespace
+
+    async def fake_load_demo(_db: object, **_kw: object) -> SimpleNamespace:
+        return SimpleNamespace(
+            draft_only=False,
+            draft_year=2027,
+            programme=SimpleNamespace(name="BSc Health Sciences (Demo)"),
+            modules=3,
+            learning_events=20,
+            objectives=60,
+            objective_links=58,
+            framework_items=8,
+            mappings=12,
+            tag_lists=3,
+            office_user_added=False,
+        )
+
+    queued: list[tuple[object, object]] = []
+    monkeypatch.setattr(cli, "load_demo", fake_load_demo)
+    monkeypatch.setattr(
+        cli, "enqueue_pending", lambda settings, kind: queued.append((settings, kind))
+    )
+
+    assert cli.main(["load-demo"]) == 0
+
+    assert [kind.value for _settings, kind in queued] == ["objective"]

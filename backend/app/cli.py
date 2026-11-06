@@ -40,6 +40,7 @@ from app.core.secrets import SecretBox, SecretUnreadableError, new_key
 from app.core.security import PasswordPolicyError
 from app.demo.loader import load_demo
 from app.demo.remover import remove_demo
+from app.jobs.embeddings import enqueue_pending
 from app.models import (
     AIProviderConfig,
     AIRun,
@@ -220,6 +221,9 @@ async def _load_demo() -> int:
     except PasswordPolicyError as exc:
         print(f"Error: {exc}", file=sys.stderr)  # noqa: T201
         return 1
+    # The demo's objectives are made here, not on a screen: queue their vectors (nothing while
+    # embeddings are off), so the AI shortlist works by meaning from the start.
+    enqueue_pending(settings, EmbeddedType.OBJECTIVE)
     if summary.draft_only:
         if summary.draft_year:
             print(f"Added the {summary.draft_year} draft to {name}.")  # noqa: T201

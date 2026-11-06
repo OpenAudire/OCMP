@@ -245,3 +245,94 @@ class TestQueueing:
         assert refused.status_code == 422
         assert names(enqueued_jobs).count("embed_objective") == 0
         assert await db_session.scalar(select(func.count()).select_from(Objective)) >= 5
+
+
+class TestQueueingEveryWayOfMakingObjectives:
+    """Objectives made by copying or importing are embedded without anyone saving them on a screen
+    (Pre-pilot fix, after the AI pass of 2026-11-06 ran on words only)."""
+
+    async def test_copying_a_phase_a_module_or_a_session_queues_a_sweep_each(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        embeddings_on: Settings,
+        enqueued_jobs: list[EnqueuedJob],
+        world: World,
+    ) -> None:
+        await sign_in(
+            api_client, db_session, embeddings_on, "programme_director", programme_scope(world)
+        )
+
+        module = await api_client.post(
+            f"{API}/modules/{world.cardio.id}/copy", json={"code": "HSC299", "name": "Copy"}
+        )
+        session = await api_client.post(
+            f"{API}/learning-events/{world.lecture.id}/copy", json={"title": "Copied session"}
+        )
+
+        assert module.status_code == 201, module.text
+        assert session.status_code == 201, session.text
+        sweeps = [j for j in enqueued_jobs if j.actor == "embed_pending"]
+        assert [j.args for j in sweeps] == [("objective",), ("objective",)]
+
+    async def test_copying_a_phase_queues_a_sweep(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        embeddings_on: Settings,
+        enqueued_jobs: list[EnqueuedJob],
+        world: World,
+    ) -> None:
+        from tests.factories import PhaseFactory
+
+        phase = PhaseFactory(version=world.draft, name="Year 1")
+        db_session.add(phase)
+        await db_session.flush()
+        await sign_in(
+            api_client, db_session, embeddings_on, "programme_director", programme_scope(world)
+        )
+
+        response = await api_client.post(f"{API}/phases/{phase.id}/copy", json={"name": "Year 1b"})
+
+        assert response.status_code == 201, response.text
+        assert [j.args for j in enqueued_jobs if j.actor == "embed_pending"] == [("objective",)]
+
+    async def test_nothing_is_queued_by_a_copy_while_embeddings_are_off(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        enqueued_jobs: list[EnqueuedJob],
+        world: World,
+    ) -> None:
+        await sign_in(
+            api_client, db_session, test_settings, "programme_director", programme_scope(world)
+        )
+
+        await api_client.post(
+            f"{API}/learning-events/{world.lecture.id}/copy", json={"title": "Copied session"}
+        )
+
+        assert [n for n in names(enqueued_jobs) if n.startswith("embed")] == []
+
+    async def test_an_excel_import_queues_one_job_for_each_objective_it_made(
+        self,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        embeddings_on: Settings,
+        enqueued_jobs: list[EnqueuedJob],
+        world: World,
+    ) -> None:
+        from tests.test_curriculum_import import SMALL, book
+
+        await sign_in(api_client, db_session, embeddings_on, "platform_admin")
+        base = f"{API}/curriculum-versions/{world.draft.id}/import"
+        preview = await api_client.post(f"{base}/preview", content=book(**SMALL))
+        assert preview.status_code == 200, preview.text
+        made = preview.json()["counts"]["objectives"]["create"]
+
+        applied = await api_client.post(f"{base}/apply", json={"token": preview.json()["token"]})
+
+        assert applied.status_code == 200, applied.text
+        assert made == 3
+        assert names(enqueued_jobs).count("embed_objective") == made

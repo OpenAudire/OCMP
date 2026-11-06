@@ -23,10 +23,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentUser, ScopeFromRequest, require_permission
+from app.api.deps import CurrentUser, ScopeFromRequest, SettingsDep, require_permission
 from app.core.database import DbSession
 from app.core.permissions import Permission, ScopeType
+from app.jobs.embeddings import enqueue_pending
 from app.models import CurriculumVersion, LearningEvent, Module, Objective, Phase, User
+from app.models.embedding import EmbeddedType
 from app.schemas.curriculum import (
     LearningEventCopy,
     LearningEventCreate,
@@ -271,14 +273,19 @@ async def move_phase(
     "/phases/{phase_id}/copy", response_model=PhaseSaved, status_code=status.HTTP_201_CREATED
 )
 async def copy_phase(
-    phase_id: uuid.UUID, body: PhaseCopy, request: Request, actor: PhaseEditor, db: DbSession
+    phase_id: uuid.UUID,
+    body: PhaseCopy,
+    request: Request,
+    actor: PhaseEditor,
+    db: DbSession,
+    settings: SettingsDep,
 ) -> Phase:
     """Copy a phase with its modules, their sessions and objectives (one new code per
     module), right after it."""
     target = target_of(request)
     assert target.phase is not None
     with audit_operation("curriculum.phase_copy", actor_id=actor.id, source_id=phase_id):
-        return await curriculum_copy.copy_phase(
+        copy = await curriculum_copy.copy_phase(
             db,
             target.phase,
             target.version,
@@ -286,6 +293,8 @@ async def copy_phase(
             module_codes=body.module_codes,
             created_by_id=actor.id,
         )
+    enqueue_pending(settings, EmbeddedType.OBJECTIVE)
+    return copy
 
 
 # --- Modules ------------------------------------------------------------------------
@@ -375,13 +384,14 @@ async def copy_module(
     request: Request,
     actor: ModuleStructureEditor,
     db: DbSession,
+    settings: SettingsDep,
 ) -> Module:
     """Copy a module with its sessions and objectives under a new code: right after it,
     or at the end of the phase given."""
     target = target_of(request)
     assert target.module is not None
     with audit_operation("curriculum.module_copy", actor_id=actor.id, source_id=module_id):
-        return await curriculum_copy.copy_module(
+        copy = await curriculum_copy.copy_module(
             db,
             target.module,
             target.version,
@@ -391,6 +401,8 @@ async def copy_module(
             phase_id=body.phase_id,
             created_by_id=actor.id,
         )
+    enqueue_pending(settings, EmbeddedType.OBJECTIVE)
+    return copy
 
 
 # --- Learning events ----------------------------------------------------------------
@@ -473,14 +485,17 @@ async def copy_learning_event(
     request: Request,
     actor: EventRemover,
     db: DbSession,
+    settings: SettingsDep,
 ) -> LearningEvent:
     """Copy a session with its objectives, right after it."""
     target = target_of(request)
     assert target.event is not None
     with audit_operation("curriculum.learning_event_copy", actor_id=actor.id, source_id=event_id):
-        return await curriculum_copy.copy_event(
+        copy = await curriculum_copy.copy_event(
             db, target.event, target.version, title=body.title, created_by_id=actor.id
         )
+    enqueue_pending(settings, EmbeddedType.OBJECTIVE)
+    return copy
 
 
 # --- Choices ------------------------------------------------------------------------

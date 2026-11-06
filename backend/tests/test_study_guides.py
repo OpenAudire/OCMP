@@ -6,12 +6,13 @@ import uuid
 
 import pytest
 from fakeredis import FakeAsyncRedis
+from fastapi import FastAPI
 from httpx import AsyncClient, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.errors import AIDisabledError
-from app.core.config import Settings
+from app.core.config import Settings, get_settings
 from app.core.permissions import ScopeType
 from app.models import AIRun, AIRunCall, AuditLog, Objective, ObjectiveProposal, User
 from app.models.curriculum import ObjectiveDomain, ObjectiveLevel, ObjectiveStatus
@@ -850,3 +851,34 @@ class TestApi:
         assert response.status_code == 200 and response.json()["status"] == "cancelled"
         again = await upload(api_client, ready, make_docx())
         assert again.status_code == 202  # the module is free again
+
+
+class TestAcceptedProposalIsEmbedded:
+    async def test_accepting_a_proposal_queues_the_embedding_of_the_new_objective(
+        self,
+        api_app: FastAPI,
+        api_client: AsyncClient,
+        db_session: AsyncSession,
+        test_settings: Settings,
+        redis_client: FakeAsyncRedis,
+        enqueued_jobs: list[EnqueuedJob],
+        ready: World,
+    ) -> None:
+        on = test_settings.model_copy(update={"embeddings_local": True})
+        api_app.dependency_overrides[get_settings] = lambda: on
+        await sign_in(api_client, db_session, on, "programme_director", programme_scope(ready))
+        started = (await upload(api_client, ready, make_docx())).json()
+        run = await db_session.get(AIRun, uuid.UUID(started["id"]))
+        assert run is not None
+        await extraction.execute_extraction(
+            db_session, on, redis_client, run.id, transport=Model(finds_the_outcomes).transport
+        )
+        [first, *_] = (
+            await api_client.get(f"{API}/modules/{ready.cardio.id}/objective-proposals")
+        ).json()
+
+        accepted = await api_client.post(f"{API}/objective-proposals/{first['id']}/accept", json={})
+
+        assert accepted.status_code == 200, accepted.text
+        queued = [j for j in enqueued_jobs if j.actor == "embed_objective"]
+        assert [j.args for j in queued] == [(accepted.json()["objective_id"],)]

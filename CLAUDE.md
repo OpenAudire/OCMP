@@ -263,8 +263,9 @@ export function ModuleCount({ count }: { count: number }) {
   Near-duplicates are shown through `objective_checks.near_duplicates_among` (only pairs the user may see on both
   sides, ADR 027) and only while embeddings are on. A text the privacy detectors flag is still embedded by the local
   server (counted, never logged) and listed as `possible_personal_information`; a **cloud** embedding provider would
-  have to go through `ai_gateway` and the guard. Embedding jobs run after a save (`enqueue_objective`) and need the
-  worker to read `EMBEDDINGS_LOCAL=true`
+  have to go through `ai_gateway` and the guard. Embedding jobs run after a save (`enqueue_objective`) and, for anything that makes objectives in bulk (copy forward,
+  copying a phase, module or session, `load-demo`), as a sweep (`enqueue_pending`): **any new way of making objectives must queue
+  one of them**. They need the worker to read `EMBEDDINGS_LOCAL=true`
 - AI mapping runs (ADR 045): `services/ai_mapping.py` (start, run, cancel), `services/mapping_shortlist.py`,
   `ai/mapping_answer.py`, `jobs/mapping.py`, router `api/v1/ai_mapping.py`. A run only ever creates `suggested`
   links through `mapping.create_link` (never accepted, never a reviewed state) and every call goes through

@@ -2050,7 +2050,7 @@ What only the owner can do before real users are on it (carried over from the Ph
 | Item | What is needed | Why it cannot be done here |
 |---|---|---|
 | **A real gold set** | Experts map a real programme's objectives to the real framework independently of the AI (Excel template: `eval-template`), import it, run `eval-run` and read kappa against the pilot target of 0.6. This, not a review of the AI's suggestions, is the measure of quality | The demo gold set is fictional and the developers' own |
-| **Embeddings on for the pilot data** | Start the embeddings service, set `EMBEDDINGS_LOCAL=true` and run `embed-all` before the first AI run, so the shortlist is by meaning and not by words (see the 39 objectives above) | A decision about the pilot server's resources |
+| **Embeddings on for the pilot data** | Start the embeddings service and set `EMBEDDINGS_LOCAL=true` before loading data, so every objective is embedded as it is made (since the pre-pilot fix below); run `embed-all` once for data made earlier. Done on the owner's local stack on 2026-11-06 | A decision about the pilot server's resources |
 | **Native-speaker review** | Afrikaans and isiZulu wording in the privacy guard's title patterns ("Mnr", "Mnu" and the like) and the objective wording rules, which are English only. (Translations of the interface are Phase 3.) | Nobody on the project can judge the wording |
 | **QA office credit figures** | The 120 credits a year, the HEQSF minimum credits at each exit level and the NQF level rules, checked against the current CHE and HEQSF documents | The figures were entered as given; the Stellenbosch source could not be fetched (1.10a) |
 | **HPCSA pack** | The real HPCSA core competencies as a framework pack from the authoritative source, with the right to use the text | Templates hold structure only; no official text could be verified or licensed |
@@ -2061,3 +2061,21 @@ What only the owner can do before real users are on it (carried over from the Ph
 ## Phase 1 approval
 
 **Phase 1 (core mapping) was approved by the product owner on 2026-11-06**, after the review of Slice 1.31: the five criteria above are met (the first by the AI pass and review of the same day), the four differences from the brief are accepted as Phase 1 scope, and what remains for the owner is the "Before the pilot" list. Phase 2 (integrate and accredit) has **not** been started and waits for its own go-ahead.
+
+
+### Pre-pilot fix: objectives are embedded wherever they are made (2026-11-06)
+**Status**: Complete. Asked by the owner before the expert test; not part of Phase 2.
+
+The first AI pass (above) ran on words only because the demo's objectives had no vectors. Reading the code showed which ways of making objectives already queued an embedding and which did not:
+
+- **Already queued** (now covered by tests): objectives saved on screen; **copy forward** (a sweep of objectives, `enqueue_pending`); the **Excel import** (one job per objective made or changed); **study-guide extraction** (one job when a proposal is accepted)
+- **Not queued, now fixed**: copying a **phase, module or session** (`POST /phases|modules|learning-events/{id}/copy` queue a sweep) and **`load-demo`** (made from the command line, so nothing was saved on a screen; it now queues a sweep). This is why the 2027 draft of the demo had no vectors, and why none of the 2026 ones did either
+- Nothing is queued while `EMBEDDINGS_LOCAL` is false, as before; `embed-all` stays the way to catch up on data made while embeddings were off
+
+**Tests**: `test_embedding_jobs.py` (copying a module and a session queues a sweep each, copying a phase, nothing queued while off, an Excel import queues one job per objective it made), `test_study_guides.py` (accepting a proposal queues the new objective), `test_cli.py` (`load-demo` queues a sweep). Ruff, format and mypy pass; these three files pass (82 tests). The whole backend suite was not run locally; CI runs it.
+
+**On the owner's local stack**: before, **0 of 119** objectives and 0 of 8 framework items had a vector. After rebuilding, `embed-all` embedded 119 objectives and 8 framework items (none flagged). The AI pass was run again on the 2027 draft (`mapping:2`, `claude-sonnet-5-5`): **all 59 objectives were sent to the AI (59 calls, none invalid, none failed), against 29 before**, and it made **37 suggestions for 33 objectives** (30 session objectives with 34 suggestions, 1 module outcome, 2 programme outcomes), against 21 for 20 objectives in the first pass. Cost $0.393 (56 196 tokens in, 22 335 out). All 37 are *suggested*, waiting in the review queue; nothing was accepted. As before, this is a count of suggestions, not a measure of their quality.
+
+**CI**: the failed run on `f27c1b9` was one WebKit-only failure in `layout.spec.ts` (the test expected the address to end at `/dashboard`, but the dashboard had already added `?version=...`), a timing race in the test and not a fault in the app; the same code passed on the next run. The test now allows a query string.
+
+**Commit**: `fix: queue embeddings for copied objectives and the demo load`
