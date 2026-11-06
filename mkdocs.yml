@@ -63,6 +63,18 @@ nav:
       - Upgrade: operations/upgrade.md
       - Backup and restore: operations/backup-restore.md
       - Embeddings: operations/embeddings.md
+  - Guides by role:
+      - Overview: guides/index.md
+      - Student: guides/student.md
+      - Lecturer: guides/lecturer.md
+      - Module coordinator: guides/module-coordinator.md
+      - Mapper and reviewer: guides/mapper-reviewer.md
+      - Programme director: guides/programme-director.md
+      - Curriculum office: guides/curriculum-office.md
+      - External reviewer: guides/external-reviewer.md
+      - Platform administrator: guides/platform-administrator.md
+      - Glossary: guides/glossary.md
+      - FAQ: guides/faq.md
   - Administration:
       - Admin basics: admin/basics.md
       - Users and roles: admin/users-and-roles.md
@@ -81,6 +93,7 @@ nav:
       - Importing the curriculum from Excel: admin/importing-curriculum.md
       - Importing tags, mappings and frameworks: admin/importing-tags-mappings-frameworks.md
       - Exporting a curriculum version: admin/exporting.md
+      - Setting up an AI provider: admin/ai-setup.md
       - AI settings: admin/ai.md
       - Checking the AI's mapping: admin/ai-evaluation.md
       - Importing frameworks: admin/framework-packs.md

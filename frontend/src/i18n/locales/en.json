@@ -2474,6 +2474,10 @@
       "assessments": {
         "title": "Assessment methods report",
         "description": "Assessments and assessment-method tags by method, and the objectives that no assessment or method covers."
+      },
+      "credits": {
+        "title": "Credits and notional hours",
+        "description": "Each module's planned hours against its credits, credits by phase and by NQF level, and the findings of the check. Needs access to the whole version."
       }
     },
     "intended": {

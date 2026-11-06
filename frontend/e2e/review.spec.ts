@@ -18,6 +18,9 @@ import {
 // API, which makes it a link a person may delete), the module, the phase and the framework
 // (ADR 037).
 //
+// It ends with the coverage report of the version, so with the structure made here and the
+// mapping it is the build, map, review and report chain of the Phase 1 definition of done.
+//
 // Not covered here: a second reviewer actually deciding (that needs a third account; the API
 // and unit tests cover it), and bulk accept with real suggestions (there is no AI yet to make
 // links with a confidence; the dialog and its count are checked).
@@ -362,5 +365,23 @@ test.describe('review queue', () => {
     await expect(card(`${one.text} \\(reworded\\)`)).toHaveCount(0);
     await page.getByLabel('Use keyboard shortcuts').check();
     await expectNoAccessibilityViolations(page);
+
+    // The end of the chain (build, map, review, report): the decided link is in the coverage report
+    // of the version. Only the accepted link counts; the one waiting for a second review is shown
+    // apart and the rejected one is not there at all.
+    const report = await page.request.get(
+      `${API}/curriculum-versions/${fixture.versionId}/coverage`,
+      { params: { framework_id: fixture.frameworkId, method: 'single' } }
+    );
+    expect(report.ok(), await report.text()).toBe(true);
+    const body = (await report.json()) as {
+      definition: string;
+      items: { code: string; links: number; waiting: number; status: string }[];
+    };
+    const item = (code: string) => body.items.find((i) => i.code === code);
+    expect(body.definition).toContain('accepted link');
+    expect(item(one.itemCode)).toMatchObject({ links: 1, status: 'covered' });
+    expect(item(two.itemCode)).toMatchObject({ links: 0, waiting: 0, status: 'none' });
+    expect(item(three.itemCode)).toMatchObject({ links: 0, waiting: 1, status: 'none' });
   });
 });

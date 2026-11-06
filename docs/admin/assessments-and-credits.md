@@ -64,6 +64,13 @@ when set, replaces it. The Credits page shows the figure and says where it comes
 
 The demo programme has only a few sessions per module, so it shows the hours as *under*.
 
+### As a report, with Excel and PDF
+
+**Reports** also lists the check as **Credits and notional hours**: the modules with their hours against their
+credits, credits by phase and by NQF level, and the findings in words. Like every report it states its method and
+the date, and can be downloaded as Excel or PDF ([Coverage and gap reports](coverage-reports.md#exporting-a-report)).
+It needs access to the whole version, as the Credits page does.
+
 ## Changing the figures
 
 The figures are the `credits` section of the institution settings (platform admin, through the

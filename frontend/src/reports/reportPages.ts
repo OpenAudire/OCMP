@@ -7,6 +7,7 @@ export const REPORT_PAGES: Record<string, { framework: 'required' | 'optional' |
   relationship: { framework: 'none' },
   'role-balance': { framework: 'required' },
   assessments: { framework: 'none' },
+  credits: { framework: 'none' },
 };
 
 /** Every report on the reports page, in order. */
@@ -19,6 +20,7 @@ export const ALL_REPORTS = [
   'relationship',
   'role-balance',
   'assessments',
+  'credits',
 ];
 
 export function reportPath(key: string): string {

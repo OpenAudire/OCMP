@@ -61,6 +61,19 @@ class TestRemoveDemo:
         assert "faculty FHS-DEMO" in text and "framework" in text
         assert "tag list teaching-methods" in text
 
+    async def test_the_demo_can_be_loaded_again_after_it_was_removed(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Removing the demo soft-deletes its faculty; loading it again must not clash with the
+        deleted rows (codes are unique among live rows only)."""
+        await load_demo(db_session)
+        first = await live_counts(db_session)
+        await remove_demo(db_session, apply=True)
+
+        await load_demo(db_session)
+
+        assert await live_counts(db_session) == first
+
     async def test_applying_removes_the_demo_and_leaves_the_rest_untouched(
         self, db_session: AsyncSession
     ) -> None:

@@ -3,10 +3,10 @@
 import uuid
 from typing import Any
 
-from sqlalchemy import ForeignKey, String, UniqueConstraint, text
+from sqlalchemy import ForeignKey, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Audited, CoreModel, SoftDeleteMixin
+from app.models.base import Audited, CoreModel, SoftDeleteMixin, live_unique
 
 
 class Institution(Audited, SoftDeleteMixin, CoreModel):
@@ -35,7 +35,7 @@ class Faculty(Audited, SoftDeleteMixin, CoreModel):
     """A faculty (or school/college) within an institution."""
 
     __tablename__ = "faculties"
-    __table_args__ = (UniqueConstraint("institution_id", "code"),)
+    __table_args__ = (live_unique("uq_faculties_institution_code_live", "institution_id", "code"),)
 
     institution_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("institutions.id", ondelete="RESTRICT"), index=True
@@ -56,7 +56,7 @@ class Department(Audited, SoftDeleteMixin, CoreModel):
     """A department within a faculty."""
 
     __tablename__ = "departments"
-    __table_args__ = (UniqueConstraint("faculty_id", "code"),)
+    __table_args__ = (live_unique("uq_departments_faculty_code_live", "faculty_id", "code"),)
 
     faculty_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("faculties.id", ondelete="RESTRICT"), index=True

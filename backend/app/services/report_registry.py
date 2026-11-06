@@ -3,6 +3,7 @@ function that builds its document. A new report is added here."""
 
 from app.services.report_context import Builder
 from app.services.report_docs import build_coverage, build_gaps
+from app.services.report_docs_credits import build_credits
 from app.services.report_docs_curriculum import build_redundancy, build_traceability
 from app.services.report_docs_teaching import (
     build_assessment_methods,
@@ -20,4 +21,5 @@ REPORTS: dict[str, Builder] = {
     "relationship": build_relationship,
     "role-balance": build_role_balance,
     "assessments": build_assessment_methods,
+    "credits": build_credits,
 }

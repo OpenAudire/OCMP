@@ -26,9 +26,14 @@ stack behind Caddy (ADR 006, ADR 026).
 4. Install the browser once, then run the tests from `frontend/`:
 
    ```bash
-   npx playwright install chromium
+   npx playwright install chromium firefox webkit
    npm run e2e
    ```
+
+   The projects are `light` and `dark` (Chromium) and `firefox` and `webkit` (light theme only: the dark
+   theme is the same CSS in every engine). CI runs all four. To run one: `npm run e2e -- --project=webkit`.
+   Journeys that change a setting shared by every project (the explorer's competency switch) run in `light`
+   only.
 
 `E2E_BASE_URL` points the tests at another address (default `https://localhost`; the
 certificate is not checked). After a frontend change, rebuild the web image first:

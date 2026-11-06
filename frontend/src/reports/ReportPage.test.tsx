@@ -92,7 +92,7 @@ describe('Report page', () => {
   it('lists every report on the reports page, without role balance outside the health profile', async () => {
     renderAt('/reports');
 
-    expect(await screen.findAllByRole('link', { name: 'Open the report' })).toHaveLength(7);
+    expect(await screen.findAllByRole('link', { name: 'Open the report' })).toHaveLength(8);
     expect(
       screen.getByRole('heading', { level: 2, name: 'Taught in many sessions' })
     ).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe('Report page', () => {
     expect(
       await screen.findByRole('heading', { level: 2, name: 'Role balance report' })
     ).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Open the report' })).toHaveLength(8);
+    expect(screen.getAllByRole('link', { name: 'Open the report' })).toHaveLength(9);
   });
 
   it('opens a report that needs no framework with only a version', async () => {

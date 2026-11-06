@@ -270,7 +270,7 @@ describe('Coverage report', () => {
   it('links the two reports from the reports page', async () => {
     renderAt('/reports');
 
-    expect(await screen.findAllByRole('link', { name: 'Open the report' })).toHaveLength(7);
+    expect(await screen.findAllByRole('link', { name: 'Open the report' })).toHaveLength(8);
   });
 
   it('states the method, its definition, the framework, the version and when it was made', async () => {

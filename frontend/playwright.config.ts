@@ -44,5 +44,17 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], colorScheme: 'dark', storageState: 'e2e/.auth/signed-in.json' },
       dependencies: ['setup', 'setup-lecturer'],
     },
+    // Other engines, light theme only: the dark theme is the same CSS, and every extra project is a
+    // full pass over the stack. `npm run e2e -- --project=firefox` runs one of them.
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'], colorScheme: 'light', storageState: 'e2e/.auth/signed-in.json' },
+      dependencies: ['setup', 'setup-lecturer'],
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'], colorScheme: 'light', storageState: 'e2e/.auth/signed-in.json' },
+      dependencies: ['setup', 'setup-lecturer'],
+    },
   ],
 });

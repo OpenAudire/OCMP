@@ -152,8 +152,9 @@ jobs:
       - name: Run tests
         run: npm run test:coverage
 
-  # Playwright journeys with axe accessibility checks (light and dark theme) against the
-  # real Docker Compose stack, as installed by the install guide.
+  # Playwright journeys with axe accessibility checks (Chromium in the light and the dark theme,
+  # Firefox and WebKit in the light theme) against the real Docker Compose stack, as installed by
+  # the install guide.
   e2e:
     name: End-to-End Tests
     runs-on: ubuntu-latest
@@ -171,7 +172,7 @@ jobs:
         working-directory: frontend
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium firefox webkit
 
       - name: Start the stack
         working-directory: deploy
