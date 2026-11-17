@@ -2079,3 +2079,13 @@ The first AI pass (above) ran on words only because the demo's objectives had no
 **CI**: the failed run on `f27c1b9` was one WebKit-only failure in `layout.spec.ts` (the test expected the address to end at `/dashboard`, but the dashboard had already added `?version=...`), a timing race in the test and not a fault in the app; the same code passed on the next run. The test now allows a query string.
 
 **Commit**: `fix: queue embeddings for copied objectives and the demo load`
+
+
+### Bug to fix: `load-demo` does not queue the framework items' embeddings (2026-11-17)
+**Status**: Open. Found while deploying the demo to a Google Cloud server (commit `9e0f8bd`, embeddings profile on).
+
+`load-demo` ends with `enqueue_pending(settings, EmbeddedType.OBJECTIVE)` (`backend/app/cli.py`), so the 119 objectives were embedded within about 10 seconds. The 8 demo framework items were never queued: `embeddings-status` stayed at `framework_item: 0 of 8` for more than 4 minutes, until `embed-all` was run by hand (8 embedded, none flagged). The pre-pilot fix above (2026-11-06) covered objectives only; importing a framework pack does queue its items (`framework_packs.py`), but `load-demo` makes framework items from the command line, like the objectives, and nothing queues them. (The Excel import of frameworks was not checked.)
+
+**Effect**: on a fresh install with embeddings on, meaning-based matching of framework items falls back to keywords until `embed-all` is run. Nothing fails and nothing is wrong silently: `embeddings-status` shows 0 of 8.
+
+**Fix**: queue `EmbeddedType.FRAMEWORK_ITEM` in `load-demo` as well, with a test in `test_cli.py` like the one for objectives. Until then, run `docker compose exec api python -m app.cli embed-all` once after `load-demo` (the install guide's demo section does not say so yet).
